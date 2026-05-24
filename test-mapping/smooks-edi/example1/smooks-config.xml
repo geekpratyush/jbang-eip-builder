@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<smooks-resource-list xmlns="https://www.smooks.org/xsd/smooks-2.0.xsd"
+                      xmlns:dfdl="https://www.smooks.org/xsd/smooks/dfdl-1.0.xsd">
+    <dfdl:parser schemaUri="file:/home/pratyush/software/test-mapping/smooks-edi/example1/mapping.dfdl.xsd" />
+</smooks-resource-list>

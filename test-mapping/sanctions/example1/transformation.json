@@ -1,0 +1,13 @@
+{
+  "name": "SANCTIONS",
+  "source": {
+    "file": "source.txt",
+    "type": "mt"
+  },
+  "logic": {
+    "file": "transform.xslt",
+    "type": "xslt"
+  },
+  "type": "mt-to-mx",
+  "target": {"type": "xml"}
+}

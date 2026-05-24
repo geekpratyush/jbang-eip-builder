@@ -1,0 +1,17 @@
+# ID: mongodb-stub
+# ENABLED: true
+# DESCRIPTION: Saves and retrieves documents from MongoDB using stubs offline
+# STUB: stub:mongodb:cameldb (replaces mongodb:cameldb?operation=insert&collection=orders)
+# REAL_URI: mongodb:myMongoBean?database=cameldb&collection=orders&operation=insert
+
+- route:
+    id: "mongodb-insert"
+    from:
+      uri: "timer:mongo?period=4000&repeatCount=4"
+      steps:
+        - setBody:
+            simple: '{"_id":"${random(1000,9999)}","customer":"ACME Corp","amount":${random(100,5000)},"ts":"${date:now:yyyy-MM-dd}"}'
+        - log: "[Chapter 3][MONGO] Inserting document: ${body}"
+        - to: "stub:mongodb:cameldb?operation=insert"
+        - log: "[Chapter 3][MONGO] Insert complete, result: ${body}"
+        - to: "mock:mongo-inserted"

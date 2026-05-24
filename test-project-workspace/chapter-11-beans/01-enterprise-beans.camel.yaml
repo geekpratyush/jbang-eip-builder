@@ -1,0 +1,21 @@
+# ID: enterprise-beans
+# DESCRIPTION: Enterprise architecture using YAML bean definitions.
+#   This will render a stunning Class Diagram visually!
+
+- beans:
+    - name: "orderService"
+      type: "com.enterprise.services.OrderService"
+      properties:
+        auditService: "#auditService"
+        maxRetries: 5
+        env: "PRODUCTION"
+    - name: "auditService"
+      type: "com.enterprise.services.AuditService"
+      properties:
+        dbSource: "#dataSource"
+    - name: "dataSource"
+      type: "org.apache.commons.dbcp2.BasicDataSource"
+      properties:
+        url: "jdbc:postgresql://db.corp:5432/orders"
+        username: "camel"
+        password: "secret"

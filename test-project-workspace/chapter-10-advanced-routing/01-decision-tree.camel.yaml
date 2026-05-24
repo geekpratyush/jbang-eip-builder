@@ -1,0 +1,25 @@
+# ID: nested-choice
+# DESCRIPTION: Complex decision tree using nested Choice EIPs
+
+- route:
+    id: "decision-tree"
+    from:
+      uri: "timer:decision?period=5000"
+      steps:
+        - setBody:
+            simple: "${random(1,100)}"
+        - choice:
+            when:
+              - simple: "${body} > 50"
+                steps:
+                  - choice:
+                      when:
+                        - simple: "${body} > 80"
+                          steps:
+                            - log: "CRITICAL: High value detected"
+                      otherwise:
+                        steps:
+                          - log: "WARNING: Medium-high value"
+            otherwise:
+              steps:
+                - log: "INFO: Low value"

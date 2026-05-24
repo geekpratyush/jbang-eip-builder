@@ -1,0 +1,19 @@
+# ID: set-body-header
+# ENABLED: true
+# DESCRIPTION: Demonstrates setBody and setHeader EIPs
+# AUTHOR: Camel Studio
+# STUB: none
+
+- route:
+    id: "set-body-header"
+    from:
+      uri: "timer:trigger?period=5000&repeatCount=3"
+      steps:
+        - setHeader:
+            name: "MessageType"
+            constant: "ORDER"
+        - setBody:
+            constant: '{"orderId":"ORD-001","amount":199.99,"currency":"USD"}'
+        - log:
+            message: "[Chapter 1] Header: ${header.MessageType} | Body: ${body}"
+        - to: "mock:output"

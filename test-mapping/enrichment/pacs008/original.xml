@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.14">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>MSG-pacs008-ORIG</MsgId>
+      <CreDtTm>2026-05-21T04:41:02.958</CreDtTm>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <Dbtr><Nm>Full Debtor Name PLC</Nm><PstlAdr><AdrLine>123 Business Street</AdrLine></PstlAdr></Dbtr>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

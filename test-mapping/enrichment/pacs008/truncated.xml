@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.14">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>MSG-TRUNC</MsgId>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <Dbtr><Nm>Debtor</Nm></Dbtr>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

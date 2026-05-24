@@ -1,0 +1,22 @@
+# ID: platform-http-hello
+# ENABLED: true
+# DESCRIPTION: Simplest live HTTP endpoint using platform-http component.
+#   Starts a real server on port 8080. Run this file then call:
+#     curl http://localhost:8080/hello
+#     curl "http://localhost:8080/hello?name=Pratyush"
+# AUTHOR: Camel Studio
+# STUB: none — live HTTP server
+
+- route:
+    id: "http-hello"
+    from:
+      uri: "platform-http:/hello"
+      parameters:
+        httpMethodRestrict: "GET"
+      steps:
+        - setBody:
+            simple: "Hello, ${header.name}! Welcome to Camel REST on Quarkus."
+        - log: "[Chapter 8][HELLO] Served: ${body}"
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/plain"
