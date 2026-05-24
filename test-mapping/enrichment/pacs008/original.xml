@@ -1,12 +1,860 @@
 <?xml version='1.0' encoding='utf-8'?>
-<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.14">
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.14"
+  xmlns:ns1="http://www.example.com/custom">
   <FIToFICstmrCdtTrf>
     <GrpHdr>
-      <MsgId>MSG-pacs008-ORIG</MsgId>
+      <MsgId>MSG-pacs008-20260521-001</MsgId>
       <CreDtTm>2026-05-21T04:41:02.958</CreDtTm>
+      <XpryDtTm>2026-05-22T12:00:00.000</XpryDtTm>
+      <BtchBookg>true</BtchBookg>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>150000.00</CtrlSum>
+      <TtlIntrBkSttlmAmt Ccy="EUR">150000.00</TtlIntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-05-21</IntrBkSttlmDt>
+      <SttlmInf>
+        <SttlmMtd>COVE</SttlmMtd>
+        <SttlmAcct>
+          <Id>
+            <Othr />
+            <Othr>
+              <Id>SETTLE-ACCT-001</Id>
+            </Othr>
+          </Id>
+        </SttlmAcct>
+        <ClrSys>
+          <Cd>EBA</Cd>
+        </ClrSys>
+        <InstgRmbrsmntAgt>
+          <FinInstnId>
+            <BICFI>BANKGB2L</BICFI>
+            <LEI>529900T8BM49AURSDO55</LEI>
+            <Nm>Instigating Reimbursement Agent Bank</Nm>
+          </FinInstnId>
+        </InstgRmbrsmntAgt>
+        <InstgRmbrsmntAgtAcct>
+          <Id>
+            <IBAN>GB82WEST12345698765432</IBAN>
+          </Id>
+        </InstgRmbrsmntAgtAcct>
+        <InstdRmbrsmntAgt>
+          <FinInstnId>
+            <BICFI>BANKFRPP</BICFI>
+            <LEI>R0MUWSFPU8MPRO8K5P83</LEI>
+            <Nm>Instructed Reimbursement Agent Bank</Nm>
+          </FinInstnId>
+        </InstdRmbrsmntAgt>
+        <InstdRmbrsmntAgtAcct>
+          <Id>
+            <IBAN>FR1420041010050500013M02606</IBAN>
+          </Id>
+        </InstdRmbrsmntAgtAcct>
+        <ThrdRmbrsmntAgt>
+          <FinInstnId>
+            <BICFI>BANKDEFF</BICFI>
+            <LEI>529900NNUPAGGFIGWXK97</LEI>
+            <Nm>Third Reimbursement Agent Bank</Nm>
+          </FinInstnId>
+        </ThrdRmbrsmntAgt>
+        <ThrdRmbrsmntAgtAcct>
+          <Id>
+            <IBAN>DE89370400440532013000</IBAN>
+          </Id>
+        </ThrdRmbrsmntAgtAcct>
+      </SttlmInf>
+      <PmtTpInf>
+        <InstrPrty>HIGH</InstrPrty>
+        <ClrChanl>RTGS</ClrChanl>
+        <SvcLvl>
+          <Cd>SEPA</Cd>
+        </SvcLvl>
+        <LclInstrm>
+          <Cd>INST</Cd>
+        </LclInstrm>
+        <CtgyPurp>
+          <Cd>CORT</Cd>
+        </CtgyPurp>
+      </PmtTpInf>
+      <InstgAgt>
+        <FinInstnId>
+          <BICFI>BANKGB2LXXX</BICFI>
+          <ClrSysMmbId />
+          <ClrSysMmbId>
+            <MmbId>123456</MmbId>
+          </ClrSysMmbId>
+          <LEI>529900T8BM49AURSDO55</LEI>
+          <Nm>Instructing Agent Bank Ltd</Nm>
+        </FinInstnId>
+      </InstgAgt>
+      <InstdAgt>
+        <FinInstnId>
+          <BICFI>BANKFRPPXXX</BICFI>
+          <LEI>R0MUWSFPU8MPRO8K5P83</LEI>
+          <Nm>Instructed Agent Bank SA</Nm>
+        </FinInstnId>
+      </InstdAgt>
     </GrpHdr>
     <CdtTrfTxInf>
-      <Dbtr><Nm>Full Debtor Name PLC</Nm><PstlAdr><AdrLine>123 Business Street</AdrLine></PstlAdr></Dbtr>
+      <PmtId>
+        <InstrId>INSTR-20260521-001</InstrId>
+        <EndToEndId>E2E-ABC-123456789</EndToEndId>
+        <TxId>TX-20260521-001</TxId>
+        <UETR>0c1979a2-9cbf-43d7-a53f-82dd73639a03</UETR>
+        <ClrSysRef>CLR-REF-001</ClrSysRef>
+      </PmtId>
+      <PmtTpInf>
+        <InstrPrty>HIGH</InstrPrty>
+        <ClrChanl>RTGS</ClrChanl>
+        <SvcLvl>
+          <Cd>SEPA</Cd>
+        </SvcLvl>
+        <LclInstrm>
+          <Cd>INST</Cd>
+        </LclInstrm>
+        <CtgyPurp>
+          <Cd>CORT</Cd>
+        </CtgyPurp>
+      </PmtTpInf>
+      <IntrBkSttlmAmt Ccy="EUR">150000.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-05-21</IntrBkSttlmDt>
+      <SttlmPrty>HIGH</SttlmPrty>
+      <SttlmTmIndctn>
+        <DbtDtTm>2026-05-21T08:00:00.000</DbtDtTm>
+        <CdtDtTm>2026-05-21T10:00:00.000</CdtDtTm>
+      </SttlmTmIndctn>
+      <SttlmTmReq>
+        <CLSTm>16:00:00</CLSTm>
+        <TillTm>15:00:00</TillTm>
+        <FrTm>09:00:00</FrTm>
+        <RjctTm>14:00:00</RjctTm>
+      </SttlmTmReq>
+      <AddtlDtTm>
+        <AccptncDtTm>2026-05-21T07:30:00.000</AccptncDtTm>
+        <PoolgAdjstmntDt>2026-05-21</PoolgAdjstmntDt>
+        <XpryDtTm>2026-05-22T12:00:00.000</XpryDtTm>
+      </AddtlDtTm>
+      <InstdAmt Ccy="EUR">150000.00</InstdAmt>
+      <XchgRate>1.0000000000</XchgRate>
+      <AgrdRate>
+        <UnitCcy>EUR</UnitCcy>
+        <QtdCcy>USD</QtdCcy>
+        <PreAgrdXchgRate>1.0850000000</PreAgrdXchgRate>
+        <QtnDtTm>2026-05-21T06:00:00.000</QtnDtTm>
+        <QtId>3a0a61c4-55f6-4c55-b8e1-24ed6ebb4717</QtId>
+        <FXAgt>
+          <FinInstnId>
+            <BICFI>BANKUS33</BICFI>
+            <LEI>7LTWFZYICNSX8D621K86</LEI>
+            <Nm>FX Agent Bank NY</Nm>
+          </FinInstnId>
+        </FXAgt>
+      </AgrdRate>
+      <ChrgBr>SHAR</ChrgBr>
+      <ChrgsInf>
+        <Amt Ccy="EUR">25.00</Amt>
+        <Agt>
+          <FinInstnId>
+            <BICFI>BANKGB2L</BICFI>
+            <Nm>Charging Agent</Nm>
+          </FinInstnId>
+        </Agt>
+        <Tp>
+          <Cd>COMM</Cd>
+        </Tp>
+      </ChrgsInf>
+      <MndtRltdInf>
+        <MndtId>MANDATE-001</MndtId>
+        <Tp>
+          <SvcLvl>
+            <Cd>SEPA</Cd>
+          </SvcLvl>
+          <LclInstrm>
+            <Cd>CORE</Cd>
+          </LclInstrm>
+          <CtgyPurp>
+            <Cd>TRAD</Cd>
+          </CtgyPurp>
+          <Clssfctn>
+            <Cd>FIXE</Cd>
+          </Clssfctn>
+        </Tp>
+        <DtOfSgntr>2026-01-15</DtOfSgntr>
+        <DtOfVrfctn>2026-01-20T10:00:00.000</DtOfVrfctn>
+        <ElctrncSgntr>U2lnZGF0YSBleGFtcGxl</ElctrncSgntr>
+        <FrstPmtDt>2026-02-01</FrstPmtDt>
+        <FnlPmtDt>2026-12-31</FnlPmtDt>
+        <Frqcy>
+          <Tp>MNTH</Tp>
+        </Frqcy>
+        <Rsn>
+          <Cd>SALA</Cd>
+        </Rsn>
+      </MndtRltdInf>
+      <PmtSgntr>
+        <Sgntr>A1B2C3D4E5F6789012345678901234567890ABCD</Sgntr>
+      </PmtSgntr>
+      <PrvsInstgAgt1>
+        <FinInstnId>
+          <BICFI>BANKDEFF</BICFI>
+          <LEI>529900NNUPAGGFIGWXK97</LEI>
+          <Nm>Previous Agent 1</Nm>
+        </FinInstnId>
+      </PrvsInstgAgt1>
+      <PrvsInstgAgt1Acct>
+        <Id>
+          <IBAN>DE89370400440532013000</IBAN>
+        </Id>
+        <Tp>
+          <Cd>CASH</Cd>
+        </Tp>
+        <Ccy>EUR</Ccy>
+        <Nm>Previous Agent 1 Account</Nm>
+      </PrvsInstgAgt1Acct>
+      <PrvsInstgAgt2>
+        <FinInstnId>
+          <BICFI>BANKITMM</BICFI>
+          <LEI>815600F58F3380F76679</LEI>
+          <Nm>Previous Agent 2</Nm>
+        </FinInstnId>
+      </PrvsInstgAgt2>
+      <PrvsInstgAgt2Acct>
+        <Id>
+          <IBAN>IT60X0542811101000000123456</IBAN>
+        </Id>
+      </PrvsInstgAgt2Acct>
+      <PrvsInstgAgt3>
+        <FinInstnId>
+          <BICFI>BANKESMM</BICFI>
+          <LEI>5299009Z7XFXLNJ0W866</LEI>
+          <Nm>Previous Agent 3</Nm>
+        </FinInstnId>
+      </PrvsInstgAgt3>
+      <PrvsInstgAgt3Acct>
+        <Id>
+          <IBAN>ES9121000418450200051332</IBAN>
+        </Id>
+      </PrvsInstgAgt3Acct>
+      <InstgAgt>
+        <FinInstnId>
+          <BICFI>BANKGB2L</BICFI>
+          <LEI>529900T8BM49AURSDO55</LEI>
+          <Nm>Instructing Agent</Nm>
+        </FinInstnId>
+      </InstgAgt>
+      <InstdAgt>
+        <FinInstnId>
+          <BICFI>BANKFRPP</BICFI>
+          <LEI>R0MUWSFPU8MPRO8K5P83</LEI>
+          <Nm>Instructed Agent</Nm>
+        </FinInstnId>
+      </InstdAgt>
+      <IntrmyAgt1>
+        <FinInstnId>
+          <BICFI>BANKNL2A</BICFI>
+          <LEI>7245005W9JLIGC3CEZ56</LEI>
+          <Nm>Intermediary Agent 1</Nm>
+        </FinInstnId>
+      </IntrmyAgt1>
+      <IntrmyAgt1Acct>
+        <Id>
+          <IBAN>NL91ABNA0417164300</IBAN>
+        </Id>
+      </IntrmyAgt1Acct>
+      <IntrmyAgt2>
+        <FinInstnId>
+          <BICFI>BANKBE15</BICFI>
+          <LEI>5493007LIP7SPZ99EI78</LEI>
+          <Nm>Intermediary Agent 2</Nm>
+        </FinInstnId>
+      </IntrmyAgt2>
+      <IntrmyAgt2Acct>
+        <Id>
+          <IBAN>BE71096123456769</IBAN>
+        </Id>
+      </IntrmyAgt2Acct>
+      <IntrmyAgt3>
+        <FinInstnId>
+          <BICFI>BANKCHZZ</BICFI>
+          <LEI>529900D6BF99TU9R4S48</LEI>
+          <Nm>Intermediary Agent 3</Nm>
+        </FinInstnId>
+      </IntrmyAgt3>
+      <IntrmyAgt3Acct>
+        <Id>
+          <IBAN>CH9300762011623852957</IBAN>
+        </Id>
+      </IntrmyAgt3Acct>
+      <UltmtDbtr>
+        <Nm>Ultimate Debtor Corporation</Nm>
+        <PstlAdr>
+          <StrtNm>1 Debtor Lane</StrtNm>
+          <TwnNm>London</TwnNm>
+          <PstCd>EC1A 1BB</PstCd>
+          <Ctry>GB</Ctry>
+          <AdrLine>123 Business Street</AdrLine>
+          <AdrLine>Floor 4, Suite 401</AdrLine>
+        </PstlAdr>
+        <Id>
+          <OrgId>
+            <AnyBIC>ULTDGB2L</AnyBIC>
+            <LEI>529900T8BM49AURSDO55</LEI>
+            <Othr>
+              <Id>ORG-123456</Id>
+              <SchmeNm>
+                <Cd>TXID</Cd>
+              </SchmeNm>
+              <Issr>Tax Authority</Issr>
+            </Othr>
+          </OrgId>
+        </Id>
+        <CtryOfRes>GB</CtryOfRes>
+        <CtctDtls>
+          <NmPrfx>MADM</NmPrfx>
+          <Nm>Contact Person</Nm>
+          <PhneNb>+44-20-79460000</PhneNb>
+          <MobNb>+44-7700-900001</MobNb>
+          <FaxNb>+44-20-79460001</FaxNb>
+          <URLAdr>https://www.example.com</URLAdr>
+          <EmailAdr>treasury@ultimatedebtor.com</EmailAdr>
+          <EmailPurp>BUSINESS</EmailPurp>
+          <JobTitl>Finance Manager</JobTitl>
+          <Rspnsblty>Payments</Rspnsblty>
+          <Dept>Treasury</Dept>
+          <Othr>
+            <ChanlTp>TELE</ChanlTp>
+            <Id>@finance_treasury</Id>
+          </Othr>
+          <PrefrdMtd>EMAIL</PrefrdMtd>
+        </CtctDtls>
+      </UltmtDbtr>
+      <InitgPty>
+        <Nm>Initiating Party Ltd</Nm>
+        <PstlAdr>
+          <StrtNm>10 Initiator Street</StrtNm>
+          <TwnNm>Manchester</TwnNm>
+          <PstCd>M1 1AA</PstCd>
+          <Ctry>GB</Ctry>
+          <AdrLine>123 Business Street</AdrLine>
+          <AdrLine>Floor 4, Suite 401</AdrLine>
+        </PstlAdr>
+        <Id>
+          <OrgId>
+            <AnyBIC>INITGB2L</AnyBIC>
+            <LEI>529900T8BM49AURSDO55</LEI>
+            <Othr>
+              <Id>ORG-123456</Id>
+              <SchmeNm>
+                <Cd>TXID</Cd>
+              </SchmeNm>
+              <Issr>Tax Authority</Issr>
+            </Othr>
+          </OrgId>
+        </Id>
+        <CtryOfRes>GB</CtryOfRes>
+        <CtctDtls>
+          <NmPrfx>MADM</NmPrfx>
+          <Nm>Contact Person</Nm>
+          <PhneNb>+44-161-2345678</PhneNb>
+          <MobNb>+44-7700-900001</MobNb>
+          <FaxNb>+44-20-79460001</FaxNb>
+          <URLAdr>https://www.example.com</URLAdr>
+          <EmailAdr>payments@initiatingparty.com</EmailAdr>
+          <EmailPurp>BUSINESS</EmailPurp>
+          <JobTitl>Finance Manager</JobTitl>
+          <Rspnsblty>Payments</Rspnsblty>
+          <Dept>Treasury</Dept>
+          <Othr>
+            <ChanlTp>TELE</ChanlTp>
+            <Id>@finance_treasury</Id>
+          </Othr>
+          <PrefrdMtd>EMAIL</PrefrdMtd>
+        </CtctDtls>
+      </InitgPty>
+      <Dbtr>
+        <Nm>Debtor Company PLC</Nm>
+        <PstlAdr>
+          <StrtNm>25 Debtor Avenue</StrtNm>
+          <TwnNm>Birmingham</TwnNm>
+          <PstCd>B1 1BB</PstCd>
+          <Ctry>GB</Ctry>
+          <AdrLine>123 Business Street</AdrLine>
+          <AdrLine>Floor 4, Suite 401</AdrLine>
+        </PstlAdr>
+        <Id>
+          <OrgId>
+            <AnyBIC>DBTRGB2L</AnyBIC>
+            <LEI>529900T8BM49AURSDO55</LEI>
+            <Othr>
+              <Id>ORG-123456</Id>
+              <SchmeNm>
+                <Cd>TXID</Cd>
+              </SchmeNm>
+              <Issr>Tax Authority</Issr>
+            </Othr>
+          </OrgId>
+        </Id>
+        <CtryOfRes>GB</CtryOfRes>
+        <CtctDtls>
+          <NmPrfx>MADM</NmPrfx>
+          <Nm>Contact Person</Nm>
+          <PhneNb>+44-121-3456789</PhneNb>
+          <MobNb>+44-7700-900001</MobNb>
+          <FaxNb>+44-20-79460001</FaxNb>
+          <URLAdr>https://www.example.com</URLAdr>
+          <EmailAdr>finance@debtorcompany.com</EmailAdr>
+          <EmailPurp>BUSINESS</EmailPurp>
+          <JobTitl>Finance Manager</JobTitl>
+          <Rspnsblty>Payments</Rspnsblty>
+          <Dept>Treasury</Dept>
+          <Othr>
+            <ChanlTp>TELE</ChanlTp>
+            <Id>@finance_treasury</Id>
+          </Othr>
+          <PrefrdMtd>EMAIL</PrefrdMtd>
+        </CtctDtls>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>GB82WEST12345698765432</IBAN>
+        </Id>
+        <Tp>
+          <Cd>CASH</Cd>
+        </Tp>
+        <Ccy>GBP</Ccy>
+        <Nm>Debtor Main Account</Nm>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>BANKGB2L</BICFI>
+          <ClrSysMmbId />
+          <ClrSysMmbId>
+            <ClrSysId>
+              <Cd>GBDSC</Cd>
+            </ClrSysId>
+          </ClrSysMmbId>
+          <ClrSysMmbId>
+            <MmbId>123456</MmbId>
+          </ClrSysMmbId>
+          <LEI>529900T8BM49AURSDO55</LEI>
+          <Nm>Debtor Agent Bank</Nm>
+        </FinInstnId>
+      </DbtrAgt>
+      <DbtrAgtAcct>
+        <Id>
+          <IBAN>GB29NWBK60161331926819</IBAN>
+        </Id>
+      </DbtrAgtAcct>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>BANKFRPP</BICFI>
+          <ClrSysMmbId />
+          <ClrSysMmbId>
+            <ClrSysId>
+              <Cd>FRSTG</Cd>
+            </ClrSysId>
+          </ClrSysMmbId>
+          <ClrSysMmbId>
+            <MmbId>987654</MmbId>
+          </ClrSysMmbId>
+          <LEI>R0MUWSFPU8MPRO8K5P83</LEI>
+          <Nm>Creditor Agent Bank</Nm>
+        </FinInstnId>
+      </CdtrAgt>
+      <CdtrAgtAcct>
+        <Id>
+          <IBAN>FR1420041010050500013M02606</IBAN>
+        </Id>
+      </CdtrAgtAcct>
+      <Cdtr>
+        <Nm>Creditor Enterprise SA</Nm>
+        <PstlAdr>
+          <StrtNm>50 Creditor Boulevard</StrtNm>
+          <TwnNm>Paris</TwnNm>
+          <PstCd>75001</PstCd>
+          <Ctry>FR</Ctry>
+          <AdrLine>123 Business Street</AdrLine>
+          <AdrLine>Floor 4, Suite 401</AdrLine>
+        </PstlAdr>
+        <Id>
+          <OrgId>
+            <AnyBIC>CDTRFRPP</AnyBIC>
+            <LEI>529900T8BM49AURSDO55</LEI>
+            <Othr>
+              <Id>ORG-123456</Id>
+              <SchmeNm>
+                <Cd>TXID</Cd>
+              </SchmeNm>
+              <Issr>Tax Authority</Issr>
+            </Othr>
+          </OrgId>
+        </Id>
+        <CtryOfRes>FR</CtryOfRes>
+        <CtctDtls>
+          <NmPrfx>MADM</NmPrfx>
+          <Nm>Contact Person</Nm>
+          <PhneNb>+33-1-23456789</PhneNb>
+          <MobNb>+44-7700-900001</MobNb>
+          <FaxNb>+44-20-79460001</FaxNb>
+          <URLAdr>https://www.example.com</URLAdr>
+          <EmailAdr>accounting@creditorenterprise.fr</EmailAdr>
+          <EmailPurp>BUSINESS</EmailPurp>
+          <JobTitl>Finance Manager</JobTitl>
+          <Rspnsblty>Payments</Rspnsblty>
+          <Dept>Treasury</Dept>
+          <Othr>
+            <ChanlTp>TELE</ChanlTp>
+            <Id>@finance_treasury</Id>
+          </Othr>
+          <PrefrdMtd>EMAIL</PrefrdMtd>
+        </CtctDtls>
+      </Cdtr>
+      <CdtrAcct>
+        <Id>
+          <IBAN>FR1420041010050500013M02606</IBAN>
+        </Id>
+        <Tp>
+          <Cd>CASH</Cd>
+        </Tp>
+        <Ccy>EUR</Ccy>
+        <Nm>Creditor Operating Account</Nm>
+      </CdtrAcct>
+      <UltmtCdtr>
+        <Nm>Ultimate Creditor Holdings</Nm>
+        <PstlAdr>
+          <StrtNm>100 Ultimate Way</StrtNm>
+          <TwnNm>Lyon</TwnNm>
+          <PstCd>69001</PstCd>
+          <Ctry>FR</Ctry>
+          <AdrLine>123 Business Street</AdrLine>
+          <AdrLine>Floor 4, Suite 401</AdrLine>
+        </PstlAdr>
+        <Id>
+          <OrgId>
+            <AnyBIC>ULTCFRPP</AnyBIC>
+            <LEI>529900T8BM49AURSDO55</LEI>
+            <Othr>
+              <Id>ORG-123456</Id>
+              <SchmeNm>
+                <Cd>TXID</Cd>
+              </SchmeNm>
+              <Issr>Tax Authority</Issr>
+            </Othr>
+          </OrgId>
+        </Id>
+        <CtryOfRes>FR</CtryOfRes>
+        <CtctDtls>
+          <NmPrfx>MADM</NmPrfx>
+          <Nm>Contact Person</Nm>
+          <PhneNb>+33-4-56789012</PhneNb>
+          <MobNb>+44-7700-900001</MobNb>
+          <FaxNb>+44-20-79460001</FaxNb>
+          <URLAdr>https://www.example.com</URLAdr>
+          <EmailAdr>group.treasury@ultimatecreditor.com</EmailAdr>
+          <EmailPurp>BUSINESS</EmailPurp>
+          <JobTitl>Finance Manager</JobTitl>
+          <Rspnsblty>Payments</Rspnsblty>
+          <Dept>Treasury</Dept>
+          <Othr>
+            <ChanlTp>TELE</ChanlTp>
+            <Id>@finance_treasury</Id>
+          </Othr>
+          <PrefrdMtd>EMAIL</PrefrdMtd>
+        </CtctDtls>
+      </UltmtCdtr>
+      <InstrForCdtrAgt>
+        <Cd>HOLD</Cd>
+        <InstrInf>Please hold funds until further notice from beneficiary</InstrInf>
+      </InstrForCdtrAgt>
+      <InstrForCdtrAgt>
+        <Cd>PHOB</Cd>
+        <InstrInf>Contact beneficiary by phone before crediting account</InstrInf>
+      </InstrForCdtrAgt>
+      <InstrForNxtAgt>
+        <Cd>PHOA</Cd>
+        <InstrInf>Phone originating agent if any issues with settlement</InstrInf>
+      </InstrForNxtAgt>
+      <InstrForNxtAgt>
+        <Cd>TELA</Cd>
+        <InstrInf>Telephone advice required upon receipt</InstrInf>
+      </InstrForNxtAgt>
+      <Purp>
+        <Cd>TRAD</Cd>
+      </Purp>
+      <RgltryRptg>
+        <DbtCdtRptgInd>BOTH</DbtCdtRptgInd>
+        <Authrty>
+          <Nm>Financial Conduct Authority</Nm>
+          <Ctry>GB</Ctry>
+        </Authrty>
+        <Dtls>
+          <Tp />
+          <Tp>
+            <Cd>BOPC</Cd>
+          </Tp>
+          <Dt>2026-05-21</Dt>
+          <Ctry>GB</Ctry>
+          <RptgCd>EXP</RptgCd>
+          <Amt Ccy="EUR">150000.00</Amt>
+          <Inf>Cross-border payment for goods export</Inf>
+          <Inf>Invoice reference: INV-2026-001</Inf>
+        </Dtls>
+        <Dtls>
+          <Tp />
+          <Tp>
+            <Prtry>CUSTOM-REPORT</Prtry>
+          </Tp>
+          <Dt>2026-05-21</Dt>
+          <Ctry>FR</Ctry>
+          <RptgCd>IMP</RptgCd>
+          <Amt Ccy="EUR">150000.00</Amt>
+          <Inf>Import declaration filed</Inf>
+        </Dtls>
+      </RgltryRptg>
+      <Tax>
+        <Cdtr>
+          <TaxId>FR12345678901</TaxId>
+          <RegnId>REG-987654</RegnId>
+          <TaxTp>VAT</TaxTp>
+        </Cdtr>
+        <Dbtr>
+          <TaxId>GB98765432109</TaxId>
+          <RegnId>REG-123456</RegnId>
+          <TaxTp>VAT</TaxTp>
+          <Authstn>
+            <Titl>Tax Representative</Titl>
+            <Nm>John Smith</Nm>
+          </Authstn>
+        </Dbtr>
+        <UltmtDbtr>
+          <TaxId>GB11111111111</TaxId>
+          <TaxTp>CORP</TaxTp>
+        </UltmtDbtr>
+        <AdmstnZone>EU</AdmstnZone>
+        <RefNb>TAX-REF-2026-001</RefNb>
+        <Mtd>Standard VAT</Mtd>
+        <TtlTaxblBaseAmt Ccy="EUR">125000.00</TtlTaxblBaseAmt>
+        <TtlTaxAmt Ccy="EUR">25000.00</TtlTaxAmt>
+        <Dt>2026-05-21</Dt>
+        <SeqNb>1</SeqNb>
+        <Rcrd>
+          <Tp>VAT</Tp>
+          <Ctgy>GOODS</Ctgy>
+          <CtgyDtls>Standard rated goods</CtgyDtls>
+          <DbtrSts>REGISTERED</DbtrSts>
+          <CertId>CERT-VAT-001</CertId>
+          <FrmsCd>FRM-001</FrmsCd>
+          <Prd>
+            <Yr>2026</Yr>
+            <Tp>MM05</Tp>
+          </Prd>
+          <TaxAmt>
+            <Rate>20.0000000000</Rate>
+            <TaxblBaseAmt Ccy="EUR">125000.00</TaxblBaseAmt>
+            <TtlAmt Ccy="EUR">25000.00</TtlAmt>
+            <Dtls>
+              <Prd>
+                <Yr>2026</Yr>
+                <Tp>MM05</Tp>
+              </Prd>
+              <Amt Ccy="EUR">25000.00</Amt>
+            </Dtls>
+          </TaxAmt>
+          <AddtlInf>Standard VAT rate applied to goods</AddtlInf>
+        </Rcrd>
+      </Tax>
+      <RltdRmtInf>
+        <RmtId>RMT-001</RmtId>
+        <RmtLctnDtls>
+          <Mtd>URID</Mtd>
+          <ElctrncAdr>https://portal.example.com/remittance/RMT-001</ElctrncAdr>
+        </RmtLctnDtls>
+        <RmtLctnDtls>
+          <Mtd>EMAL</Mtd>
+          <PstlAdr>
+            <Nm>Remittance Department</Nm>
+            <Adr>
+              <StrtNm>1 Finance Road</StrtNm>
+              <TwnNm>London</TwnNm>
+              <PstCd>EC2N 1AR</PstCd>
+              <Ctry>GB</Ctry>
+              <AdrLine>Remittance Processing Center</AdrLine>
+              <AdrLine>Attention: Accounts Receivable</AdrLine>
+            </Adr>
+          </PstlAdr>
+        </RmtLctnDtls>
+      </RltdRmtInf>
+      <RmtInf>
+        <Ustrd>Payment for goods and services - Invoice batch Q2 2026</Ustrd>
+        <Ustrd>Contract reference: CONT-2026-789</Ustrd>
+        <Ustrd>Delivery reference: DEL-2026-456</Ustrd>
+        <Strd>
+          <RfrdDocInf>
+            <Tp>
+              <CdOrPrtry>
+                <Cd>CINV</Cd>
+              </CdOrPrtry>
+              <Issr>Standard Industrial Classification</Issr>
+            </Tp>
+            <Nb>INV-2026-001</Nb>
+            <RltdDt>
+              <Tp>
+                <Cd>ISSU</Cd>
+              </Tp>
+              <Dt>2026-04-15</Dt>
+            </RltdDt>
+            <LineDtls>
+              <Id>
+                <Tp>
+                  <CdOrPrtry>
+                    <Cd>COMM</Cd>
+                  </CdOrPrtry>
+                  <Issr>Product Catalog</Issr>
+                </Tp>
+                <Nb>LINE-001</Nb>
+                <RltdDt>2026-04-10</RltdDt>
+              </Id>
+              <Id>
+                <Nb>LINE-002</Nb>
+                <RltdDt>2026-04-11</RltdDt>
+              </Id>
+              <Desc>Electronic components - Batch A</Desc>
+              <Amt>
+                <RmtAmtAndTp>
+                  <Tp>
+                    <Cd>GDSV</Cd>
+                  </Tp>
+                  <Amt Ccy="EUR">75000.00</Amt>
+                </RmtAmtAndTp>
+                <AdjstmntAmtAndRsn>
+                  <Amt Ccy="EUR">-500.00</Amt>
+                  <CdtDbtInd>DBIT</CdtDbtInd>
+                  <Rsn>DISC</Rsn>
+                  <AddtlInf>Early payment discount applied</AddtlInf>
+                </AdjstmntAmtAndRsn>
+              </Amt>
+            </LineDtls>
+          </RfrdDocInf>
+          <RfrdDocAmt>
+            <RmtAmtAndTp>
+              <Tp>
+                <Cd>TOTL</Cd>
+              </Tp>
+              <Amt Ccy="EUR">150000.00</Amt>
+            </RmtAmtAndTp>
+            <AdjstmntAmtAndRsn>
+              <Amt Ccy="EUR">-1000.00</Amt>
+              <CdtDbtInd>DBIT</CdtDbtInd>
+              <Rsn>REBA</Rsn>
+              <AddtlInf>Volume rebate for Q2</AddtlInf>
+            </AdjstmntAmtAndRsn>
+          </RfrdDocAmt>
+          <CdtrRefInf>
+            <Tp>
+              <CdOrPrtry>
+                <Cd>DISP</Cd>
+              </CdOrPrtry>
+              <Issr>Creditor Reference System</Issr>
+            </Tp>
+            <Ref>CREF-2026-001-ABC</Ref>
+          </CdtrRefInf>
+          <Invcr>
+            <Nm>Invoicing Company Ltd</Nm>
+            <Id>
+              <OrgId>
+                <AnyBIC>INVRGB2L</AnyBIC>
+                <LEI>529900ABCDEF12345678</LEI>
+                <Othr>
+                  <Id>TAX-GB123456789</Id>
+                  <SchmeNm>
+                    <Cd>TXID</Cd>
+                  </SchmeNm>
+                  <Issr>HMRC</Issr>
+                </Othr>
+              </OrgId>
+            </Id>
+            <CtryOfRes>GB</CtryOfRes>
+          </Invcr>
+          <Invcee>
+            <Nm>Invoicee Enterprise SA</Nm>
+            <Id>
+              <OrgId>
+                <AnyBIC>INVCFRPP</AnyBIC>
+                <LEI>R0MUWSFPU8MPRO8K5P83</LEI>
+                <Othr>
+                  <Id>TAX-FR987654321</Id>
+                  <SchmeNm>
+                    <Cd>TXID</Cd>
+                  </SchmeNm>
+                  <Issr>French Tax Authority</Issr>
+                </Othr>
+              </OrgId>
+            </Id>
+            <CtryOfRes>FR</CtryOfRes>
+          </Invcee>
+          <TaxRmt>
+            <Cdtr>
+              <TaxId>FR12345678901</TaxId>
+              <TaxTp>VAT</TaxTp>
+            </Cdtr>
+            <AdmstnZone>EU</AdmstnZone>
+            <RefNb>TAX-RMT-001</RefNb>
+            <Mtd>Standard</Mtd>
+            <TtlTaxAmt Ccy="EUR">25000.00</TtlTaxAmt>
+            <Dt>2026-05-21</Dt>
+          </TaxRmt>
+          <GrnshmtRmt>
+            <Tp>
+              <CdOrPrtry>
+                <Cd>GARN</Cd>
+              </CdOrPrtry>
+              <Issr>Court Order System</Issr>
+            </Tp>
+            <Grnshee>
+              <Nm>Garnishee Party</Nm>
+              <Id>
+                <PrvtId>
+                  <Othr>
+                    <Id>GARN-001</Id>
+                  </Othr>
+                </PrvtId>
+              </Id>
+            </Grnshee>
+            <GrnshmtAdmstr>
+              <Nm>Garnishment Administrator</Nm>
+            </GrnshmtAdmstr>
+            <RefNb>COURT-2026-001</RefNb>
+            <Dt>2026-05-01</Dt>
+            <RmtdAmt Ccy="EUR">5000.00</RmtdAmt>
+            <FmlyMdclInsrncInd>false</FmlyMdclInsrncInd>
+            <MplyeeTermntnInd>false</MplyeeTermntnInd>
+          </GrnshmtRmt>
+          <SctiesData>
+            <UnqTxIdr>ABCD1234567890EFGH12</UnqTxIdr>
+            <Amt Ccy="EUR">150000.00</Amt>
+          </SctiesData>
+          <AddtlRmtInf>Please process within 2 business days</AddtlRmtInf>
+          <AddtlRmtInf>Contact treasury@example.com for queries</AddtlRmtInf>
+          <AddtlRmtInf>Reference: PO-2026-12345</AddtlRmtInf>
+        </Strd>
+      </RmtInf>
+      <SplmtryData>
+        <PlcAndNm>AdditionalInformation/CustomField1</PlcAndNm>
+        <Envlp>
+          <ns1:CustomData1 xmlns:custom="http://www.example.com/custom">Custom value 1</ns1:CustomData1>
+        </Envlp>
+      </SplmtryData>
+      <SplmtryData>
+        <PlcAndNm>AdditionalInformation/CustomField2</PlcAndNm>
+        <Envlp>
+          <ns1:CustomData2 xmlns:custom="http://www.example.com/custom">Custom value 2</ns1:CustomData2>
+        </Envlp>
+      </SplmtryData>
     </CdtTrfTxInf>
+    <SplmtryData>
+      <PlcAndNm>DocumentLevel/CustomInfo</PlcAndNm>
+      <Envlp>
+        <ns1:DocumentCustom xmlns:custom="http://www.example.com/custom">Document-level
+          supplementary data</ns1:DocumentCustom>
+      </Envlp>
+    </SplmtryData>
   </FIToFICstmrCdtTrf>
 </Document>

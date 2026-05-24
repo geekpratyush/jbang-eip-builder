@@ -1,0 +1,10 @@
+{
+  "type": "smooks",
+  "name": "Smooks EDI DFDL Purchase Order Mapping",
+  "source": { "type": "text", "file": "source.edi" },
+  "logic": [
+    { "type": "xml", "file": "smooks-config.xml" },
+    { "type": "xml", "file": "mapping.dfdl.xsd" }
+  ],
+  "target": { "type": "xml" }
+}

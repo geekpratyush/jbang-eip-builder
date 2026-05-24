@@ -1,0 +1,7 @@
+{
+  "type": "groovy",
+  "name": "Groovy XML to JSON Medical Registry",
+  "source": { "type": "xml", "file": "source.xml" },
+  "logic": { "type": "java", "file": "transform.groovy" },
+  "target": { "type": "json" }
+}
