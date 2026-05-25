@@ -1,16 +1,22 @@
 {
-  "type": "enrichment",
-  "name": "ISO pacs.008 Comprehensive Enrichment",
   "sources": [
-    { "id": "original", "file": "original.xml" },
-    { "id": "truncated", "file": "truncated.xml" }
+    {
+      "file": "original.xml",
+      "id": "original"
+    },
+    {
+      "file": "truncated.xml",
+      "id": "truncated"
+    }
   ],
+  "name": "ISO pacs.008 Comprehensive Enrichment",
   "logic": {
-    "type": "xslt",
-    "file": "enrich.xslt"
+    "file": "enrich.xslt",
+    "type": "xslt"
   },
+  "type": "enrichment",
   "target": {
-    "type": "xml",
-    "xsd": "pacs.008.001.14.xsd"
+    "xsd": "pacs.008.001.14.xsd",
+    "type": "xml"
   }
 }

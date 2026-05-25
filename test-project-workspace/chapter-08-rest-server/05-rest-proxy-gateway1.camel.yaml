@@ -1,0 +1,40 @@
+# ID: rest-proxy-gateway
+# ENABLED: true
+# DESCRIPTION: API Gateway pattern — receives HTTP requests and proxies them to a
+#   downstream service (stubbed here). Adds correlation ID, auth header, logging.
+#
+#   curl http://localhost:8080/gateway/products
+#   curl http://localhost:8080/gateway/products/42
+# STUB: stub:http:downstream-service (replaces real downstream)
+# AUTHOR: Camel Studio
+
+- route:
+    id: "api-gateway"
+    from:
+      uri: "platform-http:/gateway/{resource}"
+      steps:
+        - setHeader:
+            name: "X-Correlation-ID"
+            simple: "COR-${random(100000,999999)}"
+        - setHeader:
+            name: "X-Gateway-Timestamp"
+            simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
+        - log: "[Chapter 8][GW] Routing ${header.CamelHttpMethod} /${header.resource} — CorID: ${header.X-Correlation-ID}"
+        - circuitBreaker:
+            steps:
+              - setHeader:
+                  name: "Authorization"
+                  constant: "Bearer internal-service-token"
+              - to: "stub:http:downstream-service/api/${header.resource}"
+              - log: "[Chapter 8][GW] Downstream responded: ${body}"
+            onFallback:
+              steps:
+                - log: "[Chapter 8][GW] Downstream unreachable — returning 503"
+                - setHeader:
+                    name: "CamelHttpResponseCode"
+                    constant: "503"
+                - setBody:
+                    constant: '{"error":"Service Unavailable","retryAfter":30}'
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"

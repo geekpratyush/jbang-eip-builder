@@ -1,0 +1,47 @@
+# ID: dead-letter-channel
+# ENABLED: true
+# DESCRIPTION: Dead Letter Channel pattern — capture poison messages after max retries
+# AUTHOR: Camel Studio
+# STUB: stub:jms:queue:DLQ, stub:jms:queue:MAIN.QUEUE
+
+- onException:
+    exception:
+      - "java.lang.Exception"
+    redeliveryPolicy:
+      maximumRedeliveries: 3
+      redeliveryDelay: 500
+    handled:
+      constant: true
+    steps:
+      - log:
+          loggingLevel: ERROR
+          message: "[Chapter 7][DLC] Dead-lettering message after retries. Cause: ${exception.message}"
+      - setHeader:
+          name: "X-DLQ-Reason"
+          simple: "${exception.message}"
+      - setHeader:
+          name: "X-DLQ-Timestamp"
+          simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
+      - to: "stub:jms:queue:DLQ"
+
+- route:
+    id: "main-processor"
+    from:
+      uri: "stub:jms:queue:MAIN.QUEUE"
+      steps:
+        - log: "[Chapter 7][DLC] Processing message: ${body}"
+        - filter:
+            simple: "${body} contains 'POISON'"
+            steps:
+              - throwException:
+                  exceptionType: "java.lang.RuntimeException"
+                  message: "Poison message detected"
+        - to: "mock:processed"
+
+- route:
+    id: "dlq-monitor"
+    from:
+      uri: "stub:jms:queue:DLQ"
+      steps:
+        - log: "[Chapter 7][DLC][DLQ] Received dead-letter: ${body} | Reason: ${header.X-DLQ-Reason}"
+        - to: "mock:dlq-received"

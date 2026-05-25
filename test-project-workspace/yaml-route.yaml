@@ -1,0 +1,24 @@
+#DEPS org.apache.camel:camel-freemarker:4.20.0
+
+- route:
+    id: transform-test-route
+    from:
+      uri: "timer:trigger?repeatCount=1&delay=0"
+      steps:
+        - setBody:
+            constant: |
+              {
+                "orderId": "ORD-12345",
+                "customer": {
+                  "name": "John Doe",
+                  "email": "john.doe@example.com"
+                },
+                "items": [
+                  { "name": "Laptop", "price": 999.99 },
+                  { "name": "Mouse", "price": 49.99 }
+                ]
+              }
+              
+        - to:
+            uri: "freemarker:file:/home/pratyush/software/jbang-eip-builder/test-mapping/freemarker-ftl/example1/template.ftl"
+        - log: "Parsed Output: ${body}"

@@ -1,0 +1,29 @@
+# ID: enrich-pattern
+# ENABLED: true
+# DESCRIPTION: Content Enricher pattern — fetch extra data and merge into original message
+# AUTHOR: Camel Studio
+# STUB: stub:direct:fetch-customer (replaces real DB/API call)
+
+- route:
+    id: "order-enricher"
+    from:
+      uri: "timer:enrich?period=4000&repeatCount=4"
+      steps:
+        - setBody:
+            constant: '{"orderId":"ORD-123","customerId":"CUST-42"}'
+        - log: "[Chapter 5][ENRICH] Original order: ${body}"
+        - enrich:
+            expression:
+              constant: "stub:direct:fetch-customer"
+            aggregationStrategy: "#class:org.apache.camel.processor.aggregate.GroupedBodyAggregationStrategy"
+        - log: "[Chapter 5][ENRICH] Enriched result: ${body}"
+        - to: "mock:enriched"
+
+- route:
+    id: "customer-service-stub"
+    from:
+      uri: "stub:direct:fetch-customer"
+      steps:
+        - log: "[Chapter 5][ENRICH] Fetching customer for order: ${body}"
+        - setBody:
+            constant: '{"customerId":"CUST-42","name":"ACME Corp","tier":"GOLD","creditLimit":50000}'

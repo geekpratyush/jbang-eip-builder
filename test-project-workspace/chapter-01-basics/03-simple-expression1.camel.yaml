@@ -1,0 +1,19 @@
+# ID: simple-expression
+# ENABLED: true
+# DESCRIPTION: Uses Simple language to conditionally transform the message body
+# AUTHOR: Camel Studio
+# STUB: none
+
+- route:
+    id: "simple-expression"
+    from:
+      uri: "timer:tick?period=4000"
+      steps:
+        - setHeader:
+            name: "counter"
+            groovy: "(exchange.getProperty('CamelTimerCounter', Integer.class) ?: 0)"
+        - setBody:
+            simple: "Request #${exchangeProperty.CamelTimerCounter} processed at ${date:now:HH:mm:ss}"
+        - log:
+            message: "[Chapter 1] ${body}"
+        - to: "mock:sink"

@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<smooks-resource-list xmlns="https://www.smooks.org/xsd/smooks-2.0.xsd"
-                      xmlns:csv="https://www.smooks.org/xsd/smooks/csv-1.7.xsd">
-    <csv:reader fields="id,name,city" skipLines="1" />
-</smooks-resource-list>

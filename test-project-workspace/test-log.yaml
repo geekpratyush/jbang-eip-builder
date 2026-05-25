@@ -1,0 +1,5 @@
+- route:
+    from:
+      uri: "timer:test?repeatCount=1"
+      steps:
+        - log: "TEST LOG"

@@ -1,0 +1,50 @@
+# ID: rest-consumer
+# ENABLED: true
+# DESCRIPTION: Exposes REST endpoints using Camel REST DSL (Quarkus platform)
+# AUTHOR: Camel Studio
+# STUB: none (self-hosted REST server)
+
+- rest:
+    path: "/api/v1"
+    post:
+      - path: "/orders"
+        consumes: "application/json"
+        produces: "application/json"
+        to: "direct:create-order"
+    get:
+      - path: "/orders/{id}"
+        produces: "application/json"
+        to: "direct:get-order"
+    delete:
+      - path: "/orders/{id}"
+        to: "direct:delete-order"
+
+- route:
+    id: "create-order"
+    from:
+      uri: "direct:create-order"
+      steps:
+        - log: "[Chapter 6][REST] POST /orders - Body: ${body}"
+        - setHeader:
+            name: "orderId"
+            simple: "ORD-${random(1000,9999)}"
+        - setBody:
+            simple: '{"orderId":"${header.orderId}","status":"CREATED","timestamp":"${date:now:yyyy-MM-dd HH:mm:ss}"}'
+
+- route:
+    id: "get-order"
+    from:
+      uri: "direct:get-order"
+      steps:
+        - log: "[Chapter 6][REST] GET /orders/${header.id}"
+        - setBody:
+            simple: '{"orderId":"${header.id}","status":"ACTIVE","amount":299.99}'
+
+- route:
+    id: "delete-order"
+    from:
+      uri: "direct:delete-order"
+      steps:
+        - log: "[Chapter 6][REST] DELETE /orders/${header.id}"
+        - setBody:
+            simple: '{"orderId":"${header.id}","status":"DELETED"}'

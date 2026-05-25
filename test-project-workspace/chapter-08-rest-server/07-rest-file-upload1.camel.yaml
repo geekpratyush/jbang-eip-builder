@@ -1,0 +1,39 @@
+# ID: rest-file-upload
+# ENABLED: true
+# DESCRIPTION: Multipart file upload endpoint — receives a file and saves it.
+#
+#   curl -X POST http://localhost:8080/upload \
+#     -F 'file=@/path/to/yourfile.xml'
+#
+# AUTHOR: Camel Studio
+# STUB: none — live HTTP server
+
+- route:
+    id: "file-upload-handler"
+    from:
+      uri: "platform-http:/upload"
+      parameters:
+        httpMethodRestrict: "POST"
+      steps:
+        - log: "[Chapter 8][UPLOAD] Received upload — Content-Type: ${header.Content-Type}"
+        - choice:
+            when:
+              - simple: "${body} != null"
+                steps:
+                  - setHeader:
+                      name: "CamelFileName"
+                      simple: "upload-${date:now:yyyyMMdd-HHmmss}.bin"
+                  - to: "file:uploads"
+                  - log: "[Chapter 8][UPLOAD] Saved file: ${header.CamelFileName}"
+                  - setBody:
+                      simple: '{"status":"uploaded","file":"${header.CamelFileName}","size":"${body.length}"}'
+            otherwise:
+              steps:
+                - setHeader:
+                    name: "CamelHttpResponseCode"
+                    constant: "400"
+                - setBody:
+                    constant: '{"error":"No file received"}'
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"
