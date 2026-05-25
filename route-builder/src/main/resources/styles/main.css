@@ -1,0 +1,992 @@
+/* Main Layout - VSCode Theme */
+.node-svg-icon { -fx-fill: #b0b0b0; }
+.tree-cell .ikonli-font-icon { -fx-icon-color: #cccccc; }
+
+.root {
+    -fx-background-color: #1e1e1e;
+    -fx-base: #1e1e1e;
+    -fx-control-inner-background: #1e1e1e;
+    -fx-color: #333333;
+    -fx-text-base-color: #cccccc;
+    -fx-text-background-color: #cccccc;
+}
+
+.app-root {
+    -fx-background-color: #1e1e1e;
+    -fx-font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+.main-split-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.split-pane *.split-pane-divider {
+    -fx-padding: 0 1 0 1;
+    -fx-background-color: #333333;
+}
+
+/* Common Pane Styling */
+.route-tree-pane, .editor-pane, .diagram-pane {
+    -fx-background-color: #252526;
+}
+
+.pane-title {
+    -fx-text-fill: #cccccc;
+    -fx-font-size: 11px;
+    -fx-padding: 8 10 8 10;
+    -fx-background-color: #2d2d2d;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #333333;
+}
+
+/* Menu Bar */
+.menu-bar {
+    -fx-background-color: #3c3c3c;
+    -fx-padding: 0 5;
+}
+.menu-bar .label {
+    -fx-text-fill: #cccccc;
+    -fx-font-size: 12px;
+}
+.menu:hover, .menu:showing {
+    -fx-background-color: #505050;
+}
+.context-menu {
+    -fx-background-color: #252526;
+    -fx-border-color: #454545;
+}
+.menu-item {
+    -fx-background-color: transparent;
+}
+.menu-item .label {
+    -fx-text-fill: #cccccc;
+}
+.menu-item:focused {
+    -fx-background-color: #094771;
+}
+.context-menu .ikonli-font-icon {
+    -fx-icon-color: #cccccc;
+}
+.menu-item:focused .ikonli-font-icon {
+    -fx-icon-color: #ffffff;
+}
+
+/* Status Bar */
+.status-bar {
+    -fx-background-color: #007acc;
+}
+.status-bar .label {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 12px;
+}
+
+/* ScrollBar */
+.scroll-bar:vertical, .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+.scroll-bar:vertical .track, .scroll-bar:horizontal .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+}
+.scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
+    -fx-background-color: #424242;
+    -fx-background-radius: 0;
+}
+.scroll-bar:vertical .thumb:hover, .scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: #4f4f4f;
+}
+.scroll-bar .increment-button, .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+.scroll-bar .increment-arrow, .scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+}
+
+/* Route Explorer Tree (Left Panel) */
+.custom-tree-view {
+    -fx-background-color: #252526;
+    -fx-border-width: 0;
+}
+.custom-tree-view .tree-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #cccccc;
+    -fx-padding: 4 2;
+    -fx-font-size: 13px;
+}
+.custom-tree-view .tree-cell:expanded, .custom-tree-view .tree-cell:collapsed {
+    -fx-text-fill: #ffffff;
+}
+.custom-tree-view .tree-cell:hover {
+    -fx-background-color: #2a2d2e;
+}
+.custom-tree-view .tree-cell:selected {
+    -fx-background-color: #37373d;
+    -fx-text-fill: #ffffff;
+}
+
+/* VSCode-like Yaml Editor (Middle Panel) */
+.editor-toolbar, .diagram-toolbar {
+    -fx-background-color: #252526;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #333333;
+}
+
+.editor-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #cccccc;
+    -fx-cursor: hand;
+    -fx-padding: 5 10;
+}
+.editor-btn .ikonli-font-icon {
+    -fx-icon-color: #ffffff; /* Default to white for dark modes */
+}
+.editor-btn:hover {
+    -fx-background-color: #37373d;
+    -fx-text-fill: #ffffff;
+}
+.editor-btn:hover .ikonli-font-icon {
+    -fx-icon-color: #ffffff;
+}
+
+/* Specific Toolbar Icon Colors */
+.btn-save .ikonli-font-icon { -fx-icon-color: #4CAF50; } /* Green */
+.btn-save-as .ikonli-font-icon { -fx-icon-color: #2196F3; } /* Blue */
+.btn-deploy .ikonli-font-icon { -fx-icon-color: #E91E63; } /* Pink */
+.btn-layout .ikonli-font-icon { -fx-icon-color: #FF9800; } /* Orange */
+.btn-zoom .ikonli-font-icon { -fx-icon-color: #00BCD4; } /* Cyan */
+.btn-theme .ikonli-font-icon { -fx-icon-color: #9C27B0; } /* Purple */
+.btn-new-file .ikonli-font-icon { -fx-icon-color: #4CAF50; }
+.btn-new-folder .ikonli-font-icon { -fx-icon-color: #FFC107; }
+.btn-refresh .ikonli-font-icon { -fx-icon-color: #03A9F4; }
+
+.custom-code-area {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #d4d4d4;
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-font-size: 14px;
+}
+.custom-code-area .lineno {
+    -fx-text-fill: #858585;
+    -fx-background-color: #1e1e1e;
+    -fx-padding: 0 10 0 0;
+}
+
+/* Syntax Highlighting */
+.yaml-key {
+    -fx-fill: #569cd6; /* VSCode Blue */
+    -fx-font-weight: bold;
+}
+.yaml-string {
+    -fx-fill: #ce9178; /* VSCode String Orange */
+}
+.yaml-comment {
+    -fx-fill: #6a9955; /* VSCode Green */
+}
+
+/* Visual Diagram (Right Panel) */
+.diagram-scroll {
+    -fx-background-color: #1e1e1e;
+    -fx-border-width: 0;
+}
+.diagram-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.diagram-node {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 10 20;
+    -fx-min-width: 180px;
+}
+
+.node-from {
+    -fx-border-color: #4CAF50; /* Green */
+}
+
+.node-step {
+    -fx-border-color: #2196F3; /* Blue */
+}
+
+.node-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.node-details {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 12px;
+}
+
+/* Console Styling */
+.console-pane {
+    -fx-background-color: #1e1e1e;
+}
+.console-output {
+    -fx-background-color: #1e1e1e;
+    -fx-control-inner-background: #1e1e1e;
+    -fx-text-fill: #cccccc;
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-font-size: 13px;
+    -fx-border-width: 0;
+}
+.console-output .content {
+    -fx-background-color: #1e1e1e;
+}
+
+/* ---- Suppress JavaFX 21 ComboBox CSS WARNING (ClassCastException on Paint) ---- */
+/* JavaFX 21 fails to resolve derived lookup colors in combo-box popup hover states. */
+/* Providing explicit Paint values here stops the internal cast error. */
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-background-color: #252526;
+    -fx-text-fill: #cccccc;
+}
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:hover {
+    -fx-background-color: #2a2d2e;
+    -fx-text-fill: #ffffff;
+}
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected,
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:hover:filled:selected {
+    -fx-background-color: #094771;
+    -fx-text-fill: #ffffff;
+}
+.combo-box-popup > .list-view {
+    -fx-background-color: #252526;
+    -fx-border-color: #454545;
+}
+
+/* Auto-complete Popup */
+.autocomplete-list {
+    -fx-background-color: #252526;
+    -fx-border-color: #454545;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+    -fx-max-height: 200px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 10, 0, 0, 5);
+}
+.autocomplete-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #d4d4d4;
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-padding: 5 10;
+}
+.autocomplete-list .list-cell:selected {
+    -fx-background-color: #094771;
+    -fx-text-fill: #ffffff;
+}
+
+/* Camel Specific Keyword Highlighting */
+.camel-keyword {
+    -fx-fill: #c586c0; /* VSCode Purple for Keywords */
+    -fx-font-weight: bold;
+}
+
+/* EIP Diagram specific styling */
+.diagram-node-shape {
+    -fx-fill: transparent;
+    -fx-stroke-width: 0;
+}
+
+.node-choice {
+    -fx-stroke: #FF9800; /* Orange for Choice */
+    -fx-border-color: #FF9800; /* Fallback */
+}
+
+.node-nested {
+    -fx-border-color: #9C27B0; /* Purple for Multicast/Split/Aggregate */
+}
+
+.node-to {
+    -fx-border-color: #F44336; /* Red for To */
+}
+
+.node-icon {
+    -fx-icon-color: #ffffff;
+}
+
+.branch-title {
+    -fx-text-fill: #FF9800;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 10 0;
+}
+
+.nested-container {
+    -fx-border-color: #555555;
+    -fx-border-style: dashed;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 15 0 0 0;
+    -fx-margin: 15 0 0 0;
+}
+
+/* ---------------- Themes ---------------- */
+/* Theme: IntelliJ Light */
+.theme-intellij-light.app-root, .root.theme-intellij-light { -fx-background-color: #ffffff; -fx-base: #ffffff; -fx-control-inner-background: #ffffff; -fx-color: #e5e5e5; -fx-text-base-color: #333333; }
+.theme-intellij-light .route-tree-pane, .theme-intellij-light .editor-pane, .theme-intellij-light .diagram-pane, .theme-intellij-light .console-pane { -fx-background-color: #f3f3f3; }
+.theme-intellij-light .pane-title { -fx-background-color: #e5e5e5; -fx-text-fill: #333333; -fx-border-color: #cccccc; }
+.theme-intellij-light .custom-tree-view, .theme-intellij-light .console-output { -fx-background-color: #ffffff; }
+.theme-intellij-light .custom-tree-view .tree-cell { -fx-text-fill: #333333; }
+.theme-intellij-light .custom-tree-view .tree-cell:hover { -fx-background-color: #e5e5e5; }
+.theme-intellij-light .custom-tree-view .tree-cell:selected { -fx-background-color: #2b79d2; -fx-text-fill: #ffffff; }
+.theme-intellij-light .console-output { -fx-text-fill: #333333; }
+.theme-intellij-light .node-title, .theme-intellij-light .node-details { -fx-text-fill: #333333; }
+.theme-intellij-light .node-icon { -fx-icon-color: #333333; }
+.theme-intellij-light .node-svg-icon { -fx-fill: #333333; }
+.theme-intellij-light .tree-cell .ikonli-font-icon { -fx-icon-color: #333333; }
+.theme-intellij-light .diagram-connector { -fx-stroke: #cccccc; }
+.theme-intellij-light .diagram-arrow { -fx-fill: #cccccc; }
+.theme-intellij-light .menu-bar, .theme-intellij-light .menu:hover, .theme-intellij-light .status-bar { -fx-background-color: #e5e5e5; }
+.theme-intellij-light .menu-bar .label, .theme-intellij-light .status-bar .label, .theme-intellij-light .menu-item .label { -fx-text-fill: #333333; }
+.theme-intellij-light .editor-btn { -fx-text-fill: #333333; }
+.theme-intellij-light .editor-btn .ikonli-font-icon { -fx-icon-color: #333333; }
+.theme-intellij-light .editor-toolbar, .theme-intellij-light .diagram-toolbar { -fx-background-color: #f3f3f3; -fx-border-color: #cccccc; }
+.theme-intellij-light .lineno { -fx-background-color: #ffffff; -fx-text-fill: #a0a0a0; -fx-border-color: #ffffff; }
+
+/* Submenu / Context menu light theme */
+.theme-intellij-light .context-menu { -fx-background-color: #f3f3f3; -fx-border-color: #cccccc; }
+.theme-intellij-light .context-menu .menu-item:focused { -fx-background-color: #e5e5e5; }
+.theme-intellij-light .context-menu .menu-item .label { -fx-text-fill: #333333; }
+.theme-intellij-light .context-menu .ikonli-font-icon { -fx-icon-color: #333333; }
+
+/* IntelliJ Light — Diagram Canvas */
+.theme-intellij-light .diagram-scroll { -fx-background-color: #f8f8f8; }
+.theme-intellij-light .diagram-scroll .viewport { -fx-background-color: #f8f8f8; }
+.theme-intellij-light .nested-container { -fx-border-color: #cccccc; }
+.theme-intellij-light .branch-title { -fx-text-fill: #cc7700; }
+.theme-intellij-light .diagram-node { -fx-background-color: #ffffff; -fx-effect: dropshadow(two-pass-box, rgba(0,0,0,0.12), 4, 0, 0, 2); }
+.theme-intellij-light .node-from { -fx-border-color: #2e8b57; }
+.theme-intellij-light .node-step { -fx-border-color: #1565c0; }
+.theme-intellij-light .node-to { -fx-border-color: #c62828; }
+.theme-intellij-light .node-choice { -fx-border-color: #e65100; }
+.theme-intellij-light .node-nested { -fx-border-color: #6a1b9a; }
+.theme-intellij-light .diagram-connector { -fx-stroke: #aaaaaa; }
+.theme-intellij-light .diagram-arrow { -fx-fill: #aaaaaa; }
+
+/* Theme: Dracula */
+.theme-dracula.app-root, .root.theme-dracula { -fx-background-color: #282a36; -fx-base: #282a36; -fx-control-inner-background: #282a36; -fx-color: #44475a; -fx-text-base-color: #f8f8f2; }
+.theme-dracula .route-tree-pane, .theme-dracula .editor-pane, .theme-dracula .diagram-pane, .theme-dracula .console-pane { -fx-background-color: #282a36; }
+.theme-dracula .pane-title { -fx-background-color: #44475a; -fx-text-fill: #f8f8f2; -fx-border-color: #6272a4; }
+.theme-dracula .custom-tree-view, .theme-dracula .console-output { -fx-background-color: #282a36; }
+.theme-dracula .custom-tree-view .tree-cell { -fx-text-fill: #f8f8f2; }
+.theme-dracula .custom-tree-view .tree-cell:hover { -fx-background-color: #44475a; }
+.theme-dracula .custom-tree-view .tree-cell:selected { -fx-background-color: #6272a4; -fx-text-fill: #f8f8f2; }
+.theme-dracula .console-output { -fx-text-fill: #f8f8f2; }
+.theme-dracula .node-title, .theme-dracula .node-details { -fx-text-fill: #f8f8f2; }
+.theme-dracula .node-icon { -fx-icon-color: #f8f8f2; }
+.theme-dracula .node-svg-icon { -fx-fill: #f8f8f2; }
+.theme-dracula .tree-cell .ikonli-font-icon { -fx-icon-color: #f8f8f2; }
+.theme-dracula .diagram-connector { -fx-stroke: #6272a4; }
+.theme-dracula .diagram-arrow { -fx-fill: #6272a4; }
+.theme-dracula .menu-bar, .theme-dracula .menu:hover { -fx-background-color: #44475a; }
+.theme-dracula .status-bar { -fx-background-color: #bd93f9; }
+.theme-dracula .menu-bar .label, .theme-dracula .status-bar .label, .theme-dracula .menu-item .label { -fx-text-fill: #f8f8f2; }
+.theme-dracula .editor-btn { -fx-text-fill: #f8f8f2; }
+.theme-dracula .editor-btn .ikonli-font-icon { -fx-icon-color: #f8f8f2; }
+.theme-dracula .editor-toolbar, .theme-dracula .diagram-toolbar { -fx-background-color: #282a36; -fx-border-color: #6272a4; }
+.theme-dracula .lineno { -fx-background-color: #282a36; -fx-text-fill: #6272a4; -fx-border-color: #282a36; }
+
+/* Theme: Monokai */
+.theme-monokai.app-root, .root.theme-monokai { -fx-background-color: #272822; -fx-base: #272822; -fx-control-inner-background: #272822; -fx-color: #3e3d32; -fx-text-base-color: #f8f8f2; }
+.theme-monokai .route-tree-pane, .theme-monokai .editor-pane, .theme-monokai .diagram-pane, .theme-monokai .console-pane { -fx-background-color: #272822; }
+.theme-monokai .pane-title { -fx-background-color: #3e3d32; -fx-text-fill: #f8f8f2; -fx-border-color: #75715e; }
+.theme-monokai .custom-tree-view, .theme-monokai .console-output { -fx-background-color: #272822; }
+.theme-monokai .custom-tree-view .tree-cell { -fx-text-fill: #f8f8f2; }
+.theme-monokai .custom-tree-view .tree-cell:hover { -fx-background-color: #3e3d32; }
+.theme-monokai .custom-tree-view .tree-cell:selected { -fx-background-color: #75715e; -fx-text-fill: #f8f8f2; }
+.theme-monokai .console-output { -fx-text-fill: #f8f8f2; }
+.theme-monokai .node-title, .theme-monokai .node-details { -fx-text-fill: #f8f8f2; }
+.theme-monokai .node-icon { -fx-icon-color: #f8f8f2; }
+.theme-monokai .node-svg-icon { -fx-fill: #f8f8f2; }
+.theme-monokai .tree-cell .ikonli-font-icon { -fx-icon-color: #f8f8f2; }
+.theme-monokai .diagram-connector { -fx-stroke: #75715e; }
+.theme-monokai .diagram-arrow { -fx-fill: #75715e; }
+.theme-monokai .menu-bar, .theme-monokai .menu:hover { -fx-background-color: #3e3d32; }
+.theme-monokai .status-bar { -fx-background-color: #fd971f; }
+.theme-monokai .menu-bar .label, .theme-monokai .status-bar .label, .theme-monokai .menu-item .label { -fx-text-fill: #f8f8f2; }
+.theme-monokai .editor-btn { -fx-text-fill: #f8f8f2; }
+.theme-monokai .editor-btn .ikonli-font-icon { -fx-icon-color: #f8f8f2; }
+.theme-monokai .editor-toolbar, .theme-monokai .diagram-toolbar { -fx-background-color: #272822; -fx-border-color: #75715e; }
+.theme-monokai .lineno { -fx-background-color: #272822; -fx-text-fill: #75715e; -fx-border-color: #272822; }
+
+/* Theme: Hacker */
+.theme-hacker.app-root, .root.theme-hacker { -fx-background-color: #000000; -fx-base: #000000; -fx-control-inner-background: #000000; -fx-color: #001a00; -fx-text-base-color: #00ff00; }
+.theme-hacker .route-tree-pane, .theme-hacker .editor-pane, .theme-hacker .diagram-pane, .theme-hacker .console-pane { -fx-background-color: #0d0d0d; }
+.theme-hacker .pane-title { -fx-background-color: #001a00; -fx-text-fill: #00ff00; -fx-border-color: #004d00; }
+.theme-hacker .custom-tree-view, .theme-hacker .console-output { -fx-background-color: #050505; }
+.theme-hacker .custom-tree-view .tree-cell { -fx-text-fill: #00cc00; }
+.theme-hacker .custom-tree-view .tree-cell:hover { -fx-background-color: #001a00; }
+.theme-hacker .custom-tree-view .tree-cell:selected { -fx-background-color: #004d00; -fx-text-fill: #00ff00; }
+.theme-hacker .console-output { -fx-text-fill: #00ff00; }
+.theme-hacker .node-title, .theme-hacker .node-details { -fx-text-fill: #00ff00; }
+.theme-hacker .node-icon { -fx-icon-color: #00ff00; }
+.theme-hacker .node-svg-icon { -fx-fill: #00ff00; }
+.theme-hacker .tree-cell .ikonli-font-icon { -fx-icon-color: #00cc00; }
+.theme-hacker .diagram-connector { -fx-stroke: #006600; }
+.theme-hacker .diagram-arrow { -fx-fill: #006600; }
+.theme-hacker .menu-bar, .theme-hacker .menu:hover { -fx-background-color: #001a00; }
+.theme-hacker .status-bar { -fx-background-color: #004d00; }
+.theme-hacker .menu-bar .label, .theme-hacker .status-bar .label, .theme-hacker .menu-item .label { -fx-text-fill: #00ff00; }
+.theme-hacker .editor-btn { -fx-text-fill: #00ff00; }
+.theme-hacker .editor-btn .ikonli-font-icon { 
+    -fx-icon-color: #00ff00; 
+    -fx-effect: dropshadow(three-pass-box, #00ff00, 10, 0.5, 0, 0);
+}
+.theme-hacker .editor-toolbar, .theme-hacker .diagram-toolbar { -fx-background-color: #0d0d0d; -fx-border-color: #004d00; }
+.theme-hacker .lineno { -fx-background-color: #0d0d0d; -fx-text-fill: #006600; -fx-border-color: #0d0d0d; }
+
+
+/* XML / XSLT Syntax Highlighting (High Contrast) */
+.xml-tag { -fx-fill: #569cd6; -fx-font-weight: bold; }
+.xml-attr { -fx-fill: #9cdcfe; }
+.xml-string { -fx-fill: #ce9178; }
+.xml-comment { -fx-fill: #6a9955; -fx-font-style: italic; }
+.xml-entity { -fx-fill: #d7ba7d; }
+.xml-text { -fx-fill: #d4d4d4; }
+
+/* Data Mapper UI */
+.mapper-tree-toolbar {
+    -fx-background-color: #2d2d2d;
+    -fx-padding: 2 5;
+    -fx-border-color: #333333;
+    -fx-border-width: 0 0 1 0;
+}
+.mapper-tool-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 10px;
+    -fx-padding: 3 6;
+    -fx-cursor: hand;
+}
+.mapper-tool-btn:hover {
+    -fx-background-color: #3e3e3e;
+    -fx-text-fill: #ffffff;
+}
+.mapping-node {
+    -fx-background-color: #333333;
+    -fx-border-color: #007acc;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 5 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 5, 0, 0, 3);
+}
+.mapping-node-title {
+    -fx-text-fill: #007acc;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+.mapping-node-expr {
+    -fx-text-fill: #cccccc;
+    -fx-font-family: 'Monospaced';
+    -fx-font-size: 9px;
+}
+
+
+.code-area .lineno {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #858585;
+    -fx-font-family: 'Consolas', 'Courier New', monospace;
+    -fx-font-size: 14px;
+    -fx-padding: 0 10 0 5;
+    -fx-border-color: #1e1e1e;
+    -fx-border-width: 0 1 0 0;
+}
+
+.yaml-keyword { -fx-fill: #569cd6; -fx-font-weight: bold; }
+.yaml-string { -fx-fill: #ce9178; }
+.yaml-comment { -fx-fill: #6a9955; -fx-font-style: italic; }
+
+.node-bean {
+    -fx-background-color: #2c3e50;
+    -fx-border-color: #34495e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 10, 0, 0, 5);
+}
+
+.theme-intellij-light .node-bean {
+    -fx-background-color: #f0f0f0;
+    -fx-border-color: #d0d0d0;
+    -fx-text-fill: #333333;
+}
+
+/* Property Pane styling */
+.property-pane {
+    -fx-background-color: -fx-control-inner-background;
+    -fx-text-fill: -fx-text-base-color;
+}
+.property-pane .label {
+    -fx-text-fill: -fx-text-base-color;
+    -fx-font-size: 13px;
+}
+.property-pane .text-field {
+    -fx-background-color: -fx-control-inner-background;
+    -fx-text-fill: -fx-text-base-color;
+    -fx-border-color: -fx-color;
+    -fx-border-radius: 3px;
+    -fx-padding: 6 10;
+}
+.property-pane .text-field:focused {
+    -fx-border-color: #007acc;
+}
+.property-pane .button {
+    -fx-cursor: hand;
+}
+
+.property-scroll {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+.property-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+/* RichTextFX Syntax Highlighting Styles in Property Pane */
+.syntax-editor {
+    -fx-background-color: -fx-control-inner-background;
+    -fx-font-family: 'Consolas', 'Courier New', monospace;
+    -fx-font-size: 13px;
+}
+.syntax-editor .text {
+    -fx-fill: -fx-text-base-color;
+}
+.syntax-editor .syntax-keyword {
+    -fx-fill: #569cd6;
+    -fx-font-weight: bold;
+}
+.syntax-editor .syntax-string {
+    -fx-fill: #ce9178;
+}
+.syntax-editor .syntax-comment {
+    -fx-fill: #6a9955;
+    -fx-font-style: italic;
+}
+.syntax-editor .syntax-number {
+    -fx-fill: #b5cea8;
+}
+.syntax-editor .syntax-key {
+    -fx-fill: #9cdcfe;
+}
+.syntax-editor .syntax-tag {
+    -fx-fill: #569cd6;
+}
+.syntax-editor .syntax-attr {
+    -fx-fill: #9cdcfe;
+}
+
+/* IntelliJ Light Syntax Highlighting overrides */
+.theme-intellij-light .syntax-editor .syntax-keyword {
+    -fx-fill: #000080;
+}
+.theme-intellij-light .syntax-editor .syntax-string {
+    -fx-fill: #008000;
+}
+.theme-intellij-light .syntax-editor .syntax-comment {
+    -fx-fill: #808080;
+}
+.theme-intellij-light .syntax-editor .syntax-number {
+    -fx-fill: #0000ff;
+}
+.theme-intellij-light .syntax-editor .syntax-key {
+    -fx-fill: #660e7a;
+}
+.theme-intellij-light .syntax-editor .syntax-tag {
+    -fx-fill: #000080;
+}
+.theme-intellij-light .syntax-editor .syntax-attr {
+    -fx-fill: #0000ff;
+}
+
+/* TableView Theme Adaptability */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: -fx-color;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+}
+.table-view .column-header-background {
+    -fx-background-color: -fx-color;
+}
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-size: 30px;
+}
+.table-view .column-header .label {
+    -fx-text-fill: -fx-text-base-color;
+    -fx-font-weight: bold;
+}
+.table-view .table-cell {
+    -fx-text-fill: -fx-text-base-color;
+    -fx-alignment: center-left;
+    -fx-padding: 5 10;
+}
+.table-view .table-row-cell:odd {
+    -fx-background-color: derive(-fx-control-inner-background, -3%);
+}
+.table-view .table-row-cell:even {
+    -fx-background-color: -fx-control-inner-background;
+}
+.table-view .table-row-cell:filled:selected {
+    -fx-background-color: #007acc;
+}
+.table-view .table-row-cell:filled:selected .table-cell {
+    -fx-text-fill: #ffffff;
+}
+
+/* Variables Editor Window Theming */
+.variables-title {
+    -fx-text-fill: #4CAF50;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+.variables-desc {
+    -fx-text-fill: -fx-text-base-color;
+    -fx-opacity: 0.8;
+    -fx-font-size: 11px;
+}
+.variables-field {
+    -fx-background-color: -fx-control-inner-background;
+    -fx-text-fill: -fx-text-base-color;
+    -fx-border-color: -fx-color;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+}
+.variables-field:focused {
+    -fx-border-color: #007acc;
+}
+.variables-btn-add {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.variables-btn-add:hover {
+    -fx-background-color: #45a049;
+}
+.variables-btn-delete {
+    -fx-background-color: #F44336;
+    -fx-text-fill: white;
+}
+.variables-btn-delete:hover {
+    -fx-background-color: #da190b;
+}
+.variables-btn-save {
+    -fx-background-color: #007acc;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.variables-btn-save:hover {
+    -fx-background-color: #0062a3;
+}
+.variables-btn-cancel {
+    -fx-background-color: #555555;
+    -fx-text-fill: white;
+}
+.variables-btn-cancel:hover {
+    -fx-background-color: #444444;
+}
+
+/* --- ToolBar & Icon Style Enhancements (High Contrast & Premium) --- */
+
+.tool-bar {
+    -fx-background-color: #2d2d2d;
+    -fx-border-color: #3d3d3d;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 6 12 6 12;
+}
+
+.tool-bar .toolbar-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-padding: 6 10;
+    -fx-cursor: hand;
+    -fx-transition: all 0.15s ease-in-out;
+}
+
+.tool-bar .toolbar-btn:hover {
+    -fx-background-color: #3e3e3e;
+}
+
+.tool-bar .toolbar-btn:selected {
+    -fx-background-color: #007acc;
+}
+
+.tool-bar .toolbar-btn:selected:hover {
+    -fx-background-color: #0062a3;
+}
+
+/* Base high-contrast icon color for dark mode */
+.tool-bar .toolbar-btn .ikonli-font-icon {
+    -fx-icon-color: #ffffff;
+    -fx-icon-size: 15px;
+}
+
+.tool-bar .toolbar-btn:selected .ikonli-font-icon {
+    -fx-icon-color: #ffffff;
+}
+
+/* Premium High-Contrast Color Accents for Dark Mode */
+.tool-bar .btn-play .ikonli-font-icon {
+    -fx-icon-color: #00E676; /* Vivid emerald green */
+}
+.tool-bar .btn-stop .ikonli-font-icon {
+    -fx-icon-color: #FF1744; /* Vivid cherry red */
+}
+.tool-bar .btn-variables .ikonli-font-icon {
+    -fx-icon-color: #00E5FF; /* Electric cyan */
+}
+.tool-bar .btn-decrypt .ikonli-font-icon {
+    -fx-icon-color: #FFD600; /* Bright gold */
+}
+.tool-bar .btn-xslt .ikonli-font-icon {
+    -fx-icon-color: #FF9100; /* Safety orange */
+}
+.tool-bar .btn-transform .ikonli-font-icon {
+    -fx-icon-color: #E040FB; /* Vivid neon purple */
+}
+.tool-bar .btn-export .ikonli-font-icon {
+    -fx-icon-color: #2979FF; /* Brilliant royal blue */
+}
+.tool-bar .btn-manual .ikonli-font-icon {
+    -fx-icon-color: #76FF03; /* Lime green */
+}
+
+/* Disabled state */
+.tool-bar .toolbar-btn:disabled {
+    -fx-opacity: 0.35;
+}
+
+/* ---------------- IntelliJ Light Theme Overrides ---------------- */
+.theme-intellij-light .tool-bar {
+    -fx-background-color: #f3f3f3;
+    -fx-border-color: #cccccc;
+}
+
+.theme-intellij-light .tool-bar .toolbar-btn:hover {
+    -fx-background-color: #e5e5e5;
+}
+
+.theme-intellij-light .tool-bar .toolbar-btn:selected {
+    -fx-background-color: #2b79d2;
+}
+
+.theme-intellij-light .tool-bar .toolbar-btn:selected:hover {
+    -fx-background-color: #1a5ea8;
+}
+
+/* Base high-contrast icon color for light mode */
+.theme-intellij-light .tool-bar .toolbar-btn .ikonli-font-icon {
+    -fx-icon-color: #333333;
+}
+
+.theme-intellij-light .tool-bar .toolbar-btn:selected .ikonli-font-icon {
+    -fx-icon-color: #ffffff;
+}
+
+/* Color Accents for Light Mode */
+.theme-intellij-light .tool-bar .btn-play .ikonli-font-icon {
+    -fx-icon-color: #2e7d32; /* Rich forest green */
+}
+.theme-intellij-light .tool-bar .btn-stop .ikonli-font-icon {
+    -fx-icon-color: #c62828; /* Rich crimson red */
+}
+.theme-intellij-light .tool-bar .btn-variables .ikonli-font-icon {
+    -fx-icon-color: #00838f; /* Rich dark cyan */
+}
+.theme-intellij-light .tool-bar .btn-decrypt .ikonli-font-icon {
+    -fx-icon-color: #f57f17; /* Rich dark gold/amber */
+}
+.theme-intellij-light .tool-bar .btn-xslt .ikonli-font-icon {
+    -fx-icon-color: #e65100; /* Rich burnt orange */
+}
+.theme-intellij-light .tool-bar .btn-transform .ikonli-font-icon {
+    -fx-icon-color: #880e4f; /* Rich burgundy */
+}
+.theme-intellij-light .tool-bar .btn-export .ikonli-font-icon {
+    -fx-icon-color: #1565c0; /* Rich navy blue */
+}
+.theme-intellij-light .tool-bar .btn-manual .ikonli-font-icon {
+    -fx-icon-color: #33691e; /* Rich olive green */
+}
+
+/* ---------------- Dracula Theme Overrides ---------------- */
+.theme-dracula .tool-bar {
+    -fx-background-color: #282a36;
+    -fx-border-color: #6272a4;
+}
+.theme-dracula .tool-bar .toolbar-btn:hover {
+    -fx-background-color: #44475a;
+}
+.theme-dracula .tool-bar .toolbar-btn:selected {
+    -fx-background-color: #6272a4;
+}
+
+/* ---------------- Monokai Theme Overrides ---------------- */
+.theme-monokai .tool-bar {
+    -fx-background-color: #272822;
+    -fx-border-color: #75715e;
+}
+.theme-monokai .tool-bar .toolbar-btn:hover {
+    -fx-background-color: #3e3d32;
+}
+.theme-monokai .tool-bar .toolbar-btn:selected {
+    -fx-background-color: #75715e;
+}
+
+/* ---------------- Hacker Theme Overrides ---------------- */
+.theme-hacker .tool-bar {
+    -fx-background-color: #000000;
+    -fx-border-color: #004d00;
+}
+.theme-hacker .tool-bar .toolbar-btn:hover {
+    -fx-background-color: #001a00;
+}
+.theme-hacker .tool-bar .toolbar-btn:selected {
+    -fx-background-color: #004d00;
+}
+.theme-hacker .tool-bar .toolbar-btn .ikonli-font-icon {
+    -fx-icon-color: #00ff00;
+}
+.theme-hacker .tool-bar .toolbar-btn:selected .ikonli-font-icon {
+    -fx-icon-color: #ffffff;
+}
+
+/* ---------------- Data Transformation Studio & Snippet Window Buttons ---------------- */
+.btn-run { -fx-text-fill: #4CAF50 !important; }
+.theme-vscode-dark .editor-btn.btn-run .ikonli-font-icon,
+.theme-dracula .editor-btn.btn-run .ikonli-font-icon,
+.theme-monokai .editor-btn.btn-run .ikonli-font-icon,
+.theme-hacker .editor-btn.btn-run .ikonli-font-icon {
+    -fx-icon-color: #00E676 !important;
+}
+
+.btn-validate { -fx-text-fill: #2196F3 !important; }
+.theme-vscode-dark .editor-btn.btn-validate .ikonli-font-icon,
+.theme-dracula .editor-btn.btn-validate .ikonli-font-icon,
+.theme-monokai .editor-btn.btn-validate .ikonli-font-icon,
+.theme-hacker .editor-btn.btn-validate .ikonli-font-icon {
+    -fx-icon-color: #00E5FF !important;
+}
+
+.btn-browse-xsd { -fx-text-fill: #FF9100 !important; }
+.theme-vscode-dark .editor-btn.btn-browse-xsd .ikonli-font-icon,
+.theme-dracula .editor-btn.btn-browse-xsd .ikonli-font-icon,
+.theme-monokai .editor-btn.btn-browse-xsd .ikonli-font-icon,
+.theme-hacker .editor-btn.btn-browse-xsd .ikonli-font-icon {
+    -fx-icon-color: #FF9100 !important;
+}
+
+.btn-save-config { -fx-text-fill: #FFD600 !important; }
+.theme-vscode-dark .editor-btn.btn-save-config .ikonli-font-icon,
+.theme-dracula .editor-btn.btn-save-config .ikonli-font-icon,
+.theme-monokai .editor-btn.btn-save-config .ikonli-font-icon,
+.theme-hacker .editor-btn.btn-save-config .ikonli-font-icon {
+    -fx-icon-color: #FFD600 !important;
+}
+
+.btn-set-mappings { -fx-text-fill: #E040FB !important; }
+.theme-vscode-dark .editor-btn.btn-set-mappings .ikonli-font-icon,
+.theme-dracula .editor-btn.btn-set-mappings .ikonli-font-icon,
+.theme-monokai .editor-btn.btn-set-mappings .ikonli-font-icon,
+.theme-hacker .editor-btn.btn-set-mappings .ikonli-font-icon {
+    -fx-icon-color: #E040FB !important;
+}
+
+/* Small action buttons in headers and snippet windows */
+.small-action-btn {
+    -fx-background-color: #2d2d30;
+    -fx-border-color: #3f3f46;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 4 8;
+    -fx-cursor: hand;
+}
+.small-action-btn .ikonli-font-icon {
+    -fx-icon-color: #cccccc;
+}
+.small-action-btn:hover {
+    -fx-background-color: #3f3f46;
+    -fx-border-color: #00E5FF;
+}
+.small-action-btn:hover .ikonli-font-icon {
+    -fx-icon-color: #ffffff !important;
+}
+
+.btn-open-file .ikonli-font-icon { -fx-icon-color: #FFD600 !important; }
+.btn-save-file .ikonli-font-icon { -fx-icon-color: #00E676 !important; }
+.btn-save-as-file .ikonli-font-icon { -fx-icon-color: #00E676 !important; }
+.btn-snippet-info .ikonli-font-icon { -fx-icon-color: #E040FB !important; }
+.btn-copy-text .ikonli-font-icon { -fx-icon-color: #00E5FF !important; }
+
+/* Big Copy button in the dialog */
+.btn-copy-all {
+    -fx-background-color: #00E5FF;
+    -fx-text-fill: #121212 !important;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+}
+.btn-copy-all:hover {
+    -fx-background-color: #00B0FF;
+}
+.btn-copy-all .ikonli-font-icon {
+    -fx-icon-color: #121212 !important;
+}
+
+/* Light Theme Overrides */
+.theme-intellij-light .btn-run { -fx-text-fill: #2e7d32 !important; }
+.theme-intellij-light .btn-run .ikonli-font-icon { -fx-icon-color: #2e7d32 !important; }
+
+.theme-intellij-light .btn-validate { -fx-text-fill: #1565c0 !important; }
+.theme-intellij-light .btn-validate .ikonli-font-icon { -fx-icon-color: #1565c0 !important; }
+
+.theme-intellij-light .btn-browse-xsd { -fx-text-fill: #e65100 !important; }
+.theme-intellij-light .btn-browse-xsd .ikonli-font-icon { -fx-icon-color: #e65100 !important; }
+
+.theme-intellij-light .btn-save-config { -fx-text-fill: #f57f17 !important; }
+.theme-intellij-light .btn-save-config .ikonli-font-icon { -fx-icon-color: #f57f17 !important; }
+
+.theme-intellij-light .btn-set-mappings { -fx-text-fill: #6a1b9a !important; }
+.theme-intellij-light .btn-set-mappings .ikonli-font-icon { -fx-icon-color: #6a1b9a !important; }
+
+.theme-intellij-light .small-action-btn {
+    -fx-background-color: #f3f3f3;
+    -fx-border-color: #cccccc;
+}
+.theme-intellij-light .small-action-btn:hover {
+    -fx-background-color: #e5e5e5;
+    -fx-border-color: #007ACC;
+}
+.theme-intellij-light .small-action-btn .ikonli-font-icon {
+    -fx-icon-color: #007ACC !important;
+}
+.theme-intellij-light .small-action-btn:hover .ikonli-font-icon {
+    -fx-icon-color: #005A9E !important;
+}
+/* Editor Panel Headers */
+.editor-panel-header {
+    -fx-background-color: #2d2d30;
+    -fx-border-color: #3f3f46;
+    -fx-border-width: 0 0 1px 0;
+}
+.editor-panel-header-label {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+/* Theme overrides for Editor Panel Headers */
+.theme-intellij-light .editor-panel-header {
+    -fx-background-color: #f3f3f3;
+    -fx-border-color: #cccccc;
+}
+.theme-intellij-light .editor-panel-header-label {
+    -fx-text-fill: #333333;
+}

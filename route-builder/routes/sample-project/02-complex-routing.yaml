@@ -1,0 +1,26 @@
+# ID: complex-routing-example
+# ENABLED: true
+# DESCRIPTION: Demonstrates content-based routing (Choice), WireTap for auditing, and ThrowException for unknown payloads.
+- route:
+    id: "complex-routing-example"
+    from:
+      uri: "direct:start"
+      steps:
+        - choice:
+            when:
+              - simple: "${body} == 'A'"
+                steps:
+                  - log: "Processing type A"
+                  - to: "direct:typeA"
+              - simple: "${body} == 'B'"
+                steps:
+                  - log: "Processing type B"
+                  - wireTap:
+                      uri: "direct:audit"
+                  - to: "direct:typeB"
+            otherwise:
+              steps:
+                - log: "Processing unknown type"
+                - throwException:
+                    exceptionType: "java.lang.IllegalArgumentException"
+                    message: "Unknown type"

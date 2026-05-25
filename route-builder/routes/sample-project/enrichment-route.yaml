@@ -1,0 +1,40 @@
+# ID: mt-mx-enrichment-demo
+# ENABLED: true
+# DESCRIPTION: Fetches MT payload, enriches via DB, transforms to MX via XSLT, and passes to Groovy before sending to Kafka.
+- route:
+    id: "mt-mx-enrichment-demo"
+    from:
+      uri: "timer:trigger?period=10000"
+      steps:
+        # Generate dummy truncated MT message
+        - setBody:
+            constant: "<MTMessage><Header><MessageID>MSG-123</MessageID></Header><Body><TransactionID>TXN-999</TransactionID></Body></MTMessage>"
+        
+        # Enrich the payload from a dummy DB (using direct)
+        - enrich:
+            expression:
+              constant: "direct:fetch-db-details"
+        
+        # Pass merged envelope through XSLT for MX (pacs.008) conversion
+        - to: "xslt-saxon:file:routes/sample-project/transform.xslt"
+        
+        # Pass to a groovy script for additional processing
+        - setBody:
+            groovy: "resource:file:routes/sample-project/script.groovy"
+            
+        # Log final result and send to a dummy Kafka kamelet stub
+        - log: "Final Processed Payload: ${body}"
+        - to: "stub:kafka:mx-outbound-topic"
+
+# ID: dummy-db-fetch
+# ENABLED: true
+# DESCRIPTION: A dummy component route mocking a database fetch to fetch original enrichment data.
+- route:
+    id: "dummy-db-fetch"
+    from:
+      uri: "direct:fetch-db-details"
+      steps:
+        # Simulate fetching original data from DB (e.g. SQLite / MongoDB via flapdoodle)
+        - log: "Fetching original DB data for enrichment..."
+        - setBody:
+            constant: "<Enrichment><DBStatus>VERIFIED_BY_DB</DBStatus></Enrichment>"

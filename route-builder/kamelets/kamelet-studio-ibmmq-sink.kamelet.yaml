@@ -1,0 +1,76 @@
+apiVersion: camel.apache.org/v1
+kind: Kamelet
+metadata:
+  name: kamelet-studio-ibmmq-sink
+  labels:
+    camel.apache.org/kamelet.type: "sink"
+  annotations:
+    camel.apache.org/kamelet.title: "Kamelet Studio IBM MQ Sink"
+    camel.apache.org/kamelet.version: "1.0.0"
+spec:
+  definition:
+    title: "Kamelet Studio IBM MQ Sink"
+    description: "Publishes messages to IBM MQ with SSL, mTLS, and Kerberos support."
+    required:
+      - queuename
+    type: object
+    properties:
+      queuename:
+        type: string
+      hostname:
+        type: string
+        default: "localhost"
+      port:
+        type: integer
+        default: 1414
+      queuemanager:
+        type: string
+        default: "QM1"
+      channel:
+        type: string
+        default: "DEV.APP.SVRCONN"
+      sslciphersuite:
+        type: string
+        default: ""
+      truststorepath:
+        type: string
+        default: ""
+      truststorepassword:
+        type: string
+        format: password
+      keystorepath:
+        type: string
+        default: ""
+      keystorepassword:
+        type: string
+        format: password
+  template:
+    beans:
+      - name: sslFactory
+        type: "#class:com.routebuilder.kameletstudio.core.lib.crypto.KameletStudioSslSocketFactory"
+        properties:
+          trustStorePath: '{{truststorepath}}'
+          trustStorePassword: '{{truststorepassword}}'
+          keyStorePath: '{{keystorepath}}'
+          keyStorePassword: '{{keystorepassword}}'
+      - name: mqConnectionFactory
+        type: "#class:com.ibm.mq.jakarta.jms.MQConnectionFactory"
+        properties:
+          hostName: '{{hostname}}'
+          port: '{{port}}'
+          queueManager: '{{queuemanager}}'
+          channel: '{{channel}}'
+          sslCipherSuite: '{{sslciphersuite}}'
+          sslSocketFactory: '#bean:{{sslFactory}}'
+      - name: mqPoolFactory
+        type: "#class:org.messaginghub.pooled.jms.JmsPoolConnectionFactory"
+        properties:
+          connectionFactory: '#bean:{{mqConnectionFactory}}'
+          maxConnections: 5
+    from:
+      uri: "kamelet:source"
+      steps:
+        - to:
+            uri: "jms:queue:{{queuename}}"
+            parameters:
+              connectionFactory: "#bean:{{mqPoolFactory}}"

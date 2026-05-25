@@ -1,0 +1,7 @@
+---
+- route:
+    id: "new-route"
+    from:
+      uri: "timer:tick"
+      steps:
+      - log: "Hello"
