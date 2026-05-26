@@ -7,7 +7,7 @@
   "aliases": {
     "camel": {
       "script-ref": "org.apache.camel:camel-jbang-main:4.18.0",
-      "main-class": "main.CamelJBang",
+      "main": "main.CamelJBang",
       "description": "Apache Camel JBang CLI"
     }
   }

@@ -1405,6 +1405,17 @@ public class TransformationStudioWindow {
                 } catch (Exception ignored) {}
                 snippetProcess = null;
             }
+            try {
+                String executablePath = RouteBuilderApp.getJbangExecutable();
+                java.util.List<String> stopCmd = new java.util.ArrayList<>();
+                stopCmd.add(executablePath);
+                stopCmd.add("--main=main.CamelJBang");
+                stopCmd.add("camel");
+                stopCmd.add("stop");
+                new ProcessBuilder(stopCmd).start();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         });
 
         HBox actionBox = new HBox(10);

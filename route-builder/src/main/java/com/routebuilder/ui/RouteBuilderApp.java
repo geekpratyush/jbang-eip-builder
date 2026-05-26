@@ -462,6 +462,17 @@ public class RouteBuilderApp extends Application {
                 runnerProcess[0].descendants().forEach(ProcessHandle::destroyForcibly);
                 runnerProcess[0] = null;
             }
+            try {
+                String executablePath = getJbangExecutable();
+                java.util.List<String> stopCmd = new java.util.ArrayList<>();
+                stopCmd.add(executablePath);
+                stopCmd.add("--main=main.CamelJBang");
+                stopCmd.add("camel");
+                stopCmd.add("stop");
+                new ProcessBuilder(stopCmd).start();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         });
 
         btnExport.setOnAction(e -> {
@@ -1711,6 +1722,6 @@ public class RouteBuilderApp extends Application {
         if (!jbangExe.exists()) {
             jbangExe = new java.io.File(new java.io.File(System.getProperty("user.dir"), "route-builder"), jbangScript);
         }
-        return jbangExe.exists() ? jbangExe.getAbsolutePath() : "jbang";
+        return jbangExe.exists() ? jbangExe.getAbsolutePath() : jbangScript;
     }
 }

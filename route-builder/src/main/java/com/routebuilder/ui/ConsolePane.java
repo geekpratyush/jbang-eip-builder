@@ -139,6 +139,8 @@ public class ConsolePane extends VBox {
     private boolean underline = false;
 
     private void appendRaw(String raw) {
+        if (raw == null) return;
+        raw = raw.replace("\r\n", "\n");
         int len = raw.length();
         int i = 0;
         StringBuilder plain = new StringBuilder();
