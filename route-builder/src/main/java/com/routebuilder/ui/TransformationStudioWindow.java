@@ -48,7 +48,7 @@ public class TransformationStudioWindow {
     
     private File sourceRawFile, sourceXmlFile, logicFile, logicSecondaryFile;
 
-    private TextArea consoleArea;
+    private ConsolePane consolePane;
     private Process snippetProcess;
     private final List<Object> persistentBridges = new ArrayList<>();
 
@@ -150,14 +150,12 @@ public class TransformationStudioWindow {
         lblPlaceholder.setStyle("-fx-text-fill: #555; -fx-font-size: 18;");
         mainContentArea.setCenter(lblPlaceholder);
 
-        consoleArea = new TextArea();
-        consoleArea.setEditable(false);
-        consoleArea.setPrefHeight(120);
-        consoleArea.setStyle("-fx-control-inner-background: #000; -fx-text-fill: #0f0; -fx-font-family: 'Consolas', monospace;");
+        consolePane = new ConsolePane();
+        consolePane.setPrefHeight(150);
 
         SplitPane verticalSplit = new SplitPane();
         verticalSplit.setOrientation(Orientation.VERTICAL);
-        verticalSplit.getItems().addAll(mainContentArea, consoleArea);
+        verticalSplit.getItems().addAll(mainContentArea, consolePane);
         verticalSplit.setDividerPositions(0.8);
 
         SplitPane mainSplit = new SplitPane();
@@ -1323,6 +1321,9 @@ public class TransformationStudioWindow {
                 } catch (Exception ignored) {}
                 snippetProcess = null;
             }
+            if (consolePane != null) {
+                consolePane.clear();
+            }
 
             Tab selectedTab = dslTabPane.getSelectionModel().getSelectedItem();
             String tabText = selectedTab != null ? selectedTab.getText() : "YAML";
@@ -1367,6 +1368,10 @@ public class TransformationStudioWindow {
             }
             command.add(executablePath);
             command.add("--main=main.CamelJBang");
+            String catalogPath = RouteBuilderApp.getJbangCatalog();
+            if (catalogPath != null) {
+                command.add("--catalog=" + catalogPath);
+            }
             command.add("camel");
             command.add("run");
             command.add(tempFile.getAbsolutePath());
@@ -1410,6 +1415,10 @@ public class TransformationStudioWindow {
                 java.util.List<String> stopCmd = new java.util.ArrayList<>();
                 stopCmd.add(executablePath);
                 stopCmd.add("--main=main.CamelJBang");
+                String catalogPath = RouteBuilderApp.getJbangCatalog();
+                if (catalogPath != null) {
+                    stopCmd.add("--catalog=" + catalogPath);
+                }
                 stopCmd.add("camel");
                 stopCmd.add("stop");
                 new ProcessBuilder(stopCmd).start();
@@ -1439,11 +1448,6 @@ public class TransformationStudioWindow {
         }
     }
 
-    private String stripAnsi(String text) {
-        if (text == null) return "";
-        return text.replaceAll("\\u001B\\[[;\\d]*[ -/]*[@-~]", "");
-    }
-
     private void pipeSnippetStream(Process process, java.io.InputStream stream, Button btnRun, Button btnStop, File tempFile) {
         new Thread(() -> {
             byte[] buf = new byte[2048];
@@ -1451,8 +1455,7 @@ public class TransformationStudioWindow {
             try {
                 while ((n = stream.read(buf)) != -1) {
                     final String chunk = new String(buf, 0, n, java.nio.charset.StandardCharsets.UTF_8);
-                    String cleanChunk = stripAnsi(chunk);
-                    Platform.runLater(() -> consoleArea.appendText(cleanChunk));
+                    if (consolePane != null) consolePane.log(chunk);
                 }
             } catch (Exception ignored) {
             } finally {
@@ -1473,5 +1476,10 @@ public class TransformationStudioWindow {
         }, "snippet-stream-pipe").start();
     }
 
-    private void log(String msg) { Platform.runLater(() -> { String time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")); consoleArea.appendText("[" + time + "] " + msg + "\n"); }); }
+    private void log(String msg) {
+        if (consolePane != null) {
+            String time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+            consolePane.log("[" + time + "] " + msg + "\n");
+        }
+    }
 }

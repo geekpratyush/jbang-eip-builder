@@ -13,7 +13,7 @@ if [ ! -f "$JBANG_EXE" ]; then
 fi
 
 echo "Pre-caching Camel JBang CLI locally..."
-echo "Executing: $JBANG_EXE --main=main.CamelJBang camel@apache/camel --help"
-"$JBANG_EXE" --main=main.CamelJBang camel@apache/camel --help
+echo "Executing: $JBANG_EXE --main=main.CamelJBang camel --help"
+"$JBANG_EXE" --main=main.CamelJBang camel --help
 
 echo "Camel dependencies pre-cached successfully!"

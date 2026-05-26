@@ -11,7 +11,7 @@ if (-not (Test-Path $JbangExe)) {
 }
 
 Write-Host "Pre-caching Camel JBang CLI locally..."
-Write-Host "Executing: & '$JbangExe' --main=main.CamelJBang camel@apache/camel --help"
-& $JbangExe --main=main.CamelJBang camel@apache/camel --help
+Write-Host "Executing: & '$JbangExe' --main=main.CamelJBang camel --help"
+& $JbangExe --main=main.CamelJBang camel --help
 
 Write-Host "Camel dependencies pre-cached successfully!"

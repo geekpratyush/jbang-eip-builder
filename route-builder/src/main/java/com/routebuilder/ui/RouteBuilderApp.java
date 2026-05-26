@@ -369,6 +369,10 @@ public class RouteBuilderApp extends Application {
                 }
                 command.add(executablePath);
                 command.add("--main=main.CamelJBang");
+                String catalogPath = getJbangCatalog();
+                if (catalogPath != null) {
+                    command.add("--catalog=" + catalogPath);
+                }
                 if (offline) command.add("--offline");
                 command.add("camel");
                 command.add("run");
@@ -467,6 +471,10 @@ public class RouteBuilderApp extends Application {
                 java.util.List<String> stopCmd = new java.util.ArrayList<>();
                 stopCmd.add(executablePath);
                 stopCmd.add("--main=main.CamelJBang");
+                String catalogPath = getJbangCatalog();
+                if (catalogPath != null) {
+                    stopCmd.add("--catalog=" + catalogPath);
+                }
                 stopCmd.add("camel");
                 stopCmd.add("stop");
                 new ProcessBuilder(stopCmd).start();
@@ -484,6 +492,10 @@ public class RouteBuilderApp extends Application {
                     java.util.List<String> command = new java.util.ArrayList<>();
                     command.add(executablePath);
                     command.add("--main=main.CamelJBang");
+                    String catalogPath = getJbangCatalog();
+                    if (catalogPath != null) {
+                        command.add("--catalog=" + catalogPath);
+                    }
                     command.add("camel");
                     command.add("export");
                     java.io.File[] files = baseDir.listFiles((d, name) -> name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".groovy"));
@@ -582,6 +594,10 @@ public class RouteBuilderApp extends Application {
                 }
                 command.add(executablePath);
                 command.add("--main=main.CamelJBang");
+                String catalogPath = getJbangCatalog();
+                if (catalogPath != null) {
+                    command.add("--catalog=" + catalogPath);
+                }
                 if (offline) command.add("--offline");
                 command.add("camel");
                 command.add("run");
@@ -1723,5 +1739,22 @@ public class RouteBuilderApp extends Application {
             jbangExe = new java.io.File(new java.io.File(System.getProperty("user.dir"), "route-builder"), jbangScript);
         }
         return jbangExe.exists() ? jbangExe.getAbsolutePath() : jbangScript;
+    }
+
+    public static String getJbangCatalog() {
+        java.io.File catalogFile = null;
+        try {
+            java.io.File jarFile = new java.io.File(RouteBuilderApp.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            java.io.File installDir = jarFile.getParentFile().getParentFile();
+            catalogFile = new java.io.File(installDir, "jbang-catalog.json");
+        } catch (Exception ignored) {}
+        
+        if (catalogFile == null || !catalogFile.exists()) {
+            catalogFile = new java.io.File(System.getProperty("user.dir"), "jbang-catalog.json");
+        }
+        if (!catalogFile.exists()) {
+            catalogFile = new java.io.File(new java.io.File(System.getProperty("user.dir"), "route-builder"), "jbang-catalog.json");
+        }
+        return catalogFile.exists() ? catalogFile.getAbsolutePath().replace("\\", "/") : null;
     }
 }
