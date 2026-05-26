@@ -72,6 +72,9 @@ public class TransformationBackend {
     }
 
     private static String transformSmooks(String input, String configXml, File currentFolder) throws Exception {
+        if (currentFolder != null) {
+            currentFolder = currentFolder.getAbsoluteFile().getCanonicalFile();
+        }
         if (configXml != null) {
             java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(schemaUri|schemaURI)\\s*=\\s*['\"]([^'\"]+)['\"]");
             java.util.regex.Matcher matcher = pattern.matcher(configXml);
