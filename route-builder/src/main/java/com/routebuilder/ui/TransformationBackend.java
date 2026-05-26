@@ -71,6 +71,14 @@ public class TransformationBackend {
         return transformXslt(combinedXml, logic);
     }
 
+    private static String toFileUriString(File file) {
+        String uri = file.toURI().toString();
+        if (uri.startsWith("file:/") && !uri.startsWith("file:///")) {
+            uri = "file:///" + uri.substring(6);
+        }
+        return uri;
+    }
+
     private static String transformSmooks(String input, String configXml, File currentFolder) throws Exception {
         if (currentFolder != null) {
             currentFolder = currentFolder.getAbsoluteFile().getCanonicalFile();
@@ -84,7 +92,7 @@ public class TransformationBackend {
                 String rawUri = matcher.group(2);
                 if (!rawUri.contains(":/") && !rawUri.startsWith("file:")) {
                     File schemaFile = new File(currentFolder, rawUri);
-                    String absoluteUri = schemaFile.toURI().toString();
+                    String absoluteUri = toFileUriString(schemaFile);
                     matcher.appendReplacement(sb, attrName + "=\"" + absoluteUri + "\"");
                 } else {
                     matcher.appendReplacement(sb, matcher.group(0));
@@ -99,7 +107,7 @@ public class TransformationBackend {
         try {
             Files.writeString(tempConfig.toPath(), configXml);
             smooks = new Smooks();
-            smooks.addResourceConfigs(tempConfig.toURI().toString());
+            smooks.addResourceConfigs(toFileUriString(tempConfig));
             
             StringSink sink = new StringSink();
             smooks.filterSource(new org.smooks.io.source.StringSource(input), sink);
