@@ -89,7 +89,7 @@ distributions {
     main {
         contents {
             from('.') {
-                include 'jbang', 'jbang.cmd', 'jbang.ps1'
+                include 'jbang', 'jbang.cmd', 'jbang.ps1', 'jbang-catalog.json'
                 include 'User Manual.md'
                 include 'README.md'
             }

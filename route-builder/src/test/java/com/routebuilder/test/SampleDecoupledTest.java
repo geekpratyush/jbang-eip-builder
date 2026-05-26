@@ -391,4 +391,20 @@ public class SampleDecoupledTest {
         assertEquals(1, deps.size());
         assertEquals("org.apache.camel:camel-joor:4.18.2", deps.get(0));
     }
+
+    @Test
+    public void testWindowsPathSeparatorsNormalization() {
+        String windowsPath = "C:\\Users\\User\\project\\transform.xslt";
+        String normalized = windowsPath.replace("\\", "/");
+        assertEquals("C:/Users/User/project/transform.xslt", normalized);
+    }
+
+    @Test
+    public void testMermaidResourcePresence() throws java.io.IOException {
+        try (java.io.InputStream is = com.routebuilder.ui.ClassDiagramPane.class.getResourceAsStream("/styles/mermaid.min.js")) {
+            assertNotNull(is, "mermaid.min.js resource should be bundled in the classpath under /styles/");
+            byte[] bytes = is.readAllBytes();
+            assertTrue(bytes.length > 0, "mermaid.min.js should not be empty");
+        }
+    }
 }

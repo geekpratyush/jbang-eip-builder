@@ -954,7 +954,7 @@ public class TransformationStudioWindow {
         String sourceType = sourceCfg != null ? sourceCfg.optString("type", "xml") : "xml";
         boolean isMtSource = "mt".equalsIgnoreCase(sourceType) || "mt".equalsIgnoreCase(type);
 
-        String path = logicFile.getAbsolutePath();
+        String path = logicFile.getAbsolutePath().replace("\\", "/");
         String groupId = "org.apache.camel";
         String artifactId = "camel-" + type;
         String version = "4.20.0";
@@ -1357,13 +1357,7 @@ public class TransformationStudioWindow {
                 return;
             }
 
-            String os = System.getProperty("os.name").toLowerCase();
-            String jbangScript = os.contains("win") ? "jbang.cmd" : "jbang";
-            File jbangExe = new File(System.getProperty("user.dir"), jbangScript);
-            if (!jbangExe.exists()) {
-                jbangExe = new File(new File(System.getProperty("user.dir"), "route-builder"), jbangScript);
-            }
-            String executablePath = jbangExe.exists() ? jbangExe.getAbsolutePath() : "jbang";
+            String executablePath = RouteBuilderApp.getJbangExecutable();
 
             List<String> command = new ArrayList<>();
             if (hasStdbuf()) {
@@ -1372,7 +1366,8 @@ public class TransformationStudioWindow {
                 command.add("-eL");
             }
             command.add(executablePath);
-            command.add("camel@apache/camel");
+            command.add("--main=main.CamelJBang");
+            command.add("camel");
             command.add("run");
             command.add(tempFile.getAbsolutePath());
             command.add("--runtime=main");

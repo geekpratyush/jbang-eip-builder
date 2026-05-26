@@ -229,15 +229,9 @@ public class RouteBuilderApp extends Application {
         javafx.scene.control.Button btnSwapPanels = new javafx.scene.control.Button("Swap Panels", new org.kordamp.ikonli.javafx.FontIcon("fas-exchange-alt"));
         btnSwapPanels.getStyleClass().add("toolbar-btn");
         
-        javafx.scene.control.SplitMenuButton btnPlay = new javafx.scene.control.SplitMenuButton();
-        btnPlay.setText("Play Offline (Stubs)");
-        btnPlay.setGraphic(new org.kordamp.ikonli.javafx.FontIcon("fas-plug"));
+        javafx.scene.control.Button btnPlay = new javafx.scene.control.Button("Play");
+        btnPlay.setGraphic(new org.kordamp.ikonli.javafx.FontIcon("fas-play"));
         btnPlay.getStyleClass().addAll("toolbar-btn", "btn-play");
-        javafx.scene.control.MenuItem playDevItem = new javafx.scene.control.MenuItem("Play (Local Live)");
-        playDevItem.setGraphic(new org.kordamp.ikonli.javafx.FontIcon("fas-play"));
-        javafx.scene.control.MenuItem playInfraItem = new javafx.scene.control.MenuItem("Play (My Own Infra)");
-        playInfraItem.setGraphic(new org.kordamp.ikonli.javafx.FontIcon("fas-server"));
-        btnPlay.getItems().addAll(playDevItem, playInfraItem);
 
         javafx.scene.control.Button btnStop = new javafx.scene.control.Button("Stop", new org.kordamp.ikonli.javafx.FontIcon("fas-stop"));
         btnStop.getStyleClass().addAll("toolbar-btn", "btn-stop");
@@ -365,11 +359,7 @@ public class RouteBuilderApp extends Application {
             try {
                 java.io.File baseDir = treePane.getBaseDirectory();
                 
-                String os = System.getProperty("os.name").toLowerCase();
-                String jbangScript = os.contains("win") ? "jbang.cmd" : "jbang";
-                java.io.File jbangExe = new java.io.File(System.getProperty("user.dir"), jbangScript);
-                
-                String executablePath = jbangExe.exists() ? jbangExe.getAbsolutePath() : "jbang";
+                String executablePath = getJbangExecutable();
                 
                 java.util.List<String> command = new java.util.ArrayList<>();
                 if (hasStdbuf()) {
@@ -378,8 +368,9 @@ public class RouteBuilderApp extends Application {
                     command.add("-eL");
                 }
                 command.add(executablePath);
+                command.add("--main=main.CamelJBang");
                 if (offline) command.add("--offline");
-                command.add("camel@apache/camel");
+                command.add("camel");
                 command.add("run");
                 
                 if (target == null) {
@@ -394,7 +385,7 @@ public class RouteBuilderApp extends Application {
                         String relative = baseDir.toURI().relativize(target.toURI()).getPath();
                         command.add(relative.isEmpty() ? target.getName() : relative);
                     } catch (Exception ex) {
-                        command.add(target.getAbsolutePath());
+                        command.add(target.getAbsolutePath().replace("\\", "/"));
                     }
                 } else { // Directory
                     java.util.List<String> collected = new java.util.ArrayList<>();
@@ -412,7 +403,7 @@ public class RouteBuilderApp extends Application {
                                                 String relative = base.toURI().relativize(f.toURI()).getPath();
                                                 paths.add(relative.isEmpty() ? f.getName() : relative);
                                             } catch (Exception ex) {
-                                                paths.add(f.getAbsolutePath());
+                                                paths.add(f.getAbsolutePath().replace("\\", "/"));
                                             }
                                         }
                                     }
@@ -436,7 +427,7 @@ public class RouteBuilderApp extends Application {
                     command.add("--profile=dev");
                     java.io.File infraFile = new java.io.File(System.getProperty("user.dir"), "infra.properties");
                     if (infraFile.exists()) {
-                        command.add("--properties=" + infraFile.getAbsolutePath());
+                        command.add("--properties=" + infraFile.getAbsolutePath().replace("\\", "/"));
                     }
                 }
                 
@@ -461,8 +452,6 @@ public class RouteBuilderApp extends Application {
         });
 
         btnPlay.setOnAction(e -> playProject.accept(null, "offline"));
-        playDevItem.setOnAction(e -> playProject.accept(null, "dev"));
-        playInfraItem.setOnAction(e -> playProject.accept(null, "infra"));
 
         btnStop.setOnAction(e -> {
             btnPlay.setDisable(false);
@@ -479,14 +468,12 @@ public class RouteBuilderApp extends Application {
                 System.out.println("Exporting to Camel Main Maven Project...");
                 try {
                     java.io.File baseDir = treePane.getBaseDirectory();
-                    String os = System.getProperty("os.name").toLowerCase();
-                    String jbangScript = os.contains("win") ? "jbang.cmd" : "jbang";
-                    java.io.File jbangExe = new java.io.File(System.getProperty("user.dir"), jbangScript);
-                    String executablePath = jbangExe.exists() ? jbangExe.getAbsolutePath() : "jbang";
+                    String executablePath = getJbangExecutable();
                     
                     java.util.List<String> command = new java.util.ArrayList<>();
                     command.add(executablePath);
-                    command.add("camel@apache/camel");
+                    command.add("--main=main.CamelJBang");
+                    command.add("camel");
                     command.add("export");
                     java.io.File[] files = baseDir.listFiles((d, name) -> name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".groovy"));
                     if (files != null && files.length > 0) {
@@ -574,10 +561,7 @@ public class RouteBuilderApp extends Application {
             System.out.println("Starting Single File with JBang... (mode=" + mode + ")");
             try {
                 java.io.File baseDir = file.getParentFile();
-                String os = System.getProperty("os.name").toLowerCase();
-                String jbangScript = os.contains("win") ? "jbang.cmd" : "jbang";
-                java.io.File jbangExe = new java.io.File(System.getProperty("user.dir"), jbangScript);
-                String executablePath = jbangExe.exists() ? jbangExe.getAbsolutePath() : "jbang";
+                String executablePath = getJbangExecutable();
                 
                 java.util.List<String> command = new java.util.ArrayList<>();
                 if (hasStdbuf()) {
@@ -586,8 +570,9 @@ public class RouteBuilderApp extends Application {
                     command.add("-eL");
                 }
                 command.add(executablePath);
+                command.add("--main=main.CamelJBang");
                 if (offline) command.add("--offline");
-                command.add("camel@apache/camel");
+                command.add("camel");
                 command.add("run");
                 command.add(file.getName());
                 boolean dev = "dev".equals(mode);
@@ -598,7 +583,7 @@ public class RouteBuilderApp extends Application {
                     command.add("--profile=dev");
                     java.io.File infraFile = new java.io.File(System.getProperty("user.dir"), "infra.properties");
                     if (infraFile.exists()) {
-                        command.add("--properties=" + infraFile.getAbsolutePath());
+                        command.add("--properties=" + infraFile.getAbsolutePath().replace("\\", "/"));
                     }
                 }
                 
@@ -1708,5 +1693,24 @@ public class RouteBuilderApp extends Application {
         return new java.io.File("/usr/bin/stdbuf").exists() ||
                new java.io.File("/bin/stdbuf").exists() ||
                new java.io.File("/usr/sbin/stdbuf").exists();
+    }
+
+    public static String getJbangExecutable() {
+        String os = System.getProperty("os.name").toLowerCase();
+        String jbangScript = os.contains("win") ? "jbang.cmd" : "jbang";
+        java.io.File jbangExe = null;
+        try {
+            java.io.File jarFile = new java.io.File(RouteBuilderApp.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            java.io.File installDir = jarFile.getParentFile().getParentFile();
+            jbangExe = new java.io.File(installDir, jbangScript);
+        } catch (Exception ignored) {}
+        
+        if (jbangExe == null || !jbangExe.exists()) {
+            jbangExe = new java.io.File(System.getProperty("user.dir"), jbangScript);
+        }
+        if (!jbangExe.exists()) {
+            jbangExe = new java.io.File(new java.io.File(System.getProperty("user.dir"), "route-builder"), jbangScript);
+        }
+        return jbangExe.exists() ? jbangExe.getAbsolutePath() : "jbang";
     }
 }

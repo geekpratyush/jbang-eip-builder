@@ -26,10 +26,28 @@ public class ClassDiagramPane extends VBox {
         VBox.setVgrow(webView, Priority.ALWAYS);
         getChildren().add(webView);
         
+        String mermaidJs = "";
+        try (java.io.InputStream is = ClassDiagramPane.class.getResourceAsStream("/styles/mermaid.min.js")) {
+            if (is != null) {
+                mermaidJs = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            } else {
+                System.err.println("Could not find /styles/mermaid.min.js in resources!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        String scriptTag;
+        if (!mermaidJs.isEmpty()) {
+            scriptTag = "<script>" + mermaidJs + "</script>";
+        } else {
+            scriptTag = "<script src=\"https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js\"></script>";
+        }
+
         // Load the base HTML once
         String baseHtml = "<html>" +
                 "<head>" +
-                "<script src=\"https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js\"></script>" +
+                scriptTag +
                 "<style>" +
                 "  body { background-color: #1e1e1e; color: white; margin: 0; padding: 20px; overflow: auto; font-family: 'Segoe UI', sans-serif; }" +
                 "  .mermaid { display: flex; justify-content: center; transition: opacity 0.3s; }" +
