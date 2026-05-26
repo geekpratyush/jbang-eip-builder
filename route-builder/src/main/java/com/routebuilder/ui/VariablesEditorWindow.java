@@ -167,7 +167,7 @@ public class VariablesEditorWindow {
         defaultValues.put("http.orders.endpoint", "stub:http:api.example.com/orders");
         defaultValues.put("http.downstream.endpoint", "stub:http:downstream-service/api");
         defaultValues.put("enricher.customer.service", "stub:direct:fetch-customer");
-        defaultValues.put("quarkus.http.port", "9999");
+        defaultValues.put("camel.server.port", "9999");
 
         Map<String, String> defaultDescs = new HashMap<>();
         defaultDescs.put("kafka.orders.endpoint", "Kafka Orders endpoint");
@@ -184,7 +184,7 @@ public class VariablesEditorWindow {
         defaultDescs.put("http.orders.endpoint", "HTTP Orders endpoint");
         defaultDescs.put("http.downstream.endpoint", "HTTP Downstream API endpoint");
         defaultDescs.put("enricher.customer.service", "Customer Service direct stub");
-        defaultDescs.put("quarkus.http.port", "HTTP server port");
+        defaultDescs.put("camel.server.port", "HTTP server port");
 
         // Merge missing default values into the loaded list
         for (Map.Entry<String, String> entry : defaultValues.entrySet()) {

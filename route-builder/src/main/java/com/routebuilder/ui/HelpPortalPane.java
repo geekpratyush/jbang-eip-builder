@@ -154,19 +154,19 @@ public class HelpPortalPane extends BorderPane {
     private void loadHelpTopics() {
         allTopics.add(new HelpTopic("1. Getting Started & JBang Run profiles", "General",
             "# Developer Environments & Execution Profiles\n" +
-            "The studio lets you run integrations locally under three runtime profiles using JBang and Quarkus:\n\n" +
+            "The studio lets you run integrations locally under three runtime profiles using JBang and Camel Main:\n\n" +
             "```\n" +
             "[Kamelet Studio UI] ---> [Local Workspace Dir] ---> [JBang Executable]\n" +
             "                                                           |\n" +
             "                                        +------------------+------------------+\n" +
             "                                        |                  |                  |\n" +
-            "                                [Offline / Stub]     [Dev Services]     [Live Configured]\n" +
-            "                                (--stub=all)         (Docker stubs)     (infra.properties)\n" +
+            "                                [Offline / Stub]       [Local Live]     [Live Configured]\n" +
+            "                                (--stub=all)         (Standard run)     (infra.properties)\n" +
             "```\n\n" +
             "## 1. Play Offline (Stub Mode)\n" +
             "Stubs out all external endpoints using Apache Camel's stub component. Recommended for local route structure testing without external infrastructure dependency.\n\n" +
-            "## 2. Play (Dev Services)\n" +
-            "Spins up local database/broker containers automatically using Quarkus Dev Services (Docker required). Great for verification against actual local instances.\n\n" +
+            "## 2. Play (Local Live)\n" +
+            "Runs the integration live on Camel Main, reflecting changes in real-time. Great for verification against local instances.\n\n" +
             "## 3. Play (Configured Infra)\n" +
             "Runs against your actual physical development infrastructure using environment configuration loaded from `infra.properties`."
         ));
@@ -289,9 +289,9 @@ public class HelpPortalPane extends BorderPane {
             "# Path to Production & Containerization\n" +
             "Transition your routes from local JBang testing into enterprise microservices.\n\n" +
             "## 1. Native Build Compilation\n" +
-            "Build a native Linux container binary using GraalVM:\n" +
+            "Build a native Linux container binary using Maven and GraalVM:\n" +
             "```bash\n" +
-            "./gradlew build -Dquarkus.package.type=native\n" +
+            "mvn package -Pnative\n" +
             "```\n" +
             "Native builds compile JVM code into standalone native code, reducing startup time to <10ms and RSS memory footprint to <30MB.\n\n" +
             "## 2. Secrets Management\n" +

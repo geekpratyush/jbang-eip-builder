@@ -40,20 +40,30 @@ public class RouteBuilderApp extends Application {
         });
 
         // Pipe stdout — read raw bytes so \r and mid-line ANSI sequences are preserved
-        new Thread(() -> pipeStream(process.getInputStream()), "console-stdout").start();
-        new Thread(() -> pipeStream(process.getErrorStream()),  "console-stderr").start();
+        new Thread(() -> pipeStream(process, process.getInputStream()), "console-stdout").start();
+        new Thread(() -> pipeStream(process, process.getErrorStream()),  "console-stderr").start();
     }
 
-    private void pipeStream(java.io.InputStream stream) {
+    private void pipeStream(Process process, java.io.InputStream stream) {
         byte[] buf = new byte[2048];
         int n;
         try {
             while ((n = stream.read(buf)) != -1) {
-                // Decode using the platform charset (UTF-8 for Quarkus / JBang)
+                // Decode using the platform charset (UTF-8 for Camel Main / JBang)
                 final String chunk = new String(buf, 0, n, java.nio.charset.StandardCharsets.UTF_8);
                 if (consolePane != null) consolePane.log(chunk);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        } finally {
+            if (process != null && !process.isAlive()) {
+                try {
+                    int exitCode = process.exitValue();
+                    if (consolePane != null) {
+                        consolePane.log("\n\033[1;31m[Route Builder Studio] Process exited with code " + exitCode + "\033[0m\n");
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
     }
 
 
@@ -223,7 +233,7 @@ public class RouteBuilderApp extends Application {
         btnPlay.setText("Play Offline (Stubs)");
         btnPlay.setGraphic(new org.kordamp.ikonli.javafx.FontIcon("fas-plug"));
         btnPlay.getStyleClass().addAll("toolbar-btn", "btn-play");
-        javafx.scene.control.MenuItem playDevItem = new javafx.scene.control.MenuItem("Play (Dev Services)");
+        javafx.scene.control.MenuItem playDevItem = new javafx.scene.control.MenuItem("Play (Local Live)");
         playDevItem.setGraphic(new org.kordamp.ikonli.javafx.FontIcon("fas-play"));
         javafx.scene.control.MenuItem playInfraItem = new javafx.scene.control.MenuItem("Play (My Own Infra)");
         playInfraItem.setGraphic(new org.kordamp.ikonli.javafx.FontIcon("fas-server"));
@@ -327,7 +337,11 @@ public class RouteBuilderApp extends Application {
 
         // 1. Left Panel: Route Tree (Passes file to editor when clicked)
         treePane = new RouteTreePane(file -> {
-            editorPane.loadFile(file);
+            if (file == null) {
+                editorPane.closeFile();
+            } else {
+                editorPane.loadFile(file);
+            }
         });
 
         HelpPortalPane helpPortalPane = new HelpPortalPane(() -> {
@@ -358,6 +372,11 @@ public class RouteBuilderApp extends Application {
                 String executablePath = jbangExe.exists() ? jbangExe.getAbsolutePath() : "jbang";
                 
                 java.util.List<String> command = new java.util.ArrayList<>();
+                if (hasStdbuf()) {
+                    command.add("stdbuf");
+                    command.add("-oL");
+                    command.add("-eL");
+                }
                 command.add(executablePath);
                 if (offline) command.add("--offline");
                 command.add("camel@apache/camel");
@@ -410,9 +429,9 @@ public class RouteBuilderApp extends Application {
                 }
                 
                 boolean dev = "dev".equals(mode);
-                command.add("--runtime=quarkus");
+                command.add("--runtime=main");
+                if (dev) command.add("--dev");
                 if (offline) command.add("--stub=all");
-                if (dev) command.add("--profile=devservices");
                 if (infra) {
                     command.add("--profile=dev");
                     java.io.File infraFile = new java.io.File(System.getProperty("user.dir"), "infra.properties");
@@ -422,7 +441,6 @@ public class RouteBuilderApp extends Application {
                 }
                 
                 ProcessBuilder pb = new ProcessBuilder(command);
-                pb.environment().put("QUARKUS_CONSOLE_COLOR", "true");
                 pb.environment().put("TERM", "xterm-256color");
                 pb.directory(baseDir);
                 runnerProcess[0] = pb.start();
@@ -458,26 +476,26 @@ public class RouteBuilderApp extends Application {
         });
 
         btnExport.setOnAction(e -> {
-            System.out.println("Exporting to Quarkus Maven Project...");
-            try {
-                java.io.File baseDir = treePane.getBaseDirectory();
-                String os = System.getProperty("os.name").toLowerCase();
-                String jbangScript = os.contains("win") ? "jbang.cmd" : "jbang";
-                java.io.File jbangExe = new java.io.File(System.getProperty("user.dir"), jbangScript);
-                String executablePath = jbangExe.exists() ? jbangExe.getAbsolutePath() : "jbang";
-                
-                java.util.List<String> command = new java.util.ArrayList<>();
-                command.add(executablePath);
-                command.add("camel@apache/camel");
-                command.add("export");
-                java.io.File[] files = baseDir.listFiles((d, name) -> name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".groovy"));
-                if (files != null && files.length > 0) {
-                    for (java.io.File f : files) command.add(f.getName());
-                } else {
-                    command.add("*");
-                }
-                command.add("--runtime=quarkus");
-                command.add("--dir=export-dir");
+                System.out.println("Exporting to Camel Main Maven Project...");
+                try {
+                    java.io.File baseDir = treePane.getBaseDirectory();
+                    String os = System.getProperty("os.name").toLowerCase();
+                    String jbangScript = os.contains("win") ? "jbang.cmd" : "jbang";
+                    java.io.File jbangExe = new java.io.File(System.getProperty("user.dir"), jbangScript);
+                    String executablePath = jbangExe.exists() ? jbangExe.getAbsolutePath() : "jbang";
+                    
+                    java.util.List<String> command = new java.util.ArrayList<>();
+                    command.add(executablePath);
+                    command.add("camel@apache/camel");
+                    command.add("export");
+                    java.io.File[] files = baseDir.listFiles((d, name) -> name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".groovy"));
+                    if (files != null && files.length > 0) {
+                        for (java.io.File f : files) command.add(f.getName());
+                    } else {
+                        command.add("*");
+                    }
+                    command.add("--runtime=main");
+                    command.add("--dir=export-dir");
 
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.directory(baseDir);
@@ -562,15 +580,20 @@ public class RouteBuilderApp extends Application {
                 String executablePath = jbangExe.exists() ? jbangExe.getAbsolutePath() : "jbang";
                 
                 java.util.List<String> command = new java.util.ArrayList<>();
+                if (hasStdbuf()) {
+                    command.add("stdbuf");
+                    command.add("-oL");
+                    command.add("-eL");
+                }
                 command.add(executablePath);
                 if (offline) command.add("--offline");
                 command.add("camel@apache/camel");
                 command.add("run");
                 command.add(file.getName());
                 boolean dev = "dev".equals(mode);
-                command.add("--runtime=quarkus");
+                command.add("--runtime=main");
+                if (dev) command.add("--dev");
                 if (offline) command.add("--stub=all");
-                if (dev) command.add("--profile=devservices");
                 if (infra) {
                     command.add("--profile=dev");
                     java.io.File infraFile = new java.io.File(System.getProperty("user.dir"), "infra.properties");
@@ -580,7 +603,6 @@ public class RouteBuilderApp extends Application {
                 }
                 
                 ProcessBuilder pb = new ProcessBuilder(command);
-                pb.environment().put("QUARKUS_CONSOLE_COLOR", "true");
                 pb.environment().put("TERM", "xterm-256color");
                 pb.directory(baseDir);
                 Process singleProcess = pb.start();
@@ -788,17 +810,19 @@ public class RouteBuilderApp extends Application {
             "                - log:\n" +
             "                    message: \"Transaction processing finished.\"\n";
 
-        try {
-            java.io.File dir = new java.io.File(System.getProperty("user.dir"), "routes");
-            dir.mkdirs();
-            java.io.File defaultFile = new java.io.File(dir, "complex-financial-transaction.yaml");
-            if (!defaultFile.exists()) {
-                java.nio.file.Files.writeString(defaultFile.toPath(), defaultYaml);
-                treePane.refresh();
+        if (editorPane.getCurrentFile() == null) {
+            try {
+                java.io.File dir = new java.io.File(System.getProperty("user.dir"), "routes");
+                dir.mkdirs();
+                java.io.File defaultFile = new java.io.File(dir, "complex-financial-transaction.yaml");
+                if (!defaultFile.exists()) {
+                    java.nio.file.Files.writeString(defaultFile.toPath(), defaultYaml);
+                    treePane.refresh();
+                }
+                editorPane.loadFile(defaultFile);
+            } catch (Exception e) {
+                editorPane.setText(defaultYaml);
             }
-            editorPane.loadFile(defaultFile);
-        } catch (Exception e) {
-            editorPane.setText(defaultYaml);
         }
     }
 
@@ -1008,7 +1032,7 @@ public class RouteBuilderApp extends Application {
             "- route:\n    id: \"rest-api-caller\"\n    from:\n      uri: \"timer:http?period=5000&repeatCount=4\"\n      steps:\n        - setHeader:\n            name: \"CamelHttpMethod\"\n            constant: \"GET\"\n        - setHeader:\n            name: \"Accept\"\n            constant: \"application/json\"\n        - log: \"[Chapter 6][REST] Calling external API...\"\n        - to: \"stub:http:api.example.com/api/v1/products\"\n        - log: \"[Chapter 6][REST] API Response: ${body}\"\n        - to: \"mock:api-result\"\n");
 
         write.accept(new String[]{"chapter-06-rest-api", "02-rest-consumer.camel.yaml"},
-            "# ID: rest-consumer\n# ENABLED: true\n# DESCRIPTION: Exposes REST endpoints using Camel REST DSL (Quarkus platform)\n# AUTHOR: Camel Studio\n# STUB: none (self-hosted REST server)\n\n" +
+            "# ID: rest-consumer\n# ENABLED: true\n# DESCRIPTION: Exposes REST endpoints using Camel REST DSL (Camel Main platform)\n# AUTHOR: Camel Studio\n# STUB: none (self-hosted REST server)\n\n" +
             "- rest:\n    path: \"/api/v1\"\n    post:\n      - path: \"/orders\"\n        consumes: \"application/json\"\n        produces: \"application/json\"\n        to: \"direct:create-order\"\n    get:\n      - path: \"/orders/{id}\"\n        produces: \"application/json\"\n        to: \"direct:get-order\"\n    delete:\n      - path: \"/orders/{id}\"\n        to: \"direct:delete-order\"\n\n" +
             "- route:\n    id: \"create-order\"\n    from:\n      uri: \"direct:create-order\"\n      steps:\n        - log: \"[Chapter 6][REST] POST /orders - Body: ${body}\"\n        - setHeader:\n            name: \"orderId\"\n            simple: \"ORD-${random(1000,9999)}\"\n        - setBody:\n            simple: '{\"orderId\":\"${header.orderId}\",\"status\":\"CREATED\",\"timestamp\":\"${date:now:yyyy-MM-dd HH:mm:ss}\"}'\n\n" +
             "- route:\n    id: \"get-order\"\n    from:\n      uri: \"direct:get-order\"\n      steps:\n        - log: \"[Chapter 6][REST] GET /orders/${header.id}\"\n        - setBody:\n            simple: '{\"orderId\":\"${header.id}\",\"status\":\"ACTIVE\",\"amount\":299.99}'\n\n" +
@@ -1033,16 +1057,16 @@ public class RouteBuilderApp extends Application {
 
 
         // ── Chapter 8: HTTP REST Server (Actually Runnable) ───────────────────
-        // All files in this chapter start a real Quarkus HTTP server on :8080
-        // when run with JBang. Use: curl http://localhost:8080/...
+        // All files in this chapter start a real Camel Main HTTP server on :9999
+        // when run with JBang. Use: curl http://localhost:9999/...
 
         write.accept(new String[]{"chapter-08-rest-server", "01-platform-http-hello.camel.yaml"},
             "# ID: platform-http-hello\n" +
             "# ENABLED: true\n" +
             "# DESCRIPTION: Simplest live HTTP endpoint using platform-http component.\n" +
-            "#   Starts a real server on port 8080. Run this file then call:\n" +
-            "#     curl http://localhost:8080/hello\n" +
-            "#     curl \"http://localhost:8080/hello?name=Pratyush\"\n" +
+            "#   Starts a real server on port 9999. Run this file then call:\n" +
+            "#     curl http://localhost:9999/hello\n" +
+            "#     curl \"http://localhost:9999/hello?name=Pratyush\"\n" +
             "# AUTHOR: Camel Studio\n" +
             "# STUB: none — live HTTP server\n\n" +
             "- route:\n" +
@@ -1053,7 +1077,7 @@ public class RouteBuilderApp extends Application {
             "        httpMethodRestrict: \"GET\"\n" +
             "      steps:\n" +
             "        - setBody:\n" +
-            "            simple: \"Hello, ${header.name}! Welcome to Camel REST on Quarkus.\"\n" +
+            "            simple: \"Hello, ${header.name}! Welcome to Camel REST on Camel Main.\"\n" +
             "        - log: \"[Chapter 8][HELLO] Served: ${body}\"\n" +
             "        - setHeader:\n" +
             "            name: \"Content-Type\"\n" +
@@ -1063,21 +1087,21 @@ public class RouteBuilderApp extends Application {
             "# ID: rest-dsl-crud\n" +
             "# ENABLED: true\n" +
             "# DESCRIPTION: Full CRUD REST API using the Camel REST DSL.\n" +
-            "#   Starts a live HTTP server on port 8080.\n" +
+            "#   Starts a live HTTP server on port 9999.\n" +
             "#\n" +
-            "#   CREATE:  curl -X POST http://localhost:8080/api/orders \\\n" +
+            "#   CREATE:  curl -X POST http://localhost:9999/api/orders \\\n" +
             "#              -H 'Content-Type: application/json' \\\n" +
             "#              -d '{\"product\":\"Widget\",\"qty\":5}'\n" +
             "#\n" +
-            "#   READ:    curl http://localhost:8080/api/orders/ORD-001\n" +
+            "#   READ:    curl http://localhost:9999/api/orders/ORD-001\n" +
             "#\n" +
-            "#   UPDATE:  curl -X PUT http://localhost:8080/api/orders/ORD-001 \\\n" +
+            "#   UPDATE:  curl -X PUT http://localhost:9999/api/orders/ORD-001 \\\n" +
             "#              -H 'Content-Type: application/json' \\\n" +
             "#              -d '{\"qty\":10}'\n" +
             "#\n" +
-            "#   DELETE:  curl -X DELETE http://localhost:8080/api/orders/ORD-001\n" +
+            "#   DELETE:  curl -X DELETE http://localhost:9999/api/orders/ORD-001\n" +
             "#\n" +
-            "#   LIST:    curl http://localhost:8080/api/orders\n" +
+            "#   LIST:    curl http://localhost:9999/api/orders\n" +
             "# AUTHOR: Camel Studio\n" +
             "# STUB: none — live HTTP server\n\n" +
             "- rest:\n" +
@@ -1674,5 +1698,15 @@ public class RouteBuilderApp extends Application {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static boolean hasStdbuf() {
+        String os = System.getProperty("os.name").toLowerCase();
+        if (!os.contains("linux")) {
+            return false;
+        }
+        return new java.io.File("/usr/bin/stdbuf").exists() ||
+               new java.io.File("/bin/stdbuf").exists() ||
+               new java.io.File("/usr/sbin/stdbuf").exists();
     }
 }

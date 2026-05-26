@@ -323,11 +323,11 @@ public class SampleDecoupledTest {
         java.util.List<String> deps = new java.util.ArrayList<>();
         String type = "groovy";
         if ("groovy".equals(type)) {
-            deps.add("org.apache.camel.quarkus:camel-quarkus-groovy-dsl:3.16.0");
+            deps.add("org.apache.camel:camel-groovy:4.20.0");
             deps.add("org.apache.groovy:groovy-xml:4.0.21");
             deps.add("org.apache.groovy:groovy-json:4.0.21");
         }
-        assertTrue(deps.contains("org.apache.camel.quarkus:camel-quarkus-groovy-dsl:3.16.0"));
+        assertTrue(deps.contains("org.apache.camel:camel-groovy:4.20.0"));
         assertTrue(deps.contains("org.apache.groovy:groovy-xml:4.0.21"));
         assertTrue(deps.contains("org.apache.groovy:groovy-json:4.0.21"));
     }
@@ -357,30 +357,27 @@ public class SampleDecoupledTest {
 
     @Test
     public void testRuntimeSelectionOption() {
-        String defaultOption = "Quarkus Runtime";
+        String defaultOption = "Camel Main Runtime";
         String mainOption = "Camel Main Runtime";
         
-        boolean isQuarkusDefault = "Quarkus Runtime".equals(defaultOption);
-        boolean isQuarkusMain = "Quarkus Runtime".equals(mainOption);
+        boolean isMainDefault = "Camel Main Runtime".equals(defaultOption);
+        boolean isMainMain = "Camel Main Runtime".equals(mainOption);
         
-        assertTrue(isQuarkusDefault);
-        assertFalse(isQuarkusMain);
+        assertTrue(isMainDefault);
+        assertTrue(isMainMain);
     }
 
     @Test
-    public void testJoorQuarkusFallbackLogic() {
+    public void testJoorMainExecutionLogic() {
         String yamlContent = "        - transform:\n" +
                              "            joor: \"resource:file:Transform.java\"";
         
         boolean usesJoor = yamlContent.contains("joor:") || yamlContent.contains("<joor>");
-        boolean isQuarkus = true;
+        boolean isQuarkus = false;
         
-        boolean fellBack = usesJoor && isQuarkus;
-        if (fellBack) {
-            isQuarkus = false;
-        }
+        boolean usesMain = usesJoor && !isQuarkus;
         
-        assertTrue(fellBack);
+        assertTrue(usesMain);
         assertFalse(isQuarkus);
     }
 
@@ -389,9 +386,9 @@ public class SampleDecoupledTest {
         String type = "joor";
         java.util.List<String> deps = new java.util.ArrayList<>();
         if ("joor".equals(type)) {
-            deps.add("org.apache.camel.quarkus:camel-quarkus-joor:3.35.0");
+            deps.add("org.apache.camel:camel-joor:4.18.2");
         }
         assertEquals(1, deps.size());
-        assertEquals("org.apache.camel.quarkus:camel-quarkus-joor:3.35.0", deps.get(0));
+        assertEquals("org.apache.camel:camel-joor:4.18.2", deps.get(0));
     }
 }

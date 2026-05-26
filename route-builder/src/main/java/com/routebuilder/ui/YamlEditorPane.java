@@ -113,7 +113,7 @@ public class YamlEditorPane extends VBox {
         btnPlayFile.getStyleClass().addAll("editor-btn");
         btnPlayFile.setStyle("-fx-text-fill: #4CAF50;");
         btnPlayFile.setOnAction(e -> {
-            if (onPlayFile != null && currentFile != null) onPlayFile.accept(currentFile, "offline");
+            if (onPlayFile != null && currentFile != null) onPlayFile.accept(currentFile, "dev");
         });
 
         Button btnStopFile = new Button();
@@ -526,6 +526,20 @@ public class YamlEditorPane extends VBox {
             }
         } catch (IOException ex) {
             ex.printStackTrace();
+        }
+    }
+
+    public void closeFile() {
+        currentFile = null;
+        title.setText("EDITOR: Untitled.yaml");
+        setText("");
+        if (lspManager != null) {
+            lspManager.setDocumentUri("");
+            try {
+                if (initialized) {
+                    engine.executeScript("if(window.showDiagnostics) window.showDiagnostics('[]');");
+                }
+            } catch (Exception e) {}
         }
     }
 

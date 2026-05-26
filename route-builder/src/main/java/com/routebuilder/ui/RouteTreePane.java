@@ -483,6 +483,14 @@ public class RouteTreePane extends VBox {
                 
                 // Expand parent to show the new item
                 expandToPath(newFile, rootItem);
+                
+                if (!isFolder) {
+                    TreeItem<File> item = findTreeItem(rootItem, newFile);
+                    if (item != null) {
+                        treeView.getSelectionModel().clearSelection();
+                        treeView.getSelectionModel().select(item);
+                    }
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -557,6 +565,16 @@ public class RouteTreePane extends VBox {
         return false;
     }
 
+    private TreeItem<File> findFirstFile(TreeItem<File> item) {
+        if (item == null) return null;
+        if (item.getValue() != null && item.getValue().isFile()) return item;
+        for (TreeItem<File> child : item.getChildren()) {
+            TreeItem<File> found = findFirstFile(child);
+            if (found != null) return found;
+        }
+        return null;
+    }
+
     public void setBaseDirectory(File newBaseDir) {
         this.baseDirectory = newBaseDir;
         this.rootItem.setValue(newBaseDir);
@@ -564,6 +582,17 @@ public class RouteTreePane extends VBox {
             title.setText("EXPLORER: " + newBaseDir.getName().toUpperCase());
         }
         refresh();
+        
+        TreeItem<File> firstFileItem = findFirstFile(rootItem);
+        if (firstFileItem != null) {
+            treeView.getSelectionModel().clearSelection();
+            treeView.getSelectionModel().select(firstFileItem);
+        } else {
+            treeView.getSelectionModel().clearSelection();
+            if (this.onFileSelected != null) {
+                this.onFileSelected.accept(null);
+            }
+        }
     }
 
     public void refresh() {

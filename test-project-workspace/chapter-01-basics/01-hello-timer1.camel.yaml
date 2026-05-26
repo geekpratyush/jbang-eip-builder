@@ -7,7 +7,7 @@
 - route:
     id: "hello-timer"
     from:
-      uri: "timer:hello?period=3000"
+      uri: "timer:hello?period=300"
       steps:
         - log:
             message: "[Chapter 1] Hello from Apache Camel! Timestamp: ${date:now:HH:mm:ss}"

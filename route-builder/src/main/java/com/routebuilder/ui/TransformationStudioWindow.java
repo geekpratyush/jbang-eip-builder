@@ -49,6 +49,7 @@ public class TransformationStudioWindow {
     private File sourceRawFile, sourceXmlFile, logicFile, logicSecondaryFile;
 
     private TextArea consoleArea;
+    private Process snippetProcess;
     private final List<Object> persistentBridges = new ArrayList<>();
 
     private boolean sourceRawInitialized, sourceXmlInitialized, logicInitialized, targetInitialized;
@@ -173,7 +174,15 @@ public class TransformationStudioWindow {
         stage.setScene(scene);
         
         RouteBuilderApp.themedRoots.add(root);
-        stage.setOnHidden(e -> RouteBuilderApp.themedRoots.remove(root));
+        stage.setOnHidden(e -> {
+            RouteBuilderApp.themedRoots.remove(root);
+            if (snippetProcess != null && snippetProcess.isAlive()) {
+                try {
+                    snippetProcess.destroy();
+                    snippetProcess.descendants().forEach(ProcessHandle::destroyForcibly);
+                } catch (Exception ignored) {}
+            }
+        });
         
         stage.setMaximized(true);
         stage.show();
@@ -1294,10 +1303,168 @@ public class TransformationStudioWindow {
                           "XML DSL:\n" + txtXml.getText());
         });
 
-        vbox.getChildren().addAll(lblDep, depTabPane, lblDsl, dslTabPane, btnCopy);
+        Button btnRunSnippet = new Button("Run Route", new FontIcon("fas-play"));
+        btnRunSnippet.getStyleClass().addAll("editor-btn", "btn-run");
+
+        Button btnStopSnippet = new Button("Stop Route", new FontIcon("fas-stop"));
+        btnStopSnippet.getStyleClass().addAll("editor-btn", "btn-stop");
+        btnStopSnippet.setDisable(true);
+
+        if (snippetProcess != null && snippetProcess.isAlive()) {
+            btnRunSnippet.setDisable(true);
+            btnStopSnippet.setDisable(false);
+        }
+
+        btnRunSnippet.setOnAction(e -> {
+            if (snippetProcess != null && snippetProcess.isAlive()) {
+                try {
+                    snippetProcess.destroy();
+                    snippetProcess.descendants().forEach(ProcessHandle::destroyForcibly);
+                } catch (Exception ignored) {}
+                snippetProcess = null;
+            }
+
+            Tab selectedTab = dslTabPane.getSelectionModel().getSelectedItem();
+            String tabText = selectedTab != null ? selectedTab.getText() : "YAML";
+
+            String snippetContent = "";
+            String fileName = "";
+            if ("YAML".equals(tabText)) {
+                snippetContent = yamlWithDep;
+                fileName = "temp-transform-test-route.camel.yaml";
+            } else if ("Java".equals(tabText)) {
+                snippetContent = javaWithDep;
+                fileName = "TransformRoute.java";
+            } else if ("XML".equals(tabText)) {
+                snippetContent = xmlWithDep;
+                fileName = "temp-transform-test-route.camel.xml";
+            }
+
+            File runDir = currentFolder;
+            if (runDir == null) {
+                runDir = currentMappingsPath;
+            }
+            if (runDir == null || !runDir.exists()) {
+                runDir = new File(System.getProperty("user.dir"));
+            }
+
+            File tempFile = new File(runDir, fileName);
+            try {
+                Files.writeString(tempFile.toPath(), snippetContent);
+                tempFile.deleteOnExit();
+            } catch (Exception ex) {
+                log("Failed to write temporary route file: " + ex.getMessage());
+                return;
+            }
+
+            String os = System.getProperty("os.name").toLowerCase();
+            String jbangScript = os.contains("win") ? "jbang.cmd" : "jbang";
+            File jbangExe = new File(System.getProperty("user.dir"), jbangScript);
+            if (!jbangExe.exists()) {
+                jbangExe = new File(new File(System.getProperty("user.dir"), "route-builder"), jbangScript);
+            }
+            String executablePath = jbangExe.exists() ? jbangExe.getAbsolutePath() : "jbang";
+
+            List<String> command = new ArrayList<>();
+            if (hasStdbuf()) {
+                command.add("stdbuf");
+                command.add("-oL");
+                command.add("-eL");
+            }
+            command.add(executablePath);
+            command.add("camel@apache/camel");
+            command.add("run");
+            command.add(tempFile.getAbsolutePath());
+            command.add("--runtime=main");
+            command.add("--dev");
+
+            try {
+                ProcessBuilder pb = new ProcessBuilder(command);
+                pb.environment().put("TERM", "xterm-256color");
+                pb.directory(runDir);
+                snippetProcess = pb.start();
+
+                btnRunSnippet.setDisable(true);
+                btnStopSnippet.setDisable(false);
+
+                log("╔══ Running Camel Route from Snippet ══╗");
+                log("Command: " + String.join(" ", command));
+
+                pipeSnippetStream(snippetProcess, snippetProcess.getInputStream(), btnRunSnippet, btnStopSnippet, tempFile);
+                pipeSnippetStream(snippetProcess, snippetProcess.getErrorStream(), btnRunSnippet, btnStopSnippet, tempFile);
+
+            } catch (Exception ex) {
+                log("Failed to start route process: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
+
+        btnStopSnippet.setOnAction(e -> {
+            btnRunSnippet.setDisable(false);
+            btnStopSnippet.setDisable(true);
+            log("Stopping route process...");
+            if (snippetProcess != null && snippetProcess.isAlive()) {
+                try {
+                    snippetProcess.destroy();
+                    snippetProcess.descendants().forEach(ProcessHandle::destroyForcibly);
+                } catch (Exception ignored) {}
+                snippetProcess = null;
+            }
+        });
+
+        HBox actionBox = new HBox(10);
+        actionBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        actionBox.getChildren().addAll(btnCopy, btnRunSnippet, btnStopSnippet);
+
+        vbox.getChildren().addAll(lblDep, depTabPane, lblDsl, dslTabPane, actionBox);
         dialog.getDialogPane().setContent(vbox);
         RouteBuilderApp.themeDialog(dialog);
         dialog.showAndWait();
+    }
+
+    private boolean hasStdbuf() {
+        String os = System.getProperty("os.name").toLowerCase();
+        if (!os.contains("linux")) return false;
+        try {
+            Process p = Runtime.getRuntime().exec(new String[]{"which", "stdbuf"});
+            return p.waitFor() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private String stripAnsi(String text) {
+        if (text == null) return "";
+        return text.replaceAll("\\u001B\\[[;\\d]*[ -/]*[@-~]", "");
+    }
+
+    private void pipeSnippetStream(Process process, java.io.InputStream stream, Button btnRun, Button btnStop, File tempFile) {
+        new Thread(() -> {
+            byte[] buf = new byte[2048];
+            int n;
+            try {
+                while ((n = stream.read(buf)) != -1) {
+                    final String chunk = new String(buf, 0, n, java.nio.charset.StandardCharsets.UTF_8);
+                    String cleanChunk = stripAnsi(chunk);
+                    Platform.runLater(() -> consoleArea.appendText(cleanChunk));
+                }
+            } catch (Exception ignored) {
+            } finally {
+                Platform.runLater(() -> {
+                    if (process != null && !process.isAlive()) {
+                        btnRun.setDisable(false);
+                        btnStop.setDisable(true);
+                        try {
+                            int code = process.exitValue();
+                            log("Process exited with code: " + code);
+                        } catch (Exception ignored2) {}
+                        if (tempFile.exists()) {
+                            tempFile.delete();
+                        }
+                    }
+                });
+            }
+        }, "snippet-stream-pipe").start();
     }
 
     private void log(String msg) { Platform.runLater(() -> { String time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")); consoleArea.appendText("[" + time + "] " + msg + "\n"); }); }

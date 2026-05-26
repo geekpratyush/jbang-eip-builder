@@ -43,7 +43,7 @@ public class LspTest {
         initParams.setCapabilities(new ClientCapabilities());
         
         java.util.Map<String, Object> camelConfig = new java.util.HashMap<>();
-        camelConfig.put("camelCatalogProvider", "Quarkus");
+        camelConfig.put("camelCatalogProvider", "Main");
         java.util.Map<String, Object> settings = new java.util.HashMap<>();
         settings.put("camel", camelConfig);
         initParams.setInitializationOptions(settings);
