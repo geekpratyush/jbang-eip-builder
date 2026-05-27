@@ -102,18 +102,27 @@ public class TransformationBackend {
             configXml = sb.toString();
         }
 
-        File tempConfig = File.createTempFile("smooks-config-", ".xml", currentFolder);
         Smooks smooks = null;
         try {
-            Files.writeString(tempConfig.toPath(), configXml);
             smooks = new Smooks();
-            smooks.addResourceConfigs(toFileUriString(tempConfig));
+            byte[] configBytes = configXml.getBytes(StandardCharsets.UTF_8);
+            try (InputStream stream = new ByteArrayInputStream(configBytes)) {
+                if (currentFolder != null) {
+                    String baseUri = toFileUriString(currentFolder);
+                    if (!baseUri.endsWith("/")) {
+                        baseUri += "/";
+                    }
+                    smooks.addResourceConfigs(baseUri, stream);
+                } else {
+                    smooks.addResourceConfigs(stream);
+                }
+            }
             
             StringSink sink = new StringSink();
             smooks.filterSource(new org.smooks.io.source.StringSource(input), sink);
             String result = sink.toString();
             if (result == null || result.trim().isEmpty() || result.trim().equals("[]")) {
-                 return "Smooks filtered successfully but returned no data. Check your <exports> or reader configuration.\nConfig Path: " + tempConfig.getAbsolutePath();
+                 return "Smooks filtered successfully but returned no data. Check your <exports> or reader configuration.";
             }
             try {
                 return prettyPrintXml(result);
@@ -122,7 +131,6 @@ public class TransformationBackend {
             }
         } finally {
             if (smooks != null) smooks.close();
-            tempConfig.delete();
         }
     }
 

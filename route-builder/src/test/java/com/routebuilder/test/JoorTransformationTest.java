@@ -8,10 +8,18 @@ import java.nio.file.Files;
 
 public class JoorTransformationTest {
 
+    private File getTestFolder(String path) throws Exception {
+        java.net.URL resource = getClass().getResource(path);
+        if (resource == null) {
+            throw new IllegalArgumentException("Resource not found: " + path);
+        }
+        return new File(resource.toURI());
+    }
+
     @Test
     public void testJoorSnippetExample1() throws Exception {
         System.out.println("=== RUNNING JOOR SNIPPET EXAMPLE 1 TEST ===");
-        File folder = new File("../test-mapping/joor-java-mapper/example1");
+        File folder = getTestFolder("/test-mapping/joor-java-mapper/example1");
         File logicFile = new File(folder, "Transform.java");
         File sourceFile = new File(folder, "source.xml");
         
@@ -32,7 +40,7 @@ public class JoorTransformationTest {
     @Test
     public void testJoorClassExample2() throws Exception {
         System.out.println("=== RUNNING JOOR CLASS EXAMPLE 2 TEST ===");
-        File folder = new File("../test-mapping/joor-java-mapper/example2");
+        File folder = getTestFolder("/test-mapping/joor-java-mapper/example2");
         File logicFile = new File(folder, "Transform.java");
         File sourceFile = new File(folder, "source.xml");
         

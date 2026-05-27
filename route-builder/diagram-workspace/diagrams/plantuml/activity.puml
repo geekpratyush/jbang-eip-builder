@@ -1,0 +1,13 @@
+@startuml
+start
+:Login;
+if (Authenticated?) then (yes)
+  :View Dashboard;
+  :Select Item;
+  :Add to Cart;
+  :Checkout;
+else (no)
+  :Redirect to Login;
+endif
+stop
+@enduml

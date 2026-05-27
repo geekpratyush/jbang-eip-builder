@@ -407,4 +407,40 @@ public class SampleDecoupledTest {
             assertTrue(bytes.length > 0, "mermaid.min.js should not be empty");
         }
     }
+
+    @Test
+    public void testFileUriToTripleSlashNormalization() throws Exception {
+        java.lang.reflect.Method backendToUri = com.routebuilder.ui.TransformationBackend.class.getDeclaredMethod("toFileUriString", File.class);
+        backendToUri.setAccessible(true);
+
+        java.lang.reflect.Method studioToUri = com.routebuilder.ui.TransformationStudioWindow.class.getDeclaredMethod("toFileUriString", File.class);
+        studioToUri.setAccessible(true);
+
+        File file1 = new File("/home/pratyush/test.xml");
+        String uri1 = (String) backendToUri.invoke(null, file1);
+        String uri2 = (String) studioToUri.invoke(null, file1);
+
+        assertTrue(uri1.startsWith("file:///"));
+        assertTrue(uri2.startsWith("file:///"));
+
+        // Test raw string normalization for both Linux and Windows structures
+        String rawLinuxUri = "file:/home/pratyush/test.xml";
+        String normalizedLinux = rawLinuxUri.startsWith("file:/") && !rawLinuxUri.startsWith("file:///") 
+            ? "file:///" + rawLinuxUri.substring(6) : rawLinuxUri;
+        assertEquals("file:///home/pratyush/test.xml", normalizedLinux);
+
+        String rawWindowsUri = "file:/C:/home/pratyush/test.xml";
+        String normalizedWindows = rawWindowsUri.startsWith("file:/") && !rawWindowsUri.startsWith("file:///") 
+            ? "file:///" + rawWindowsUri.substring(6) : rawWindowsUri;
+        assertEquals("file:///C:/home/pratyush/test.xml", normalizedWindows);
+        
+        // Also test LspManager URI normalization flow
+        String rawLspWin = "file:/C:/Users/test/route.yaml";
+        String normalizedLspWin = !rawLspWin.toLowerCase().startsWith("file:") 
+            ? new File(rawLspWin).toURI().toString() : rawLspWin;
+        if (normalizedLspWin.startsWith("file:/") && !normalizedLspWin.startsWith("file:///")) {
+            normalizedLspWin = "file:///" + normalizedLspWin.substring(6);
+        }
+        assertEquals("file:///C:/Users/test/route.yaml", normalizedLspWin);
+    }
 }

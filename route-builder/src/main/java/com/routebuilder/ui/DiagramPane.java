@@ -47,6 +47,17 @@ public class DiagramPane extends VBox {
         this.currentFile = file;
     }
 
+    private String currentTheme = "VSCode Dark";
+    public void setTheme(String theme) {
+        this.currentTheme = theme;
+        if (classDiagramPane != null) {
+            classDiagramPane.setTheme(theme);
+        }
+        if (currentYaml != null && !currentYaml.isEmpty()) {
+            renderDiagram(currentYaml);
+        }
+    }
+
     public static class BeanData {
         public String name;
         public String type;
@@ -406,6 +417,7 @@ public class DiagramPane extends VBox {
         if (isUmlDiagram) {
             if (classDiagramPane == null) {
                 classDiagramPane = new ClassDiagramPane();
+                classDiagramPane.setTheme(currentTheme);
             }
             if (splitPane.getItems().contains(scrollPane)) {
                 splitPane.getItems().remove(scrollPane);
@@ -692,36 +704,30 @@ public class DiagramPane extends VBox {
                 card.getStyleClass().add("eip-node");
                 if (b.isLocal) {
                     card.getStyleClass().add("node-bean-local");
-                    card.setStyle("-fx-background-color: linear-gradient(to bottom right, #2b3e50, #1e2b37); " +
-                                 "-fx-padding: 10; -fx-border-radius: 8; -fx-background-radius: 8; " +
-                                 "-fx-border-color: #3498db; -fx-border-width: 1.5;");
                 } else {
                     card.getStyleClass().add("node-bean-ref");
-                    card.setStyle("-fx-background-color: linear-gradient(to bottom right, #2d2d30, #252526); " +
-                                 "-fx-padding: 10; -fx-border-radius: 8; -fx-background-radius: 8; " +
-                                 "-fx-border-color: #7a7a7a; -fx-border-width: 1.5; -fx-border-style: dashed;");
                 }
 
                 Label lblHeader = new Label(b.name);
-                lblHeader.setStyle("-fx-font-weight: bold; -fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                lblHeader.getStyleClass().add("node-bean-title");
 
                 String cleanType = b.type;
                 if (cleanType.contains(".")) {
                     cleanType = cleanType.substring(cleanType.lastIndexOf('.') + 1);
                 }
                 Label lblType = new Label(b.isLocal ? "<<" + cleanType + ">>" : "<<ref: " + cleanType + ">>");
-                lblType.setStyle("-fx-font-style: italic; -fx-text-fill: " + (b.isLocal ? "#3498db" : "#aaaaaa") + "; -fx-font-size: 11px;");
+                lblType.getStyleClass().add(b.isLocal ? "node-bean-type-local" : "node-bean-type-ref");
 
                 card.getChildren().addAll(lblHeader, lblType);
 
                 if (!b.properties.isEmpty()) {
                     VBox propsBox = new VBox(1);
-                    propsBox.setStyle("-fx-padding: 5 0 0 0; -fx-border-color: #3f3f46; -fx-border-width: 0.5 0 0 0;");
+                    propsBox.getStyleClass().add("node-bean-props-box");
                     int count = 0;
                     for (Map.Entry<String, String> entry : b.properties.entrySet()) {
                         if (count >= 2) {
                             Label lblMore = new Label("... and " + (b.properties.size() - 2) + " more");
-                            lblMore.setStyle("-fx-text-fill: #71717a; -fx-font-size: 10px;");
+                            lblMore.getStyleClass().add("node-bean-prop-more");
                             propsBox.getChildren().add(lblMore);
                             break;
                         }
@@ -730,7 +736,7 @@ public class DiagramPane extends VBox {
                             propType = propType.substring(propType.lastIndexOf('.') + 1);
                         }
                         Label lblProp = new Label(entry.getKey() + ": " + propType);
-                        lblProp.setStyle("-fx-text-fill: #cccccc; -fx-font-size: 10px;");
+                        lblProp.getStyleClass().add("node-bean-prop");
                         propsBox.getChildren().add(lblProp);
                         count++;
                     }
@@ -1953,6 +1959,7 @@ public class DiagramPane extends VBox {
         
         StackPane wrapper = new StackPane(box);
         wrapper.setPadding(new Insets(10));
+        wrapper.getStyleClass().addAll("diagram-node", styleClass);
         return wrapper;
     }
 
@@ -1965,14 +1972,14 @@ public class DiagramPane extends VBox {
         
         if ("standard".equals(type)) {
             Line line1 = isHorizontal ? new Line(0, 0, lineLength, 0) : new Line(0, 0, 0, lineLength);
-            line1.setStroke(Color.web("#888888"));
+            line1.getStyleClass().add("diagram-connector");
             line1.setStrokeWidth(2.5);
             box.getChildren().add(line1);
             
             javafx.scene.shape.Polygon arrow = isHorizontal ? 
                 new javafx.scene.shape.Polygon(0, -4, 0, 4, 6, 0) : 
                 new javafx.scene.shape.Polygon(-4, 0, 4, 0, 0, 6);
-            arrow.setFill(Color.web("#888888"));
+            arrow.getStyleClass().add("diagram-arrow");
             box.getChildren().add(arrow);
         } else if ("split".equals(type)) {
             javafx.scene.shape.SVGPath branch = new javafx.scene.shape.SVGPath();

@@ -20,6 +20,9 @@ public class ClassDiagramPane extends VBox {
     private boolean isInitialized = false;
     private String lastMermaidCode = "";
 
+    private String currentTheme = "VSCode Dark";
+    private String scriptTag = "";
+
     public ClassDiagramPane() {
         webView = new WebView();
         engine = webView.getEngine();
@@ -37,19 +40,92 @@ public class ClassDiagramPane extends VBox {
             e.printStackTrace();
         }
 
-        String scriptTag;
         if (!mermaidJs.isEmpty()) {
             scriptTag = "<script>" + mermaidJs + "</script>";
         } else {
             scriptTag = "<script src=\"https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js\"></script>";
         }
 
-        // Load the base HTML once
-        String baseHtml = "<html>" +
+        engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
+            if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
+                isInitialized = true;
+                if (!lastMermaidCode.isEmpty()) {
+                    renderCode(lastMermaidCode);
+                }
+            }
+        });
+        engine.loadContent(generateBaseHtml());
+    }
+
+    public void setTheme(String theme) {
+        this.currentTheme = theme;
+        isInitialized = false;
+        engine.loadContent(generateBaseHtml());
+    }
+
+    private String generateBaseHtml() {
+        String bgColor = "#1e1e1e";
+        String fgColor = "white";
+        String mermaidTheme = "dark";
+        String background = "#1e1e1e";
+        String primaryColor = "#1e1e1e";
+        String primaryTextColor = "#d4d4d4";
+        String primaryBorderColor = "#3f3f46";
+        String lineColor = "#52525b";
+        String secondaryColor = "#27272a";
+        String tertiaryColor = "#27272a";
+
+        if ("IntelliJ Light".equalsIgnoreCase(currentTheme)) {
+            bgColor = "#ffffff";
+            fgColor = "#333333";
+            mermaidTheme = "default";
+            background = "#ffffff";
+            primaryColor = "#e2e8f0";
+            primaryTextColor = "#1e293b";
+            primaryBorderColor = "#cbd5e1";
+            lineColor = "#94a3b8";
+            secondaryColor = "#f1f5f9";
+            tertiaryColor = "#f1f5f9";
+        } else if ("Dracula".equalsIgnoreCase(currentTheme)) {
+            bgColor = "#282a36";
+            fgColor = "#f8f8f2";
+            mermaidTheme = "dark";
+            background = "#282a36";
+            primaryColor = "#44475a";
+            primaryTextColor = "#f8f8f2";
+            primaryBorderColor = "#6272a4";
+            lineColor = "#6272a4";
+            secondaryColor = "#282a36";
+            tertiaryColor = "#282a36";
+        } else if ("Monokai".equalsIgnoreCase(currentTheme)) {
+            bgColor = "#272822";
+            fgColor = "#f8f8f2";
+            mermaidTheme = "dark";
+            background = "#272822";
+            primaryColor = "#3e3d32";
+            primaryTextColor = "#f8f8f2";
+            primaryBorderColor = "#75715e";
+            lineColor = "#75715e";
+            secondaryColor = "#272822";
+            tertiaryColor = "#272822";
+        } else if ("Hacker".equalsIgnoreCase(currentTheme)) {
+            bgColor = "#050505";
+            fgColor = "#00ff00";
+            mermaidTheme = "dark";
+            background = "#050505";
+            primaryColor = "#001d00";
+            primaryTextColor = "#00ff00";
+            primaryBorderColor = "#00ff00";
+            lineColor = "#00ff00";
+            secondaryColor = "#000000";
+            tertiaryColor = "#000000";
+        }
+
+        return "<html>" +
                 "<head>" +
                 scriptTag +
                 "<style>" +
-                "  body { background-color: #1e1e1e; color: white; margin: 0; padding: 20px; overflow: auto; font-family: 'Segoe UI', sans-serif; }" +
+                "  body { background-color: " + bgColor + "; color: " + fgColor + "; margin: 0; padding: 20px; overflow: auto; font-family: 'Segoe UI', sans-serif; }" +
                 "  .mermaid { display: flex; justify-content: center; transition: opacity 0.3s; }" +
                 "  .status { position: fixed; top: 10px; right: 10px; font-size: 10px; color: #444; }" +
                 "  #error-box { color: #f44336; padding: 10px; border: 1px solid #f44336; border-radius: 4px; display: none; font-size: 12px; margin-top: 20px; }" +
@@ -73,17 +149,17 @@ public class ClassDiagramPane extends VBox {
                 "    try {" +
                 "      mermaid.initialize({" +
                 "        startOnLoad: false," +
-                "        theme: 'dark'," +
+                "        theme: '" + mermaidTheme + "'," +
                 "        securityLevel: 'loose'," +
                 "        class: { useMaxWidth: false }," +
                 "        themeVariables: {" +
-                "          background: '#1e1e1e'," +
-                "          primaryColor: '#1e1e1e'," +
-                "          primaryTextColor: '#d4d4d4'," +
-                "          primaryBorderColor: '#3f3f46'," +
-                "          lineColor: '#52525b'," +
-                "          secondaryColor: '#27272a'," +
-                "          tertiaryColor: '#27272a'" +
+                "          background: '" + background + "'," +
+                "          primaryColor: '" + primaryColor + "'," +
+                "          primaryTextColor: '" + primaryTextColor + "'," +
+                "          primaryBorderColor: '" + primaryBorderColor + "'," +
+                "          lineColor: '" + lineColor + "'," +
+                "          secondaryColor: '" + secondaryColor + "'," +
+                "          tertiaryColor: '" + tertiaryColor + "'" +
                 "        }" +
                 "      });" +
                 "      mermaid.render('graphDiv', code).then(({svg}) => {" +
@@ -102,16 +178,6 @@ public class ClassDiagramPane extends VBox {
                 "</script>" +
                 "</body>" +
                 "</html>";
-        
-        engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
-            if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
-                isInitialized = true;
-                if (!lastMermaidCode.isEmpty()) {
-                    renderCode(lastMermaidCode);
-                }
-            }
-        });
-        engine.loadContent(baseHtml);
     }
 
     public void renderClassDiagram(String javaCode) {
@@ -326,7 +392,7 @@ public class ClassDiagramPane extends VBox {
                 if (!classMembers.containsKey(ext)) {
                     sb.append("class ").append(ext).append(" {\n  <<External>>\n}\n");
                 }
-                sb.append("style ").append(ext).append(" fill:#1a3a5a,stroke:#3a5a7a,stroke-width:2px,color:#fff\n");
+                sb.append(getExternalStyleString(ext));
             }
 
             for (String rel : relations) {
@@ -407,7 +473,7 @@ public class ClassDiagramPane extends VBox {
         for (String ext : externalClasses) {
             if (!classMembers.containsKey(ext)) {
                 sb.append("class ").append(ext).append(" {\n  <<External>>\n}\n");
-                sb.append("style ").append(ext).append(" fill:#1a3a5a,stroke:#3a5a7a,stroke-width:2px,color:#fff\n");
+                sb.append(getExternalStyleString(ext));
             }
         }
 
@@ -432,5 +498,31 @@ public class ClassDiagramPane extends VBox {
         }
 
         return sb.toString();
+    }
+
+    private String getExternalStyleString(String ext) {
+        String fill = "#1a3a5a";
+        String stroke = "#3a5a7a";
+        String color = "#fff";
+        
+        if ("IntelliJ Light".equalsIgnoreCase(currentTheme)) {
+            fill = "#e2e8f0";
+            stroke = "#94a3b8";
+            color = "#1e293b";
+        } else if ("Dracula".equalsIgnoreCase(currentTheme)) {
+            fill = "#44475a";
+            stroke = "#6272a4";
+            color = "#f8f8f2";
+        } else if ("Monokai".equalsIgnoreCase(currentTheme)) {
+            fill = "#3e3d32";
+            stroke = "#75715e";
+            color = "#f8f8f2";
+        } else if ("Hacker".equalsIgnoreCase(currentTheme)) {
+            fill = "#001a00";
+            stroke = "#00ff00";
+            color = "#00ff00";
+        }
+        
+        return "style " + ext + " fill:" + fill + ",stroke:" + stroke + ",stroke-width:2px,color:" + color + "\n";
     }
 }

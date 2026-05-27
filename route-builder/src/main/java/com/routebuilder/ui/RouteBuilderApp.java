@@ -14,10 +14,15 @@ public class RouteBuilderApp extends Application {
     private RouteTreePane treePane;
     private com.routebuilder.lsp.LspManager lspManager;
     private ConsolePane consolePane;
+    private HelpPortalPane helpPortalPane;
 
     public static String currentThemeClass = "theme-vscode-dark";
+    public static String currentThemeName = "VSCode Dark";
     public static String currentDynamicCssUri = null;
     public static final java.util.List<javafx.scene.Parent> themedRoots = new java.util.ArrayList<>();
+    public static RouteBuilderApp instance;
+    public static javafx.scene.layout.BorderPane rootNode;
+    public static javafx.scene.control.ComboBox<String> globalThemeBox;
 
     public static void themeDialog(javafx.scene.control.Dialog<?> dialog) {
         dialog.getDialogPane().getStyleClass().add(currentThemeClass);
@@ -125,6 +130,8 @@ public class RouteBuilderApp extends Application {
 
         BorderPane root = new BorderPane();
         root.getStyleClass().add("app-root");
+        instance = this;
+        rootNode = root;
 
         // Top Menu Bar
         javafx.scene.control.MenuBar menuBar = new javafx.scene.control.MenuBar();
@@ -307,13 +314,35 @@ public class RouteBuilderApp extends Application {
             studio.show();
         });
 
+        javafx.scene.control.Button btnValidateStudio = new javafx.scene.control.Button("Validate", new org.kordamp.ikonli.javafx.FontIcon("fas-check-double"));
+        btnValidateStudio.getStyleClass().addAll("toolbar-btn", "btn-validate-studio");
+        btnValidateStudio.setTooltip(new javafx.scene.control.Tooltip("Open Universal Validator Studio"));
+        btnValidateStudio.setOnAction(e -> {
+            ValidatorStudioWindow validatorStudio = new ValidatorStudioWindow();
+            validatorStudio.show();
+        });
+
+        javafx.scene.control.Button btnDiagramStudio = new javafx.scene.control.Button("Diagrams", new org.kordamp.ikonli.javafx.FontIcon("fas-paint-brush"));
+        btnDiagramStudio.getStyleClass().addAll("toolbar-btn", "btn-diagram-studio");
+        btnDiagramStudio.setTooltip(new javafx.scene.control.Tooltip("Open Universal Diagram Studio"));
+        btnDiagramStudio.setOnAction(e -> {
+            DiagramStudioWindow diagramStudio = new DiagramStudioWindow();
+            diagramStudio.show();
+        });
+
+        java.util.prefs.Preferences startupPrefs = java.util.prefs.Preferences.userNodeForPackage(RouteBuilderApp.class);
+        String savedTheme = startupPrefs.get("themeName", "VSCode Dark");
+        currentThemeName = savedTheme;
+        currentThemeClass = "theme-" + savedTheme.toLowerCase().replace(" ", "-");
+
         javafx.scene.control.ComboBox<String> themeBox = new javafx.scene.control.ComboBox<>();
         themeBox.getItems().addAll("VSCode Dark", "IntelliJ Light", "Dracula", "Monokai", "Hacker");
-        themeBox.setValue("VSCode Dark");
+        themeBox.setValue(savedTheme);
+        globalThemeBox = themeBox;
         themeBox.setTooltip(new javafx.scene.control.Tooltip("Change IDE Theme"));
         themeBox.setOnAction(e -> applyTheme(themeBox.getValue(), root));
 
-        toolBar.getItems().addAll(btnViewExplorer, btnViewCode, btnViewDiagram, new javafx.scene.control.Separator(), btnSwapPanels, new javafx.scene.control.Separator(), btnPlay, btnStop, new javafx.scene.control.Separator(), btnInfraConfig, btnVariables, btnDecrypt, btnXsltMapper, btnTransform, btnExport, btnManual, new javafx.scene.control.Separator(), themeBox);
+        toolBar.getItems().addAll(btnViewExplorer, btnViewCode, btnViewDiagram, new javafx.scene.control.Separator(), btnSwapPanels, new javafx.scene.control.Separator(), btnPlay, btnStop, new javafx.scene.control.Separator(), btnInfraConfig, btnVariables, btnDecrypt, btnXsltMapper, btnTransform, btnValidateStudio, btnDiagramStudio, btnExport, btnManual, new javafx.scene.control.Separator(), themeBox);
 
         boolean[] swapCodeDiagram = {false};
 
@@ -337,10 +366,12 @@ public class RouteBuilderApp extends Application {
                 editorPane.loadFile(file);
             }
         });
+        themedRoots.add(treePane);
 
-        HelpPortalPane helpPortalPane = new HelpPortalPane(() -> {
+        helpPortalPane = new HelpPortalPane(() -> {
             viewHelpItem.setSelected(false);
         });
+        themedRoots.add(helpPortalPane);
 
         searchBox.setOnAction(e -> {
             String query = searchBox.getText();
@@ -577,6 +608,7 @@ public class RouteBuilderApp extends Application {
             treePane.refresh();
         });
         editorPane.setLspManager(lspManager);
+        themedRoots.add(editorPane);
 
         editorPane.setOnPlayFile((file, mode) -> {
             boolean offline = "offline".equals(mode);
@@ -649,6 +681,7 @@ public class RouteBuilderApp extends Application {
         diagramPane = new DiagramPane(theme -> applyTheme(theme, root), updatedYaml -> {
             editorPane.setText(updatedYaml);
         });
+        themedRoots.add(diagramPane);
 
         Runnable updateLayout = () -> {
             mainSplitPane.getItems().clear();
@@ -729,6 +762,7 @@ public class RouteBuilderApp extends Application {
 
         // 4. Bottom Panel: Console
         consolePane = new ConsolePane();
+        themedRoots.add(consolePane);
 
         // Wrap in a vertical SplitPane
         SplitPane verticalSplitPane = new SplitPane();
@@ -845,77 +879,123 @@ public class RouteBuilderApp extends Application {
         diagramPane.renderDiagram(yamlContent);
     }
 
-    private void applyTheme(String theme, javafx.scene.layout.BorderPane root) {
-        root.getStyleClass().removeAll("theme-vscode-dark", "theme-intellij-light", "theme-dracula", "theme-monokai", "theme-hacker");
-        String cssClass = "theme-" + theme.toLowerCase().replace(" ", "-");
-        currentThemeClass = cssClass;
-        if (!cssClass.equals("theme-vscode-dark")) {
-            root.getStyleClass().add(cssClass);
+    public static void setGlobalTheme(String theme) {
+        if (instance != null && instance.rootNode != null) {
+            instance.applyTheme(theme, instance.rootNode);
         }
-        if (cssClass.equals("theme-intellij-light")) editorPane.setTheme("vs");
-        else if (cssClass.equals("theme-hacker")) editorPane.setTheme("hc-black");
-        else editorPane.setTheme("vs-dark");
+    }
 
-        String baseColor = "#1e1e1e";
-        String textColor = "#cccccc";
-        if (cssClass.equals("theme-intellij-light")) { baseColor = "#ffffff"; textColor = "#333333"; }
-        else if (cssClass.equals("theme-dracula")) { baseColor = "#282a36"; textColor = "#f8f8f2"; }
-        else if (cssClass.equals("theme-monokai")) { baseColor = "#272822"; textColor = "#f8f8f2"; }
-        else if (cssClass.equals("theme-hacker")) { baseColor = "#050505"; textColor = "#00ff00"; }
-        
+    private boolean inThemeApply = false;
+    private void applyTheme(String theme, javafx.scene.layout.BorderPane root) {
+        if (inThemeApply) return;
+        inThemeApply = true;
         try {
-            javafx.scene.Scene currentScene = root.getScene();
-            if (currentScene != null) {
-                root.setStyle("");
+            currentThemeName = theme;
+            java.util.prefs.Preferences themePrefs = java.util.prefs.Preferences.userNodeForPackage(RouteBuilderApp.class);
+            themePrefs.put("themeName", theme);
 
-                currentScene.getStylesheets().removeIf(s -> s.startsWith("data:text/css"));
-                String keyCol = cssClass.equals("theme-intellij-light") ? "#0000ff" : "#9cdcfe";
-                String strCol = cssClass.equals("theme-intellij-light") ? "#a31515" : "#ce9178";
-                String numCol = cssClass.equals("theme-intellij-light") ? "#098658" : "#b5cea8";
-                String tagCol = cssClass.equals("theme-intellij-light") ? "#800000" : "#569cd6";
-                String editorBg = cssClass.equals("theme-intellij-light") ? "#ffffff" : "#1e1e1e";
-                String editorFg = cssClass.equals("theme-intellij-light") ? "#333333" : "#d4d4d4";
-                String borderCol = cssClass.equals("theme-intellij-light") ? "#cccccc" : "#444444";
+            if (globalThemeBox != null && !theme.equals(globalThemeBox.getValue())) {
+                javafx.application.Platform.runLater(() -> globalThemeBox.setValue(theme));
+            }
 
-                String menuBgCol = cssClass.equals("theme-intellij-light") ? "#f3f3f3" : "#252526";
-                String menuBorderCol = cssClass.equals("theme-intellij-light") ? "#cccccc" : "#454545";
-                String menuHoverCol = cssClass.equals("theme-intellij-light") ? "#e5e5e5" : "#094771";
-                String menuTextCol = cssClass.equals("theme-intellij-light") ? "#333333" : "#cccccc";
-                String menuTextHoverCol = cssClass.equals("theme-intellij-light") ? "#000000" : "#ffffff";
+            root.getStyleClass().removeAll("theme-vscode-dark", "theme-intellij-light", "theme-dracula", "theme-monokai", "theme-hacker");
+            String cssClass = "theme-" + theme.toLowerCase().replace(" ", "-");
+            currentThemeClass = cssClass;
+            root.getStyleClass().add(cssClass);
+            
+            if (cssClass.equals("theme-intellij-light")) editorPane.setTheme("vs");
+            else if (cssClass.equals("theme-hacker")) editorPane.setTheme("hc-black");
+            else editorPane.setTheme("vs-dark");
 
-                String dynamicCss = 
-                    ".root { -fx-base: " + baseColor + "; -fx-control-inner-background: " + baseColor + "; -fx-background-color: " + baseColor + "; -fx-text-base-color: " + textColor + "; -fx-text-background-color: " + textColor + "; -fx-text-fill: " + textColor + "; }\n" +
-                    ".context-menu { -fx-background-color: " + menuBgCol + "; -fx-border-color: " + menuBorderCol + "; }\n" +
-                    ".context-menu .menu-item:focused { -fx-background-color: " + menuHoverCol + "; }\n" +
-                    ".context-menu .menu-item .label { -fx-text-fill: " + menuTextCol + "; }\n" +
-                    ".context-menu .menu-item:focused .label { -fx-text-fill: " + menuTextHoverCol + "; }\n" +
-                    ".context-menu .ikonli-font-icon { -fx-icon-color: " + menuTextCol + "; }\n" +
-                    ".context-menu .menu-item:focused .ikonli-font-icon { -fx-icon-color: " + menuTextHoverCol + "; }\n" +
-                    ".syntax-editor .text.syntax-key { -fx-fill: " + keyCol + "; }\n" +
-                    ".syntax-editor .text.syntax-string { -fx-fill: " + strCol + "; }\n" +
-                    ".syntax-editor .text.syntax-number { -fx-fill: " + numCol + "; }\n" +
-                    ".syntax-editor .text.syntax-keyword { -fx-fill: " + keyCol + "; -fx-font-weight: bold; }\n" +
-                    ".syntax-editor .text.syntax-tag { -fx-fill: " + tagCol + "; }\n" +
-                    ".syntax-editor .text.syntax-attr { -fx-fill: " + keyCol + "; }\n" +
-                    ".syntax-editor { -fx-font-family: 'Monospaced'; -fx-font-size: 13px; -fx-background-color: " + editorBg + "; -fx-border-color: " + borderCol + "; -fx-border-radius: 3px; }\n" +
-                    ".syntax-editor .text { -fx-fill: " + editorFg + "; }";
-                String dataUri = "data:text/css;charset=utf-8," + java.net.URLEncoder.encode(dynamicCss, "UTF-8").replace("+", "%20");
-                currentDynamicCssUri = dataUri;
-                currentScene.getStylesheets().add(dataUri);
+            if (diagramPane != null) {
+                diagramPane.setTheme(theme);
+            }
 
-                for (javafx.scene.Parent themedRoot : themedRoots) {
-                    themedRoot.getStyleClass().removeAll("theme-vscode-dark", "theme-intellij-light", "theme-dracula", "theme-monokai", "theme-hacker");
-                    if (!cssClass.equals("theme-vscode-dark")) {
+            if (editorPane != null) {
+                editorPane.setTheme(theme);
+            }
+
+            if (helpPortalPane != null) {
+                helpPortalPane.setTheme(theme);
+            }
+
+            for (TransformationStudioWindow studio : TransformationStudioWindow.activeInstances) {
+                studio.setTheme(theme);
+            }
+
+            for (TransformationEditorWindow editor : TransformationEditorWindow.activeInstances) {
+                editor.setTheme(theme);
+            }
+
+            for (ValidatorStudioWindow vStudio : ValidatorStudioWindow.activeInstances) {
+                vStudio.setTheme(theme);
+            }
+
+            for (DiagramStudioWindow dStudio : DiagramStudioWindow.activeInstances) {
+                dStudio.setTheme(theme);
+            }
+
+            String baseColor = "#1e1e1e";
+            String textColor = "#cccccc";
+            if (cssClass.equals("theme-intellij-light")) { baseColor = "#ffffff"; textColor = "#333333"; }
+            else if (cssClass.equals("theme-dracula")) { baseColor = "#282a36"; textColor = "#f8f8f2"; }
+            else if (cssClass.equals("theme-monokai")) { baseColor = "#272822"; textColor = "#f8f8f2"; }
+            else if (cssClass.equals("theme-hacker")) { baseColor = "#050505"; textColor = "#00ff00"; }
+            
+            try {
+                javafx.scene.Scene currentScene = root.getScene();
+                if (currentScene != null) {
+                    root.setStyle("");
+
+                    currentScene.getStylesheets().removeIf(s -> s.startsWith("data:text/css"));
+                    String keyCol = cssClass.equals("theme-intellij-light") ? "#0000ff" : "#9cdcfe";
+                    String strCol = cssClass.equals("theme-intellij-light") ? "#a31515" : "#ce9178";
+                    String numCol = cssClass.equals("theme-intellij-light") ? "#098658" : "#b5cea8";
+                    String tagCol = cssClass.equals("theme-intellij-light") ? "#800000" : "#569cd6";
+                    String editorBg = cssClass.equals("theme-intellij-light") ? "#ffffff" : "#1e1e1e";
+                    String editorFg = cssClass.equals("theme-intellij-light") ? "#333333" : "#d4d4d4";
+                    String borderCol = cssClass.equals("theme-intellij-light") ? "#cccccc" : "#444444";
+
+                    String menuBgCol = cssClass.equals("theme-intellij-light") ? "#f3f3f3" : "#252526";
+                    String menuBorderCol = cssClass.equals("theme-intellij-light") ? "#cccccc" : "#454545";
+                    String menuHoverCol = cssClass.equals("theme-intellij-light") ? "#e5e5e5" : "#094771";
+                    String menuTextCol = cssClass.equals("theme-intellij-light") ? "#333333" : "#cccccc";
+                    String menuTextHoverCol = cssClass.equals("theme-intellij-light") ? "#000000" : "#ffffff";
+
+                    String dynamicCss = 
+                        ".root { -fx-base: " + baseColor + "; -fx-control-inner-background: " + baseColor + "; -fx-background-color: " + baseColor + "; -fx-text-base-color: " + textColor + "; -fx-text-background-color: " + textColor + "; -fx-text-fill: " + textColor + "; }\n" +
+                        ".context-menu { -fx-background-color: " + menuBgCol + "; -fx-border-color: " + menuBorderCol + "; }\n" +
+                        ".context-menu .menu-item:focused { -fx-background-color: " + menuHoverCol + "; }\n" +
+                        ".context-menu .menu-item .label { -fx-text-fill: " + menuTextCol + "; }\n" +
+                        ".context-menu .menu-item:focused .label { -fx-text-fill: " + menuTextHoverCol + "; }\n" +
+                        ".context-menu .ikonli-font-icon { -fx-icon-color: " + menuTextCol + "; }\n" +
+                        ".context-menu .menu-item:focused .ikonli-font-icon { -fx-icon-color: " + menuTextHoverCol + "; }\n" +
+                        ".syntax-editor .text.syntax-key { -fx-fill: " + keyCol + "; }\n" +
+                        ".syntax-editor .text.syntax-string { -fx-fill: " + strCol + "; }\n" +
+                        ".syntax-editor .text.syntax-number { -fx-fill: " + numCol + "; }\n" +
+                        ".syntax-editor .text.syntax-keyword { -fx-fill: " + keyCol + "; -fx-font-weight: bold; }\n" +
+                        ".syntax-editor .text.syntax-tag { -fx-fill: " + tagCol + "; }\n" +
+                        ".syntax-editor .text.syntax-attr { -fx-fill: " + keyCol + "; }\n" +
+                        ".syntax-editor { -fx-font-family: 'Monospaced'; -fx-font-size: 13px; -fx-background-color: " + editorBg + "; -fx-border-color: " + borderCol + "; -fx-border-radius: 3px; }\n" +
+                        ".syntax-editor .text { -fx-fill: " + editorFg + "; }";
+                    String dataUri = "data:text/css;charset=utf-8," + java.net.URLEncoder.encode(dynamicCss, "UTF-8").replace("+", "%20");
+                    currentDynamicCssUri = dataUri;
+                    currentScene.getStylesheets().add(dataUri);
+
+                    for (javafx.scene.Parent themedRoot : themedRoots) {
+                        themedRoot.getStyleClass().removeAll("theme-vscode-dark", "theme-intellij-light", "theme-dracula", "theme-monokai", "theme-hacker");
                         themedRoot.getStyleClass().add(cssClass);
-                    }
-                    javafx.scene.Scene scene = themedRoot.getScene();
-                    if (scene != null) {
-                        scene.getStylesheets().removeIf(s -> s.startsWith("data:text/css"));
-                        scene.getStylesheets().add(currentDynamicCssUri);
+                        javafx.scene.Scene scene = themedRoot.getScene();
+                        if (scene != null) {
+                            scene.getStylesheets().removeIf(s -> s.startsWith("data:text/css"));
+                            scene.getStylesheets().add(currentDynamicCssUri);
+                        }
                     }
                 }
-            }
-        } catch (Exception ex) { ex.printStackTrace(); }
+            } catch (Exception ex) { ex.printStackTrace(); }
+        } finally {
+            inThemeApply = false;
+        }
     }
 
     private void saveRecentProject(String path, java.util.prefs.Preferences prefs, javafx.scene.control.Menu recentProjectsMenu, RouteTreePane treePane) {

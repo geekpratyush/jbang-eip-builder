@@ -28,7 +28,7 @@ public class YamlEditorPane extends VBox {
     private String pendingText = "";
     private boolean isUpdatingFromBridge = false;
     private JavaBridge bridge = new JavaBridge();
-    private String currentTheme = "vs-dark";
+    private String currentTheme = RouteBuilderApp.currentThemeName.equalsIgnoreCase("IntelliJ Light") ? "vs" : "vs-dark";
 
     private Consumer<String> onTextChanged;
     private Runnable onFileSaved;
@@ -110,8 +110,7 @@ public class YamlEditorPane extends VBox {
         Button btnPlayFile = new Button();
         btnPlayFile.setGraphic(new FontIcon("fas-play"));
         btnPlayFile.setTooltip(new Tooltip("Play Current File"));
-        btnPlayFile.getStyleClass().addAll("editor-btn");
-        btnPlayFile.setStyle("-fx-text-fill: #4CAF50;");
+        btnPlayFile.getStyleClass().addAll("editor-btn", "btn-play-file");
         btnPlayFile.setOnAction(e -> {
             if (onPlayFile != null && currentFile != null) onPlayFile.accept(currentFile, "dev");
         });
@@ -119,8 +118,7 @@ public class YamlEditorPane extends VBox {
         Button btnStopFile = new Button();
         btnStopFile.setGraphic(new FontIcon("fas-stop"));
         btnStopFile.setTooltip(new Tooltip("Stop Current File"));
-        btnStopFile.getStyleClass().addAll("editor-btn");
-        btnStopFile.setStyle("-fx-text-fill: #F44336;");
+        btnStopFile.getStyleClass().addAll("editor-btn", "btn-stop-file");
         btnStopFile.setOnAction(e -> {
             if (onStopFile != null) onStopFile.run();
         });
@@ -196,12 +194,13 @@ public class YamlEditorPane extends VBox {
     }
 
     private String getMonacoHtml() {
+        String bgColor = currentTheme.equals("vs") ? "#ffffff" : "#1e1e1e";
         return "<!DOCTYPE html>\n" +
             "<html>\n" +
             "<head>\n" +
             "    <meta charset=\"UTF-8\">\n" +
             "    <style>\n" +
-            "        body { margin: 0; padding: 0; overflow: hidden; background-color: #1e1e1e; }\n" +
+            "        body { margin: 0; padding: 0; overflow: hidden; background-color: " + bgColor + "; }\n" +
             "        #editor { width: 100vw; height: 100vh; }\n" +
             "    </style>\n" +
             "    <script>\n" +
@@ -337,9 +336,12 @@ public class YamlEditorPane extends VBox {
     }
 
     public void setTheme(String themeName) {
-        currentTheme = themeName;
-        if (initialized) {
-            engine.executeScript("if(window.setTheme) window.setTheme('" + currentTheme + "');");
+        String monacoTheme = themeName.equalsIgnoreCase("IntelliJ Light") ? "vs" : "vs-dark";
+        if (!monacoTheme.equals(currentTheme)) {
+            currentTheme = monacoTheme;
+            if (initialized) {
+                engine.executeScript("if(window.setTheme) window.setTheme('" + currentTheme + "');");
+            }
         }
     }
 

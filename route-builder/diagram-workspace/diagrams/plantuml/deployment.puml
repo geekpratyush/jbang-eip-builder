@@ -1,0 +1,13 @@
+@startuml
+node "Client Browser" {
+  [Web App]
+}
+node "Application Server" {
+  [API Service]
+}
+database "Database Server" {
+  [PostgreSQL]
+}
+[Web App] -- [API Service] : HTTPS
+[API Service] -- [PostgreSQL] : TCP/5432
+@enduml

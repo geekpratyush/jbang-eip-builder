@@ -8,10 +8,18 @@ import java.nio.file.Files;
 
 public class SmooksSupportedFormatsTest {
 
+    private File getTestFolder(String path) throws Exception {
+        java.net.URL resource = getClass().getResource(path);
+        if (resource == null) {
+            throw new IllegalArgumentException("Resource not found: " + path);
+        }
+        return new File(resource.toURI());
+    }
+
     @Test
     public void testCsvTransformation() throws Exception {
         System.out.println("=== RUNNING CSV TRANSFORMATION TEST ===");
-        File folder = new File("../test-mapping/smooks/smooks-csv/example1");
+        File folder = getTestFolder("/test-mapping/smooks/smooks-csv/example1");
         File configFile = new File(folder, "smooks-config.xml");
         File sourceFile = new File(folder, "source.csv");
         
@@ -33,7 +41,7 @@ public class SmooksSupportedFormatsTest {
     @Test
     public void testCsvTransformationExample3() throws Exception {
         System.out.println("=== RUNNING CSV TRANSFORMATION TEST EXAMPLE 3 ===");
-        File folder = new File("../test-mapping/smooks/smooks-csv/example3");
+        File folder = getTestFolder("/test-mapping/smooks/smooks-csv/example3");
         File configFile = new File(folder, "smooks-config.xml");
         File sourceFile = new File(folder, "source.csv");
         
@@ -56,7 +64,7 @@ public class SmooksSupportedFormatsTest {
     @Test
     public void testJsonTransformation() throws Exception {
         System.out.println("=== RUNNING JSON TRANSFORMATION TEST ===");
-        File folder = new File("../test-mapping/smooks/smooks-json/example1");
+        File folder = getTestFolder("/test-mapping/smooks/smooks-json/example1");
         File configFile = new File(folder, "smooks-config.xml");
         File sourceFile = new File(folder, "source.json");
         
@@ -78,7 +86,7 @@ public class SmooksSupportedFormatsTest {
     @Test
     public void testYamlTransformation() throws Exception {
         System.out.println("=== RUNNING YAML TRANSFORMATION TEST ===");
-        File folder = new File("../test-mapping/smooks/smooks-yaml/example1");
+        File folder = getTestFolder("/test-mapping/smooks/smooks-yaml/example1");
         File configFile = new File(folder, "smooks-config.xml");
         File sourceFile = new File(folder, "source.yaml");
         
@@ -99,7 +107,7 @@ public class SmooksSupportedFormatsTest {
     @Test
     public void testFixedLengthTransformation() throws Exception {
         System.out.println("=== RUNNING FIXED-LENGTH TRANSFORMATION TEST ===");
-        File folder = new File("../test-mapping/smooks/smooks-fixed-length/example1");
+        File folder = getTestFolder("/test-mapping/smooks/smooks-fixed-length/example1");
         File configFile = new File(folder, "smooks-config.xml");
         File sourceFile = new File(folder, "source.txt");
         

@@ -1,0 +1,15 @@
+{
+  "mappings": [
+    { "messagePath": "messages/xml/invoice-valid.xml", "schemaPath": "schemas/xsd/invoice-schema.xsd", "type": "XML + XSD" },
+    { "messagePath": "messages/xml/invoice-invalid.xml", "schemaPath": "schemas/xsd/invoice-schema.xsd", "type": "XML + XSD" },
+    { "messagePath": "messages/json/customer-valid.json", "schemaPath": "schemas/json-schema/customer-schema.json", "type": "JSON + Schema" },
+    { "messagePath": "messages/json/customer-invalid.json", "schemaPath": "schemas/json-schema/customer-schema.json", "type": "JSON + Schema" },
+    { "messagePath": "messages/yaml/config-valid.yaml", "schemaPath": "schemas/json-schema/config-schema.json", "type": "YAML + Schema" },
+    { "messagePath": "messages/yaml/config-invalid.yaml", "schemaPath": "schemas/json-schema/config-schema.json", "type": "YAML + Schema" },
+    { "messagePath": "messages/csv/transactions-valid.csv", "schemaPath": "schemas/csv/transactions-metadata.json", "type": "CSV + CSVW" },
+    { "messagePath": "messages/csv/transactions-invalid.csv", "schemaPath": "schemas/csv/transactions-metadata.json", "type": "CSV + CSVW" },
+    { "messagePath": "messages/flatfile/fixedwidth-valid.txt", "schemaPath": "schemas/flatfile/fixedwidth-schema.json", "type": "Flat File" },
+    { "messagePath": "messages/iso20022/pacs008-valid.xml", "schemaPath": "schemas/iso20022/pacs008-schema.xsd", "type": "ISO 20022 MX" },
+    { "messagePath": "messages/iso20022/pacs008-invalid.xml", "schemaPath": "schemas/iso20022/pacs008-schema.xsd", "type": "ISO 20022 MX" }
+  ]
+}

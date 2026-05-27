@@ -33,8 +33,7 @@ public class ConsolePane extends VBox {
 
     private static final String FONT_FAMILY = "'JetBrains Mono', 'Consolas', 'DejaVu Sans Mono', monospace";
     private static final String FONT_SIZE   = "12.5px";
-    private static final String BG          = "#0d1117";
-    private static final String DEFAULT_FG  = "#e6edf3";
+    private static final String DEFAULT_FG  = "-console-fg";
 
     private final InlineCssTextArea textArea;
     private int currentLineStart = 0;
@@ -45,25 +44,24 @@ public class ConsolePane extends VBox {
         HBox header = new HBox(8);
         header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         header.setPadding(new Insets(4, 8, 4, 8));
-        header.setStyle("-fx-background-color: #161b22; -fx-border-color: #30363d; -fx-border-width: 0 0 1 0;");
+        header.getStyleClass().add("console-header");
 
         Label title = new Label("TERMINAL / CONSOLE");
-        title.getStyleClass().add("pane-title");
-        title.setStyle("-fx-text-fill: #8b949e; -fx-font-weight: bold;");
+        title.getStyleClass().add("console-title");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         FontIcon copyIcon = new FontIcon("fas-copy");
-        copyIcon.setStyle("-fx-icon-color: #c9d1d9;");
+        copyIcon.getStyleClass().add("console-icon");
         Button btnCopy = new Button("Copy Logs", copyIcon);
-        btnCopy.setStyle("-fx-background-color: #21262d; -fx-text-fill: #c9d1d9; -fx-border-color: #30363d; -fx-border-radius: 3; -fx-cursor: hand; -fx-font-size: 11px;");
+        btnCopy.getStyleClass().add("console-button");
         btnCopy.setOnAction(e -> copyAllToClipboard());
 
         FontIcon clearIcon = new FontIcon("fas-trash-alt");
-        clearIcon.setStyle("-fx-icon-color: #c9d1d9;");
+        clearIcon.getStyleClass().add("console-icon");
         Button btnClear = new Button("Clear", clearIcon);
-        btnClear.setStyle("-fx-background-color: #21262d; -fx-text-fill: #c9d1d9; -fx-border-color: #30363d; -fx-border-radius: 3; -fx-cursor: hand; -fx-font-size: 11px;");
+        btnClear.getStyleClass().add("console-button");
         btnClear.setOnAction(e -> clear());
 
         header.getChildren().addAll(title, spacer, btnCopy, btnClear);
@@ -72,36 +70,27 @@ public class ConsolePane extends VBox {
         textArea.setEditable(false);
         textArea.setWrapText(true);
         textArea.getStyleClass().add("console-text-area");
-        textArea.setStyle(
-            "-fx-background-color: " + BG + ";" +
-            "-fx-padding: 6 8 6 8;"
-        );
 
         VirtualizedScrollPane<InlineCssTextArea> vsPane = new VirtualizedScrollPane<>(textArea);
-        vsPane.setStyle(
-            "-fx-background: " + BG + ";" +
-            "-fx-background-color: " + BG + ";" +
-            "-fx-border-color: #30363d;" +
-            "-fx-border-width: 1 0 0 0;"
-        );
+        vsPane.getStyleClass().add("console-scroll-pane");
 
         // Right-click context menu
         ContextMenu contextMenu = new ContextMenu();
         MenuItem copyItem = new MenuItem("Copy Selection");
         FontIcon copyMenuIcon = new FontIcon("fas-copy");
-        copyMenuIcon.setStyle("-fx-icon-color: #c9d1d9;");
+        copyMenuIcon.getStyleClass().add("console-icon");
         copyItem.setGraphic(copyMenuIcon);
         copyItem.setOnAction(e -> textArea.copy());
         
         MenuItem copyAllItem = new MenuItem("Copy All Logs");
         FontIcon copyAllMenuIcon = new FontIcon("fas-copy");
-        copyAllMenuIcon.setStyle("-fx-icon-color: #c9d1d9;");
+        copyAllMenuIcon.getStyleClass().add("console-icon");
         copyAllItem.setGraphic(copyAllMenuIcon);
         copyAllItem.setOnAction(e -> copyAllToClipboard());
 
         MenuItem clearItem = new MenuItem("Clear Console");
         FontIcon clearMenuIcon = new FontIcon("fas-trash-alt");
-        clearMenuIcon.setStyle("-fx-icon-color: #c9d1d9;");
+        clearMenuIcon.getStyleClass().add("console-icon");
         clearItem.setGraphic(clearMenuIcon);
         clearItem.setOnAction(e -> clear());
         contextMenu.getItems().addAll(copyItem, copyAllItem, clearItem);
@@ -346,7 +335,13 @@ public class ConsolePane extends VBox {
         sb.append("-fx-font-family: ").append(FONT_FAMILY).append(";");
         sb.append("-fx-font-size: ").append(FONT_SIZE).append(";");
         String fg = fgColor;
-        if (dim) fg = dimColor(fg);
+        if (dim) {
+            if ("-console-fg".equals(fg)) {
+                fg = "-console-dim-fg";
+            } else {
+                fg = dimColor(fg);
+            }
+        }
         sb.append("-fx-fill: ").append(fg).append(";");
         if (bgColor != null)
             sb.append("-fx-background-color: ").append(bgColor).append(";");

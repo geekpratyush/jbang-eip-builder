@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class TransformationEditorWindow {
+    public static final java.util.List<TransformationEditorWindow> activeInstances = new java.util.ArrayList<>();
 
     private final File folder;
     private JSONObject config;
@@ -45,9 +46,20 @@ public class TransformationEditorWindow {
     private boolean isEnrichment = false;
 
     public TransformationEditorWindow(File folder) {
+        activeInstances.add(this);
         this.folder = folder;
         this.stage = new Stage();
         loadConfig();
+    }
+
+    public void setTheme(String themeName) {
+        String monacoTheme = themeName.equalsIgnoreCase("IntelliJ Light") ? "vs" : "vs-dark";
+        Platform.runLater(() -> {
+            if (sourceRawInitialized) sourceRawEngine.executeScript("if(window.setTheme) window.setTheme('" + monacoTheme + "');");
+            if (sourceXmlInitialized) sourceXmlEngine.executeScript("if(window.setTheme) window.setTheme('" + monacoTheme + "');");
+            if (logicInitialized) logicEngine.executeScript("if(window.setTheme) window.setTheme('" + monacoTheme + "');");
+            if (targetInitialized) targetEngine.executeScript("if(window.setTheme) window.setTheme('" + monacoTheme + "');");
+        });
     }
 
     private void loadConfig() {
@@ -94,19 +106,17 @@ public class TransformationEditorWindow {
         stage.setTitle("Data Transformation Studio - " + config.optString("name", folder.getName()));
 
         BorderPane root = new BorderPane();
+        root.getStyleClass().add("app-root");
         root.getStyleClass().add(RouteBuilderApp.currentThemeClass);
-        root.setStyle("-fx-background-color: #1e1e1e;");
 
         // Toolbar
         ToolBar toolBar = new ToolBar();
         Button btnRun = new Button("Run", new FontIcon("fas-play"));
-        btnRun.getStyleClass().add("editor-btn");
-        btnRun.setStyle("-fx-text-fill: #4CAF50;");
+        btnRun.getStyleClass().addAll("editor-btn", "btn-play-file");
         btnRun.setOnAction(e -> runTransformation());
 
         Button btnValidate = new Button("Validate", new FontIcon("fas-check-double"));
-        btnValidate.getStyleClass().add("editor-btn");
-        btnValidate.setStyle("-fx-text-fill: #2196F3;");
+        btnValidate.getStyleClass().addAll("editor-btn", "btn-validate");
         btnValidate.setOnAction(e -> runValidation());
         
         JSONObject targetCfg = config.optJSONObject("target");
@@ -119,7 +129,7 @@ public class TransformationEditorWindow {
         btnSave.setOnAction(e -> saveLogic());
 
         Label lblName = new Label(config.optString("name", "Transformation"));
-        lblName.setStyle("-fx-font-weight: bold; -fx-padding: 0 20; -fx-text-fill: white;");
+        lblName.getStyleClass().add("transformation-name-label");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -127,12 +137,17 @@ public class TransformationEditorWindow {
         toolBar.getItems().addAll(btnRun, btnValidate, btnSave, new Separator(), lblName, spacer);
         root.setTop(toolBar);
 
+        RouteBuilderApp.themedRoots.add(root);
+        stage.setOnHidden(e -> {
+            activeInstances.remove(this);
+            RouteBuilderApp.themedRoots.remove(root);
+        });
+
         // Console at bottom
         consoleArea = new TextArea();
         consoleArea.setEditable(false);
         consoleArea.setPrefHeight(120);
-        consoleArea.getStyleClass().add("console-area");
-        consoleArea.setStyle("-fx-control-inner-background: #000; -fx-text-fill: #0f0; -fx-font-family: 'Consolas', monospace;");
+        consoleArea.getStyleClass().add("studio-console-area");
         log("Studio Initialized for " + config.optString("name"));
 
         // Main Horizontal SplitPane

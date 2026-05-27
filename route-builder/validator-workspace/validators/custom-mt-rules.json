@@ -1,0 +1,20 @@
+{
+  "custom_rules": [
+    {
+      "id": "CUSTOM-001",
+      "description": "Amount limit check > 10M"
+    },
+    {
+      "id": "CUSTOM-002",
+      "description": "Restricted currency RUB"
+    },
+    {
+      "id": "CUSTOM-003",
+      "description": "High-risk jurisdiction Iran"
+    },
+    {
+      "id": "CUSTOM-004",
+      "description": "Reference format starts with EXB-"
+    }
+  ]
+}

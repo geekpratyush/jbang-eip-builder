@@ -1,0 +1,10 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+Person(customer, "Customer", "A customer of the online store.")
+System(store, "Online Store", "Allows customers to buy products.")
+System_Ext(payment, "Payment Gateway", "Processes payments.")
+
+Rel(customer, store, "Uses")
+Rel(store, payment, "Processes payments using")
+@enduml

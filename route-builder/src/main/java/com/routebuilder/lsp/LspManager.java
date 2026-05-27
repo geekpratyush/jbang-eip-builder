@@ -27,9 +27,12 @@ public class LspManager {
         // If the uri is already a file:// URI keep it as-is; otherwise treat
         // as a path and convert.  Append .camel.yaml only when the file has no
         // recognised YAML extension so the Camel LSP activates its schema.
-        if (!uri.startsWith("file://")) {
+        if (!uri.toLowerCase().startsWith("file:")) {
             java.io.File f = new java.io.File(uri);
             uri = f.toURI().toString();
+        }
+        if (uri.startsWith("file:/") && !uri.startsWith("file:///")) {
+            uri = "file:///" + uri.substring(6);
         }
         String lower = uri.toLowerCase();
         if (!lower.endsWith(".camel.yaml") && !lower.endsWith(".yaml") && !lower.endsWith(".yml")) {

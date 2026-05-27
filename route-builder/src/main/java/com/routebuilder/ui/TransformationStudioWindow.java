@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.prefs.Preferences;
 
 public class TransformationStudioWindow {
+    public static final java.util.List<TransformationStudioWindow> activeInstances = new java.util.ArrayList<>();
 
     private final Stage stage;
     private final Preferences prefs;
@@ -33,6 +34,7 @@ public class TransformationStudioWindow {
     private TreeView<File> mappingTree;
     private BorderPane mainContentArea;
     private Label lblStudioTitle;
+    private ComboBox<String> studioThemeBox;
     
     private Button btnRun, btnValidate, btnSave, btnBrowseXsd, btnConfig, btnSnippet, btnClose;
     
@@ -55,6 +57,7 @@ public class TransformationStudioWindow {
     private boolean sourceRawInitialized, sourceXmlInitialized, logicInitialized, targetInitialized;
 
     public TransformationStudioWindow() {
+        activeInstances.add(this);
         this.stage = new Stage();
         this.prefs = Preferences.userNodeForPackage(TransformationStudioWindow.class);
         String defaultPath = new File(System.getProperty("user.dir"), "test-mapping").exists() ?
@@ -71,8 +74,7 @@ public class TransformationStudioWindow {
         stage.setTitle("Data Transformation Studio");
 
         BorderPane root = new BorderPane();
-        root.getStyleClass().add(RouteBuilderApp.currentThemeClass);
-        root.setStyle("-fx-background-color: #1e1e1e;");
+        root.getStyleClass().addAll("app-root", RouteBuilderApp.currentThemeClass);
 
         // --- Toolbar ---
         ToolBar toolBar = new ToolBar();
@@ -102,12 +104,20 @@ public class TransformationStudioWindow {
         btnConfig.setOnAction(e -> chooseMappingsPath());
 
         lblStudioTitle = new Label("Select a mapping to begin");
-        lblStudioTitle.setStyle("-fx-font-weight: bold; -fx-padding: 0 20; -fx-text-fill: white;");
+        lblStudioTitle.getStyleClass().add("studio-title-label");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        toolBar.getItems().addAll(btnRun, btnValidate, btnBrowseXsd, btnSave, new Separator(), btnConfig, new Separator(), lblStudioTitle, spacer);
+        studioThemeBox = new ComboBox<>();
+        studioThemeBox.getItems().addAll("VSCode Dark", "IntelliJ Light", "Dracula", "Monokai", "Hacker");
+        studioThemeBox.setValue(RouteBuilderApp.currentThemeName);
+        studioThemeBox.setTooltip(new Tooltip("Change Theme"));
+        studioThemeBox.setOnAction(e -> {
+            RouteBuilderApp.setGlobalTheme(studioThemeBox.getValue());
+        });
+
+        toolBar.getItems().addAll(btnRun, btnValidate, btnBrowseXsd, btnSave, new Separator(), btnConfig, new Separator(), lblStudioTitle, spacer, studioThemeBox);
         root.setTop(toolBar);
 
         // --- Left Sidebar ---
@@ -115,10 +125,10 @@ public class TransformationStudioWindow {
         sidebar.setPrefWidth(250);
         sidebar.setPadding(new Insets(10));
         sidebar.setSpacing(5);
-        sidebar.setStyle("-fx-background-color: #252526; -fx-border-color: #333333; -fx-border-width: 0 1 0 0;");
+        sidebar.getStyleClass().add("studio-sidebar");
 
         Label lblExplorer = new Label("MAPPING EXPLORER");
-        lblExplorer.setStyle("-fx-font-size: 10; -fx-text-fill: #858585; -fx-font-weight: bold;");
+        lblExplorer.getStyleClass().add("studio-explorer-label");
         
         mappingTree = new TreeView<>();
         mappingTree.setShowRoot(false);
@@ -144,10 +154,10 @@ public class TransformationStudioWindow {
 
         // --- Main Content Area ---
         mainContentArea = new BorderPane();
-        mainContentArea.setStyle("-fx-background-color: #1e1e1e;");
+        mainContentArea.getStyleClass().addAll("studio-content", "app-root");
         
         Label lblPlaceholder = new Label("Select a transformation folder from the explorer");
-        lblPlaceholder.setStyle("-fx-text-fill: #555; -fx-font-size: 18;");
+        lblPlaceholder.getStyleClass().add("studio-placeholder-label");
         mainContentArea.setCenter(lblPlaceholder);
 
         consolePane = new ConsolePane();
@@ -173,6 +183,7 @@ public class TransformationStudioWindow {
         
         RouteBuilderApp.themedRoots.add(root);
         stage.setOnHidden(e -> {
+            activeInstances.remove(this);
             RouteBuilderApp.themedRoots.remove(root);
             if (snippetProcess != null && snippetProcess.isAlive()) {
                 try {
@@ -211,15 +222,19 @@ public class TransformationStudioWindow {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null); setGraphic(null);
+                    getStyleClass().removeAll("mapping-tree-item", "folder-tree-item");
                 } else {
                     setText(item.getName());
+                    setStyle(null);
                     File configFile = new File(item, "transformation.json");
                     if (configFile.exists()) {
                         setGraphic(new FontIcon("fas-exchange-alt"));
-                        setStyle("-fx-text-fill: #4fc1ff;");
+                        getStyleClass().add("mapping-tree-item");
+                        getStyleClass().remove("folder-tree-item");
                     } else {
                         setGraphic(new FontIcon("fas-folder"));
-                        setStyle("-fx-text-fill: #cccccc;");
+                        getStyleClass().add("folder-tree-item");
+                        getStyleClass().remove("mapping-tree-item");
                     }
                 }
             }
@@ -490,7 +505,15 @@ public class TransformationStudioWindow {
     private void setupMonaco(WebEngine engine, String language, javafx.beans.value.ChangeListener<javafx.concurrent.Worker.State> onSucceeded) {
         String monacoBase = getClass().getResource("/monaco/vs/loader.js").toExternalForm();
         monacoBase = monacoBase.substring(0, monacoBase.lastIndexOf("/vs/loader.js"));
-        String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>body{margin:0;padding:0;overflow:hidden;background-color:#1e1e1e;}#editor{width:100vw;height:100vh;}</style></head><body><div id='editor'></div><script src='" + monacoBase + "/vs/loader.js'></script><script>\n" +
+        
+        String activeTheme = RouteBuilderApp.currentThemeClass;
+        String editorBg = "#1e1e1e";
+        if ("theme-intellij-light".equals(activeTheme)) editorBg = "#ffffff";
+        else if ("theme-dracula".equals(activeTheme)) editorBg = "#282a36";
+        else if ("theme-monokai".equals(activeTheme)) editorBg = "#272822";
+        else if ("theme-hacker".equals(activeTheme)) editorBg = "#050505";
+
+        String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>body{margin:0;padding:0;overflow:hidden;background-color:" + editorBg + ";}#editor{width:100vw;height:100vh;}</style></head><body><div id='editor'></div><script src='" + monacoBase + "/vs/loader.js'></script><script>\n" +
             "window.editorValue = ''; window.setValue = function(val) { window.editorValue = val; if(window.editor) window.editor.setValue(val); };\n" +
             "window.getValue = function() { return window.editor ? window.editor.getValue() : window.editorValue; };\n" +
             "window.getSelection = function() { if(!window.editor) return ''; var sel = window.editor.getSelection(); return window.editor.getModel().getValueInRange(sel); };\n" +
@@ -498,8 +521,12 @@ public class TransformationStudioWindow {
             "require(['vs/editor/editor.main'], function() {\n" +
             "  monaco.languages.register({ id: 'swift-mt' });\n" +
             "  monaco.languages.setMonarchTokensProvider('swift-mt', { tokenizer: { root: [ [/{[1-5]:/, 'metatag'], [/}/, 'metatag'], [/^:[0-9A-Z]{2,3}:/, 'keyword'], [/-}/, 'metatag'], [/\\n:[0-9A-Z]{2,3}:/, 'keyword'] ] } });\n" +
-            "  monaco.editor.defineTheme('swift-dark', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: '569cd6', fontStyle: 'bold' }, { token: 'metatag', foreground: 'ce9178' } ], colors: { 'editor.background': '#1e1e1e' } });\n" +
-            "  window.editor = monaco.editor.create(document.getElementById('editor'), { value: window.editorValue, language: '" + ("text".equals(language) ? "swift-mt" : language) + "', theme: 'swift-dark', automaticLayout: true, minimap: { enabled: false }, fontSize: 12 });\n" +
+            "  monaco.editor.defineTheme('theme-vscode-dark', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: '569cd6', fontStyle: 'bold' }, { token: 'metatag', foreground: 'ce9178' } ], colors: { 'editor.background': '#1e1e1e' } });\n" +
+            "  monaco.editor.defineTheme('theme-intellij-light', { base: 'vs', inherit: true, rules: [ { token: 'keyword', foreground: '0000ff', fontStyle: 'bold' }, { token: 'metatag', foreground: 'a31515' } ], colors: { 'editor.background': '#ffffff' } });\n" +
+            "  monaco.editor.defineTheme('theme-dracula', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'ff79c6', fontStyle: 'bold' }, { token: 'metatag', foreground: 'bd93f9' } ], colors: { 'editor.background': '#282a36' } });\n" +
+            "  monaco.editor.defineTheme('theme-monokai', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'f92672', fontStyle: 'bold' }, { token: 'metatag', foreground: 'ae81ff' } ], colors: { 'editor.background': '#272822' } });\n" +
+            "  monaco.editor.defineTheme('theme-hacker', { base: 'hc-black', inherit: true, rules: [ { token: 'keyword', foreground: '00ff00', fontStyle: 'bold' }, { token: 'metatag', foreground: '00ff00' } ], colors: { 'editor.background': '#050505' } });\n" +
+            "  window.editor = monaco.editor.create(document.getElementById('editor'), { value: window.editorValue, language: '" + ("text".equals(language) ? "swift-mt" : language) + "', theme: '" + activeTheme + "', automaticLayout: true, minimap: { enabled: false }, fontSize: 12 });\n" +
             "  window.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC, function() {\n" +
             "     var text = window.getSelection(); if(!text) text = window.getValue();\n" +
             "     if(window.javaBridge) window.javaBridge.copy(text);\n" +
@@ -953,6 +980,7 @@ public class TransformationStudioWindow {
         boolean isMtSource = "mt".equalsIgnoreCase(sourceType) || "mt".equalsIgnoreCase(type);
 
         String path = logicFile.getAbsolutePath().replace("\\", "/");
+        String fileUri = toFileUriString(logicFile);
         String groupId = "org.apache.camel";
         String artifactId = "camel-" + type;
         String version = "4.20.0";
@@ -1063,59 +1091,58 @@ public class TransformationStudioWindow {
 
         if ("xslt".equalsIgnoreCase(type) || isMtSource || "mt-to-mx".equalsIgnoreCase(type) || "mx-to-mt".equalsIgnoreCase(type)) {
             if (isMtSource || "mt-to-mx".equalsIgnoreCase(type)) {
-                yamlStep = "unmarshal:\n            swiftMt: {}\n        - setBody:\n            simple: \"${body.xml}\"\n        - to:\n            uri: \"xslt-saxon:file:" + path + "\"";
-                javaStep = ".unmarshal().swiftMt()\n            .setBody().simple(\"${body.xml}\")\n            .to(\"xslt-saxon:file:" + path + "\")";
-                xmlStep = "<unmarshal>\n            <swiftMt/>\n        </unmarshal>\n        <setBody>\n            <simple>${body.xml}</simple>\n        </setBody>\n        <to uri=\"xslt-saxon:file:" + path + "\"/>";
+                yamlStep = "unmarshal:\n            swiftMt: {}\n        - setBody:\n            simple: \"${body.xml}\"\n        - to:\n            uri: \"xslt-saxon:" + fileUri + "\"";
+                javaStep = ".unmarshal().swiftMt()\n            .setBody().simple(\"${body.xml}\")\n            .to(\"xslt-saxon:" + fileUri + "\")";
+                xmlStep = "<unmarshal>\n            <swiftMt/>\n        </unmarshal>\n        <setBody>\n            <simple>${body.xml}</simple>\n        </setBody>\n        <to uri=\"xslt-saxon:" + fileUri + "\"/>";
             } else if ("mx-to-mt".equalsIgnoreCase(type)) {
-                yamlStep = "to:\n            uri: \"xslt-saxon:file:" + path + "\"\n        - marshal:\n            swiftMt: {}";
-                javaStep = ".to(\"xslt-saxon:file:" + path + "\")\n            .marshal().swiftMt()";
-                xmlStep = "<to uri=\"xslt-saxon:file:" + path + "\"/>\n        <marshal>\n            <swiftMt/>\n        </marshal>";
+                yamlStep = "to:\n            uri: \"xslt-saxon:" + fileUri + "\"\n        - marshal:\n            swiftMt: {}";
+                javaStep = ".to(\"xslt-saxon:" + fileUri + "\")\n            .marshal().swiftMt()";
+                xmlStep = "<to uri=\"xslt-saxon:" + fileUri + "\"/>\n        <marshal>\n            <swiftMt/>\n        </marshal>";
             } else {
-                yamlStep = "to:\n            uri: \"xslt-saxon:file:" + path + "\"";
-                javaStep = ".to(\"xslt-saxon:file:" + path + "\")";
-                xmlStep = "<to uri=\"xslt-saxon:file:" + path + "\"/>";
+                yamlStep = "to:\n            uri: \"xslt-saxon:" + fileUri + "\"";
+                javaStep = ".to(\"xslt-saxon:" + fileUri + "\")";
+                xmlStep = "<to uri=\"xslt-saxon:" + fileUri + "\"/>";
             }
         } else if ("jslt".equals(type)) {
-
-            yamlStep = "to:\n            uri: \"jslt:file:" + path + "\"";
-            javaStep = ".to(\"jslt:file:" + path + "\")";
-            xmlStep = "<to uri=\"jslt:file:" + path + "\"/>";
+            yamlStep = "to:\n            uri: \"jslt:" + fileUri + "\"";
+            javaStep = ".to(\"jslt:" + fileUri + "\")";
+            xmlStep = "<to uri=\"jslt:" + fileUri + "\"/>";
         } else if ("smooks".equals(type)) {
-            yamlStep = "unmarshal:\n            smooks:\n              smooksConfig: \"file:" + path + "\"";
-            javaStep = ".unmarshal().smooks(\"file:" + path + "\")";
-            xmlStep = "<unmarshal>\n            <smooks smooksConfig=\"file:" + path + "\"/>\n        </unmarshal>";
+            yamlStep = "unmarshal:\n            smooks:\n              smooksConfig: \"" + fileUri + "\"";
+            javaStep = ".unmarshal().smooks(\"" + fileUri + "\")";
+            xmlStep = "<unmarshal>\n            <smooks smooksConfig=\"" + fileUri + "\"/>\n        </unmarshal>";
         } else if ("flatpack".equals(type)) {
             yamlStep = "unmarshal:\n" +
                        "            flatpack:\n" +
                        "              fixed: " + isFlatpackFixed + "\n" +
-                       "              definition: \"file:" + path + "\"\n" +
+                       "              definition: \"" + fileUri + "\"\n" +
                        "        - split:\n" +
                        "            simple: \"${body}\"\n" +
                        "            steps:\n" +
                        "              - log: \"Row: ${body}\"";
-            javaStep = ".unmarshal().flatpack(\"file:" + path + "\", " + isFlatpackFixed + ")\n" +
+            javaStep = ".unmarshal().flatpack(\"" + fileUri + "\", " + isFlatpackFixed + ")\n" +
                        "            .split().simple(\"${body}\")\n" +
                        "                .log(\"Row: ${body}\")\n" +
                        "            .end()";
             xmlStep = "<unmarshal>\n" +
-                      "            <flatpack id=\"flatpack\" definition=\"file:" + path + "\" fixed=\"" + isFlatpackFixed + "\"/>\n" +
+                      "            <flatpack id=\"flatpack\" definition=\"" + fileUri + "\" fixed=\"" + isFlatpackFixed + "\"/>\n" +
                       "        </unmarshal>\n" +
                       "        <split>\n" +
                       "            <simple>${body}</simple>\n" +
                       "            <log message=\"Row: ${body}\"/>\n" +
                       "        </split>";
         } else if ("groovy".equals(type)) {
-            yamlStep = "transform:\n            groovy: \"resource:file:" + path + "\"";
-            javaStep = ".transform().groovy(\"resource:file:" + path + "\")";
-            xmlStep = "<transform>\n            <groovy>resource:file:" + path + "</groovy>\n        </transform>";
+            yamlStep = "transform:\n            groovy: \"resource:" + fileUri + "\"";
+            javaStep = ".transform().groovy(\"resource:" + fileUri + "\")";
+            xmlStep = "<transform>\n            <groovy>resource:" + fileUri + "</groovy>\n        </transform>";
         } else if ("joor".equals(type)) {
-            yamlStep = "transform:\n            joor: \"resource:file:" + path + "\"";
-            javaStep = ".transform().joor(\"resource:file:" + path + "\")";
-            xmlStep = "<transform>\n            <joor>resource:file:" + path + "</joor>\n        </transform>";
+            yamlStep = "transform:\n            joor: \"resource:" + fileUri + "\"";
+            javaStep = ".transform().joor(\"resource:" + fileUri + "\")";
+            xmlStep = "<transform>\n            <joor>resource:" + fileUri + "</joor>\n        </transform>";
         } else {
-            yamlStep = "to:\n            uri: \"" + type + ":file:" + path + "\"";
-            javaStep = ".to(\"" + type + ":file:" + path + "\")";
-            xmlStep = "<to uri=\"" + type + ":file:" + path + "\"/>";
+            yamlStep = "to:\n            uri: \"" + type + ":" + fileUri + "\"";
+            javaStep = ".to(\"" + type + ":" + fileUri + "\")";
+            xmlStep = "<to uri=\"" + type + ":" + fileUri + "\"/>";
         }
 
         // Generate full runnable route DSLs
@@ -1448,6 +1475,14 @@ public class TransformationStudioWindow {
         }
     }
 
+    private static String toFileUriString(File file) {
+        String uri = file.toURI().toString();
+        if (uri.startsWith("file:/") && !uri.startsWith("file:///")) {
+            uri = "file:///" + uri.substring(6);
+        }
+        return uri;
+    }
+
     private void pipeSnippetStream(Process process, java.io.InputStream stream, Button btnRun, Button btnStop, File tempFile) {
         new Thread(() -> {
             byte[] buf = new byte[2048];
@@ -1480,6 +1515,34 @@ public class TransformationStudioWindow {
         if (consolePane != null) {
             String time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
             consolePane.log("[" + time + "] " + msg + "\n");
+        }
+    }
+
+    public void setTheme(String themeName) {
+        String themeClass = "theme-" + themeName.toLowerCase().replace(" ", "-");
+        Platform.runLater(() -> {
+            if (studioThemeBox != null && !themeName.equals(studioThemeBox.getValue())) {
+                studioThemeBox.setValue(themeName);
+            }
+            applyMonacoTheme(sourceRawEngine, themeClass);
+            applyMonacoTheme(sourceXmlEngine, themeClass);
+            applyMonacoTheme(logicEngine, themeClass);
+            applyMonacoTheme(logicSecondaryEngine, themeClass);
+            applyMonacoTheme(targetEngine, themeClass);
+        });
+    }
+
+    private void applyMonacoTheme(WebEngine engine, String themeClass) {
+        if (engine != null) {
+            try {
+                String bg = "#1e1e1e";
+                if ("theme-intellij-light".equals(themeClass)) bg = "#ffffff";
+                else if ("theme-dracula".equals(themeClass)) bg = "#282a36";
+                else if ("theme-monokai".equals(themeClass)) bg = "#272822";
+                else if ("theme-hacker".equals(themeClass)) bg = "#050505";
+                
+                engine.executeScript("if(window.editor) { monaco.editor.setTheme('" + themeClass + "'); document.body.style.backgroundColor = '" + bg + "'; }");
+            } catch (Exception ignored) {}
         }
     }
 }

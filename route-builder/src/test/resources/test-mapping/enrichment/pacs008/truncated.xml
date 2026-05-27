@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.14">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>MSG-pacs008-2026</MsgId>
+      <CreDtTm>2026-05-21T14:36:36.250789086+05:30</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>INDA</SttlmMtd>
+      </SttlmInf>
+      <InstgAgt>
+        <FinInstnId>
+          <BICFI>BANKGB2LXXX</BICFI>
+        </FinInstnId>
+      </InstgAgt>
+      <InstdAgt>
+        <FinInstnId>
+          <BICFI>BANKFRPPXXX</BICFI>
+        </FinInstnId>
+      </InstdAgt>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>INSTR-20260521-0</InstrId>
+        <EndToEndId>INSTR-20260521-0</EndToEndId>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="EUR">150000.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-05-21</IntrBkSttlmDt>
+      <InstdAmt Ccy="EUR">150000.00</InstdAmt>
+      <XchgRate>1.0000000000</XchgRate>
+      <ChrgBr>SHAR</ChrgBr>
+      <ChrgsInf>
+        <Amt Ccy="EUR">25.00</Amt>
+        <Agt>
+          <FinInstnId>
+            <BICFI>BANKGB2LXXX</BICFI>
+          </FinInstnId>
+        </Agt>
+      </ChrgsInf>
+      <PrvsInstgAgt1>
+        <FinInstnId>
+          <BICFI>BANKGB2LXXX</BICFI>
+        </FinInstnId>
+      </PrvsInstgAgt1>
+      <IntrmyAgt1>
+        <FinInstnId>
+          <BICFI>BANKNL2A</BICFI>
+        </FinInstnId>
+      </IntrmyAgt1>
+      <Dbtr>
+        <Nm>Debtor Company PLC</Nm>
+        <PstlAdr>
+          <AdrLine>123 Business Street</AdrLine>
+          <AdrLine>Floor 4, Suite 401</AdrLine>
+        </PstlAdr>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>GB82WEST12345698765432</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>BANKGB2L</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>BANKFRPP</BICFI>
+        </FinInstnId>
+      </CdtrAgt>
+      <Cdtr>
+        <Nm>Creditor Enterprise SA</Nm>
+        <PstlAdr>
+          <AdrLine>123 Business Street</AdrLine>
+          <AdrLine>Floor 4, Suite 401</AdrLine>
+        </PstlAdr>
+      </Cdtr>
+      <CdtrAcct>
+        <Id>
+          <IBAN>FR1420041010050500013M02606</IBAN>
+        </Id>
+      </CdtrAcct>
+      <InstrForCdtrAgt>
+        <Cd>HOLD</Cd>
+        <InstrInf>Please hold funds until furthe</InstrInf>
+      </InstrForCdtrAgt>
+      <RmtInf>
+        <Ustrd>Payment for goods and services - In
+          voice batch Q2 2026
+          Contract reference: CONT-2026-789
+          Delivery reference: DEL-2026-456</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

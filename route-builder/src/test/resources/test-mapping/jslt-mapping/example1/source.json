@@ -1,0 +1,11 @@
+{
+  "order_id": "ORD-12345",
+  "customer": {
+    "name": "Pratyush Software",
+    "country": "GB"
+  },
+  "items": [
+    { "id": "P1", "price": 100.0, "qty": 2 },
+    { "id": "P2", "price": 50.0, "qty": 1 }
+  ]
+}

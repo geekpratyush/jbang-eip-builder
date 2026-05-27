@@ -45,23 +45,23 @@ public class HelpPortalPane extends BorderPane {
         // Header / Search Bar
         HBox header = new HBox(10);
         header.setPadding(new Insets(10));
-        header.setStyle("-fx-background-color: #252526; -fx-border-color: #3c3c3c; -fx-border-width: 0 0 1 0;");
+        header.getStyleClass().add("help-header");
         header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
         Label title = new Label("Interactive Help Portal");
-        title.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 14px;");
+        title.getStyleClass().add("help-title");
 
         searchField = new TextField();
         searchField.setPromptText("Search by topic, keyword, or component...");
         searchField.setPrefWidth(220);
         HBox.setHgrow(searchField, Priority.ALWAYS);
-        searchField.setStyle("-fx-background-color: #3c3c3c; -fx-text-fill: white; -fx-prompt-text-fill: #808080;");
+        searchField.getStyleClass().add("help-search-field");
         searchField.textProperty().addListener((obs, oldVal, newVal) -> filterTopics(newVal));
 
         Button btnClose = new Button();
         btnClose.setGraphic(new FontIcon("fas-times"));
         btnClose.setTooltip(new Tooltip("Close Help Portal"));
-        btnClose.setStyle("-fx-background-color: transparent; -fx-text-fill: #cccccc;");
+        btnClose.getStyleClass().add("help-close-btn");
         btnClose.setOnAction(e -> {
             if (onCloseHandler != null) onCloseHandler.run();
         });
@@ -72,10 +72,10 @@ public class HelpPortalPane extends BorderPane {
         // Left topics index vs Right contents webview
         SplitPane splitPane = new SplitPane();
         splitPane.setOrientation(Orientation.HORIZONTAL);
-        splitPane.setStyle("-fx-background-color: #1e1e1e;");
+        splitPane.getStyleClass().add("help-split-pane");
 
         topicListView = new ListView<>();
-        topicListView.setStyle("-fx-background-color: #252526; -fx-control-inner-background: #252526; -fx-text-fill: #d4d4d4;");
+        topicListView.getStyleClass().add("help-topic-list");
         // Custom cells for list view to keep dark mode style
         topicListView.setCellFactory(lv -> new ListCell<>() {
             @Override
@@ -83,17 +83,16 @@ public class HelpPortalPane extends BorderPane {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
-                    setStyle("-fx-background-color: transparent;");
+                    setGraphic(null);
                 } else {
                     setText(item.title);
                     setTooltip(new Tooltip(item.category));
-                    setStyle("-fx-text-fill: #cccccc; -fx-padding: 8px 12px;");
                 }
             }
         });
 
         webView = new WebView();
-        webView.setStyle("-fx-background-color: #1e1e1e;");
+        webView.getStyleClass().add("help-web-view");
 
         splitPane.getItems().addAll(topicListView, webView);
         splitPane.setDividerPositions(0.35);
@@ -127,25 +126,73 @@ public class HelpPortalPane extends BorderPane {
         topicListView.setItems(filtered);
     }
 
+    private String currentTheme = "VSCode Dark";
+
+    public void setTheme(String theme) {
+        this.currentTheme = theme;
+        // Refresh current topic if one is selected
+        HelpTopic selected = topicListView.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            webView.getEngine().loadContent(markdownToHtml(selected.markdownContent));
+        }
+    }
+
     private String markdownToHtml(String markdown) {
         org.commonmark.parser.Parser parser = org.commonmark.parser.Parser.builder().build();
         org.commonmark.node.Node document = parser.parse(markdown);
         org.commonmark.renderer.html.HtmlRenderer renderer = org.commonmark.renderer.html.HtmlRenderer.builder().build();
         String bodyHtml = renderer.render(document);
         
+        String bgColor = "#1e1e1e";
+        String textColor = "#d4d4d4";
+        String headerColor = "#4CAF50";
+        String subHeaderColor = "#569cd6";
+        String codeBg = "#2d2d2d";
+        String borderColor = "#3c3c3c";
+
+        if ("IntelliJ Light".equalsIgnoreCase(currentTheme)) {
+            bgColor = "#ffffff";
+            textColor = "#333333";
+            headerColor = "#2e7d32";
+            subHeaderColor = "#1565c0";
+            codeBg = "#f3f3f3";
+            borderColor = "#cccccc";
+        } else if ("Dracula".equalsIgnoreCase(currentTheme)) {
+            bgColor = "#282a36";
+            textColor = "#f8f8f2";
+            headerColor = "#bd93f9";
+            subHeaderColor = "#8be9fd";
+            codeBg = "#44475a";
+            borderColor = "#6272a4";
+        } else if ("Monokai".equalsIgnoreCase(currentTheme)) {
+            bgColor = "#272822";
+            textColor = "#f8f8f2";
+            headerColor = "#a6e22e";
+            subHeaderColor = "#66d9ef";
+            codeBg = "#3e3d32";
+            borderColor = "#75715e";
+        } else if ("Hacker".equalsIgnoreCase(currentTheme)) {
+            bgColor = "#050505";
+            textColor = "#00ff00";
+            headerColor = "#00ff00";
+            subHeaderColor = "#00cc00";
+            codeBg = "#001a00";
+            borderColor = "#004d00";
+        }
+        
         return "<html><head><style>" +
-               "body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #1e1e1e; color: #d4d4d4; padding: 15px; line-height: 1.6; }" +
-               "h1 { color: #4CAF50; border-bottom: 1px solid #3c3c3c; padding-bottom: 5px; font-size: 1.5em; margin-top: 0; }" +
-               "h2 { color: #569cd6; border-bottom: 1px solid #2d2d2d; padding-bottom: 3px; font-size: 1.25em; }" +
+               "body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background-color: " + bgColor + "; color: " + textColor + "; padding: 15px; line-height: 1.6; }" +
+               "h1 { color: " + headerColor + "; border-bottom: 1px solid " + borderColor + "; padding-bottom: 5px; font-size: 1.5em; margin-top: 0; }" +
+               "h2 { color: " + subHeaderColor + "; border-bottom: 1px solid " + borderColor + "; padding-bottom: 3px; font-size: 1.25em; }" +
                "h3 { color: #ce9178; font-size: 1.1em; }" +
-               "code { font-family: 'Consolas', 'Courier New', monospace; background-color: #2d2d2d; color: #9cdcfe; padding: 2px 5px; border-radius: 3px; font-size: 0.9em; }" +
-               "pre { background-color: #2d2d2d; border: 1px solid #3c3c3c; border-radius: 4px; padding: 10px; overflow-x: auto; font-family: 'Consolas', 'Courier New', monospace; }" +
-               "pre code { background-color: transparent; color: #d4d4d4; padding: 0; }" +
+               "code { font-family: 'Consolas', 'Courier New', monospace; background-color: " + codeBg + "; color: " + subHeaderColor + "; padding: 2px 5px; border-radius: 3px; font-size: 0.9em; }" +
+               "pre { background-color: " + codeBg + "; border: 1px solid " + borderColor + "; border-radius: 4px; padding: 10px; overflow-x: auto; font-family: 'Consolas', 'Courier New', monospace; }" +
+               "pre code { background-color: transparent; color: " + textColor + "; padding: 0; }" +
                "table { border-collapse: collapse; width: 100%; margin: 15px 0; font-size: 0.9em; }" +
-               "th, td { border: 1px solid #3c3c3c; padding: 8px; text-align: left; }" +
-               "th { background-color: #2d2d2d; color: #4CAF50; }" +
-               "blockquote { border-left: 4px solid #4CAF50; background-color: #252526; margin: 10px 0; padding: 10px; color: #b5cea8; }" +
-               "hr { border: 0; border-top: 1px solid #3c3c3c; margin: 20px 0; }" +
+               "th, td { border: 1px solid " + borderColor + "; padding: 8px; text-align: left; }" +
+               "th { background-color: " + codeBg + "; color: " + headerColor + "; }" +
+               "blockquote { border-left: 4px solid " + headerColor + "; background-color: " + codeBg + "; margin: 10px 0; padding: 10px; color: #b5cea8; }" +
+               "hr { border: 0; border-top: 1px solid " + borderColor + "; margin: 20px 0; }" +
                "ul { padding-left: 20px; }" +
                "li { margin-bottom: 5px; }" +
                "</style></head><body>" + bodyHtml + "</body></html>";

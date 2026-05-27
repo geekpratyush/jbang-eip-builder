@@ -1,0 +1,10 @@
+{
+  "mappings": [
+    { "diagramPath": "diagrams/mermaid/flowchart.mmd", "type": "Mermaid" },
+    { "diagramPath": "diagrams/plantuml/component.puml", "type": "PlantUML" },
+    { "diagramPath": "diagrams/graphviz/network.dot", "type": "Graphviz" },
+    { "diagramPath": "diagrams/d2/system-arch.d2", "type": "D2" },
+    { "diagramPath": "diagrams/c4/context.puml", "type": "C4" },
+    { "diagramPath": "diagrams/bpmn/order-process.bpmn", "type": "BPMN" }
+  ]
+}

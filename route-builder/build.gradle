@@ -70,6 +70,9 @@ dependencies {
     implementation 'org.smooks.cartridges.edi:smooks-edifact-cartridge:2.0.0'
     implementation 'org.smooks.cartridges:smooks-dfdl-cartridge:1.0.0'
 
+    // PlantUML
+    implementation 'net.sourceforge.plantuml:plantuml:1.2024.3'
+    
     // Testing
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
     testImplementation 'org.junit.platform:junit-platform-launcher:1.10.2'

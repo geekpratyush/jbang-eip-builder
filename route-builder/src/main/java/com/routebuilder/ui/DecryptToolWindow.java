@@ -24,16 +24,19 @@ public class DecryptToolWindow {
 
         VBox layout = new VBox(10);
         layout.setPadding(new Insets(15));
-        layout.setStyle("-fx-background-color: #1e1e1e;");
+        layout.getStyleClass().add("decrypt-window");
+        layout.getStyleClass().add(RouteBuilderApp.currentThemeClass);
+        RouteBuilderApp.themedRoots.add(layout);
+        stage.setOnHidden(e -> RouteBuilderApp.themedRoots.remove(layout));
 
         Label titleLbl = new Label("AES-256-GCM Decryption Utility");
-        titleLbl.setStyle("-fx-text-fill: #4CAF50; -fx-font-size: 16px; -fx-font-weight: bold;");
+        titleLbl.getStyleClass().add("decrypt-title");
 
         Label keyLbl = new Label("Secret Key / Encryption Password:");
-        keyLbl.setStyle("-fx-text-fill: #cccccc;");
+        keyLbl.getStyleClass().add("decrypt-label");
         
         PasswordField keyField = new PasswordField();
-        keyField.setStyle("-fx-background-color: #3c3c3c; -fx-text-fill: white; -fx-prompt-text-fill: #808080;");
+        keyField.getStyleClass().add("decrypt-field");
         keyField.setPromptText("Enter secret key or password...");
         
         // Pre-populate if system property KAMELET_STUDIO_ENCRYPTION_KEY exists
@@ -43,26 +46,26 @@ public class DecryptToolWindow {
         }
 
         Label cipherLbl = new Label("Base64 Encrypted Ciphertext:");
-        cipherLbl.setStyle("-fx-text-fill: #cccccc;");
+        cipherLbl.getStyleClass().add("decrypt-label");
         
         TextArea cipherArea = new TextArea();
         cipherArea.setPromptText("Paste your Base64 encrypted payload here...");
         cipherArea.setPrefHeight(100);
         cipherArea.setWrapText(true);
-        cipherArea.setStyle("-fx-control-inner-background: #2d2d2d; -fx-text-fill: white;");
+        cipherArea.getStyleClass().add("decrypt-area");
 
         Button btnDecrypt = new Button("Decrypt Payload");
-        btnDecrypt.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
+        btnDecrypt.getStyleClass().add("decrypt-btn");
         btnDecrypt.setPrefWidth(150);
 
         Label plainLbl = new Label("Decrypted Plaintext Output:");
-        plainLbl.setStyle("-fx-text-fill: #cccccc;");
+        plainLbl.getStyleClass().add("decrypt-label");
         
         TextArea plainArea = new TextArea();
         plainArea.setEditable(false);
         plainArea.setPrefHeight(150);
         plainArea.setWrapText(true);
-        plainArea.setStyle("-fx-control-inner-background: #2d2d2d; -fx-text-fill: #9cdcfe; -fx-font-family: monospace;");
+        plainArea.getStyleClass().add("decrypt-output-area");
 
         btnDecrypt.setOnAction(e -> {
             String secret = keyField.getText();
@@ -88,6 +91,12 @@ public class DecryptToolWindow {
         );
 
         Scene scene = new Scene(layout, 500, 520);
+        try {
+            scene.getStylesheets().add(DecryptToolWindow.class.getResource("/styles/main.css").toExternalForm());
+            if (RouteBuilderApp.currentDynamicCssUri != null) {
+                scene.getStylesheets().add(RouteBuilderApp.currentDynamicCssUri);
+            }
+        } catch (Exception ignored) {}
         stage.setScene(scene);
         stage.show();
     }

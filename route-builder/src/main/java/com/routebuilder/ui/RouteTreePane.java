@@ -357,12 +357,20 @@ public class RouteTreePane extends VBox {
             }
         });
 
+        MenuItem copyUriMenu = new MenuItem("Copy Camel URI", new FontIcon("fas-link"));
+        copyUriMenu.setOnAction(e -> {
+            String uri = getCamelUri(item);
+            javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
+            content.putString(uri);
+            javafx.scene.input.Clipboard.getSystemClipboard().setContent(content);
+        });
+
         if (item.isDirectory()) {
             contextMenu.getItems().addAll(newMenu, runRouteMenu, new SeparatorMenuItem(), pasteMenu, new SeparatorMenuItem(), renameMenu, deleteMenu);
         } else {
             String name = item.getName().toLowerCase();
             if (name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".groovy")) {
-                contextMenu.getItems().addAll(openMenu, runRouteMenu, new SeparatorMenuItem(), cutMenu, copyMenu, pasteMenu, new SeparatorMenuItem(), renameMenu, deleteMenu);
+                contextMenu.getItems().addAll(openMenu, runRouteMenu, copyUriMenu, new SeparatorMenuItem(), cutMenu, copyMenu, pasteMenu, new SeparatorMenuItem(), renameMenu, deleteMenu);
             } else {
                 contextMenu.getItems().addAll(openMenu, new SeparatorMenuItem(), cutMenu, copyMenu, pasteMenu, new SeparatorMenuItem(), renameMenu, deleteMenu);
             }
@@ -378,6 +386,27 @@ public class RouteTreePane extends VBox {
         });
 
         return contextMenu;
+    }
+
+    private String getCamelUri(File item) {
+        if (item == null) return "";
+        String fileName = item.getName();
+        if (fileName.endsWith(".kamelet.yaml")) {
+            // For kamelets, the URI is kamelet:name
+            String name = fileName.substring(0, fileName.indexOf(".kamelet.yaml"));
+            return "kamelet:" + name;
+        }
+        
+        try {
+            // Get path relative to base directory
+            java.nio.file.Path base = baseDirectory.toPath().toAbsolutePath();
+            java.nio.file.Path file = item.toPath().toAbsolutePath();
+            java.nio.file.Path relative = base.relativize(file);
+            String path = relative.toString().replace("\\", "/");
+            return "file:" + path;
+        } catch (Exception e) {
+            return "file:" + item.getName();
+        }
     }
 
     private void createNewItem(boolean isFolder) {

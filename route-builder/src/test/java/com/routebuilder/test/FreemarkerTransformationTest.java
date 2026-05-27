@@ -8,10 +8,18 @@ import java.nio.file.Files;
 
 public class FreemarkerTransformationTest {
 
+    private File getTestFolder(String path) throws Exception {
+        java.net.URL resource = getClass().getResource(path);
+        if (resource == null) {
+            throw new IllegalArgumentException("Resource not found: " + path);
+        }
+        return new File(resource.toURI());
+    }
+
     @Test
     public void testFreemarkerJsonExample1() throws Exception {
         System.out.println("=== RUNNING FREEMARKER JSON EXAMPLE 1 TEST ===");
-        File folder = new File("../test-mapping/freemarker-ftl/example1");
+        File folder = getTestFolder("/test-mapping/freemarker-ftl/example1");
         File logicFile = new File(folder, "template.ftl");
         File sourceFile = new File(folder, "source.json");
         
@@ -34,7 +42,7 @@ public class FreemarkerTransformationTest {
     @Test
     public void testFreemarkerXmlExample2() throws Exception {
         System.out.println("=== RUNNING FREEMARKER XML EXAMPLE 2 TEST ===");
-        File folder = new File("../test-mapping/freemarker-ftl/example2");
+        File folder = getTestFolder("/test-mapping/freemarker-ftl/example2");
         File logicFile = new File(folder, "template.ftl");
         File sourceFile = new File(folder, "source.xml");
         
