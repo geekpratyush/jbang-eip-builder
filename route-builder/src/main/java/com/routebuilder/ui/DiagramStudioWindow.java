@@ -1,6 +1,8 @@
 package com.routebuilder.ui;
 
 import javafx.application.Platform;
+import javafx.scene.Parent;
+import javafx.scene.paint.Color;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -38,6 +40,9 @@ public class DiagramStudioWindow {
     private final Map<Tab, WebEngine> tabEngines = new HashMap<>();
     private final Map<Tab, WebEngine> tabCanvasEngines = new HashMap<>();
     private final Map<Tab, File> tabFiles = new HashMap<>();
+    private final Map<Tab, WebView> tabEditorViews = new HashMap<>();
+    private final Map<Tab, WebView> tabCanvasViews = new HashMap<>();
+    private final Map<Tab, Parent> tabEditorContainers = new HashMap<>();
     
     private ComboBox<String> studioThemeBox;
     private ComboBox<String> diagramThemeBox;
@@ -49,12 +54,16 @@ public class DiagramStudioWindow {
     };
 
     private ComboBox<String> boardThemeBox;
+    private ComboBox<String> layoutModeBox;
     private String currentBoardTheme = "Dark Grid";
     private String currentOrientation = "T-D";
-    private boolean isSwapped = false;
+    private String currentLayoutMode = "Code Left";
     private static final String[] BOARD_THEMES = { 
         "Plain White", "Grey Paper", "Soft Grey", "Dotted Grey", "Light Grid", 
         "Dark Grid", "Dark Dotted", "Clean Dark", "Navy Blue", "Hacker Black", "Blueprint" 
+    };
+    private static final String[] LAYOUT_MODES = {
+        "Code Left", "Code Right", "Code Top", "Code Bottom"
     };
 
     public DiagramStudioWindow() {
@@ -79,7 +88,7 @@ public class DiagramStudioWindow {
         this.currentDiagramTheme = prefs.get("diagramTheme", "default");
         this.currentBoardTheme = prefs.get("boardTheme", "Dark Grid");
         this.currentOrientation = prefs.get("orientation", "T-D");
-        this.isSwapped = prefs.getBoolean("isSwapped", false);
+        this.currentLayoutMode = prefs.get("layoutMode", "Code Left");
 
         if (!workspaceRoot.exists()) {
             workspaceRoot.mkdirs();
@@ -158,6 +167,22 @@ public class DiagramStudioWindow {
             refreshAllTabs();
         });
 
+        Button btnRender = new Button("Render", new FontIcon("fas-play"));
+        btnRender.getStyleClass().addAll("toolbar-btn", "btn-render");
+        btnRender.setTooltip(new Tooltip("Force render / refresh active diagram"));
+        btnRender.setOnAction(e -> forceRenderActiveTab());
+
+        layoutModeBox = new ComboBox<>();
+        layoutModeBox.getItems().addAll(LAYOUT_MODES);
+        layoutModeBox.setValue(currentLayoutMode);
+        layoutModeBox.setTooltip(new Tooltip("Split Pane Layout Position"));
+        layoutModeBox.setOnAction(e -> {
+            currentLayoutMode = layoutModeBox.getValue();
+            java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(DiagramStudioWindow.class);
+            prefs.put("layoutMode", currentLayoutMode);
+            updateAllTabsLayout();
+        });
+
         Button btnOrientation = new Button();
         btnOrientation.setGraphic(new FontIcon("L-R".equals(currentOrientation) ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down"));
         btnOrientation.setTooltip(new Tooltip("Toggle Layout Orientation (T-D / L-R)"));
@@ -180,11 +205,12 @@ public class DiagramStudioWindow {
 
         toolBar.getItems().addAll(
             btnNew, btnOpenWorkspace, new Separator(),
-            btnSave, btnRefreshWorkspace, btnSwap, new Separator(),
+            btnSave, btnRefreshWorkspace, btnSwap, btnRender, new Separator(),
             btnExport, new Separator(),
             btnZoomIn, btnZoomOut, btnZoomReset, new Separator(),
             new Label("Theme:"), diagramThemeBox, 
             new Label("Board:"), boardThemeBox,
+            new Label("Layout:"), layoutModeBox,
             btnOrientation, new Separator(),
             spacer, studioThemeBox
         );
@@ -368,22 +394,64 @@ public class DiagramStudioWindow {
             return;
         }
 
+        tabPane.getTabs().clear();
+        openTabs.clear();
+        tabEngines.clear();
+        tabCanvasEngines.clear();
+        tabFiles.clear();
+
         Tab tab = new Tab(file.getName());
         openTabs.put(file, tab);
         tabFiles.put(tab, file);
         
         SplitPane tabSplit = new SplitPane();
-        tabSplit.setOrientation(Orientation.HORIZONTAL);
 
         WebView canvasView = new WebView();
         WebView editorView = new WebView();
+        RouteBuilderApp.installClipboardShortcuts(editorView);
         
-        if (isSwapped) {
-            tabSplit.getItems().addAll(editorView, canvasView);
-        } else {
-            tabSplit.getItems().addAll(canvasView, editorView);
-        }
-        tabSplit.setDividerPositions(0.5);
+        tabEditorViews.put(tab, editorView);
+        tabCanvasViews.put(tab, canvasView);
+        
+        VBox editorBox = new VBox();
+        editorBox.getStyleClass().add("editor-view-container");
+        
+        HBox editorToolbar = new HBox();
+        editorToolbar.getStyleClass().add("editor-header-bar");
+        editorToolbar.setPadding(new Insets(5));
+        editorToolbar.setSpacing(10);
+        editorToolbar.setAlignment(Pos.CENTER_LEFT);
+        
+        Label codeLabel = new Label("Editor Tools:");
+        codeLabel.getStyleClass().add("editor-tools-label");
+        
+        ColorPicker colorPicker = new ColorPicker(Color.web("#4CAF50"));
+        colorPicker.setStyle("-fx-color-label-visible: false;");
+        colorPicker.setTooltip(new Tooltip("Pick Color - inserts hex code at cursor"));
+        colorPicker.setOnAction(evt -> {
+            insertTextInEditor(tab, toHexString(colorPicker.getValue()));
+        });
+        
+        ComboBox<String> snippetBox = new ComboBox<>();
+        snippetBox.setPromptText("Insert Snippet/Theme");
+        updateSnippetDropdown(tab, snippetBox);
+        
+        snippetBox.setOnAction(evt -> {
+            String selected = snippetBox.getValue();
+            if (selected != null) {
+                handleSnippetSelection(tab, selected, colorPicker);
+                Platform.runLater(() -> snippetBox.setValue(null));
+            }
+        });
+        
+        editorToolbar.getChildren().addAll(codeLabel, new Label("Color:"), colorPicker, new Label("Snippets:"), snippetBox);
+        
+        VBox.setVgrow(editorView, Priority.ALWAYS);
+        editorBox.getChildren().addAll(editorToolbar, editorView);
+        
+        tabEditorContainers.put(tab, editorBox);
+        
+        applyLayoutToSplitPane(tabSplit, editorBox, canvasView);
 
         tab.setContent(tabSplit);
         tabPane.getTabs().add(tab);
@@ -405,7 +473,137 @@ public class DiagramStudioWindow {
             tabEngines.remove(tab);
             tabCanvasEngines.remove(tab);
             tabFiles.remove(tab);
+            tabEditorViews.remove(tab);
+            tabCanvasViews.remove(tab);
+            tabEditorContainers.remove(tab);
         });
+    }
+
+    private void applyLayoutToSplitPane(SplitPane tabSplit, Parent editorNode, WebView canvasView) {
+        tabSplit.getItems().clear();
+        switch (currentLayoutMode) {
+            case "Code Right":
+                tabSplit.setOrientation(Orientation.HORIZONTAL);
+                tabSplit.getItems().addAll(canvasView, editorNode);
+                break;
+            case "Code Top":
+                tabSplit.setOrientation(Orientation.VERTICAL);
+                tabSplit.getItems().addAll(editorNode, canvasView);
+                break;
+            case "Code Bottom":
+                tabSplit.setOrientation(Orientation.VERTICAL);
+                tabSplit.getItems().addAll(canvasView, editorNode);
+                break;
+            case "Code Left":
+            default:
+                tabSplit.setOrientation(Orientation.HORIZONTAL);
+                tabSplit.getItems().addAll(editorNode, canvasView);
+                break;
+        }
+        tabSplit.setDividerPositions(0.5);
+    }
+
+    private void updateSnippetDropdown(Tab tab, ComboBox<String> box) {
+        box.getItems().clear();
+        File file = tabFiles.get(tab);
+        if (file == null) return;
+        String type = getDiagramType(file);
+        
+        if ("plantuml".equalsIgnoreCase(type)) {
+            box.getItems().addAll(
+                "Theme: Metal",
+                "Theme: Superhero",
+                "Theme: Black Knight",
+                "Theme: Cerulean",
+                "Skinparam Class Background",
+                "Skinparam Actor Background",
+                "Color: Element Inline Color"
+            );
+        } else if ("mermaid".equalsIgnoreCase(type)) {
+            box.getItems().addAll(
+                "Theme: Dark",
+                "Theme: Forest",
+                "Theme: Neutral",
+                "Theme: Base (Custom Primary)",
+                "Style: Node Styling Template",
+                "Style: Stroke Dasharray",
+                "Link Style: Direct Link Color"
+            );
+        } else if ("graphviz".equalsIgnoreCase(type)) {
+            box.getItems().addAll(
+                "Style: Filled Node (Yellow)",
+                "Style: Filled Node (Custom)",
+                "Style: Colored Edge",
+                "Graph: Background Color"
+            );
+        } else {
+            box.getItems().addAll(
+                "Insert Color Hex"
+            );
+        }
+    }
+
+    private void handleSnippetSelection(Tab tab, String selection, ColorPicker colorPicker) {
+        if (selection == null || selection.isEmpty()) return;
+        
+        String hex = toHexString(colorPicker.getValue());
+        String snippet = "";
+        
+        switch (selection) {
+            // PlantUML
+            case "Theme: Metal": snippet = "!theme metal\n"; break;
+            case "Theme: Superhero": snippet = "!theme superhero\n"; break;
+            case "Theme: Black Knight": snippet = "!theme black-knight\n"; break;
+            case "Theme: Cerulean": snippet = "!theme cerulean\n"; break;
+            case "Skinparam Class Background": snippet = "skinparam classBackgroundColor " + hex + "\n"; break;
+            case "Skinparam Actor Background": snippet = "skinparam actorBackgroundColor " + hex + "\n"; break;
+            case "Color: Element Inline Color": snippet = " " + hex; break;
+            
+            // Mermaid
+            case "Theme: Dark": snippet = "%%{init: {'theme': 'dark'}}%%\n"; break;
+            case "Theme: Forest": snippet = "%%{init: {'theme': 'forest'}}%%\n"; break;
+            case "Theme: Neutral": snippet = "%%{init: {'theme': 'neutral'}}%%\n"; break;
+            case "Theme: Base (Custom Primary)": snippet = "%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '" + hex + "' }}}%%\n"; break;
+            case "Style: Node Styling Template": snippet = "style NODE_ID fill:" + hex + ",stroke:#333,stroke-width:2px;\n"; break;
+            case "Style: Stroke Dasharray": snippet = "style NODE_ID stroke-dasharray: 5 5;\n"; break;
+            case "Link Style: Direct Link Color": snippet = "linkStyle 0 stroke:" + hex + ",stroke-width:2px;\n"; break;
+            
+            // Graphviz
+            case "Style: Filled Node (Yellow)": snippet = " [fillcolor=\"yellow\", style=filled]"; break;
+            case "Style: Filled Node (Custom)": snippet = " [fillcolor=\"" + hex + "\", style=filled]"; break;
+            case "Style: Colored Edge": snippet = " [color=\"" + hex + "\"]"; break;
+            case "Graph: Background Color": snippet = "bgcolor=\"" + hex + "\""; break;
+            
+            default:
+                snippet = hex;
+                break;
+        }
+        
+        insertTextInEditor(tab, snippet);
+    }
+
+    private String toHexString(Color val) {
+        return String.format("#%02X%02X%02X",
+            (int)(val.getRed() * 255),
+            (int)(val.getGreen() * 255),
+            (int)(val.getBlue() * 255)
+        );
+    }
+
+    private void insertTextInEditor(Tab tab, String text) {
+        WebEngine engine = tabEngines.get(tab);
+        if (engine != null) {
+            try {
+                String escapedText = text.replace("\\", "\\\\")
+                                         .replace("'", "\\'")
+                                         .replace("\"", "\\\"")
+                                         .replace("\n", "\\n")
+                                         .replace("\r", "");
+                engine.executeScript("if(window.editor) { window.editor.trigger('keyboard', 'type', { text: '" + escapedText + "' }); window.editor.focus(); }");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void loadMonacoForTab(Tab tab, String content, String language) {
@@ -451,7 +649,12 @@ public class DiagramStudioWindow {
                 } else {
                     WebEngine canvasEngine = tabCanvasEngines.get(tab);
                     if (canvasEngine != null) {
-                        canvasEngine.executeScript("if(window.updateDiagram) window.updateDiagram(\"" + newCode.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + "\");");
+                        try {
+                            String base64 = java.util.Base64.getEncoder().encodeToString(newCode.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                            canvasEngine.executeScript("if(window.updateDiagramBase64) window.updateDiagramBase64(\"" + base64 + "\");");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             });
@@ -462,7 +665,12 @@ public class DiagramStudioWindow {
             Platform.runLater(() -> {
                 WebEngine canvasEngine = tabCanvasEngines.get(tab);
                 if (canvasEngine != null) {
-                    canvasEngine.executeScript("if(window.updateSvg) window.updateSvg(\"" + svg.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + "\");");
+                    try {
+                        String base64 = java.util.Base64.getEncoder().encodeToString(svg.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                        canvasEngine.executeScript("if(window.updateSvgBase64) window.updateSvgBase64(\"" + base64 + "\");");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             });
         }
@@ -596,6 +804,8 @@ public class DiagramStudioWindow {
             }
         }
 
+        String base64Code = java.util.Base64.getEncoder().encodeToString(processedCode.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
         return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" +
                "<script src=\"" + getClass().getResource("/styles/viz.js").toExternalForm() + "\"></script>" +
                "<script src=\"" + getClass().getResource("/styles/lite.render.js").toExternalForm() + "\"></script>" +
@@ -626,7 +836,14 @@ public class DiagramStudioWindow {
                "window.onmouseup = function() { isDragging = false; };" +
                "function updateTransform() { viewport.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')'; }" +
                "window.updateDiagram = function(code) { render(code); };" +
-               "render(`" + processedCode.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$") + "`);" +
+               "window.updateDiagramBase64 = function(base64) {" +
+               "  var code = decodeURIComponent(escape(window.atob(base64)));" +
+               "  window.updateDiagram(code);" +
+               "};" +
+               "window.onload = function() {" +
+               "  var initialCode = decodeURIComponent(escape(window.atob('" + base64Code + "')));" +
+               "  render(initialCode);" +
+               "};" +
                "</script></body></html>";
     }
 
@@ -637,6 +854,7 @@ public class DiagramStudioWindow {
             processed = processed.replace("@startuml", "@startuml\nleft to right direction");
         }
         String svg = renderPlantUmlToSvg(processed);
+        String base64Svg = java.util.Base64.getEncoder().encodeToString(svg.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         
         return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" +
                "<style>" +
@@ -650,7 +868,6 @@ public class DiagramStudioWindow {
                "  svg { max-width: 100%; height: auto; }" +
                "</style></head><body class=\"" + (currentThemeName.equalsIgnoreCase("IntelliJ Light") ? "theme-intellij-light" : "") + "\">" +
                "<div id=\"container\"><div id=\"viewport\">" +
-               "<div class=\"diagram-block\">" + svg + "</div>" +
                "</div></div>" +
                "<script>" +
                "var scale = 1.0, tx = 0, ty = 0, isDragging = false, lastX, lastY;" +
@@ -679,6 +896,13 @@ public class DiagramStudioWindow {
                "window.updateSvg = function(svg) {" +
                "  viewport.innerHTML = '<div class=\"diagram-block\">' + svg + '</div>';" +
                "};" +
+               "window.updateSvgBase64 = function(base64) {" +
+               "  var svg = decodeURIComponent(escape(window.atob(base64)));" +
+               "  window.updateSvg(svg);" +
+               "};" +
+               "window.onload = function() {" +
+               "  window.updateSvgBase64('" + base64Svg + "');" +
+               "};" +
                "</script></body></html>";
     }
 
@@ -694,11 +918,8 @@ public class DiagramStudioWindow {
                 processed = processed.replace("@startuml", "@startuml\n!pragma layout smetana");
             }
             
-            // Fix C4 includes to look locally if they are remote
-            // Support both https and http, and literal strings to avoid regex pitfalls
-            String c4LocalBase = new File(workspaceRoot, "libraries/c4/").getAbsolutePath().replace("\\", "/") + "/";
-            processed = processed.replace("https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/", c4LocalBase);
-            processed = processed.replace("http://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/", c4LocalBase);
+            // Support built-in offline C4 library inside PlantUML jar by using standard include path syntax <C4/...>
+            processed = processed.replaceAll("https?://raw\\.githubusercontent\\.com/plantuml-stdlib/C4-PlantUML/master/([A-Za-z0-9_]+)(\\.puml)?", "<C4/$1>");
 
             SourceStringReader reader = new SourceStringReader(processed);
             reader.generateImage(os, new FileFormatOption(FileFormat.SVG));
@@ -759,15 +980,19 @@ public class DiagramStudioWindow {
                "  viewport.innerHTML = '';" +
                "  var blocks = code.split(/```mermaid|```/);" +
                "  if (blocks.length <= 1 && code.trim().length > 0) {" +
-               "    var div = document.createElement('div'); div.className = 'mermaid diagram-block'; div.innerHTML = code;" +
+               "    var div = document.createElement('div'); div.className = 'mermaid diagram-block'; div.textContent = code;" +
                "    viewport.appendChild(div);" +
                "  } else {" +
                "    for (var i = 1; i < blocks.length; i += 2) {" +
-               "      var div = document.createElement('div'); div.className = 'mermaid diagram-block'; div.innerHTML = blocks[i];" +
+               "      var div = document.createElement('div'); div.className = 'mermaid diagram-block'; div.textContent = blocks[i];" +
                "      viewport.appendChild(div);" +
                "    }" +
                "  }" +
                "  try { mermaid.init(undefined, '.mermaid'); } catch(e) { console.error(e); }" +
+               "};" +
+               "window.updateDiagramBase64 = function(base64) {" +
+               "  var code = decodeURIComponent(escape(window.atob(base64)));" +
+               "  window.updateDiagram(code);" +
                "};" +
                "</script></body></html>";
     }
@@ -809,14 +1034,23 @@ public class DiagramStudioWindow {
             for (int i = 1; i < parts.length; i++) {
                 String block = parts[i].split("```")[0];
                 String processed = injectMermaidOrientation(block, orientation);
-                sb.append("<div class=\"mermaid diagram-block\">").append(processed).append("</div>");
+                sb.append("<div class=\"mermaid diagram-block\">").append(escapeHtml(processed)).append("</div>");
             }
         } else {
             // Assume the whole file is a single mermaid diagram
             String processed = injectMermaidOrientation(content, orientation);
-            sb.append("<div class=\"mermaid diagram-block\">").append(processed).append("</div>");
+            sb.append("<div class=\"mermaid diagram-block\">").append(escapeHtml(processed)).append("</div>");
         }
         return sb.toString();
+    }
+
+    private String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&apos;");
     }
 
     private String injectMermaidOrientation(String code, String orientation) {
@@ -1003,20 +1237,69 @@ public class DiagramStudioWindow {
     }
 
     private void swapPanels() {
-        isSwapped = !isSwapped;
-        java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(DiagramStudioWindow.class);
-        prefs.putBoolean("isSwapped", isSwapped);
+        if ("Code Left".equals(currentLayoutMode)) {
+            currentLayoutMode = "Code Right";
+        } else if ("Code Right".equals(currentLayoutMode)) {
+            currentLayoutMode = "Code Left";
+        } else if ("Code Top".equals(currentLayoutMode)) {
+            currentLayoutMode = "Code Bottom";
+        } else if ("Code Bottom".equals(currentLayoutMode)) {
+            currentLayoutMode = "Code Top";
+        }
         
+        if (layoutModeBox != null) {
+            layoutModeBox.setValue(currentLayoutMode);
+        }
+        
+        java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(DiagramStudioWindow.class);
+        prefs.put("layoutMode", currentLayoutMode);
+        updateAllTabsLayout();
+    }
+
+    private void updateAllTabsLayout() {
         for (Tab tab : tabPane.getTabs()) {
             if (tab.getContent() instanceof SplitPane) {
                 SplitPane sp = (SplitPane) tab.getContent();
-                ObservableList<javafx.scene.Node> items = sp.getItems();
-                if (items.size() == 2) {
-                    javafx.scene.Node first = items.get(0);
-                    javafx.scene.Node second = items.get(1);
-                    items.setAll(second, first);
+                WebView editor = tabEditorViews.get(tab);
+                WebView canvas = tabCanvasViews.get(tab);
+                if (editor != null && canvas != null) {
+                    applyLayoutToSplitPane(sp, editor, canvas);
                 }
             }
+        }
+    }
+
+    private void forceRenderActiveTab() {
+        Tab activeTab = tabPane.getSelectionModel().getSelectedItem();
+        if (activeTab == null) return;
+        
+        WebEngine editorEngine = tabEngines.get(activeTab);
+        if (editorEngine == null) return;
+        
+        try {
+            String currentCode = (String) editorEngine.executeScript("window.editor.getValue();");
+            if (currentCode != null) {
+                File file = tabFiles.get(activeTab);
+                if (file != null) {
+                    String type = getDiagramType(file);
+                    if ("plantuml".equalsIgnoreCase(type)) {
+                        String svg = renderPlantUmlToSvg(currentCode);
+                        WebEngine canvasEngine = tabCanvasEngines.get(activeTab);
+                        if (canvasEngine != null) {
+                            String base64 = java.util.Base64.getEncoder().encodeToString(svg.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                            canvasEngine.executeScript("if(window.updateSvgBase64) window.updateSvgBase64(\"" + base64 + "\");");
+                        }
+                    } else {
+                        WebEngine canvasEngine = tabCanvasEngines.get(activeTab);
+                        if (canvasEngine != null) {
+                            String base64 = java.util.Base64.getEncoder().encodeToString(currentCode.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                            canvasEngine.executeScript("if(window.updateDiagramBase64) window.updateDiagramBase64(\"" + base64 + "\");");
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

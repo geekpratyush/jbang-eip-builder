@@ -127,6 +127,7 @@ public class LiquibaseExportWindow {
 
         // --- Monaco Editor ---
         WebView webView = new WebView();
+        RouteBuilderApp.installClipboardShortcuts(webView);
         WebEngine engine = webView.getEngine();
         VBox.setVgrow(webView, Priority.ALWAYS);
 

@@ -1760,3 +1760,76 @@
     -fx-text-fill: #00ff00;
     -fx-prompt-text-fill: #008000;
 }
+
+/* Editor View Container and Header Bar */
+.editor-view-container {
+    -fx-background-color: #1e1e1e;
+}
+.editor-header-bar {
+    -fx-background-color: #252526;
+    -fx-border-color: #3c3c3c;
+    -fx-border-width: 0 0 1px 0;
+}
+.editor-header-bar .label {
+    -fx-text-fill: #cccccc;
+}
+.editor-header-bar .combo-box {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #555555;
+    -fx-border-radius: 3px;
+    -fx-background-radius: 3px;
+}
+
+/* Theme: IntelliJ Light overrides */
+.theme-intellij-light .editor-view-container {
+    -fx-background-color: #ffffff;
+}
+.theme-intellij-light .editor-header-bar {
+    -fx-background-color: #f3f3f3;
+    -fx-border-color: #cccccc;
+}
+.theme-intellij-light .editor-header-bar .label {
+    -fx-text-fill: #333333;
+}
+.theme-intellij-light .editor-header-bar .combo-box {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #333333;
+    -fx-border-color: #cccccc;
+}
+
+/* Theme: Dracula overrides */
+.theme-dracula .editor-view-container {
+    -fx-background-color: #282a36;
+}
+.theme-dracula .editor-header-bar {
+    -fx-background-color: #282a36;
+    -fx-border-color: #6272a4;
+}
+
+/* Theme: Monokai overrides */
+.theme-monokai .editor-view-container {
+    -fx-background-color: #272822;
+}
+.theme-monokai .editor-header-bar {
+    -fx-background-color: #272822;
+    -fx-border-color: #75715e;
+}
+
+/* Theme: Hacker overrides */
+.theme-hacker .editor-view-container {
+    -fx-background-color: #000000;
+}
+.theme-hacker .editor-header-bar {
+    -fx-background-color: #0d0d0d;
+    -fx-border-color: #004d00;
+}
+.theme-hacker .editor-header-bar .label {
+    -fx-text-fill: #00ff00;
+}
+.theme-hacker .editor-header-bar .combo-box {
+    -fx-background-color: #050505;
+    -fx-text-fill: #00ff00;
+    -fx-border-color: #004d00;
+}
+

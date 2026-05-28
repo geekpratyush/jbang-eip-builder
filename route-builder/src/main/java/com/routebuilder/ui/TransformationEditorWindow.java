@@ -165,9 +165,11 @@ public class TransformationEditorWindow {
             enrichSplit.setOrientation(Orientation.VERTICAL);
             
             VBox originalBox = new VBox(new Label("Original Source"), sourceRawWebView = new WebView());
+            RouteBuilderApp.installClipboardShortcuts(sourceRawWebView);
             VBox.setVgrow(sourceRawWebView, Priority.ALWAYS);
             
             VBox truncatedBox = new VBox(new Label("Truncated Source (to be enriched)"), sourceXmlWebView = new WebView());
+            RouteBuilderApp.installClipboardShortcuts(sourceXmlWebView);
             VBox.setVgrow(sourceXmlWebView, Priority.ALWAYS);
             
             enrichSplit.getItems().addAll(originalBox, truncatedBox);
@@ -181,9 +183,11 @@ public class TransformationEditorWindow {
             sourceSplit.setOrientation(Orientation.VERTICAL);
             
             VBox rawBox = new VBox(new Label("Raw Source"), sourceRawWebView = new WebView());
+            RouteBuilderApp.installClipboardShortcuts(sourceRawWebView);
             VBox.setVgrow(sourceRawWebView, Priority.ALWAYS);
             
             VBox xmlBox = new VBox(new Label("Converted XML"), sourceXmlWebView = new WebView());
+            RouteBuilderApp.installClipboardShortcuts(sourceXmlWebView);
             VBox.setVgrow(sourceXmlWebView, Priority.ALWAYS);
             
             sourceSplit.getItems().addAll(rawBox, xmlBox);
@@ -194,6 +198,7 @@ public class TransformationEditorWindow {
             sourceXmlEngine = sourceXmlWebView.getEngine();
         } else {
             sourceXmlWebView = new WebView();
+            RouteBuilderApp.installClipboardShortcuts(sourceXmlWebView);
             sourcePanel.getChildren().add(sourceXmlWebView);
             VBox.setVgrow(sourceXmlWebView, Priority.ALWAYS);
             sourceXmlEngine = sourceXmlWebView.getEngine();
@@ -204,6 +209,7 @@ public class TransformationEditorWindow {
         Label lblLogic = new Label("LOGIC (" + transformationType.toUpperCase() + ")");
         lblLogic.getStyleClass().add("pane-title");
         logicWebView = new WebView();
+        RouteBuilderApp.installClipboardShortcuts(logicWebView);
         logicPanel.getChildren().addAll(lblLogic, logicWebView);
         VBox.setVgrow(logicWebView, Priority.ALWAYS);
         logicEngine = logicWebView.getEngine();
@@ -213,6 +219,7 @@ public class TransformationEditorWindow {
         Label lblTarget = new Label("TARGET");
         lblTarget.getStyleClass().add("pane-title");
         targetWebView = new WebView();
+        RouteBuilderApp.installClipboardShortcuts(targetWebView);
         targetPanel.getChildren().addAll(lblTarget, targetWebView);
         VBox.setVgrow(targetWebView, Priority.ALWAYS);
         targetEngine = targetWebView.getEngine();

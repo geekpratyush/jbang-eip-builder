@@ -1,9 +1,9 @@
 graph TD
-    A[Start] --> B{Is user authenticated?}
+    A[Start] --> B{"Is user authenticated?"}
     B -->|Yes| C[Show Dashboard]
     B -->|No| D[Show Login Page]
     D --> E[Enter Credentials]
-    E --> F{Valid?}
+    E --> F{"Valid?"}
     F -->|Yes| G[Generate Token]
     G --> C
     F -->|No| H[Show Error]
@@ -12,7 +12,6 @@ graph TD
     I --> J[Logout]
     J --> K[Clear Session]
     K --> A
-
     style A fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:#fff
     style B fill:#FF9800,stroke:#E65100,stroke-width:2px,color:#fff
     style C fill:#2196F3,stroke:#0D47A1,stroke-width:2px,color:#fff

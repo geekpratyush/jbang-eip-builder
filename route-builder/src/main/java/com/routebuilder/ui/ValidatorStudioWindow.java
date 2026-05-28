@@ -318,6 +318,7 @@ public class ValidatorStudioWindow {
         headerSource.getChildren().addAll(lblSourceIcon, lblSourceTitle);
 
         webViewSource = new WebView();
+        RouteBuilderApp.installClipboardShortcuts(webViewSource);
         VBox.setVgrow(webViewSource, Priority.ALWAYS);
         engineSource = webViewSource.getEngine();
         paneSource.getChildren().addAll(headerSource, webViewSource);
@@ -336,6 +337,7 @@ public class ValidatorStudioWindow {
         headerSchema.getChildren().addAll(lblSchemaIcon, lblSchemaTitle);
 
         webViewSchema = new WebView();
+        RouteBuilderApp.installClipboardShortcuts(webViewSchema);
         VBox.setVgrow(webViewSchema, Priority.ALWAYS);
         engineSchema = webViewSchema.getEngine();
         paneSchema.getChildren().addAll(headerSchema, webViewSchema);
@@ -354,6 +356,7 @@ public class ValidatorStudioWindow {
         headerResult.getChildren().addAll(lblResultIcon, lblResultTitle);
 
         webViewResult = new WebView();
+        RouteBuilderApp.installClipboardShortcuts(webViewResult);
         VBox.setVgrow(webViewResult, Priority.ALWAYS);
         engineResult = webViewResult.getEngine();
         paneResult.getChildren().addAll(headerResult, webViewResult);
