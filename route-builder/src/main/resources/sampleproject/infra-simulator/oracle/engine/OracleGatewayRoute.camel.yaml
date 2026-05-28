@@ -1,0 +1,17 @@
+# camel-k: dependency=mvn:com.fasterxml.jackson.core:jackson-databind:2.17.0
+# camel-k: source=OracleGateway.java
+
+- beans:
+    - name: "oracleGateway"
+      type: "oracle.engine.OracleGateway"
+
+- route:
+    id: oracle-gateway-simulator-route
+    from:
+      uri: direct:oracle-gateway
+      steps:
+        # Call the execute method of OracleGateway bean under oracle.engine package
+        - bean:
+            ref: "oracleGateway"
+            method: "execute"
+        - log: "Oracle DB Gateway Output: ${body}"

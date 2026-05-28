@@ -1,5 +1,11 @@
 <?xml version="1.0"?>
 <smooks-resource-list xmlns="https://www.smooks.org/xsd/smooks-2.0.xsd"
+                      xmlns:core="https://www.smooks.org/xsd/smooks/smooks-core-1.6.xsd"
                       xmlns:csv="https://www.smooks.org/xsd/smooks/csv-1.7.xsd">
+
+    <core:exports>
+        <core:result type="org.smooks.io.sink.StringSink" />
+    </core:exports>
+
     <csv:reader fields="firstname,lastname,gender,age,country" skipLines="1" />
 </smooks-resource-list>

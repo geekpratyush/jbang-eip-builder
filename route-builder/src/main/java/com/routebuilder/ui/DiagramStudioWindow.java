@@ -1,6 +1,7 @@
 package com.routebuilder.ui;
 
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -49,6 +50,8 @@ public class DiagramStudioWindow {
 
     private ComboBox<String> boardThemeBox;
     private String currentBoardTheme = "Dark Grid";
+    private String currentOrientation = "T-D";
+    private boolean isSwapped = false;
     private static final String[] BOARD_THEMES = { 
         "Plain White", "Grey Paper", "Soft Grey", "Dotted Grey", "Light Grid", 
         "Dark Grid", "Dark Dotted", "Clean Dark", "Navy Blue", "Hacker Black", "Blueprint" 
@@ -59,11 +62,24 @@ public class DiagramStudioWindow {
         this.stage = new Stage();
         
         java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(DiagramStudioWindow.class);
-        String savedRoot = prefs.get("workspaceRoot", new File(System.getProperty("user.dir"), "diagram-workspace").getAbsolutePath());
-        this.workspaceRoot = new File(savedRoot);
+        String savedRoot = prefs.get("workspaceRoot", null);
+        File defaultRoot = new File(System.getProperty("user.dir"), "diagram-workspace");
         
+        if (savedRoot != null) {
+            File f = new File(savedRoot);
+            if (f.exists() && f.isDirectory()) {
+                this.workspaceRoot = f;
+            }
+        }
+        
+        if (this.workspaceRoot == null) {
+            this.workspaceRoot = defaultRoot;
+        }
+
         this.currentDiagramTheme = prefs.get("diagramTheme", "default");
         this.currentBoardTheme = prefs.get("boardTheme", "Dark Grid");
+        this.currentOrientation = prefs.get("orientation", "T-D");
+        this.isSwapped = prefs.getBoolean("isSwapped", false);
 
         if (!workspaceRoot.exists()) {
             workspaceRoot.mkdirs();
@@ -93,6 +109,16 @@ public class DiagramStudioWindow {
         Button btnSave = new Button("Save", new FontIcon("fas-save"));
         btnSave.getStyleClass().addAll("toolbar-btn", "btn-save");
         btnSave.setOnAction(e -> saveCurrentTab());
+
+        Button btnRefreshWorkspace = new Button(null, new FontIcon("fas-sync-alt"));
+        btnRefreshWorkspace.getStyleClass().add("toolbar-btn");
+        btnRefreshWorkspace.setTooltip(new Tooltip("Refresh File Tree"));
+        btnRefreshWorkspace.setOnAction(e -> refreshTree());
+
+        Button btnSwap = new Button(null, new FontIcon("fas-exchange-alt"));
+        btnSwap.getStyleClass().add("toolbar-btn");
+        btnSwap.setTooltip(new Tooltip("Swap Editor and Canvas"));
+        btnSwap.setOnAction(e -> swapPanels());
 
         Button btnExport = new Button("Export SVG", new FontIcon("fas-download"));
         btnExport.getStyleClass().addAll("toolbar-btn", "btn-export");
@@ -132,6 +158,18 @@ public class DiagramStudioWindow {
             refreshAllTabs();
         });
 
+        Button btnOrientation = new Button();
+        btnOrientation.setGraphic(new FontIcon("L-R".equals(currentOrientation) ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down"));
+        btnOrientation.setTooltip(new Tooltip("Toggle Layout Orientation (T-D / L-R)"));
+        btnOrientation.getStyleClass().add("toolbar-btn");
+        btnOrientation.setOnAction(e -> {
+            currentOrientation = "L-R".equals(currentOrientation) ? "T-D" : "L-R";
+            btnOrientation.setGraphic(new FontIcon("L-R".equals(currentOrientation) ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down"));
+            java.util.prefs.Preferences p = java.util.prefs.Preferences.userNodeForPackage(DiagramStudioWindow.class);
+            p.put("orientation", currentOrientation);
+            refreshAllTabs();
+        });
+
         studioThemeBox = new ComboBox<>();
         studioThemeBox.getItems().addAll("VSCode Dark", "IntelliJ Light", "Dracula", "Monokai", "Hacker");
         studioThemeBox.setValue(RouteBuilderApp.currentThemeName);
@@ -140,29 +178,82 @@ public class DiagramStudioWindow {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        toolBar.getItems().addAll(btnNew, btnOpenWorkspace, btnSave, btnExport, new Separator(), btnZoomIn, btnZoomOut, btnZoomReset, new Separator(), 
-            new Label("Board:"), boardThemeBox, new Label("Theme:"), diagramThemeBox, new Separator(), spacer, studioThemeBox);
+        toolBar.getItems().addAll(
+            btnNew, btnOpenWorkspace, new Separator(),
+            btnSave, btnRefreshWorkspace, btnSwap, new Separator(),
+            btnExport, new Separator(),
+            btnZoomIn, btnZoomOut, btnZoomReset, new Separator(),
+            new Label("Theme:"), diagramThemeBox, 
+            new Label("Board:"), boardThemeBox,
+            btnOrientation, new Separator(),
+            spacer, studioThemeBox
+        );
         root.setTop(toolBar);
 
         // --- Sidebar ---
         VBox sidebar = new VBox();
-        sidebar.setPrefWidth(250);
-        sidebar.setPadding(new Insets(8));
+        sidebar.setPrefWidth(260);
+        sidebar.setMinWidth(50);
+        sidebar.setPadding(new Insets(10));
         sidebar.setSpacing(5);
         sidebar.getStyleClass().add("studio-sidebar");
 
-        Label lblExplorer = new Label("DIAGRAM EXPLORER");
+        HBox sidebarHeader = new HBox(5);
+        sidebarHeader.setAlignment(Pos.CENTER_LEFT);
+        
+        Label lblExplorer = new Label("EXPLORER");
         lblExplorer.getStyleClass().add("studio-explorer-label");
+        HBox.setHgrow(lblExplorer, Priority.ALWAYS);
+        lblExplorer.setMaxWidth(Double.MAX_VALUE);
+
+        Button btnExpandAll = new Button(null, new FontIcon("fas-expand-arrows-alt"));
+        btnExpandAll.getStyleClass().add("small-action-btn");
+        btnExpandAll.setTooltip(new Tooltip("Expand All"));
+        btnExpandAll.setOnAction(e -> toggleAllNodes(treeView.getRoot(), true));
+
+        Button btnCollapseAll = new Button(null, new FontIcon("fas-compress-arrows-alt"));
+        btnCollapseAll.getStyleClass().add("small-action-btn");
+        btnCollapseAll.setTooltip(new Tooltip("Collapse All"));
+        btnCollapseAll.setOnAction(e -> toggleAllNodes(treeView.getRoot(), false));
+
+        sidebarHeader.getChildren().addAll(lblExplorer, btnExpandAll, btnCollapseAll);
 
         treeView = new TreeView<>();
         treeView.getStyleClass().add("sidebar-tree-view");
         VBox.setVgrow(treeView, Priority.ALWAYS);
+        
+        // --- Keyboard Shortcuts & Auto-Selection ---
+        treeView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && newVal.getValue().isFile()) {
+                // Auto-switch/open on selection
+                openFile(newVal.getValue());
+            }
+        });
+
         treeView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
                 TreeItem<File> item = treeView.getSelectionModel().getSelectedItem();
                 if (item != null && item.getValue().isFile()) {
                     openFile(item.getValue());
                 }
+            }
+        });
+
+        treeView.setOnKeyPressed(event -> {
+            KeyCode code = event.getCode();
+            if (code == KeyCode.ENTER) {
+                TreeItem<File> item = treeView.getSelectionModel().getSelectedItem();
+                if (item != null) {
+                    if (item.getValue().isFile()) openFile(item.getValue());
+                    else item.setExpanded(!item.isExpanded());
+                }
+                event.consume();
+            } else if (code == KeyCode.DELETE || (code == KeyCode.BACK_SPACE && event.isShortcutDown())) {
+                deleteSelectedFile();
+                event.consume();
+            } else if (code == KeyCode.F5) {
+                refreshTree();
+                event.consume();
             }
         });
         
@@ -175,20 +266,7 @@ public class DiagramStudioWindow {
                     setGraphic(null);
                 } else {
                     setText(item.getName());
-                    if (item.isDirectory()) {
-                        setGraphic(new FontIcon("fas-folder"));
-                    } else {
-                        String name = item.getName().toLowerCase();
-                        if (name.endsWith(".mmd") || name.endsWith(".mermaid")) {
-                            setGraphic(new FontIcon("fas-project-diagram")); // Mermaid
-                        } else if (name.endsWith(".puml") || name.endsWith(".plantuml")) {
-                            setGraphic(new FontIcon("fas-sitemap")); // PlantUML
-                        } else if (name.endsWith(".dot") || name.endsWith(".gv")) {
-                            setGraphic(new FontIcon("fas-network-wired")); // Graphviz
-                        } else {
-                            setGraphic(new FontIcon("fas-file-image"));
-                        }
-                    }
+                    setGraphic(RouteBuilderApp.getFileIcon(item));
                 }
             }
         });
@@ -208,6 +286,18 @@ public class DiagramStudioWindow {
         root.setCenter(horizontalSplit);
 
         Scene scene = new Scene(root, 1400, 900);
+        
+        // --- Global Accelerators ---
+        scene.getAccelerators().put(new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN), this::saveCurrentTab);
+        scene.getAccelerators().put(new KeyCodeCombination(KeyCode.W, KeyCombination.SHORTCUT_DOWN), () -> {
+            Tab selected = tabPane.getSelectionModel().getSelectedItem();
+            if (selected != null) tabPane.getTabs().remove(selected);
+        });
+        scene.getAccelerators().put(new KeyCodeCombination(KeyCode.EQUALS, KeyCombination.SHORTCUT_DOWN), () -> applyZoom(1.2));
+        scene.getAccelerators().put(new KeyCodeCombination(KeyCode.MINUS, KeyCombination.SHORTCUT_DOWN), () -> applyZoom(0.8));
+        scene.getAccelerators().put(new KeyCodeCombination(KeyCode.DIGIT0, KeyCombination.SHORTCUT_DOWN), this::resetZoom);
+        scene.getAccelerators().put(new KeyCodeCombination(KeyCode.R, KeyCombination.SHORTCUT_DOWN), this::refreshTree);
+
         scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
         if (RouteBuilderApp.currentDynamicCssUri != null) {
             scene.getStylesheets().add(RouteBuilderApp.currentDynamicCssUri);
@@ -288,7 +378,11 @@ public class DiagramStudioWindow {
         WebView canvasView = new WebView();
         WebView editorView = new WebView();
         
-        tabSplit.getItems().addAll(canvasView, editorView);
+        if (isSwapped) {
+            tabSplit.getItems().addAll(editorView, canvasView);
+        } else {
+            tabSplit.getItems().addAll(canvasView, editorView);
+        }
         tabSplit.setDividerPositions(0.5);
 
         tab.setContent(tabSplit);
@@ -316,19 +410,31 @@ public class DiagramStudioWindow {
 
     private void loadMonacoForTab(Tab tab, String content, String language) {
         WebEngine engine = tabEngines.get(tab);
-        engine.loadContent(getMonacoHtml(content, language));
+        String activeTheme = RouteBuilderApp.currentThemeClass;
         
-        engine.getLoadWorker().stateProperty().addListener((obs, old, newVal) -> {
+        String monacoBase = getClass().getResource("/monaco/vs/loader.js").toExternalForm();
+        monacoBase = monacoBase.substring(0, monacoBase.lastIndexOf("/vs/loader.js"));
+
+        String html = getMonacoHtml(content, language);
+        
+        engine.getLoadWorker().stateProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == javafx.concurrent.Worker.State.SUCCEEDED) {
                 JSObject window = (JSObject) engine.executeScript("window");
                 window.setMember("javaBridge", new DiagramBridge(tab));
+                
+                // Ensure theme is set after load
+                String mTheme = activeTheme.contains("light") ? "vs" : "vs-dark";
+                engine.executeScript("if(window.setTheme) window.setTheme('" + mTheme + "');");
             }
         });
+        
+        engine.loadContent(html);
     }
 
     private void loadCanvasForTab(Tab tab, String content, String type) {
         WebEngine engine = tabCanvasEngines.get(tab);
-        engine.loadContent(getCanvasHtml(content, type));
+        String html = getCanvasHtml(content, type);
+        engine.loadContent(html);
     }
 
     public class DiagramBridge {
@@ -363,19 +469,96 @@ public class DiagramStudioWindow {
     }
 
     private String getMonacoHtml(String content, String language) {
-        String monacoTheme = currentThemeName.equalsIgnoreCase("IntelliJ Light") ? "vs" : "vs-dark";
-        return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" +
-               "<style>body { margin: 0; padding: 0; overflow: hidden; background-color: #1e1e1e; } #editor { width: 100vw; height: 100vh; }</style>" +
+        String activeTheme = RouteBuilderApp.currentThemeClass;
+        String editorBg = "#1e1e1e";
+        if ("theme-intellij-light".equals(activeTheme)) editorBg = "#ffffff";
+        else if ("theme-dracula".equals(activeTheme)) editorBg = "#282a36";
+        else if ("theme-monokai".equals(activeTheme)) editorBg = "#272822";
+        else if ("theme-hacker".equals(activeTheme)) editorBg = "#050505";
+
+        String encodedContent = "";
+        try {
+            encodedContent = java.net.URLEncoder.encode(content, "UTF-8").replace("+", "%20");
+        } catch (Exception ignored) {}
+        
+        String monacoBase = getClass().getResource("/monaco/vs/loader.js").toExternalForm();
+        monacoBase = monacoBase.substring(0, monacoBase.lastIndexOf("/vs/loader.js"));
+
+        return "<!DOCTYPE html><html><head><base href=\"" + monacoBase + "/\"/><meta charset=\"UTF-8\">" +
+               "<style>body { margin: 0; padding: 0; overflow: hidden; background-color: " + editorBg + "; } #editor { width: 100vw; height: 100vh; }</style>" +
                "</head><body><div id=\"editor\"></div>" +
-               "<script src=\"" + getClass().getResource("/monaco/vs/loader.js").toExternalForm() + "\"></script>" +
+               "<script src=\"" + monacoBase + "/vs/loader.js\"></script>" +
                "<script>" +
-               "require.config({ paths: { vs: '" + getClass().getResource("/monaco/vs").toExternalForm() + "' }});" +
+               "require.config({ paths: { vs: '" + monacoBase + "/vs' }});" +
                "require(['vs/editor/editor.main'], function() {" +
+               "  try {" +
+               "    // Register Mermaid language\n" +
+               "    monaco.languages.register({ id: 'mermaid' });\n" +
+               "    monaco.languages.setMonarchTokensProvider('mermaid', {\n" +
+               "      tokenizer: {\n" +
+               "        root: [\n" +
+               "          [/[a-z_$][\\w$]*/, { cases: { '@keywords': 'keyword', '@default': 'identifier' } }],\n" +
+               "          { include: '@whitespace' },\n" +
+               "          [/\\[\\[.*?\\]\\]/, 'annotation'],\n" +
+               "          [/\\d+/, 'number'],\n" +
+               "          [/\"/, { token: 'string.quote', bracket: '@open', next: '@string' }],\n" +
+               "        ],\n" +
+               "        string: [\n" +
+               "          [/[^\"]+/, 'string'],\n" +
+               "          [/\"/, { token: 'string.quote', bracket: '@close', next: '@pop' }],\n" +
+               "        ],\n" +
+               "        whitespace: [[/[ \\t\\r\\n]+/, 'white'], [/%%.*$/, 'comment']],\n" +
+               "      },\n" +
+               "      keywords: ['graph', 'TD', 'LR', 'subgraph', 'end', 'sequenceDiagram', 'participant', 'as', 'note', 'loop', 'alt', 'else', 'opt', 'classDiagram', 'stateDiagram-v2', 'erDiagram', 'pie'],\n" +
+               "    });\n" +
+               "\n" +
+               "    // Register PlantUML language\n" +
+               "    monaco.languages.register({ id: 'plantuml' });\n" +
+               "    monaco.languages.setMonarchTokensProvider('plantuml', {\n" +
+               "      tokenizer: {\n" +
+               "        root: [\n" +
+               "          [/^\\s*@startuml/, 'keyword'], [/^\\s*@enduml/, 'keyword'],\n" +
+               "          [/![a-z]*/, 'keyword'],\n" +
+               "          [/[a-z_$][\\w$]*/, { cases: { '@keywords': 'keyword', '@default': 'identifier' } }],\n" +
+               "          { include: '@whitespace' },\n" +
+               "          [/\"/, { token: 'string.quote', bracket: '@open', next: '@string' }],\n" +
+               "        ],\n" +
+               "        string: [[/[^\"]+/, 'string'], [/\"/, { token: 'string.quote', bracket: '@close', next: '@pop' }]],\n" +
+               "        whitespace: [[/[ \\t\\r\\n]+/, 'white'], [/' .*$/, 'comment']],\n" +
+               "      },\n" +
+               "      keywords: ['actor', 'boundary', 'control', 'entity', 'participant', 'as', 'order', 'box', 'newpage', 'title', 'header', 'footer', 'caption', 'legend', 'package', 'node', 'cloud', 'database', 'storage', 'agent', 'artifact', 'component', 'interface', 'class', 'enum', 'struct'],\n" +
+               "    });\n" +
+               "\n" +
+               "    // Register Graphviz (dot) language\n" +
+               "    monaco.languages.register({ id: 'dot' });\n" +
+               "    monaco.languages.setMonarchTokensProvider('dot', {\n" +
+               "      tokenizer: {\n" +
+               "        root: [\n" +
+               "          [/[a-z_$][\\w$]*/, { cases: { '@keywords': 'keyword', '@default': 'identifier' } }],\n" +
+               "          { include: '@whitespace' },\n" +
+               "          [/\"/, { token: 'string.quote', bracket: '@open', next: '@string' }],\n" +
+               "        ],\n" +
+               "        string: [[/[^\"]+/, 'string'], [/\"/, { token: 'string.quote', bracket: '@close', next: '@pop' }]],\n" +
+               "        whitespace: [[/[ \\t\\r\\n]+/, 'white'], [/\\/\\/.*$/, 'comment'], [/\\/\\*/, 'comment', '@comment']],\n" +
+               "      },\n" +
+               "      comment: [[/[^\\/*]+/, 'comment'], [/[\\/*]/, 'comment'], [/\\*\\//, 'comment', '@pop']],\n" +
+               "      keywords: ['graph', 'digraph', 'subgraph', 'node', 'edge', 'strict'],\n" +
+               "    });\n" +
+               "\n" +
+               "    monaco.editor.defineTheme('theme-vscode-dark', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: '569cd6', fontStyle: 'bold' }, { token: 'comment', foreground: '6a9955', fontStyle: 'italic' }, { token: 'string', foreground: 'ce9178' } ], colors: { 'editor.background': '#1e1e1e' } });\n" +
+               "    monaco.editor.defineTheme('theme-intellij-light', { base: 'vs', inherit: true, rules: [ { token: 'keyword', foreground: '0000ff', fontStyle: 'bold' }, { token: 'comment', foreground: '808080', fontStyle: 'italic' }, { token: 'string', foreground: '008000' } ], colors: { 'editor.background': '#ffffff' } });\n" +
+               "    monaco.editor.defineTheme('theme-dracula', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'ff79c6', fontStyle: 'bold' }, { token: 'comment', foreground: '6272a4', fontStyle: 'italic' }, { token: 'string', foreground: 'f1fa8c' } ], colors: { 'editor.background': '#282a36' } });\n" +
+               "    monaco.editor.defineTheme('theme-monokai', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'f92672', fontStyle: 'bold' }, { token: 'comment', foreground: '75715e', fontStyle: 'italic' }, { token: 'string', foreground: 'e6db74' } ], colors: { 'editor.background': '#272822' } });\n" +
+               "    monaco.editor.defineTheme('theme-hacker', { base: 'hc-black', inherit: true, rules: [ { token: 'keyword', foreground: '00ff00', fontStyle: 'bold' }, { token: 'comment', foreground: '00cc00', fontStyle: 'italic' }, { token: 'string', foreground: '00ff00' } ], colors: { 'editor.background': '#050505' } });\n" +
+               "  } catch(e) { console.error('Registration error', e); }\n" +
+               "\n" +
                "  window.editor = monaco.editor.create(document.getElementById('editor'), {" +
-               "    value: `" + content + "`," +
+               "    value: decodeURIComponent('" + encodedContent + "')," +
                "    language: '" + language + "'," +
-               "    theme: '" + monacoTheme + "'," +
-               "    automaticLayout: true" +
+               "    theme: '" + activeTheme + "'," +
+               "    automaticLayout: true," +
+               "    fontSize: 14," +
+               "    minimap: { enabled: false }" +
                "  });" +
                "  window.editor.onDidChangeModelContent(function() {" +
                "    if(window.javaBridge) window.javaBridge.onContentChanged(window.editor.getValue());" +
@@ -402,10 +585,22 @@ public class DiagramStudioWindow {
 
     private String getGraphvizHtml(String content) {
         String boardCss = getBoardThemeCss();
+        String processedCode = content.trim();
+        if (processedCode.startsWith("digraph") || processedCode.startsWith("graph")) {
+            String dir = currentOrientation.equals("L-R") ? "LR" : "TB";
+            if (!processedCode.contains("rankdir")) {
+                int braceIdx = processedCode.indexOf("{");
+                if (braceIdx != -1) {
+                    processedCode = processedCode.substring(0, braceIdx + 1) + "\n  rankdir=" + dir + ";\n" + processedCode.substring(braceIdx + 1);
+                }
+            }
+        }
+
         return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" +
                "<script src=\"" + getClass().getResource("/styles/viz.js").toExternalForm() + "\"></script>" +
                "<script src=\"" + getClass().getResource("/styles/lite.render.js").toExternalForm() + "\"></script>" +
                "<style>" +
+               "  * { -webkit-user-select: none; user-select: none; }" +
                "  body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; " + boardCss + " }" +
                "  #container { width: 100vw; height: 100vh; cursor: grab; overflow: hidden; display: flex; justify-content: center; align-items: center; }" +
                "  #container:active { cursor: grabbing; }" +
@@ -418,6 +613,7 @@ public class DiagramStudioWindow {
                "<script>" +
                "var viz = new Viz(); var scale = 1.0, tx = 0, ty = 0, isDragging = false, lastX, lastY;" +
                "var container = document.getElementById('container'), viewport = document.getElementById('viewport');" +
+               "window.addEventListener('dragstart', function(e) { e.preventDefault(); });" +
                "function render(code) {" +
                "  if (!code || code.trim().length === 0) return;" +
                "  viz.renderSVGElement(code).then(function(element) {" +
@@ -425,21 +621,26 @@ public class DiagramStudioWindow {
                "  }).catch(error => { viewport.innerHTML = '<div style=\"color:red\">Graphviz Error: ' + error + '</div>'; });" +
                "}" +
                "container.onwheel = function(e) { e.preventDefault(); var delta = e.deltaY > 0 ? 0.9 : 1.1; scale *= delta; updateTransform(); };" +
-               "container.onmousedown = function(e) { if(e.button === 0) { isDragging = true; lastX = e.clientX; lastY = e.clientY; } };" +
+               "container.onmousedown = function(e) { if(e.button === 0) { isDragging = true; lastX = e.clientX; lastY = e.clientY; e.preventDefault(); } };" +
                "window.onmousemove = function(e) { if (!isDragging) return; tx += (e.clientX - lastX); ty += (e.clientY - lastY); lastX = e.clientX; lastY = e.clientY; updateTransform(); };" +
                "window.onmouseup = function() { isDragging = false; };" +
                "function updateTransform() { viewport.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')'; }" +
                "window.updateDiagram = function(code) { render(code); };" +
-               "render(`" + content.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$") + "`);" +
+               "render(`" + processedCode.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$") + "`);" +
                "</script></body></html>";
     }
 
     private String getPlantUmlHtml(String content) {
         String boardCss = getBoardThemeCss();
-        String svg = renderPlantUmlToSvg(content);
+        String processed = content.trim();
+        if (currentOrientation.equals("L-R") && !processed.contains("left to right direction")) {
+            processed = processed.replace("@startuml", "@startuml\nleft to right direction");
+        }
+        String svg = renderPlantUmlToSvg(processed);
         
         return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" +
                "<style>" +
+               "  * { -webkit-user-select: none; user-select: none; }" +
                "  body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; " + boardCss + " }" +
                "  #container { width: 100vw; height: 100vh; cursor: grab; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }" +
                "  #container:active { cursor: grabbing; }" +
@@ -454,13 +655,14 @@ public class DiagramStudioWindow {
                "<script>" +
                "var scale = 1.0, tx = 0, ty = 0, isDragging = false, lastX, lastY;" +
                "var container = document.getElementById('container'), viewport = document.getElementById('viewport');" +
+               "window.addEventListener('dragstart', function(e) { e.preventDefault(); });" +
                "container.onwheel = function(e) {" +
                "  e.preventDefault();" +
                "  var delta = e.deltaY > 0 ? 0.9 : 1.1;" +
                "  scale *= delta;" +
                "  updateTransform();" +
                "};" +
-               "container.onmousedown = function(e) { if(e.button === 0) { isDragging = true; lastX = e.clientX; lastY = e.clientY; } };" +
+               "container.onmousedown = function(e) { if(e.button === 0) { isDragging = true; lastX = e.clientX; lastY = e.clientY; e.preventDefault(); } };" +
                "window.onmousemove = function(e) {" +
                "  if (!isDragging) return;" +
                "  tx += (e.clientX - lastX); ty += (e.clientY - lastY);" +
@@ -472,7 +674,6 @@ public class DiagramStudioWindow {
                "  viewport.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';" +
                "}" +
                "window.updateDiagram = function(code) {" +
-               "  // For PlantUML, we need to call back to Java to re-render SVG" +
                "  if(window.javaBridge) window.javaBridge.requestPlantUmlRender(code);" +
                "};" +
                "window.updateSvg = function(svg) {" +
@@ -494,7 +695,10 @@ public class DiagramStudioWindow {
             }
             
             // Fix C4 includes to look locally if they are remote
-            processed = processed.replaceAll("!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/", "!include " + new File(workspaceRoot, "libraries/c4/").getAbsolutePath().replace("\\", "/") + "/");
+            // Support both https and http, and literal strings to avoid regex pitfalls
+            String c4LocalBase = new File(workspaceRoot, "libraries/c4/").getAbsolutePath().replace("\\", "/") + "/";
+            processed = processed.replace("https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/", c4LocalBase);
+            processed = processed.replace("http://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/", c4LocalBase);
 
             SourceStringReader reader = new SourceStringReader(processed);
             reader.generateImage(os, new FileFormatOption(FileFormat.SVG));
@@ -507,10 +711,12 @@ public class DiagramStudioWindow {
     private String getMermaidHtml(String content) {
         String theme = currentDiagramTheme;
         String boardCss = getBoardThemeCss();
+        String orientation = currentOrientation.equals("L-R") ? "LR" : "TD";
         
         return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" +
                "<script src=\"" + getClass().getResource("/styles/mermaid.min.js").toExternalForm() + "\"></script>" +
                "<style>" +
+               "  * { -webkit-user-select: none; user-select: none; }" +
                "  body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; " + boardCss + " }" +
                "  #container { width: 100vw; height: 100vh; cursor: grab; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }" +
                "  #container:active { cursor: grabbing; }" +
@@ -519,12 +725,13 @@ public class DiagramStudioWindow {
                "  .theme-intellij-light .diagram-block { background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }" +
                "</style></head><body class=\"" + (currentThemeName.equalsIgnoreCase("IntelliJ Light") ? "theme-intellij-light" : "") + "\">" +
                "<div id=\"container\"><div id=\"viewport\">" +
-               renderAllMermaidBlocks(content) +
+               renderAllMermaidBlocks(content, orientation) +
                "</div></div>" +
                "<script>" +
                "mermaid.initialize({ startOnLoad: true, theme: '" + theme + "', securityLevel: 'loose', flowchart: { useMaxWidth: false } });" +
                "var scale = 1.0, tx = 0, ty = 0, isDragging = false, lastX, lastY;" +
                "var container = document.getElementById('container'), viewport = document.getElementById('viewport');" +
+               "window.addEventListener('dragstart', function(e) { e.preventDefault(); });" +
                "container.onwheel = function(e) {" +
                "  e.preventDefault();" +
                "  var rect = viewport.getBoundingClientRect();" +
@@ -537,7 +744,7 @@ public class DiagramStudioWindow {
                "    updateTransform();" +
                "  }" +
                "};" +
-               "container.onmousedown = function(e) { if(e.button === 0) { isDragging = true; lastX = e.clientX; lastY = e.clientY; } };" +
+               "container.onmousedown = function(e) { if(e.button === 0) { isDragging = true; lastX = e.clientX; lastY = e.clientY; e.preventDefault(); } };" +
                "window.onmousemove = function(e) {" +
                "  if (!isDragging) return;" +
                "  tx += (e.clientX - lastX); ty += (e.clientY - lastY);" +
@@ -593,7 +800,7 @@ public class DiagramStudioWindow {
         }
     }
 
-    private String renderAllMermaidBlocks(String content) {
+    private String renderAllMermaidBlocks(String content, String orientation) {
         if (content == null || content.trim().isEmpty()) return "";
         StringBuilder sb = new StringBuilder();
         // Check if content has markdown blocks
@@ -601,13 +808,31 @@ public class DiagramStudioWindow {
             String[] parts = content.split("```mermaid");
             for (int i = 1; i < parts.length; i++) {
                 String block = parts[i].split("```")[0];
-                sb.append("<div class=\"mermaid diagram-block\">").append(block).append("</div>");
+                String processed = injectMermaidOrientation(block, orientation);
+                sb.append("<div class=\"mermaid diagram-block\">").append(processed).append("</div>");
             }
         } else {
             // Assume the whole file is a single mermaid diagram
-            sb.append("<div class=\"mermaid diagram-block\">").append(content).append("</div>");
+            String processed = injectMermaidOrientation(content, orientation);
+            sb.append("<div class=\"mermaid diagram-block\">").append(processed).append("</div>");
         }
         return sb.toString();
+    }
+
+    private String injectMermaidOrientation(String code, String orientation) {
+        String trimmed = code.trim();
+        if (trimmed.startsWith("graph ") || trimmed.startsWith("flowchart ")) {
+            // Replace existing orientation if found
+            String updated = trimmed.replaceAll("(graph|flowchart)\\s+(TD|LR|TB|BT|RL)", "$1 " + orientation);
+            if (!updated.equals(trimmed)) return updated;
+            
+            // Or inject after first word if not found
+            int firstSpace = trimmed.indexOf(" ");
+            if (firstSpace != -1) {
+                return trimmed.substring(0, firstSpace) + " " + orientation + " " + trimmed.substring(firstSpace + 1);
+            }
+        }
+        return code;
     }
 
     private String getLanguage(File file) {
@@ -651,24 +876,27 @@ public class DiagramStudioWindow {
         mnuNewFile.setOnAction(e -> createNewDiagram());
 
         MenuItem mnuDelete = new MenuItem("Delete", new FontIcon("fas-trash"));
-        mnuDelete.setOnAction(e -> {
-            TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
-            if (selected == null || selected.getValue().equals(workspaceRoot)) return;
-            File target = selected.getValue();
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Delete " + target.getName() + "?", ButtonType.YES, ButtonType.NO);
-            alert.showAndWait().ifPresent(response -> {
-                if (response == ButtonType.YES) {
-                    deleteRecursively(target);
-                    refreshTree();
-                }
-            });
-        });
+        mnuDelete.setOnAction(e -> deleteSelectedFile());
 
         MenuItem mnuRefresh = new MenuItem("Refresh", new FontIcon("fas-sync"));
         mnuRefresh.setOnAction(e -> refreshTree());
 
         contextMenu.getItems().addAll(mnuNewFile, new SeparatorMenuItem(), mnuDelete, new SeparatorMenuItem(), mnuRefresh);
         treeView.setContextMenu(contextMenu);
+    }
+
+    private void deleteSelectedFile() {
+        TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
+        if (selected == null || selected.getValue().equals(workspaceRoot)) return;
+        File target = selected.getValue();
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Delete " + target.getName() + "?", ButtonType.YES, ButtonType.NO);
+        RouteBuilderApp.themeDialog(alert);
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.YES) {
+                deleteRecursively(target);
+                refreshTree();
+            }
+        });
     }
 
     private void deleteRecursively(File file) {
@@ -759,7 +987,7 @@ public class DiagramStudioWindow {
         if (tab != null) {
             WebEngine engine = tabCanvasEngines.get(tab);
             if (engine != null) {
-                engine.executeScript("scale *= " + factor + "; updateTransform();");
+                engine.executeScript("if(typeof scale !== 'undefined') scale *= " + factor + "; if(window.updateTransform) updateTransform();");
             }
         }
     }
@@ -769,7 +997,34 @@ public class DiagramStudioWindow {
         if (tab != null) {
             WebEngine engine = tabCanvasEngines.get(tab);
             if (engine != null) {
-                engine.executeScript("scale = 1.0; tx = 0; ty = 0; updateTransform();");
+                engine.executeScript("if(typeof scale !== 'undefined') scale = 1.0; if(typeof tx !== 'undefined') tx = 0; if(typeof ty !== 'undefined') ty = 0; if(window.updateTransform) updateTransform();");
+            }
+        }
+    }
+
+    private void swapPanels() {
+        isSwapped = !isSwapped;
+        java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(DiagramStudioWindow.class);
+        prefs.putBoolean("isSwapped", isSwapped);
+        
+        for (Tab tab : tabPane.getTabs()) {
+            if (tab.getContent() instanceof SplitPane) {
+                SplitPane sp = (SplitPane) tab.getContent();
+                ObservableList<javafx.scene.Node> items = sp.getItems();
+                if (items.size() == 2) {
+                    javafx.scene.Node first = items.get(0);
+                    javafx.scene.Node second = items.get(1);
+                    items.setAll(second, first);
+                }
+            }
+        }
+    }
+
+    private void toggleAllNodes(TreeItem<?> item, boolean expanded) {
+        if (item != null) {
+            item.setExpanded(expanded);
+            for (TreeItem<?> child : item.getChildren()) {
+                toggleAllNodes(child, expanded);
             }
         }
     }

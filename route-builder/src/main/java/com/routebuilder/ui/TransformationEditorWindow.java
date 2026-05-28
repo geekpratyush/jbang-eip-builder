@@ -294,6 +294,7 @@ public class TransformationEditorWindow {
         return "<!DOCTYPE html>\n" +
             "<html>\n" +
             "<head>\n" +
+            "    <base href=\"" + monacoBase + "/\"/>\n" +
             "    <meta charset=\"UTF-8\">\n" +
             "    <style>\n" +
             "        body { margin: 0; padding: 0; overflow: hidden; background-color: #1e1e1e; }\n" +
@@ -345,7 +346,7 @@ public class TransformationEditorWindow {
             "                automaticLayout: true,\n" +
             "                minimap: { enabled: false },\n" +
             "                scrollBeyondLastLine: false,\n" +
-            "                fontSize: 12\n" +
+            "                fontSize: 14\n" +
             "            });\n" +
             "        });\n" +
             "    </script>\n" +

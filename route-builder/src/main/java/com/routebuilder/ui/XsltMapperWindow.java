@@ -242,7 +242,7 @@ public class XsltMapperWindow {
             "                automaticLayout: true,\n" +
             "                minimap: { enabled: true },\n" +
             "                scrollBeyondLastLine: false,\n" +
-            "                fontSize: 12,\n" +
+            "                fontSize: 14,\n" +
             "                lineNumbers: 'on',\n" +
             "                renderWhitespace: 'all',\n" +
             "                folding: true\n" +
@@ -368,7 +368,7 @@ public class XsltMapperWindow {
                         setText(item);
                         setGraphic(getTreeItem().getGraphic());
                         String col = item.contains("string") ? "#ce9178" : (item.contains("date") ? "#b5cea8" : "#cccccc");
-                        setStyle("-fx-background-color: transparent; -fx-text-fill: " + col + "; -fx-font-size: 11px;");
+                        setStyle("-fx-background-color: transparent; -fx-text-fill: " + col + "; -fx-font-size: 14px;");
                     }
                 }
             };

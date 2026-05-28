@@ -1,0 +1,18 @@
+[
+  {
+    "id": "MX-101",
+    "messageType": "pacs.008.001.08",
+    "sender": "ChaseBank",
+    "receiver": "CitiBank",
+    "amount": 250000.00,
+    "currency": "USD"
+  },
+  {
+    "id": "MX-102",
+    "messageType": "pain.001.001.08",
+    "sender": "Barclays",
+    "receiver": "HSBC",
+    "amount": 8900.50,
+    "currency": "GBP"
+  }
+]

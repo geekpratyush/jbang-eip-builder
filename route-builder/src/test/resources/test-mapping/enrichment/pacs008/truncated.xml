@@ -2,7 +2,7 @@
 <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.14">
   <FIToFICstmrCdtTrf>
     <GrpHdr>
-      <MsgId>MSG-pacs008-2026</MsgId>
+      <MsgId>MSG-pacs008-20260521-001</MsgId>
       <CreDtTm>2026-05-21T14:36:36.250789086+05:30</CreDtTm>
       <NbOfTxs>1</NbOfTxs>
       <SttlmInf>

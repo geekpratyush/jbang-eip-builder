@@ -3,6 +3,7 @@ package com.routebuilder.ui;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
@@ -27,7 +28,7 @@ import java.util.prefs.Preferences;
 public class TransformationStudioWindow {
     public static final java.util.List<TransformationStudioWindow> activeInstances = new java.util.ArrayList<>();
 
-    private final Stage stage;
+    private Stage stage;
     private final Preferences prefs;
     private File currentMappingsPath;
     
@@ -39,6 +40,11 @@ public class TransformationStudioWindow {
     private Button btnRun, btnValidate, btnSave, btnBrowseXsd, btnConfig, btnSnippet, btnClose;
     
     private File currentFolder;
+    private final java.util.Set<File> checkedFiles = new java.util.HashSet<>();
+
+    public java.util.Set<File> getCheckedFiles() {
+        return checkedFiles;
+    }
     private JSONObject currentConfig;
     private String transformationType = "xslt";
     private boolean isNonXmlSource = false;
@@ -58,7 +64,6 @@ public class TransformationStudioWindow {
 
     public TransformationStudioWindow() {
         activeInstances.add(this);
-        this.stage = new Stage();
         this.prefs = Preferences.userNodeForPackage(TransformationStudioWindow.class);
         String defaultPath = new File(System.getProperty("user.dir"), "test-mapping").exists() ?
             new File(System.getProperty("user.dir"), "test-mapping").getAbsolutePath() :
@@ -71,6 +76,9 @@ public class TransformationStudioWindow {
     }
 
     public void show() {
+        if (stage == null) {
+            stage = new Stage();
+        }
         stage.setTitle("Data Transformation Studio");
 
         BorderPane root = new BorderPane();
@@ -103,6 +111,21 @@ public class TransformationStudioWindow {
         btnConfig.getStyleClass().addAll("editor-btn", "btn-set-mappings");
         btnConfig.setOnAction(e -> chooseMappingsPath());
 
+        Button btnSampleData = new Button("Create Sample Mappings", new FontIcon("fas-magic"));
+        btnSampleData.getStyleClass().addAll("editor-btn", "btn-sample-data");
+        btnSampleData.setOnAction(e -> {
+            DirectoryChooser chooser = new DirectoryChooser();
+            chooser.setTitle("Select Directory for Sample Mappings");
+            chooser.setInitialDirectory(currentMappingsPath.exists() ? currentMappingsPath : new File(System.getProperty("user.dir")));
+            File selected = chooser.showDialog(stage);
+            if (selected != null) {
+                currentMappingsPath = selected;
+                prefs.put("mappingsPath", selected.getAbsolutePath());
+                generateSampleMappings(selected);
+                refreshMappingTree();
+            }
+        });
+
         lblStudioTitle = new Label("Select a mapping to begin");
         lblStudioTitle.getStyleClass().add("studio-title-label");
 
@@ -117,18 +140,49 @@ public class TransformationStudioWindow {
             RouteBuilderApp.setGlobalTheme(studioThemeBox.getValue());
         });
 
-        toolBar.getItems().addAll(btnRun, btnValidate, btnBrowseXsd, btnSave, new Separator(), btnConfig, new Separator(), lblStudioTitle, spacer, studioThemeBox);
+        Button btnExport = new Button("Export", new FontIcon("fas-download"));
+        btnExport.getStyleClass().addAll("editor-btn", "btn-export");
+        btnExport.setTooltip(new Tooltip("Export Selected Transformations to Liquibase Changelog"));
+        btnExport.setOnAction(e -> {
+            if (checkedFiles.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.WARNING, "Please select one or more transformations using the checkboxes in the Explorer.");
+                RouteBuilderApp.themeDialog(alert);
+                alert.showAndWait();
+                return;
+            }
+            LiquibaseExportWindow.showForTransformations(currentMappingsPath, checkedFiles);
+        });
+
+        toolBar.getItems().addAll(btnRun, btnValidate, btnBrowseXsd, btnSave, new Separator(), btnConfig, btnSampleData, btnExport, new Separator(), lblStudioTitle, spacer, studioThemeBox);
         root.setTop(toolBar);
 
         // --- Left Sidebar ---
         VBox sidebar = new VBox();
-        sidebar.setPrefWidth(250);
+        sidebar.setPrefWidth(260);
+        sidebar.setMinWidth(50);
         sidebar.setPadding(new Insets(10));
         sidebar.setSpacing(5);
         sidebar.getStyleClass().add("studio-sidebar");
 
+        HBox sidebarHeader = new HBox(5);
+        sidebarHeader.setAlignment(Pos.CENTER_LEFT);
+
         Label lblExplorer = new Label("MAPPING EXPLORER");
         lblExplorer.getStyleClass().add("studio-explorer-label");
+        HBox.setHgrow(lblExplorer, Priority.ALWAYS);
+        lblExplorer.setMaxWidth(Double.MAX_VALUE);
+
+        Button btnExpandAll = new Button(null, new FontIcon("fas-expand-arrows-alt"));
+        btnExpandAll.getStyleClass().add("small-action-btn");
+        btnExpandAll.setTooltip(new Tooltip("Expand All"));
+        btnExpandAll.setOnAction(e -> toggleAllNodes(mappingTree.getRoot(), true));
+
+        Button btnCollapseAll = new Button(null, new FontIcon("fas-compress-arrows-alt"));
+        btnCollapseAll.getStyleClass().add("small-action-btn");
+        btnCollapseAll.setTooltip(new Tooltip("Collapse All"));
+        btnCollapseAll.setOnAction(e -> toggleAllNodes(mappingTree.getRoot(), false));
+
+        sidebarHeader.getChildren().addAll(lblExplorer, btnExpandAll, btnCollapseAll);
         
         mappingTree = new TreeView<>();
         mappingTree.setShowRoot(false);
@@ -150,7 +204,8 @@ public class TransformationStudioWindow {
         contextMenu.getItems().addAll(newItem, newFolderItem, deleteItem, new SeparatorMenuItem(), refreshItem);
         mappingTree.setContextMenu(contextMenu);
 
-        sidebar.getChildren().addAll(lblExplorer, mappingTree);
+        sidebar.getChildren().addAll(sidebarHeader, mappingTree);
+        VBox.setVgrow(mappingTree, Priority.ALWAYS);
 
         // --- Main Content Area ---
         mainContentArea = new BorderPane();
@@ -227,15 +282,43 @@ public class TransformationStudioWindow {
                     setText(item.getName());
                     setStyle(null);
                     File configFile = new File(item, "transformation.json");
+                    
+                    CheckBox cb = new CheckBox();
+                    cb.setAllowIndeterminate(true);
+                    
+                    CheckState state = getFolderCheckState(item);
+                    if (state == CheckState.CHECKED) {
+                        cb.setSelected(true);
+                        cb.setIndeterminate(false);
+                    } else if (state == CheckState.UNCHECKED) {
+                        cb.setSelected(false);
+                        cb.setIndeterminate(false);
+                    } else {
+                        cb.setSelected(false);
+                        cb.setIndeterminate(true);
+                    }
+                    
+                    cb.setOnAction(e -> {
+                        CheckState currentState = getFolderCheckState(item);
+                        boolean targetChecked = (currentState != CheckState.CHECKED);
+                        setCheckedRecursive(item, targetChecked);
+                        mappingTree.refresh();
+                    });
+
+                    FontIcon icon;
                     if (configFile.exists()) {
-                        setGraphic(new FontIcon("fas-exchange-alt"));
+                        icon = new FontIcon("fas-exchange-alt");
                         getStyleClass().add("mapping-tree-item");
                         getStyleClass().remove("folder-tree-item");
                     } else {
-                        setGraphic(new FontIcon("fas-folder"));
+                        icon = RouteBuilderApp.getFileIcon(item);
                         getStyleClass().add("folder-tree-item");
                         getStyleClass().remove("mapping-tree-item");
                     }
+                    
+                    HBox box = new HBox(5, cb, icon);
+                    box.setAlignment(Pos.CENTER_LEFT);
+                    setGraphic(box);
                 }
             }
         });
@@ -513,7 +596,7 @@ public class TransformationStudioWindow {
         else if ("theme-monokai".equals(activeTheme)) editorBg = "#272822";
         else if ("theme-hacker".equals(activeTheme)) editorBg = "#050505";
 
-        String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>body{margin:0;padding:0;overflow:hidden;background-color:" + editorBg + ";}#editor{width:100vw;height:100vh;}</style></head><body><div id='editor'></div><script src='" + monacoBase + "/vs/loader.js'></script><script>\n" +
+        String html = "<!DOCTYPE html><html><head><base href='" + monacoBase + "/'/><meta charset='UTF-8'><style>body{margin:0;padding:0;overflow:hidden;background-color:" + editorBg + ";}#editor{width:100vw;height:100vh;}</style></head><body><div id='editor'></div><script src='" + monacoBase + "/vs/loader.js'></script><script>\n" +
             "window.editorValue = ''; window.setValue = function(val) { window.editorValue = val; if(window.editor) window.editor.setValue(val); };\n" +
             "window.getValue = function() { return window.editor ? window.editor.getValue() : window.editorValue; };\n" +
             "window.getSelection = function() { if(!window.editor) return ''; var sel = window.editor.getSelection(); return window.editor.getModel().getValueInRange(sel); };\n" +
@@ -526,7 +609,7 @@ public class TransformationStudioWindow {
             "  monaco.editor.defineTheme('theme-dracula', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'ff79c6', fontStyle: 'bold' }, { token: 'metatag', foreground: 'bd93f9' } ], colors: { 'editor.background': '#282a36' } });\n" +
             "  monaco.editor.defineTheme('theme-monokai', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'f92672', fontStyle: 'bold' }, { token: 'metatag', foreground: 'ae81ff' } ], colors: { 'editor.background': '#272822' } });\n" +
             "  monaco.editor.defineTheme('theme-hacker', { base: 'hc-black', inherit: true, rules: [ { token: 'keyword', foreground: '00ff00', fontStyle: 'bold' }, { token: 'metatag', foreground: '00ff00' } ], colors: { 'editor.background': '#050505' } });\n" +
-            "  window.editor = monaco.editor.create(document.getElementById('editor'), { value: window.editorValue, language: '" + ("text".equals(language) ? "swift-mt" : language) + "', theme: '" + activeTheme + "', automaticLayout: true, minimap: { enabled: false }, fontSize: 12 });\n" +
+            "  window.editor = monaco.editor.create(document.getElementById('editor'), { value: window.editorValue, language: '" + ("text".equals(language) ? "swift-mt" : language) + "', theme: '" + activeTheme + "', automaticLayout: true, minimap: { enabled: false }, fontSize: 14 });\n" +
             "  window.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC, function() {\n" +
             "     var text = window.getSelection(); if(!text) text = window.getValue();\n" +
             "     if(window.javaBridge) window.javaBridge.copy(text);\n" +
@@ -983,59 +1066,34 @@ public class TransformationStudioWindow {
         String fileUri = toFileUriString(logicFile);
         String groupId = "org.apache.camel";
         String artifactId = "camel-" + type;
-        String version = "4.20.0";
+        String version = RouteBuilderApp.getCamelVersion();
 
-        // Determine all necessary dependencies (cartridges + Camel components)
-        java.util.List<String> deps = new java.util.ArrayList<>();
-        if (isMtSource) {
-            deps.add("org.apache.camel:camel-swift:4.18.2");
-            deps.add("org.apache.camel:camel-xslt:4.20.0");
-        } else if ("smooks".equals(type)) {
-            deps.add("org.apache.camel:camel-smooks:4.20.0");
+        boolean isFullClassVal = false;
+        String fullClassNameVal = "";
+        String classSourceVal = "";
+        if ("joor".equals(type) && logicFile != null && logicFile.exists()) {
             try {
-                String xmlContent = Files.readString(logicFile.toPath());
-                if (xmlContent.contains("csv") || xmlContent.contains("<csv:") || xmlContent.contains("xmlns:csv")) {
-                    deps.add("org.smooks.cartridges:smooks-csv-cartridge:2.0.3");
-                } else if (xmlContent.contains("fixed-length") || xmlContent.contains("<fl:") || xmlContent.contains("fixed-length-1.4.xsd")) {
-                    deps.add("org.smooks.cartridges:smooks-fixed-length-cartridge:2.0.3");
-                } else if (xmlContent.contains("json") || xmlContent.contains("<json:") || xmlContent.contains("xmlns:json")) {
-                    deps.add("org.smooks.cartridges:smooks-json-cartridge:2.0.3");
-                } else if (xmlContent.contains("yaml") || xmlContent.contains("<yaml:") || xmlContent.contains("xmlns:yaml")) {
-                    deps.add("org.smooks.cartridges:smooks-yaml-cartridge:2.0.3");
-                } else if (xmlContent.contains("edi") || xmlContent.contains("<edi:") || xmlContent.contains("xmlns:edi")) {
-                    deps.add("org.smooks.cartridges:smooks-edifact-cartridge:2.0.3");
+                String content = Files.readString(logicFile.toPath());
+                if (content.contains("class ") || content.contains("interface ")) {
+                    isFullClassVal = true;
+                    classSourceVal = content;
+                    String pkg = "com.routebuilder.dynamic";
+                    java.util.regex.Matcher pkgMatcher = java.util.regex.Pattern.compile("package\\s+([a-zA-Z0-9_\\.]+)\\s*;").matcher(content);
+                    if (pkgMatcher.find()) {
+                        pkg = pkgMatcher.group(1);
+                    }
+                    String className = "Mapper";
+                    java.util.regex.Matcher classMatcher = java.util.regex.Pattern.compile("(?:class|interface|enum)\\s+(\\w+)").matcher(content);
+                    if (classMatcher.find()) {
+                        className = classMatcher.group(1);
+                    }
+                    fullClassNameVal = pkg + "." + className;
                 }
             } catch (Exception ignored) {}
-        } else if ("groovy".equals(type)) {
-            deps.add("org.apache.camel:camel-groovy:4.20.0");
-        } else if ("joor".equals(type)) {
-            deps.add("org.apache.camel:camel-joor:4.18.2");
-        } else if ("mt".equalsIgnoreCase(type)) {
-            deps.add("org.apache.camel:camel-swift:4.18.2");
-            deps.add("org.apache.camel:camel-xslt:4.20.0");
-        } else if ("xslt".equalsIgnoreCase(type) || "mt-to-mx".equalsIgnoreCase(type) || "mx-to-mt".equalsIgnoreCase(type)) {
-            deps.add("org.apache.camel:camel-xslt:4.20.0");
-        } else {
-            deps.add(groupId + ":" + artifactId + ":" + version);
         }
-
-        // Format dependencies for the dependency tabs
-        StringBuilder jbangDepsBuilder = new StringBuilder();
-        StringBuilder gradleDepsBuilder = new StringBuilder();
-        StringBuilder mavenDepsBuilder = new StringBuilder();
-        for (String dep : deps) {
-            jbangDepsBuilder.append("//DEPS ").append(dep).append("\n");
-            gradleDepsBuilder.append("implementation(\"").append(dep).append("\")\n");
-            String[] parts = dep.split(":");
-            mavenDepsBuilder.append("<dependency>\n")
-                            .append("    <groupId>").append(parts[0]).append("</groupId>\n")
-                            .append("    <artifactId>").append(parts[1]).append("</artifactId>\n")
-                            .append("    <version>").append(parts[2]).append("</version>\n")
-                            .append("</dependency>\n");
-        }
-        String jbangDepsStr = jbangDepsBuilder.toString().trim();
-        String gradleDepsStr = gradleDepsBuilder.toString().trim();
-        String mavenDepsStr = mavenDepsBuilder.toString().trim();
+        final boolean isFullClass = isFullClassVal;
+        final String fullClassName = fullClassNameVal;
+        final String classSource = classSourceVal;
 
         // Retrieve source content from editor or file
         String sourceMsg = "";
@@ -1073,6 +1131,73 @@ public class TransformationStudioWindow {
             }
             if (sourceMsg == null) sourceMsg = "";
         }
+
+        // Determine all necessary dependencies (cartridges + Camel components)
+        java.util.List<String> deps = new java.util.ArrayList<>();
+        if (isMtSource) {
+            deps.add("org.apache.camel:camel-swift:4.18.2");
+            deps.add("org.apache.camel:camel-xslt:" + version);
+        } else if ("smooks".equals(type)) {
+            deps.add("org.apache.camel:camel-smooks:" + version);
+            try {
+                String xmlContent = Files.readString(logicFile.toPath());
+                if (xmlContent.contains("csv") || xmlContent.contains("<csv:") || xmlContent.contains("xmlns:csv")) {
+                    deps.add("org.smooks.cartridges:smooks-csv-cartridge:2.0.3");
+                } else if (xmlContent.contains("fixed-length") || xmlContent.contains("<fl:") || xmlContent.contains("fixed-length-1.4.xsd")) {
+                    deps.add("org.smooks.cartridges:smooks-fixed-length-cartridge:2.0.3");
+                } else if (xmlContent.contains("json") || xmlContent.contains("<json:") || xmlContent.contains("xmlns:json")) {
+                    deps.add("org.smooks.cartridges:smooks-json-cartridge:2.0.3");
+                } else if (xmlContent.contains("yaml") || xmlContent.contains("<yaml:") || xmlContent.contains("xmlns:yaml")) {
+                    deps.add("org.smooks.cartridges:smooks-yaml-cartridge:2.0.3");
+                } else if (xmlContent.contains("edi") || xmlContent.contains("<edi:") || xmlContent.contains("xmlns:edi")) {
+                    deps.add("org.smooks.cartridges:smooks-edifact-cartridge:2.0.3");
+                }
+                if (xmlContent.contains("javabean") || xmlContent.contains("xmlns:jb") || xmlContent.contains("/javabean-")) {
+                    deps.add("org.smooks.cartridges:smooks-javabean-cartridge:2.0.3");
+                }
+            } catch (Exception ignored) {}
+        } else if ("groovy".equals(type)) {
+            deps.add("org.apache.camel:camel-groovy:" + version);
+            if (version.startsWith("4.20") || version.startsWith("4.21") || version.startsWith("4.22") || version.compareTo("4.20.0") >= 0) {
+                deps.add("org.apache.groovy:groovy-xml:5.0.5");
+                deps.add("org.apache.groovy:groovy-json:5.0.5");
+            } else {
+                deps.add("org.apache.groovy:groovy-xml:4.0.30");
+                deps.add("org.apache.groovy:groovy-json:4.0.30");
+            }
+        } else if ("joor".equals(type)) {
+            deps.add("org.apache.camel:camel-joor:" + version);
+            deps.add("org.json:json:20231013");
+        } else if ("mt".equalsIgnoreCase(type)) {
+            deps.add("org.apache.camel:camel-swift:4.18.2");
+            deps.add("org.apache.camel:camel-xslt:" + version);
+        } else if ("xslt".equalsIgnoreCase(type) || "mt-to-mx".equalsIgnoreCase(type) || "mx-to-mt".equalsIgnoreCase(type)) {
+            deps.add("org.apache.camel:camel-xslt:" + version);
+        } else {
+            deps.add(groupId + ":" + artifactId + ":" + version);
+        }
+
+        if ("freemarker".equals(type) && (sourceMsg.trim().startsWith("{") || sourceMsg.trim().startsWith("["))) {
+            deps.add("org.apache.camel:camel-jackson:" + version);
+        }
+
+        // Format dependencies for the dependency tabs
+        StringBuilder jbangDepsBuilder = new StringBuilder();
+        StringBuilder gradleDepsBuilder = new StringBuilder();
+        StringBuilder mavenDepsBuilder = new StringBuilder();
+        for (String dep : deps) {
+            jbangDepsBuilder.append("//DEPS ").append(dep).append("\n");
+            gradleDepsBuilder.append("implementation(\"").append(dep).append("\")\n");
+            String[] parts = dep.split(":");
+            mavenDepsBuilder.append("<dependency>\n")
+                            .append("    <groupId>").append(parts[0]).append("</groupId>\n")
+                            .append("    <artifactId>").append(parts[1]).append("</artifactId>\n")
+                            .append("    <version>").append(parts[2]).append("</version>\n")
+                            .append("</dependency>\n");
+        }
+        String jbangDepsStr = jbangDepsBuilder.toString().trim();
+        String gradleDepsStr = gradleDepsBuilder.toString().trim();
+        String mavenDepsStr = mavenDepsBuilder.toString().trim();
 
         // Build route steps based on type
         String yamlStep = "";
@@ -1136,9 +1261,32 @@ public class TransformationStudioWindow {
             javaStep = ".transform().groovy(\"resource:" + fileUri + "\")";
             xmlStep = "<transform>\n            <groovy>resource:" + fileUri + "</groovy>\n        </transform>";
         } else if ("joor".equals(type)) {
-            yamlStep = "transform:\n            joor: \"resource:" + fileUri + "\"";
-            javaStep = ".transform().joor(\"resource:" + fileUri + "\")";
-            xmlStep = "<transform>\n            <joor>resource:" + fileUri + "</joor>\n        </transform>";
+            if (isFullClass) {
+                String escapedSource = escapeJavaString(classSource);
+                String joorCode = 
+                    "Class<?> clazz;\n" +
+                    "try {\n" +
+                    "    clazz = Class.forName(\"" + fullClassName + "\");\n" +
+                    "} catch (Exception e) {\n" +
+                    "    clazz = org.joor.Reflect.compile(\n" +
+                    "        \"" + fullClassName + "\",\n" +
+                    "        \"" + escapedSource + "\"\n" +
+                    "    ).type();\n" +
+                    "}\n" +
+                    "return org.joor.Reflect.onClass(clazz).call(\"map\", body).get();";
+                
+                yamlStep = "transform:\n            joor: |\n" + indentString(joorCode, 14);
+                javaStep = ".transform().joor(\"" + joorCode.replace("\n", "\\n").replace("\"", "\\\"") + "\")";
+                xmlStep = "<transform>\n            <joor>\n" + indentString(joorCode.replace("<", "&lt;").replace(">", "&gt;"), 16) + "\n            </joor>\n        </transform>";
+            } else {
+                yamlStep = "transform:\n            joor: \"resource:" + fileUri + "\"";
+                javaStep = ".transform().joor(\"" + fileUri + "\")";
+                xmlStep = "<transform>\n            <joor>resource:" + fileUri + "</joor>\n        </transform>";
+            }
+        } else if ("freemarker".equals(type) && (sourceMsg.trim().startsWith("{") || sourceMsg.trim().startsWith("["))) {
+            yamlStep = "unmarshal:\n            json:\n              library: Jackson\n        - to:\n            uri: \"freemarker:" + fileUri + "\"";
+            javaStep = ".unmarshal().json(org.apache.camel.model.dataformat.JsonLibrary.Jackson)\n            .to(\"freemarker:" + fileUri + "\")";
+            xmlStep = "<unmarshal>\n            <json library=\"Jackson\"/>\n        </unmarshal>\n        <to uri=\"freemarker:" + fileUri + "\"/>";
         } else {
             yamlStep = "to:\n            uri: \"" + type + ":" + fileUri + "\"";
             javaStep = ".to(\"" + type + ":" + fileUri + "\")";
@@ -1150,6 +1298,26 @@ public class TransformationStudioWindow {
         String javaDsl = "";
         String xmlDsl = "";
 
+        String yamlHeaderSteps = "";
+        String javaHeaderSteps = "";
+        String xmlHeaderSteps = "";
+        if ("freemarker".equals(type)) {
+            yamlHeaderSteps = "        - setHeader:\n" +
+                              "            name: \"name\"\n" +
+                              "            constant: \"Camel Developer\"\n" +
+                              "        - setHeader:\n" +
+                              "            name: \"date\"\n" +
+                              "            simple: \"${date:now:yyyy-MM-dd}\"\n";
+            javaHeaderSteps = "            .setHeader(\"name\").constant(\"Camel Developer\")\n" +
+                              "            .setHeader(\"date\").simple(\"${date:now:yyyy-MM-dd}\")\n";
+            xmlHeaderSteps = "        <setHeader name=\"name\">\n" +
+                             "            <constant>Camel Developer</constant>\n" +
+                             "        </setHeader>\n" +
+                             "        <setHeader name=\"date\">\n" +
+                             "            <simple>${date:now:yyyy-MM-dd}</simple>\n" +
+                             "        </setHeader>\n";
+        }
+
         yamlDsl = "- route:\n" +
                          "    id: transform-test-route\n" +
                          "    from:\n" +
@@ -1158,6 +1326,7 @@ public class TransformationStudioWindow {
                          "        - setBody:\n" +
                          "            constant: |\n" +
                          (sourceMsg.isEmpty() ? "              [source message]\n" : indentString(sourceMsg, 14) + "\n") +
+                         yamlHeaderSteps +
                          "        - " + yamlStep + "\n" +
                          "        - log: \"Parsed Output: ${body}\"";
 
@@ -1169,6 +1338,7 @@ public class TransformationStudioWindow {
                              "            .setBody().constant(\"\"\"\n" +
                              (sourceMsg.isEmpty() ? "                [source message]\n" : indentString(sourceMsg, 16) + "\n") +
                              "                \"\"\")\n" +
+                             javaHeaderSteps +
                              "            " + javaStep + "\n" +
                              "            .log(\"Parsed Output: ${body}\");\n" +
                              "    }\n" +
@@ -1186,6 +1356,7 @@ public class TransformationStudioWindow {
                             (sourceMsg.isEmpty() ? "                [source message]\n" : indentString(xmlSourceContent, 16) + "\n") +
                             "            </constant>\n" +
                             "        </setBody>\n" +
+                            xmlHeaderSteps +
                             "        " + xmlStep + "\n" +
                             "        <log message=\"Parsed Output: ${body}\"/>\n" +
                             "    </route>\n" +
@@ -1265,9 +1436,9 @@ public class TransformationStudioWindow {
         StringBuilder javaHeader = new StringBuilder();
         StringBuilder xmlHeader = new StringBuilder();
         for (String dep : deps) {
-            yamlHeader.append("#DEPS ").append(dep).append("\n");
+            yamlHeader.append("# camel-k: dependency=mvn:").append(dep).append("\n");
             javaHeader.append("//DEPS ").append(dep).append("\n");
-            xmlHeader.append("<!--DEPS ").append(dep).append(" -->\n");
+            xmlHeader.append("<!-- camel-k: dependency=mvn:").append(dep).append(" -->\n");
         }
         String yamlWithDep = yamlHeader.toString() + "\n" + yamlDsl;
         String javaWithDep = javaHeader.toString() + "\n" + javaDsl;
@@ -1402,6 +1573,9 @@ public class TransformationStudioWindow {
             command.add("camel");
             command.add("run");
             command.add(tempFile.getAbsolutePath());
+            for (String dep : deps) {
+                command.add("--dependency=" + dep);
+            }
             command.add("--runtime=main");
             command.add("--dev");
 
@@ -1544,5 +1718,131 @@ public class TransformationStudioWindow {
                 engine.executeScript("if(window.editor) { monaco.editor.setTheme('" + themeClass + "'); document.body.style.backgroundColor = '" + bg + "'; }");
             } catch (Exception ignored) {}
         }
+    }
+
+    private void generateSampleMappings(File base) {
+        try {
+            String filesIndex = readResource("/samplemapping/files.txt");
+            if (filesIndex == null || filesIndex.trim().isEmpty()) {
+                log("Error: samplemapping/files.txt not found or empty.");
+                return;
+            }
+            String[] lines = filesIndex.split("\\r?\\n");
+            for (String relativePath : lines) {
+                relativePath = relativePath.trim();
+                if (relativePath.isEmpty()) continue;
+
+                // Load content of the resource
+                String content = readResource("/samplemapping/" + relativePath);
+
+                // Recreate directory structure under base directory
+                File targetFile = new File(base, relativePath);
+                File parentDir = targetFile.getParentFile();
+                if (parentDir != null && !parentDir.exists()) {
+                    parentDir.mkdirs();
+                }
+
+                // Write the file content
+                Files.writeString(targetFile.toPath(), content);
+            }
+            log("Successfully generated sample mappings in: " + base.getAbsolutePath());
+        } catch (Exception e) {
+            e.printStackTrace();
+            log("Error generating sample mappings: " + e.getMessage());
+        }
+    }
+
+    private String readResource(String path) {
+        try (java.io.InputStream is = TransformationStudioWindow.class.getResourceAsStream(path)) {
+            if (is == null) {
+                return "";
+            }
+            return new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    private void toggleAllNodes(TreeItem<?> item, boolean expanded) {
+        if (item != null) {
+            item.setExpanded(expanded);
+            for (TreeItem<?> child : item.getChildren()) {
+                toggleAllNodes(child, expanded);
+            }
+        }
+    }
+
+    private enum CheckState {
+        CHECKED, UNCHECKED, INDETERMINATE
+    }
+
+    private boolean isMappingFolder(File file) {
+        if (!file.isDirectory()) return false;
+        return new File(file, "transformation.json").exists();
+    }
+
+    private CheckState getFolderCheckState(File folder) {
+        java.util.List<File> mappings = new java.util.ArrayList<>();
+        collectMappingsRecursive(folder, mappings);
+        if (mappings.isEmpty()) return CheckState.UNCHECKED;
+        
+        int checkedCount = 0;
+        for (File f : mappings) {
+            if (checkedFiles.contains(f)) checkedCount++;
+        }
+        
+        if (checkedCount == 0) return CheckState.UNCHECKED;
+        if (checkedCount == mappings.size()) return CheckState.CHECKED;
+        return CheckState.INDETERMINATE;
+    }
+
+    private void collectMappingsRecursive(File file, java.util.List<File> list) {
+        if (isMappingFolder(file)) {
+            list.add(file);
+        }
+        File[] children = file.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                if (child.isDirectory() && !child.getName().startsWith(".")) {
+                    collectMappingsRecursive(child, list);
+                }
+            }
+        }
+    }
+
+    private void setCheckedRecursive(File file, boolean checked) {
+        if (isMappingFolder(file)) {
+            if (checked) checkedFiles.add(file);
+            else checkedFiles.remove(file);
+        }
+        File[] children = file.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                if (child.isDirectory() && !child.getName().startsWith(".")) {
+                    setCheckedRecursive(child, checked);
+                }
+            }
+        }
+    }
+
+    private static String escapeJavaString(String source) {
+        if (source == null) return "";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < source.length(); i++) {
+            char c = source.charAt(i);
+            if (c == '\\') {
+                sb.append("\\\\");
+            } else if (c == '"') {
+                sb.append("\\\"");
+            } else if (c == '\n') {
+                sb.append("\\n");
+            } else if (c == '\r') {
+                // skip
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 }

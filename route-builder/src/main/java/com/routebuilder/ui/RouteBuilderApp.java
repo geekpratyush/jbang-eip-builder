@@ -6,8 +6,107 @@ import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 public class RouteBuilderApp extends Application {
+
+    public static FontIcon getFileIcon(java.io.File file) {
+        if (file == null) return new FontIcon("fas-file");
+        if (file.isDirectory()) return new FontIcon("fas-folder");
+        
+        String name = file.getName().toLowerCase();
+        if (name.endsWith(".yaml") || name.endsWith(".yml")) {
+            try {
+                // Peek first 4KB for performance
+                String content = "";
+                try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(file, "r")) {
+                    long len = Math.min(raf.length(), 4096);
+                    byte[] bytes = new byte[(int)len];
+                    raf.readFully(bytes);
+                    content = new String(bytes, java.nio.charset.StandardCharsets.UTF_8).toLowerCase();
+                }
+                
+                if (content.contains("camel") || content.contains("route:") || content.contains("from:")) {
+                    FontIcon icon = new FontIcon("fas-route");
+                    icon.setIconColor(javafx.scene.paint.Color.web("#FF9800"));
+                    return icon;
+                }
+                if (content.contains("kafka")) {
+                    FontIcon icon = new FontIcon("fas-server");
+                    icon.setIconColor(javafx.scene.paint.Color.web("#E91E63"));
+                    return icon;
+                }
+                if (content.contains("mongodb")) {
+                    FontIcon icon = new FontIcon("fas-leaf");
+                    icon.setIconColor(javafx.scene.paint.Color.web("#4CAF50"));
+                    return icon;
+                }
+                if (content.contains("kamelet")) {
+                    FontIcon icon = new FontIcon("fas-plug");
+                    icon.setIconColor(javafx.scene.paint.Color.web("#2196F3"));
+                    return icon;
+                }
+                if (content.contains("{{type:")) {
+                    FontIcon icon = new FontIcon("fas-magic");
+                    icon.setIconColor(javafx.scene.paint.Color.web("#E040FB"));
+                    return icon;
+                }
+            } catch (Exception ignored) {}
+            return new FontIcon("fas-file-signature");
+        }
+        
+        if (name.endsWith(".xml") || name.endsWith(".template") || name.endsWith(".txt")) {
+            try {
+                String content = "";
+                try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(file, "r")) {
+                    long len = Math.min(raf.length(), 2048);
+                    byte[] bytes = new byte[(int)len];
+                    raf.readFully(bytes);
+                    content = new String(bytes, java.nio.charset.StandardCharsets.UTF_8).toLowerCase();
+                }
+                if (content.contains("{{type:")) {
+                    FontIcon icon = new FontIcon("fas-magic");
+                    icon.setIconColor(javafx.scene.paint.Color.web("#E040FB"));
+                    return icon;
+                }
+            } catch (Exception ignored) {}
+        }
+        
+        if (name.endsWith(".xml")) {
+            FontIcon icon = new FontIcon("fas-file-code");
+            icon.setIconColor(javafx.scene.paint.Color.web("#569cd6"));
+            return icon;
+        }
+        if (name.endsWith(".json")) {
+            FontIcon icon = new FontIcon("fas-file-alt");
+            icon.setIconColor(javafx.scene.paint.Color.web("#ce9178"));
+            return icon;
+        }
+        if (name.endsWith(".java")) {
+            FontIcon icon = new FontIcon("fas-coffee");
+            icon.setIconColor(javafx.scene.paint.Color.web("#f89820"));
+            return icon;
+        }
+        if (name.endsWith(".mmd") || name.endsWith(".mermaid")) {
+            FontIcon icon = new FontIcon("fas-project-diagram");
+            icon.setIconColor(javafx.scene.paint.Color.web("#E040FB"));
+            return icon;
+        }
+        if (name.endsWith(".puml") || name.endsWith(".plantuml")) {
+            FontIcon icon = new FontIcon("fas-sitemap");
+            icon.setIconColor(javafx.scene.paint.Color.web("#00BCD4"));
+            return icon;
+        }
+        if (name.endsWith(".dot") || name.endsWith(".gv")) {
+            FontIcon icon = new FontIcon("fas-network-wired");
+            icon.setIconColor(javafx.scene.paint.Color.web("#9C27B0"));
+            return icon;
+        }
+        if (name.endsWith(".csv")) return new FontIcon("fas-file-csv");
+        if (name.endsWith(".bpmn")) return new FontIcon("fas-project-diagram");
+        
+        return new FontIcon("fas-file");
+    }
 
     private YamlEditorPane editorPane;
     private DiagramPane diagramPane;
@@ -15,6 +114,9 @@ public class RouteBuilderApp extends Application {
     private com.routebuilder.lsp.LspManager lspManager;
     private ConsolePane consolePane;
     private HelpPortalPane helpPortalPane;
+    private javafx.scene.control.Button btnPlay;
+    private javafx.scene.control.Button btnStop;
+    private final Process[] runnerProcess = {null};
 
     public static String currentThemeClass = "theme-vscode-dark";
     public static String currentThemeName = "VSCode Dark";
@@ -44,9 +146,8 @@ public class RouteBuilderApp extends Application {
             }
         });
 
-        // Pipe stdout — read raw bytes so \r and mid-line ANSI sequences are preserved
-        new Thread(() -> pipeStream(process, process.getInputStream()), "console-stdout").start();
-        new Thread(() -> pipeStream(process, process.getErrorStream()),  "console-stderr").start();
+        // Pipe combined stdout/stderr — read raw bytes so \r and mid-line ANSI sequences are preserved
+        new Thread(() -> pipeStream(process, process.getInputStream()), "console-combined-stream").start();
     }
 
     private void pipeStream(Process process, java.io.InputStream stream) {
@@ -67,6 +168,14 @@ public class RouteBuilderApp extends Application {
                         consolePane.log("\n\033[1;31m[Route Builder Studio] Process exited with code " + exitCode + "\033[0m\n");
                     }
                 } catch (Exception ignored) {}
+                javafx.application.Platform.runLater(() -> {
+                    if (btnStop != null) btnStop.setDisable(true);
+                    if (btnPlay != null && treePane != null) {
+                        boolean hasChecked = !treePane.getCheckedFiles().isEmpty();
+                        boolean hasSelected = treePane.getTreeView().getSelectionModel().getSelectedItem() != null;
+                        btnPlay.setDisable(!hasChecked && !hasSelected);
+                    }
+                });
             }
         }
     }
@@ -182,10 +291,10 @@ public class RouteBuilderApp extends Application {
         pasteItem.setAccelerator(new javafx.scene.input.KeyCodeCombination(javafx.scene.input.KeyCode.V, javafx.scene.input.KeyCombination.CONTROL_DOWN));
         selectAllItem.setAccelerator(new javafx.scene.input.KeyCodeCombination(javafx.scene.input.KeyCode.A, javafx.scene.input.KeyCombination.CONTROL_DOWN));
 
-        javafx.scene.control.MenuItem decryptItem = new javafx.scene.control.MenuItem("Decrypt Ciphertext...");
-        decryptItem.setOnAction(e -> DecryptToolWindow.show());
+        javafx.scene.control.MenuItem cryptoItem = new javafx.scene.control.MenuItem("Crypto Studio...");
+        cryptoItem.setOnAction(e -> CryptoStudioWindow.show());
 
-        editMenu.getItems().addAll(undoItem, redoItem, new javafx.scene.control.SeparatorMenuItem(), cutItem, copyItem, pasteItem, new javafx.scene.control.SeparatorMenuItem(), decryptItem, selectAllItem);
+        editMenu.getItems().addAll(undoItem, redoItem, new javafx.scene.control.SeparatorMenuItem(), cutItem, copyItem, pasteItem, new javafx.scene.control.SeparatorMenuItem(), cryptoItem, selectAllItem);
 
         javafx.scene.control.Menu viewMenu = new javafx.scene.control.Menu("_View");
         javafx.scene.control.CheckMenuItem viewExplorerItem = new javafx.scene.control.CheckMenuItem("Project Explorer");
@@ -236,50 +345,32 @@ public class RouteBuilderApp extends Application {
         javafx.scene.control.Button btnSwapPanels = new javafx.scene.control.Button("Swap Panels", new org.kordamp.ikonli.javafx.FontIcon("fas-exchange-alt"));
         btnSwapPanels.getStyleClass().add("toolbar-btn");
         
-        javafx.scene.control.Button btnPlay = new javafx.scene.control.Button("Play");
+        btnPlay = new javafx.scene.control.Button("Play");
         btnPlay.setGraphic(new org.kordamp.ikonli.javafx.FontIcon("fas-play"));
         btnPlay.getStyleClass().addAll("toolbar-btn", "btn-play");
+        btnPlay.setDisable(true); // Disabled by default until a file/folder is selected or checked
 
-        javafx.scene.control.Button btnStop = new javafx.scene.control.Button("Stop", new org.kordamp.ikonli.javafx.FontIcon("fas-stop"));
+        btnStop = new javafx.scene.control.Button("Stop", new org.kordamp.ikonli.javafx.FontIcon("fas-stop"));
         btnStop.getStyleClass().addAll("toolbar-btn", "btn-stop");
         btnStop.setDisable(true);
 
         javafx.scene.control.Button btnExport = new javafx.scene.control.Button("Export", new org.kordamp.ikonli.javafx.FontIcon("fas-download"));
         btnExport.getStyleClass().addAll("toolbar-btn", "btn-export");
+        btnExport.setTooltip(new javafx.scene.control.Tooltip("Export Selected Routes to Liquibase Changelog"));
+        btnExport.setOnAction(e -> {
+            java.util.Set<java.io.File> checked = treePane.getCheckedFiles();
+            if (checked.isEmpty()) {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Please select one or more routes using the checkboxes in the Explorer.");
+                themeDialog(alert);
+                alert.showAndWait();
+                return;
+            }
+            LiquibaseExportWindow.showForRoutes(treePane.getBaseDirectory(), checked);
+        });
         
         javafx.scene.control.Button btnManual = new javafx.scene.control.Button("Manual", new org.kordamp.ikonli.javafx.FontIcon("fas-book"));
         btnManual.getStyleClass().addAll("toolbar-btn", "btn-manual");
         btnManual.setOnAction(e -> showManual());
-
-        javafx.scene.control.Button btnInfraConfig = new javafx.scene.control.Button("Infra", new org.kordamp.ikonli.javafx.FontIcon("fas-cog"));
-        btnInfraConfig.getStyleClass().addAll("toolbar-btn", "btn-config");
-        btnInfraConfig.setOnAction(e -> {
-            javafx.scene.control.Dialog<String> dialog = new javafx.scene.control.Dialog<>();
-            dialog.setTitle("Infrastructure Configuration");
-            dialog.setHeaderText("Define connection properties (SSL, mTLS, Kerberos, etc.)");
-            javafx.scene.control.ButtonType saveButtonType = new javafx.scene.control.ButtonType("Save", javafx.scene.control.ButtonBar.ButtonData.OK_DONE);
-            dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, javafx.scene.control.ButtonType.CANCEL);
-            javafx.scene.control.TextArea textArea = new javafx.scene.control.TextArea();
-            textArea.setPromptText("camel.component.kafka.brokers=my-cluster:9092\ncamel.ssl.trustStore=...");
-            textArea.setPrefSize(500, 300);
-            textArea.setStyle("-fx-font-family: monospace;");
-            java.io.File infraFile = new java.io.File(System.getProperty("user.dir"), "infra.properties");
-            if (infraFile.exists()) {
-                try {
-                    textArea.setText(java.nio.file.Files.readString(infraFile.toPath()));
-                } catch (Exception ex) {}
-            }
-            dialog.getDialogPane().setContent(textArea);
-            dialog.setResultConverter(dialogButton -> {
-                if (dialogButton == saveButtonType) return textArea.getText();
-                return null;
-            });
-            dialog.showAndWait().ifPresent(configText -> {
-                try {
-                    java.nio.file.Files.writeString(infraFile.toPath(), configText);
-                } catch (Exception ex) { ex.printStackTrace(); }
-            });
-        });
 
         javafx.scene.control.Button btnVariables = new javafx.scene.control.Button("Variables", new org.kordamp.ikonli.javafx.FontIcon("fas-cube"));
         btnVariables.getStyleClass().addAll("toolbar-btn", "btn-variables");
@@ -297,9 +388,10 @@ public class RouteBuilderApp extends Application {
             }
         });
 
-        javafx.scene.control.Button btnDecrypt = new javafx.scene.control.Button("Decrypt", new org.kordamp.ikonli.javafx.FontIcon("fas-unlock-alt"));
-        btnDecrypt.getStyleClass().addAll("toolbar-btn", "btn-decrypt");
-        btnDecrypt.setOnAction(e -> DecryptToolWindow.show());
+        javafx.scene.control.Button btnCrypto = new javafx.scene.control.Button("Crypto", new org.kordamp.ikonli.javafx.FontIcon("fas-shield-alt"));
+        btnCrypto.getStyleClass().addAll("toolbar-btn", "btn-decrypt");
+        btnCrypto.setTooltip(new javafx.scene.control.Tooltip("Open Universal Crypto Studio (AES, Base64, URL)"));
+        btnCrypto.setOnAction(e -> CryptoStudioWindow.show());
 
         javafx.scene.control.Button btnXsltMapper = new javafx.scene.control.Button("Map", new org.kordamp.ikonli.javafx.FontIcon("fas-map-marked-alt"));
         btnXsltMapper.getStyleClass().addAll("toolbar-btn", "btn-xslt");
@@ -330,6 +422,15 @@ public class RouteBuilderApp extends Application {
             diagramStudio.show();
         });
 
+        javafx.scene.control.Button btnFakerStudio = new javafx.scene.control.Button("Faker", new org.kordamp.ikonli.javafx.FontIcon("fas-magic"));
+        btnFakerStudio.getStyleClass().addAll("toolbar-btn", "btn-faker-studio");
+        btnFakerStudio.setTooltip(new javafx.scene.control.Tooltip("Open Universal Faker & Template Studio"));
+        btnFakerStudio.setOnAction(e -> {
+            java.io.File baseDir = treePane.getBaseDirectory();
+            FakerStudioWindow fakerStudio = new FakerStudioWindow(baseDir);
+            fakerStudio.show();
+        });
+
         java.util.prefs.Preferences startupPrefs = java.util.prefs.Preferences.userNodeForPackage(RouteBuilderApp.class);
         String savedTheme = startupPrefs.get("themeName", "VSCode Dark");
         currentThemeName = savedTheme;
@@ -342,7 +443,7 @@ public class RouteBuilderApp extends Application {
         themeBox.setTooltip(new javafx.scene.control.Tooltip("Change IDE Theme"));
         themeBox.setOnAction(e -> applyTheme(themeBox.getValue(), root));
 
-        toolBar.getItems().addAll(btnViewExplorer, btnViewCode, btnViewDiagram, new javafx.scene.control.Separator(), btnSwapPanels, new javafx.scene.control.Separator(), btnPlay, btnStop, new javafx.scene.control.Separator(), btnInfraConfig, btnVariables, btnDecrypt, btnXsltMapper, btnTransform, btnValidateStudio, btnDiagramStudio, btnExport, btnManual, new javafx.scene.control.Separator(), themeBox);
+        toolBar.getItems().addAll(btnViewExplorer, btnViewCode, btnViewDiagram, new javafx.scene.control.Separator(), btnSwapPanels, new javafx.scene.control.Separator(), btnPlay, btnStop, new javafx.scene.control.Separator(), btnVariables, btnCrypto, btnXsltMapper, btnTransform, btnValidateStudio, btnDiagramStudio, btnFakerStudio, btnExport, btnManual, new javafx.scene.control.Separator(), themeBox);
 
         boolean[] swapCodeDiagram = {false};
 
@@ -362,10 +463,57 @@ public class RouteBuilderApp extends Application {
         treePane = new RouteTreePane(file -> {
             if (file == null) {
                 editorPane.closeFile();
+                if (mainSplitPane.getItems().contains(editorPane)) {
+                    mainSplitPane.getItems().remove(editorPane);
+                }
             } else {
+                if (!mainSplitPane.getItems().contains(editorPane) && viewCodeItem.isSelected()) {
+                    mainSplitPane.getItems().add(1, editorPane);
+                    mainSplitPane.setDividerPositions(0.18, 0.6);
+                }
                 editorPane.loadFile(file);
             }
         });
+        
+        treePane.setOnCheckedFilesChanged(() -> {
+            java.util.Set<java.io.File> checked = treePane.getCheckedFiles();
+            java.util.List<java.io.File> files = new java.util.ArrayList<>(checked);
+            if (files.size() > 1) {
+                viewCodeItem.setSelected(false);
+                
+                // Render all diagrams
+                java.util.List<String> contents = new java.util.ArrayList<>();
+                for (java.io.File f : files) {
+                    try {
+                        contents.add(java.nio.file.Files.readString(f.toPath()));
+                    } catch (Exception ignored) {}
+                }
+                diagramPane.setCurrentFile(null);
+                diagramPane.renderDiagrams(contents);
+            } else if (files.size() == 1) {
+                viewCodeItem.setSelected(true);
+                try {
+                    String content = java.nio.file.Files.readString(files.get(0).toPath());
+                    diagramPane.setCurrentFile(files.get(0));
+                    diagramPane.renderDiagram(content);
+                } catch (Exception ignored) {}
+            } else {
+                diagramPane.renderDiagram("");
+            }
+            
+            boolean hasChecked = !checked.isEmpty();
+            boolean hasSelected = treePane.getTreeView().getSelectionModel().getSelectedItem() != null;
+            boolean isRunning = runnerProcess[0] != null && runnerProcess[0].isAlive();
+            btnPlay.setDisable(isRunning || (!hasChecked && !hasSelected));
+        });
+        
+        treePane.getTreeView().getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            boolean hasChecked = !treePane.getCheckedFiles().isEmpty();
+            boolean hasSelected = newVal != null;
+            boolean isRunning = runnerProcess[0] != null && runnerProcess[0].isAlive();
+            btnPlay.setDisable(isRunning || (!hasChecked && !hasSelected));
+        });
+
         themedRoots.add(treePane);
 
         helpPortalPane = new HelpPortalPane(() -> {
@@ -379,11 +527,10 @@ public class RouteBuilderApp extends Application {
             helpPortalPane.search(query);
         });
 
-        Process[] runnerProcess = {null};
+
 
         java.util.function.BiConsumer<java.io.File, String> playProject = (target, mode) -> {
             boolean offline = "offline".equals(mode);
-            boolean infra = "infra".equals(mode);
             btnPlay.setDisable(true);
             btnStop.setDisable(false);
             System.out.println("Starting Routes with JBang... (mode=" + mode + ", target=" + (target == null ? "all" : target.getName()) + ")");
@@ -393,11 +540,6 @@ public class RouteBuilderApp extends Application {
                 String executablePath = getJbangExecutable();
                 
                 java.util.List<String> command = new java.util.ArrayList<>();
-                if (hasStdbuf()) {
-                    command.add("stdbuf");
-                    command.add("-oL");
-                    command.add("-eL");
-                }
                 command.add(executablePath);
                 command.add("--main=main.CamelJBang");
                 String catalogPath = getJbangCatalog();
@@ -407,68 +549,99 @@ public class RouteBuilderApp extends Application {
                 if (offline) command.add("--offline");
                 command.add("camel");
                 command.add("run");
+                command.add("--console"); // Enable interactive-style output
+                command.add("--logging-level=info");
                 
+                java.io.File propsFile = new java.io.File(baseDir, "application.properties");
+                if (propsFile.exists()) {
+                    command.add("--properties=application.properties");
+                }
+                
+                java.util.Set<String> addedPaths = new java.util.HashSet<>();
+                java.util.Set<String> dependencies = new java.util.HashSet<>();
+
                 if (target == null) {
-                    java.io.File[] files = baseDir.listFiles((d, name) -> name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".groovy"));
-                    if (files != null && files.length > 0) {
-                        for (java.io.File f : files) command.add(f.getName());
+                    java.util.Set<java.io.File> checked = treePane.getCheckedFiles();
+                    if (!checked.isEmpty()) {
+                        for (java.io.File f : checked) {
+                            if (f.isFile()) {
+                                String relative = baseDir.toPath().toAbsolutePath().relativize(f.toPath().toAbsolutePath()).toString().replace("\\", "/");
+                                if (addedPaths.add(relative)) {
+                                    command.add(relative);
+                                }
+                                for (java.io.File srcFile : findCamelKSources(f)) {
+                                    String relSrc = baseDir.toPath().toAbsolutePath().relativize(srcFile.toPath().toAbsolutePath()).toString().replace("\\", "/");
+                                    if (addedPaths.add(relSrc)) {
+                                        command.add(relSrc);
+                                    }
+                                }
+                                dependencies.addAll(findCamelKDependencies(f));
+                            }
+                        }
                     } else {
-                        command.add("*");
+                        command.add(".");
                     }
                 } else if (target.isFile()) {
                     try {
-                        String relative = baseDir.toURI().relativize(target.toURI()).getPath();
-                        command.add(relative.isEmpty() ? target.getName() : relative);
+                        String relative = baseDir.toPath().toAbsolutePath().relativize(target.toPath().toAbsolutePath()).toString().replace("\\", "/");
+                        String val = relative.isEmpty() ? target.getName() : relative;
+                        if (addedPaths.add(val)) {
+                            command.add(val);
+                        }
                     } catch (Exception ex) {
-                        command.add(target.getAbsolutePath().replace("\\", "/"));
+                        String val = target.getAbsolutePath().replace("\\", "/");
+                        if (addedPaths.add(val)) {
+                            command.add(val);
+                        }
                     }
-                } else { // Directory
-                    java.util.List<String> collected = new java.util.ArrayList<>();
-                    class FileCollector {
-                        void collect(java.io.File folder, java.util.List<String> paths, java.io.File base) {
-                            java.io.File[] files = folder.listFiles();
-                            if (files != null) {
-                                for (java.io.File f : files) {
-                                    if (f.isDirectory()) {
-                                        collect(f, paths, base);
-                                    } else {
-                                        String name = f.getName().toLowerCase();
-                                        if (name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".groovy")) {
-                                            try {
-                                                String relative = base.toURI().relativize(f.toURI()).getPath();
-                                                paths.add(relative.isEmpty() ? f.getName() : relative);
-                                            } catch (Exception ex) {
-                                                paths.add(f.getAbsolutePath().replace("\\", "/"));
-                                            }
-                                        }
-                                    }
-                                }
+                    for (java.io.File srcFile : findCamelKSources(target)) {
+                        try {
+                            String relSrc = baseDir.toPath().toAbsolutePath().relativize(srcFile.toPath().toAbsolutePath()).toString().replace("\\", "/");
+                            if (addedPaths.add(relSrc)) {
+                                command.add(relSrc);
+                            }
+                        } catch (Exception ex) {
+                            String val = srcFile.getAbsolutePath().replace("\\", "/");
+                            if (addedPaths.add(val)) {
+                                command.add(val);
                             }
                         }
                     }
-                    new FileCollector().collect(target, collected, baseDir);
+                    dependencies.addAll(findCamelKDependencies(target));
+                } else { // Directory
+                    java.util.List<java.io.File> collected = new java.util.ArrayList<>();
+                    collectAllRouteFiles(target, collected);
                     if (!collected.isEmpty()) {
-                        command.addAll(collected);
+                        for (java.io.File f : collected) {
+                            String relative = baseDir.toPath().toAbsolutePath().relativize(f.toPath().toAbsolutePath()).toString().replace("\\", "/");
+                            if (addedPaths.add(relative)) {
+                                command.add(relative);
+                            }
+                            for (java.io.File srcFile : findCamelKSources(f)) {
+                                String relSrc = baseDir.toPath().toAbsolutePath().relativize(srcFile.toPath().toAbsolutePath()).toString().replace("\\", "/");
+                                if (addedPaths.add(relSrc)) {
+                                    command.add(relSrc);
+                                }
+                            }
+                            dependencies.addAll(findCamelKDependencies(f));
+                        }
                     } else {
                         command.add(target.getName() + "/*");
                     }
+                }
+
+                for (String dep : dependencies) {
+                    command.add("--dependency=" + dep);
                 }
                 
                 boolean dev = "dev".equals(mode);
                 command.add("--runtime=main");
                 if (dev) command.add("--dev");
-                if (offline) command.add("--stub=all");
-                if (infra) {
-                    command.add("--profile=dev");
-                    java.io.File infraFile = new java.io.File(System.getProperty("user.dir"), "infra.properties");
-                    if (infraFile.exists()) {
-                        command.add("--properties=" + infraFile.getAbsolutePath().replace("\\", "/"));
-                    }
-                }
                 
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.environment().put("TERM", "xterm-256color");
                 pb.directory(baseDir);
+                pb.redirectErrorStream(true);
                 runnerProcess[0] = pb.start();
                 showConsole(runnerProcess[0], "Camel Route Runtime (JBang)");
                 
@@ -486,10 +659,21 @@ public class RouteBuilderApp extends Application {
             playProject.accept(target, mode);
         });
 
-        btnPlay.setOnAction(e -> playProject.accept(null, "offline"));
+        btnPlay.setOnAction(e -> {
+            java.util.Set<java.io.File> checked = treePane.getCheckedFiles();
+            if (!checked.isEmpty()) {
+                playProject.accept(null, "offline"); // playProject already handles checkedFiles internally
+            } else {
+                javafx.scene.control.TreeItem<java.io.File> selectedItem = treePane.getTreeView().getSelectionModel().getSelectedItem();
+                java.io.File target = (selectedItem != null) ? selectedItem.getValue() : null;
+                playProject.accept(target, "offline");
+            }
+        });
 
         btnStop.setOnAction(e -> {
-            btnPlay.setDisable(false);
+            boolean hasChecked = !treePane.getCheckedFiles().isEmpty();
+            boolean hasSelected = treePane.getTreeView().getSelectionModel().getSelectedItem() != null;
+            btnPlay.setDisable(!hasChecked && !hasSelected);
             btnStop.setDisable(true);
             System.out.println("Stopping Routes...");
             if (runnerProcess[0] != null && runnerProcess[0].isAlive()) {
@@ -515,46 +699,14 @@ public class RouteBuilderApp extends Application {
         });
 
         btnExport.setOnAction(e -> {
-                System.out.println("Exporting to Camel Main Maven Project...");
-                try {
-                    java.io.File baseDir = treePane.getBaseDirectory();
-                    String executablePath = getJbangExecutable();
-                    
-                    java.util.List<String> command = new java.util.ArrayList<>();
-                    command.add(executablePath);
-                    command.add("--main=main.CamelJBang");
-                    String catalogPath = getJbangCatalog();
-                    if (catalogPath != null) {
-                        command.add("--catalog=" + catalogPath);
-                    }
-                    command.add("camel");
-                    command.add("export");
-                    java.io.File[] files = baseDir.listFiles((d, name) -> name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".groovy"));
-                    if (files != null && files.length > 0) {
-                        for (java.io.File f : files) command.add(f.getName());
-                    } else {
-                        command.add("*");
-                    }
-                    command.add("--runtime=main");
-                    command.add("--dir=export-dir");
-
-                ProcessBuilder pb = new ProcessBuilder(command);
-                pb.directory(baseDir);
-                Process exportProcess = pb.start();
-                showConsole(exportProcess, "Maven Export Output");
-                System.out.println("Export triggered. Check the 'export-dir' in your project directory.");
-
-                exportProcess.onExit().thenRun(() -> {
-                    System.out.println("Export completed. Generating database changelogs...");
-                    RouteChangelogGenerator.generate(baseDir, baseDir);
-                    java.io.File exportDir = new java.io.File(baseDir, "export-dir");
-                    if (exportDir.exists()) {
-                        RouteChangelogGenerator.generate(baseDir, exportDir);
-                    }
-                });
-            } catch (Exception ex) {
-                ex.printStackTrace();
+            java.util.Set<java.io.File> checked = treePane.getCheckedFiles();
+            if (checked.isEmpty()) {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Please select one or more routes using the checkboxes in the Explorer.");
+                themeDialog(alert);
+                alert.showAndWait();
+                return;
             }
+            LiquibaseExportWindow.showForRoutes(treePane.getBaseDirectory(), checked);
         });
 
         java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(RouteBuilderApp.class);
@@ -612,18 +764,12 @@ public class RouteBuilderApp extends Application {
 
         editorPane.setOnPlayFile((file, mode) -> {
             boolean offline = "offline".equals(mode);
-            boolean infra = "infra".equals(mode);
             System.out.println("Starting Single File with JBang... (mode=" + mode + ")");
             try {
                 java.io.File baseDir = file.getParentFile();
                 String executablePath = getJbangExecutable();
                 
                 java.util.List<String> command = new java.util.ArrayList<>();
-                if (hasStdbuf()) {
-                    command.add("stdbuf");
-                    command.add("-oL");
-                    command.add("-eL");
-                }
                 command.add(executablePath);
                 command.add("--main=main.CamelJBang");
                 String catalogPath = getJbangCatalog();
@@ -633,22 +779,52 @@ public class RouteBuilderApp extends Application {
                 if (offline) command.add("--offline");
                 command.add("camel");
                 command.add("run");
-                command.add(file.getName());
+                command.add("--console"); // Enable interactive-style output
+                command.add("--logging-level=info");
+                
+                java.io.File workspaceDir = treePane != null ? treePane.getBaseDirectory() : null;
+                java.io.File propsFile = new java.io.File(baseDir, "application.properties");
+                if (propsFile.exists()) {
+                    command.add("--properties=application.properties");
+                } else if (workspaceDir != null) {
+                    java.io.File wsPropsFile = new java.io.File(workspaceDir, "application.properties");
+                    if (wsPropsFile.exists()) {
+                        try {
+                            String relProps = baseDir.toPath().toAbsolutePath().relativize(wsPropsFile.toPath().toAbsolutePath()).toString().replace("\\", "/");
+                            command.add("--properties=" + relProps);
+                        } catch (Exception ex) {
+                            command.add("--properties=" + wsPropsFile.getAbsolutePath().replace("\\", "/"));
+                        }
+                    }
+                }
+                
+                java.util.Set<String> addedPaths = new java.util.HashSet<>();
+                if (addedPaths.add(file.getName())) {
+                    command.add(file.getName());
+                }
+                for (java.io.File srcFile : findCamelKSources(file)) {
+                    try {
+                        String relSrc = baseDir.toPath().toAbsolutePath().relativize(srcFile.toPath().toAbsolutePath()).toString().replace("\\", "/");
+                        if (addedPaths.add(relSrc)) {
+                            command.add(relSrc);
+                        }
+                    } catch (Exception ex) {
+                        if (addedPaths.add(srcFile.getName())) {
+                            command.add(srcFile.getName());
+                        }
+                    }
+                }
+                for (String dep : findCamelKDependencies(file)) {
+                    command.add("--dependency=" + dep);
+                }
                 boolean dev = "dev".equals(mode);
                 command.add("--runtime=main");
                 if (dev) command.add("--dev");
-                if (offline) command.add("--stub=all");
-                if (infra) {
-                    command.add("--profile=dev");
-                    java.io.File infraFile = new java.io.File(System.getProperty("user.dir"), "infra.properties");
-                    if (infraFile.exists()) {
-                        command.add("--properties=" + infraFile.getAbsolutePath().replace("\\", "/"));
-                    }
-                }
                 
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.environment().put("TERM", "xterm-256color");
                 pb.directory(baseDir);
+                pb.redirectErrorStream(true);
                 Process singleProcess = pb.start();
                 
                 if (runnerProcess[0] != null && runnerProcess[0].isAlive()) {
@@ -657,6 +833,11 @@ public class RouteBuilderApp extends Application {
                 }
                 runnerProcess[0] = singleProcess;
                 showConsole(runnerProcess[0], "Single Route: " + file.getName());
+                
+                javafx.application.Platform.runLater(() -> {
+                    btnPlay.setDisable(true);
+                    btnStop.setDisable(false);
+                });
                 
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     if (singleProcess.isAlive()) {
@@ -935,6 +1116,10 @@ public class RouteBuilderApp extends Application {
                 dStudio.setTheme(theme);
             }
 
+            for (FakerStudioWindow fStudio : FakerStudioWindow.activeInstances) {
+                fStudio.setTheme(theme);
+            }
+
             String baseColor = "#1e1e1e";
             String textColor = "#cccccc";
             if (cssClass.equals("theme-intellij-light")) { baseColor = "#ffffff"; textColor = "#333333"; }
@@ -1028,597 +1213,56 @@ public class RouteBuilderApp extends Application {
     }
 
     private void generateChapterSamples(RouteTreePane treePane, java.io.File base) {
-        // helper to create a subfolder then write a file into it
-        java.util.function.BiConsumer<String[], String> write = (path, content) -> {
-            java.io.File dir = base;
-            for (int i = 0; i < path.length - 1; i++) dir = new java.io.File(dir, path[i]);
-            dir.mkdirs();
-            treePane.createTemplateFileInDir(dir, path[path.length - 1], content);
-        };
+        try {
+            String filesIndex = readResource("/sampleproject/files.txt");
+            if (filesIndex == null || filesIndex.trim().isEmpty()) {
+                return;
+            }
+            String[] lines = filesIndex.split("\\r?\\n");
+            for (String relativePath : lines) {
+                relativePath = relativePath.trim();
+                if (relativePath.isEmpty()) continue;
 
-        // Write application.properties to root of sample project
-        String propsContent = 
-            "# Decoupled URIs for Chapter Samples\n" +
-            "wiretap.audit.uri=stub:jms:queue:audit.trail\n" +
-            "kafka.orders.uri=stub:kafka:topic:orders\n" +
-            "ibmmq.request.uri=stub:jms:queue:REQUEST.Q\n" +
-            "mongodb.orders.uri=stub:mongodb:cameldb?operation=insert\n" +
-            "dlq.uri=stub:jms:queue:DLQ\n";
-        treePane.createTemplateFileInDir(base, "application.properties", propsContent);
+                // Load content of the resource
+                String content = readResource("/sampleproject/" + relativePath);
 
-        // ── Chapter 1: Basics ────────────────────────────────────────────────
-        write.accept(new String[]{"chapter-01-basics", "01-hello-timer.camel.yaml"},
-            "# ID: hello-timer\n# ENABLED: true\n# DESCRIPTION: Simplest possible route — timer fires every 3s and logs a message\n# AUTHOR: Camel Studio\n# STUB: none\n\n" +
-            "- route:\n    id: \"hello-timer\"\n    from:\n      uri: \"timer:hello?period=3000\"\n      steps:\n        - log:\n            message: \"[Chapter 1] Hello from Apache Camel! Timestamp: ${date:now:HH:mm:ss}\"\n");
+                // Recreate directory structure under base directory
+                java.io.File targetFile = new java.io.File(base, relativePath);
+                java.io.File parentDir = targetFile.getParentFile();
+                if (parentDir != null && !parentDir.exists()) {
+                    parentDir.mkdirs();
+                }
 
-        write.accept(new String[]{"chapter-01-basics", "02-set-body-header.camel.yaml"},
-            "# ID: set-body-header\n# ENABLED: true\n# DESCRIPTION: Demonstrates setBody and setHeader EIPs\n# AUTHOR: Camel Studio\n# STUB: none\n\n" +
-            "- route:\n    id: \"set-body-header\"\n    from:\n      uri: \"timer:trigger?period=5000&repeatCount=3\"\n      steps:\n        - setHeader:\n            name: \"MessageType\"\n            constant: \"ORDER\"\n        - setBody:\n            constant: '{\"orderId\":\"ORD-001\",\"amount\":199.99,\"currency\":\"USD\"}'\n        - log:\n            message: \"[Chapter 1] Header: ${header.MessageType} | Body: ${body}\"\n        - to: \"mock:output\"\n");
+                // Write the file content
+                if (treePane != null) {
+                    treePane.createTemplateFileInDir(parentDir, targetFile.getName(), content, true);
+                } else {
+                    java.nio.file.Files.writeString(targetFile.toPath(), content);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        write.accept(new String[]{"chapter-01-basics", "03-simple-expression.camel.yaml"},
-            "# ID: simple-expression\n# ENABLED: true\n# DESCRIPTION: Uses Simple language to conditionally transform the message body\n# AUTHOR: Camel Studio\n# STUB: none\n\n" +
-            "- route:\n    id: \"simple-expression\"\n    from:\n      uri: \"timer:tick?period=4000\"\n      steps:\n        - setHeader:\n            name: \"counter\"\n            groovy: \"(exchange.getProperty('CamelTimerCounter', Integer.class) ?: 0)\"\n        - setBody:\n            simple: \"Request #${exchangeProperty.CamelTimerCounter} processed at ${date:now:HH:mm:ss}\"\n        - log:\n            message: \"[Chapter 1] ${body}\"\n        - to: \"mock:sink\"\n");
+        if (treePane != null) {
+            treePane.refresh();
+        }
+    }
 
-        // ── Chapter 2: Content-Based Routing ─────────────────────────────────
-        write.accept(new String[]{"chapter-02-routing", "01-choice-routing.camel.yaml"},
-            "# ID: choice-routing\n# ENABLED: true\n# DESCRIPTION: Content-Based Router pattern using Choice/When/Otherwise EIPs\n# AUTHOR: Camel Studio\n# STUB: none\n\n" +
-            "- route:\n    id: \"cbr-injector\"\n    from:\n      uri: \"timer:cbr?period=2000&repeatCount=6\"\n      steps:\n        - setBody:\n            simple: \"${random(1,4)}\"\n        - log: \"[Chapter 2] Routing message with type: ${body}\"\n        - to: \"direct:cbr-router\"\n\n" +
-            "- route:\n    id: \"cbr-router\"\n    from:\n      uri: \"direct:cbr-router\"\n      steps:\n        - choice:\n            when:\n              - simple: \"${body} == '1'\"\n                steps:\n                  - log: \"[Chapter 2] >> Priority GOLD order\"\n                  - to: \"mock:gold\"\n              - simple: \"${body} == '2'\"\n                steps:\n                  - log: \"[Chapter 2] >> Priority SILVER order\"\n                  - to: \"mock:silver\"\n              - simple: \"${body} == '3'\"\n                steps:\n                  - log: \"[Chapter 2] >> Priority BRONZE order\"\n                  - to: \"mock:bronze\"\n            otherwise:\n              steps:\n                - log: \"[Chapter 2] >> Unknown priority, rejecting\"\n                - to: \"mock:rejected\"\n");
+    public void dumpSamplesToResources() {
+        generateChapterSamples(null, null);
+    }
 
-        write.accept(new String[]{"chapter-02-routing", "02-wiretap-audit.camel.yaml"},
-            "# ID: wiretap-audit\n# ENABLED: true\n# DESCRIPTION: WireTap pattern — async audit copy without slowing main flow\n# AUTHOR: Camel Studio\n# STUB: mock (stub replaces JMS audit queue)\n\n" +
-            "- route:\n    id: \"main-payment-flow\"\n    from:\n      uri: \"timer:payment?period=3000&repeatCount=4\"\n      steps:\n        - setBody:\n            constant: '{\"txId\":\"TX-${random(1000,9999)}\",\"amount\":500}'\n        - log: \"[Chapter 2] Processing payment: ${body}\"\n        - wireTap:\n            uri: \"{{wiretap.audit.uri}}\"\n        - to: \"mock:payment-processed\"\n\n" +
-            "- route:\n    id: \"audit-consumer\"\n    from:\n      uri: \"{{wiretap.audit.uri}}\"\n      steps:\n        - log: \"[Chapter 2][AUDIT] Captured audit event: ${body}\"\n        - to: \"mock:audit-log\"\n");
-
-        write.accept(new String[]{"chapter-02-routing", "03-filter-eip.camel.yaml"},
-            "# ID: filter-eip\n# ENABLED: true\n# DESCRIPTION: Message Filter EIP — only passes messages matching the predicate\n# AUTHOR: Camel Studio\n# STUB: none\n\n" +
-            "- route:\n    id: \"filter-high-value\"\n    from:\n      uri: \"timer:orders?period=2500\"\n      steps:\n        - setBody:\n            simple: \"${random(100,1000)}\"\n        - log: \"[Chapter 2] Order amount: ${body}\"\n        - filter:\n            simple: \"${body} > 500\"\n            steps:\n              - log: \"[Chapter 2][FILTER] High-value order detected: ${body}\"\n              - to: \"mock:high-value\"\n");
-
-        // ── Chapter 3: Messaging Systems (Stubs) ─────────────────────────────
-        write.accept(new String[]{"chapter-03-messaging", "01-kafka-consumer.camel.yaml"},
-            "# ID: kafka-consumer-stub\n# ENABLED: true\n# DESCRIPTION: Consumes messages from a Kafka topic. Uses stub: in offline mode.\n# STUB: stub:kafka:topic:orders (replaces kafka:orders?brokers=localhost:9092)\n# REAL_URI: kafka:orders?brokers=localhost:9092&groupId=camel-studio\n\n" +
-            "- route:\n    id: \"kafka-order-consumer\"\n    from:\n      uri: \"{{kafka.orders.uri}}\"\n      steps:\n        - log: \"[Chapter 3][KAFKA] Received order from Kafka: ${body}\"\n        - setHeader:\n            name: \"ProcessedAt\"\n            simple: \"${date:now:yyyy-MM-dd HH:mm:ss}\"\n        - to: \"mock:order-processor\"\n\n" +
-            "- route:\n    id: \"kafka-order-publisher\"\n    from:\n      uri: \"timer:kafka-test?period=4000&repeatCount=5\"\n      steps:\n        - setBody:\n            simple: '{\"orderId\":\"ORD-${random(100,999)}\",\"product\":\"Widget\",\"qty\":${random(1,10)}}'\n        - log: \"[Chapter 3][KAFKA] Sending to Kafka: ${body}\"\n        - to: \"{{kafka.orders.uri}}\"\n");
-
-        write.accept(new String[]{"chapter-03-messaging", "02-jms-ibmmq-stub.camel.yaml"},
-            "# ID: jms-ibmmq-stub\n# ENABLED: true\n# DESCRIPTION: IBM MQ / JMS request-reply pattern using stubs for offline testing\n# STUB: stub:jms:queue:REQUEST.Q and stub:jms:queue:REPLY.Q\n# REAL_URI: jms:queue:REQUEST.Q?connectionFactory=#ibmMQFactory\n\n" +
-            "- route:\n    id: \"ibmmq-request-sender\"\n    from:\n      uri: \"timer:mq-test?period=5000&repeatCount=4\"\n      steps:\n        - setBody:\n            constant: '<TransactionRequest><TxId>TXN-001</TxId><Amount>1000.00</Amount></TransactionRequest>'\n        - setHeader:\n            name: \"JMSCorrelationID\"\n            simple: \"CID-${random(10000,99999)}\"\n        - log: \"[Chapter 3][IBM-MQ] Sending to request queue: ${header.JMSCorrelationID}\"\n        - to: \"{{ibmmq.request.uri}}\"\n\n" +
-            "- route:\n    id: \"ibmmq-request-handler\"\n    from:\n      uri: \"{{ibmmq.request.uri}}\"\n      steps:\n        - log: \"[Chapter 3][IBM-MQ] Processing request: ${body}\"\n        - setBody:\n            constant: '<TransactionResponse><Status>APPROVED</Status><Auth>AUTH-789</Auth></TransactionResponse>'\n        - to: \"stub:jms:queue:REPLY.Q\"\n\n" +
-            "- route:\n    id: \"ibmmq-reply-consumer\"\n    from:\n      uri: \"stub:jms:queue:REPLY.Q\"\n      steps:\n        - log: \"[Chapter 3][IBM-MQ] Got reply: ${body}\"\n        - to: \"mock:mq-completed\"\n");
-
-        write.accept(new String[]{"chapter-03-messaging", "03-mongodb-stub.camel.yaml"},
-            "# ID: mongodb-stub\n# ENABLED: true\n# DESCRIPTION: Saves and retrieves documents from MongoDB using stubs offline\n# STUB: stub:mongodb:cameldb (replaces mongodb:cameldb?operation=insert&collection=orders)\n# REAL_URI: mongodb:myMongoBean?database=cameldb&collection=orders&operation=insert\n\n" +
-            "- route:\n    id: \"mongodb-insert\"\n    from:\n      uri: \"timer:mongo?period=4000&repeatCount=4\"\n      steps:\n        - setBody:\n            simple: '{\"_id\":\"${random(1000,9999)}\",\"customer\":\"ACME Corp\",\"amount\":${random(100,5000)},\"ts\":\"${date:now:yyyy-MM-dd}\"}'\n        - log: \"[Chapter 3][MONGO] Inserting document: ${body}\"\n        - to: \"{{mongodb.orders.uri}}\"\n        - log: \"[Chapter 3][MONGO] Insert complete, result: ${body}\"\n        - to: \"mock:mongo-inserted\"\n");
-
-        // ── Chapter 4: Error Handling ─────────────────────────────────────────
-        write.accept(new String[]{"chapter-04-error-handling", "01-global-exception.camel.yaml"},
-            "# ID: global-exception-handler\n# ENABLED: true\n# DESCRIPTION: Global onException with retry, exponential backoff, and dead-letter channel\n# AUTHOR: Camel Studio\n# STUB: stub:jms:queue:DLQ (dead letter queue)\n\n" +
-            "- onException:\n    exception:\n      - \"java.io.IOException\"\n      - \"java.net.ConnectException\"\n    redeliveryPolicy:\n      maximumRedeliveries: 3\n      redeliveryDelay: 1000\n      backOffMultiplier: 2.0\n      useExponentialBackOff: true\n    handled:\n      constant: true\n    steps:\n      - log:\n          loggingLevel: ERROR\n          message: \"[Chapter 4][DLQ] Routing to dead-letter after ${header.CamelRedeliveryCounter} retries: ${exception.message}\"\n      - to: \"{{dlq.uri}}\"\n\n" +
-            "- route:\n    id: \"flaky-downstream\"\n    from:\n      uri: \"timer:errors?period=3000&repeatCount=5\"\n      steps:\n        - setBody:\n            simple: \"Payload-${random(1,100)}\"\n        - log: \"[Chapter 4] Attempting to send: ${body}\"\n        - to: \"{{dlq.uri}}\"\n        - log: \"[Chapter 4] Sent successfully\"\n");
-
-        write.accept(new String[]{"chapter-04-error-handling", "02-dotry-docatch.camel.yaml"},
-            "# ID: dotry-docatch\n# ENABLED: true\n# DESCRIPTION: Inline doTry/doCatch/doFinally for local exception scoping\n# AUTHOR: Camel Studio\n# STUB: none\n\n" +
-            "- route:\n    id: \"dotry-example\"\n    from:\n      uri: \"timer:try?period=4000&repeatCount=4\"\n      steps:\n        - setBody:\n            simple: \"${random(1,10)}\"\n        - doTry:\n            steps:\n              - log: \"[Chapter 4][TRY] Processing value: ${body}\"\n              - filter:\n                  simple: \"${body} > 7\"\n                  steps:\n                    - throwException:\n                        exceptionType: \"java.lang.RuntimeException\"\n                        message: \"Value too large: ${body}\"\n              - log: \"[Chapter 4][TRY] Success: ${body}\"\n              - to: \"mock:success\"\n            doCatch:\n              - exception:\n                  - \"java.lang.RuntimeException\"\n                steps:\n                  - log: \"[Chapter 4][CATCH] Caught exception: ${exception.message}\"\n                  - to: \"mock:caught\"\n            doFinally:\n              steps:\n                - log: \"[Chapter 4][FINALLY] Cleanup complete\"\n");
-
-        write.accept(new String[]{"chapter-04-error-handling", "03-circuit-breaker.camel.yaml"},
-            "# ID: circuit-breaker\n# ENABLED: true\n# DESCRIPTION: Circuit Breaker pattern protecting against downstream failures with fallback\n# AUTHOR: Camel Studio\n# STUB: stub:http:api.example.com/orders (replaces live HTTP call)\n\n" +
-            "- route:\n    id: \"circuit-breaker-demo\"\n    from:\n      uri: \"timer:cb-test?period=3000&repeatCount=6\"\n      steps:\n        - log: \"[Chapter 4][CB] Calling downstream service...\"\n        - circuitBreaker:\n            steps:\n              - setHeader:\n                  name: \"CamelHttpMethod\"\n                  constant: \"GET\"\n              - to: \"stub:http:api.example.com/orders\"\n              - log: \"[Chapter 4][CB] Success: ${body}\"\n              - to: \"mock:cb-success\"\n            onFallback:\n              steps:\n                - log: \"[Chapter 4][CB] Circuit OPEN — returning cached fallback\"\n                - setBody:\n                    constant: '{\"orders\":[],\"source\":\"cache\",\"status\":\"degraded\"}'\n                - to: \"mock:cb-fallback\"\n");
-
-        // ── Chapter 5: Transformation ─────────────────────────────────────────
-        write.accept(new String[]{"chapter-05-transformation", "01-enrich-pattern.camel.yaml"},
-            "# ID: enrich-pattern\n# ENABLED: true\n# DESCRIPTION: Content Enricher pattern — fetch extra data and merge into original message\n# AUTHOR: Camel Studio\n# STUB: stub:direct:fetch-customer (replaces real DB/API call)\n\n" +
-            "- route:\n    id: \"order-enricher\"\n    from:\n      uri: \"timer:enrich?period=4000&repeatCount=4\"\n      steps:\n        - setBody:\n            constant: '{\"orderId\":\"ORD-123\",\"customerId\":\"CUST-42\"}'\n        - log: \"[Chapter 5][ENRICH] Original order: ${body}\"\n        - enrich:\n            expression:\n              constant: \"stub:direct:fetch-customer\"\n            aggregationStrategy: \"#class:org.apache.camel.processor.aggregate.GroupedBodyAggregationStrategy\"\n        - log: \"[Chapter 5][ENRICH] Enriched result: ${body}\"\n        - to: \"mock:enriched\"\n\n" +
-            "- route:\n    id: \"customer-service-stub\"\n    from:\n      uri: \"stub:direct:fetch-customer\"\n      steps:\n        - log: \"[Chapter 5][ENRICH] Fetching customer for order: ${body}\"\n        - setBody:\n            constant: '{\"customerId\":\"CUST-42\",\"name\":\"ACME Corp\",\"tier\":\"GOLD\",\"creditLimit\":50000}'\n");
-
-        write.accept(new String[]{"chapter-05-transformation", "02-split-aggregate.camel.yaml"},
-            "# ID: split-aggregate\n# ENABLED: true\n# DESCRIPTION: Splitter + Aggregator pattern — split batch, process items, recombine\n# AUTHOR: Camel Studio\n# STUB: none\n\n" +
-            "- route:\n    id: \"batch-splitter\"\n    from:\n      uri: \"timer:batch?period=6000&repeatCount=3\"\n      steps:\n        - setBody:\n            constant: \"item1,item2,item3,item4,item5\"\n        - log: \"[Chapter 5][SPLIT] Splitting batch: ${body}\"\n        - split:\n            simple: \"${body}\"\n            delimiter: \",\"\n            steps:\n              - log: \"[Chapter 5][SPLIT] Processing item: ${body}\"\n              - setBody:\n                  simple: \"PROCESSED:${body}:${date:now:HH:mm:ss}\"\n              - to: \"mock:split-item\"\n");
-
-        write.accept(new String[]{"chapter-05-transformation", "03-multicast.camel.yaml"},
-            "# ID: multicast\n# ENABLED: true\n# DESCRIPTION: Multicast EIP — broadcast same message to multiple endpoints in parallel\n# AUTHOR: Camel Studio\n# STUB: stub:jms:queue:NOTIFY.EMAIL, stub:jms:queue:NOTIFY.SMS\n\n" +
-            "- route:\n    id: \"multicast-notifier\"\n    from:\n      uri: \"timer:notify?period=5000&repeatCount=3\"\n      steps:\n        - setBody:\n            constant: '{\"event\":\"PAYMENT_COMPLETE\",\"txId\":\"TX-12345\",\"amount\":499.99}'\n        - log: \"[Chapter 5][MULTICAST] Broadcasting notification: ${body}\"\n        - multicast:\n            parallelProcessing: true\n            steps:\n              - to: \"stub:jms:queue:NOTIFY.EMAIL\"\n              - to: \"stub:jms:queue:NOTIFY.SMS\"\n              - to: \"mock:audit-trail\"\n");
-
-        // ── Chapter 6: REST APIs ──────────────────────────────────────────────
-        write.accept(new String[]{"chapter-06-rest-api", "01-rest-producer.camel.yaml"},
-            "# ID: rest-producer\n# ENABLED: true\n# DESCRIPTION: Calls an external REST API using the http component (stubbed for offline)\n# AUTHOR: Camel Studio\n# STUB: stub:http:api.example.com (replaces real HTTP)\n\n" +
-            "- route:\n    id: \"rest-api-caller\"\n    from:\n      uri: \"timer:http?period=5000&repeatCount=4\"\n      steps:\n        - setHeader:\n            name: \"CamelHttpMethod\"\n            constant: \"GET\"\n        - setHeader:\n            name: \"Accept\"\n            constant: \"application/json\"\n        - log: \"[Chapter 6][REST] Calling external API...\"\n        - to: \"stub:http:api.example.com/api/v1/products\"\n        - log: \"[Chapter 6][REST] API Response: ${body}\"\n        - to: \"mock:api-result\"\n");
-
-        write.accept(new String[]{"chapter-06-rest-api", "02-rest-consumer.camel.yaml"},
-            "# ID: rest-consumer\n# ENABLED: true\n# DESCRIPTION: Exposes REST endpoints using Camel REST DSL (Camel Main platform)\n# AUTHOR: Camel Studio\n# STUB: none (self-hosted REST server)\n\n" +
-            "- rest:\n    path: \"/api/v1\"\n    post:\n      - path: \"/orders\"\n        consumes: \"application/json\"\n        produces: \"application/json\"\n        to: \"direct:create-order\"\n    get:\n      - path: \"/orders/{id}\"\n        produces: \"application/json\"\n        to: \"direct:get-order\"\n    delete:\n      - path: \"/orders/{id}\"\n        to: \"direct:delete-order\"\n\n" +
-            "- route:\n    id: \"create-order\"\n    from:\n      uri: \"direct:create-order\"\n      steps:\n        - log: \"[Chapter 6][REST] POST /orders - Body: ${body}\"\n        - setHeader:\n            name: \"orderId\"\n            simple: \"ORD-${random(1000,9999)}\"\n        - setBody:\n            simple: '{\"orderId\":\"${header.orderId}\",\"status\":\"CREATED\",\"timestamp\":\"${date:now:yyyy-MM-dd HH:mm:ss}\"}'\n\n" +
-            "- route:\n    id: \"get-order\"\n    from:\n      uri: \"direct:get-order\"\n      steps:\n        - log: \"[Chapter 6][REST] GET /orders/${header.id}\"\n        - setBody:\n            simple: '{\"orderId\":\"${header.id}\",\"status\":\"ACTIVE\",\"amount\":299.99}'\n\n" +
-            "- route:\n    id: \"delete-order\"\n    from:\n      uri: \"direct:delete-order\"\n      steps:\n        - log: \"[Chapter 6][REST] DELETE /orders/${header.id}\"\n        - setBody:\n            simple: '{\"orderId\":\"${header.id}\",\"status\":\"DELETED\"}'\n");
-
-        // ── Chapter 7: Enterprise Patterns ────────────────────────────────────
-        write.accept(new String[]{"chapter-07-enterprise", "01-saga-pattern.camel.yaml"},
-            "# ID: saga-pattern\n# ENABLED: true\n# DESCRIPTION: Saga EIP for distributed transaction coordination with compensation\n# AUTHOR: Camel Studio\n# STUB: stub:direct:book-hotel, stub:direct:book-flight, stub:direct:charge-payment\n\n" +
-            "- route:\n    id: \"saga-travel-booking\"\n    from:\n      uri: \"timer:saga?period=6000&repeatCount=3\"\n      steps:\n        - setBody:\n            constant: '{\"tripId\":\"TRIP-001\",\"customer\":\"John Doe\",\"destination\":\"Paris\"}'\n        - log: \"[Chapter 7][SAGA] Starting travel booking saga: ${body}\"\n        - saga:\n            compensation: \"direct:cancel-booking\"\n            completion: \"direct:confirm-booking\"\n            steps:\n              - to: \"stub:direct:book-hotel\"\n              - log: \"[Chapter 7][SAGA] Hotel booked\"\n              - to: \"stub:direct:book-flight\"\n              - log: \"[Chapter 7][SAGA] Flight booked\"\n              - to: \"stub:direct:charge-payment\"\n              - log: \"[Chapter 7][SAGA] Payment charged — saga complete\"\n\n" +
-            "- route:\n    id: \"cancel-booking\"\n    from:\n      uri: \"direct:cancel-booking\"\n      steps:\n        - log: \"[Chapter 7][SAGA][COMPENSATE] Cancelling booking: ${body}\"\n        - to: \"mock:booking-cancelled\"\n\n" +
-            "- route:\n    id: \"confirm-booking\"\n    from:\n      uri: \"direct:confirm-booking\"\n      steps:\n        - log: \"[Chapter 7][SAGA][COMPLETE] Booking confirmed: ${body}\"\n        - to: \"mock:booking-confirmed\"\n");
-
-        write.accept(new String[]{"chapter-07-enterprise", "02-transactional-outbox.camel.yaml"},
-            "# ID: transactional-outbox\n# ENABLED: true\n# DESCRIPTION: Transactional Outbox pattern — poll DB outbox table and publish to Kafka\n# AUTHOR: Camel Studio\n# STUB: stub:kafka:topic:OUTBOX.EVENTS (replaces real Kafka)\n\n" +
-            "- route:\n    id: \"outbox-poller\"\n    from:\n      uri: \"timer:outbox-poll?period=5000\"\n      steps:\n        - log: \"[Chapter 7][OUTBOX] Polling outbox table for unpublished events...\"\n        - setBody:\n            constant: '[{\"eventId\":\"EVT-001\",\"type\":\"ORDER_CREATED\",\"payload\":\"{}\",\"status\":\"PENDING\"}]'\n        - split:\n            jsonpath: \"$[*]\"\n            steps:\n              - log: \"[Chapter 7][OUTBOX] Publishing event: ${body}\"\n              - to: \"stub:kafka:topic:OUTBOX.EVENTS\"\n              - log: \"[Chapter 7][OUTBOX] Event published, marking as SENT\"\n              - to: \"mock:outbox-sent\"\n");
-
-        write.accept(new String[]{"chapter-07-enterprise", "03-dead-letter-channel.camel.yaml"},
-            "# ID: dead-letter-channel\n# ENABLED: true\n# DESCRIPTION: Dead Letter Channel pattern — capture poison messages after max retries\n# AUTHOR: Camel Studio\n# STUB: stub:jms:queue:DLQ, stub:jms:queue:MAIN.QUEUE\n\n" +
-            "- onException:\n    exception:\n      - \"java.lang.Exception\"\n    redeliveryPolicy:\n      maximumRedeliveries: 3\n      redeliveryDelay: 500\n    handled:\n      constant: true\n    steps:\n      - log:\n          loggingLevel: ERROR\n          message: \"[Chapter 7][DLC] Dead-lettering message after retries. Cause: ${exception.message}\"\n      - setHeader:\n          name: \"X-DLQ-Reason\"\n          simple: \"${exception.message}\"\n      - setHeader:\n          name: \"X-DLQ-Timestamp\"\n          simple: \"${date:now:yyyy-MM-dd HH:mm:ss}\"\n      - to: \"stub:jms:queue:DLQ\"\n\n" +
-            "- route:\n    id: \"main-processor\"\n    from:\n      uri: \"stub:jms:queue:MAIN.QUEUE\"\n      steps:\n        - log: \"[Chapter 7][DLC] Processing message: ${body}\"\n        - filter:\n            simple: \"${body} contains 'POISON'\"\n            steps:\n              - throwException:\n                  exceptionType: \"java.lang.RuntimeException\"\n                  message: \"Poison message detected\"\n        - to: \"mock:processed\"\n\n" +
-            "- route:\n    id: \"dlq-monitor\"\n    from:\n      uri: \"stub:jms:queue:DLQ\"\n      steps:\n        - log: \"[Chapter 7][DLC][DLQ] Received dead-letter: ${body} | Reason: ${header.X-DLQ-Reason}\"\n        - to: \"mock:dlq-received\"\n");
-
-
-        // ── Chapter 8: HTTP REST Server (Actually Runnable) ───────────────────
-        // All files in this chapter start a real Camel Main HTTP server on :9999
-        // when run with JBang. Use: curl http://localhost:9999/...
-
-        write.accept(new String[]{"chapter-08-rest-server", "01-platform-http-hello.camel.yaml"},
-            "# ID: platform-http-hello\n" +
-            "# ENABLED: true\n" +
-            "# DESCRIPTION: Simplest live HTTP endpoint using platform-http component.\n" +
-            "#   Starts a real server on port 9999. Run this file then call:\n" +
-            "#     curl http://localhost:9999/hello\n" +
-            "#     curl \"http://localhost:9999/hello?name=Pratyush\"\n" +
-            "# AUTHOR: Camel Studio\n" +
-            "# STUB: none — live HTTP server\n\n" +
-            "- route:\n" +
-            "    id: \"http-hello\"\n" +
-            "    from:\n" +
-            "      uri: \"platform-http:/hello\"\n" +
-            "      parameters:\n" +
-            "        httpMethodRestrict: \"GET\"\n" +
-            "      steps:\n" +
-            "        - setBody:\n" +
-            "            simple: \"Hello, ${header.name}! Welcome to Camel REST on Camel Main.\"\n" +
-            "        - log: \"[Chapter 8][HELLO] Served: ${body}\"\n" +
-            "        - setHeader:\n" +
-            "            name: \"Content-Type\"\n" +
-            "            constant: \"text/plain\"\n");
-
-        write.accept(new String[]{"chapter-08-rest-server", "02-rest-dsl-crud.camel.yaml"},
-            "# ID: rest-dsl-crud\n" +
-            "# ENABLED: true\n" +
-            "# DESCRIPTION: Full CRUD REST API using the Camel REST DSL.\n" +
-            "#   Starts a live HTTP server on port 9999.\n" +
-            "#\n" +
-            "#   CREATE:  curl -X POST http://localhost:9999/api/orders \\\n" +
-            "#              -H 'Content-Type: application/json' \\\n" +
-            "#              -d '{\"product\":\"Widget\",\"qty\":5}'\n" +
-            "#\n" +
-            "#   READ:    curl http://localhost:9999/api/orders/ORD-001\n" +
-            "#\n" +
-            "#   UPDATE:  curl -X PUT http://localhost:9999/api/orders/ORD-001 \\\n" +
-            "#              -H 'Content-Type: application/json' \\\n" +
-            "#              -d '{\"qty\":10}'\n" +
-            "#\n" +
-            "#   DELETE:  curl -X DELETE http://localhost:9999/api/orders/ORD-001\n" +
-            "#\n" +
-            "#   LIST:    curl http://localhost:9999/api/orders\n" +
-            "# AUTHOR: Camel Studio\n" +
-            "# STUB: none — live HTTP server\n\n" +
-            "- rest:\n" +
-            "    path: \"/api/orders\"\n" +
-            "    consumes: \"application/json\"\n" +
-            "    produces: \"application/json\"\n" +
-            "    get:\n" +
-            "      - path: \"/\"\n" +
-            "        description: \"List all orders\"\n" +
-            "        to: \"direct:list-orders\"\n" +
-            "      - path: \"/{id}\"\n" +
-            "        description: \"Get order by ID\"\n" +
-            "        to: \"direct:get-order\"\n" +
-            "    post:\n" +
-            "      - path: \"/\"\n" +
-            "        description: \"Create a new order\"\n" +
-            "        to: \"direct:create-order\"\n" +
-            "    put:\n" +
-            "      - path: \"/{id}\"\n" +
-            "        description: \"Update an order\"\n" +
-            "        to: \"direct:update-order\"\n" +
-            "    delete:\n" +
-            "      - path: \"/{id}\"\n" +
-            "        description: \"Delete an order\"\n" +
-            "        to: \"direct:delete-order\"\n\n" +
-            "- route:\n" +
-            "    id: \"list-orders\"\n" +
-            "    from:\n" +
-            "      uri: \"direct:list-orders\"\n" +
-            "      steps:\n" +
-            "        - log: \"[Chapter 8][CRUD] GET /api/orders\"\n" +
-            "        - setBody:\n" +
-            "            constant: '[{\"id\":\"ORD-001\",\"product\":\"Widget\",\"qty\":5,\"status\":\"ACTIVE\"},{\"id\":\"ORD-002\",\"product\":\"Gadget\",\"qty\":2,\"status\":\"PENDING\"}]'\n\n" +
-            "- route:\n" +
-            "    id: \"get-order\"\n" +
-            "    from:\n" +
-            "      uri: \"direct:get-order\"\n" +
-            "      steps:\n" +
-            "        - log: \"[Chapter 8][CRUD] GET /api/orders/${header.id}\"\n" +
-            "        - setBody:\n" +
-            "            simple: '{\"id\":\"${header.id}\",\"product\":\"Widget\",\"qty\":5,\"status\":\"ACTIVE\",\"createdAt\":\"${date:now:yyyy-MM-dd HH:mm:ss\"}'\n\n" +
-            "- route:\n" +
-            "    id: \"create-order\"\n" +
-            "    from:\n" +
-            "      uri: \"direct:create-order\"\n" +
-            "      steps:\n" +
-            "        - log: \"[Chapter 8][CRUD] POST /api/orders body=${body}\"\n" +
-            "        - setHeader:\n" +
-            "            name: \"newOrderId\"\n" +
-            "            simple: \"ORD-${random(1000,9999)}\"\n" +
-            "        - setBody:\n" +
-            "            simple: '{\"id\":\"${header.newOrderId}\",\"status\":\"CREATED\",\"createdAt\":\"${date:now:yyyy-MM-dd HH:mm:ss\"}'\n" +
-            "        - setHeader:\n" +
-            "            name: \"CamelHttpResponseCode\"\n" +
-            "            constant: \"201\"\n\n" +
-            "- route:\n" +
-            "    id: \"update-order\"\n" +
-            "    from:\n" +
-            "      uri: \"direct:update-order\"\n" +
-            "      steps:\n" +
-            "        - log: \"[Chapter 8][CRUD] PUT /api/orders/${header.id} body=${body}\"\n" +
-            "        - setBody:\n" +
-            "            simple: '{\"id\":\"${header.id}\",\"status\":\"UPDATED\",\"updatedAt\":\"${date:now:yyyy-MM-dd HH:mm:ss\"}'\n\n" +
-            "- route:\n" +
-            "    id: \"delete-order\"\n" +
-            "    from:\n" +
-            "      uri: \"direct:delete-order\"\n" +
-            "      steps:\n" +
-            "        - log: \"[Chapter 8][CRUD] DELETE /api/orders/${header.id}\"\n" +
-            "        - setBody:\n" +
-            "            simple: '{\"id\":\"${header.id}\",\"status\":\"DELETED\"}'\n" +
-            "        - setHeader:\n" +
-            "            name: \"CamelHttpResponseCode\"\n" +
-            "            constant: \"200\"\n");
-
-        write.accept(new String[]{"chapter-08-rest-server", "03-rest-auth-header.camel.yaml"},
-            "# ID: rest-auth-header\n" +
-            "# ENABLED: true\n" +
-            "# DESCRIPTION: REST endpoint that validates an API-Key header before serving.\n" +
-            "#   curl -H 'X-API-Key: secret123' http://localhost:8080/secure/data\n" +
-            "#   curl http://localhost:8080/secure/data   <- returns 401\n" +
-            "# AUTHOR: Camel Studio\n" +
-            "# STUB: none — live HTTP server\n\n" +
-            "- route:\n" +
-            "    id: \"secure-endpoint\"\n" +
-            "    from:\n" +
-            "      uri: \"platform-http:/secure/data\"\n" +
-            "      parameters:\n" +
-            "        httpMethodRestrict: \"GET\"\n" +
-            "      steps:\n" +
-            "        - choice:\n" +
-            "            when:\n" +
-            "              - simple: \"${header.X-API-Key} == 'secret123'\"\n" +
-            "                steps:\n" +
-            "                  - log: \"[Chapter 8][AUTH] Authorized request\"\n" +
-            "                  - setBody:\n" +
-            "                      constant: '{\"data\":\"Sensitive payload\",\"clearance\":\"TOP_SECRET\"}'\n" +
-            "                  - setHeader:\n" +
-            "                      name: \"Content-Type\"\n" +
-            "                      constant: \"application/json\"\n" +
-            "            otherwise:\n" +
-            "              steps:\n" +
-            "                - log: \"[Chapter 8][AUTH] Unauthorized — missing or wrong API key\"\n" +
-            "                - setHeader:\n" +
-            "                    name: \"CamelHttpResponseCode\"\n" +
-            "                    constant: \"401\"\n" +
-            "                - setBody:\n" +
-            "                    constant: '{\"error\":\"Unauthorized\",\"message\":\"Valid X-API-Key header required\"}'\n");
-
-        write.accept(new String[]{"chapter-08-rest-server", "04-rest-json-transform.camel.yaml"},
-            "# ID: rest-json-transform\n" +
-            "# ENABLED: true\n" +
-            "# DESCRIPTION: REST endpoint that accepts a raw payment object and transforms it\n" +
-            "#   to a canonical format using setBody + Simple expressions.\n" +
-            "#\n" +
-            "#   curl -X POST http://localhost:8080/api/payments \\\n" +
-            "#     -H 'Content-Type: application/json' \\\n" +
-            "#     -d '{\"sender\":\"Alice\",\"receiver\":\"Bob\",\"amount\":250.00,\"currency\":\"USD\"}'\n" +
-            "# AUTHOR: Camel Studio\n" +
-            "# STUB: none — live HTTP server\n\n" +
-            "- route:\n" +
-            "    id: \"payment-transformer\"\n" +
-            "    from:\n" +
-            "      uri: \"platform-http:/api/payments\"\n" +
-            "      parameters:\n" +
-            "        httpMethodRestrict: \"POST\"\n" +
-            "      steps:\n" +
-            "        - log: \"[Chapter 8][PAY] Received payment: ${body}\"\n" +
-            "        - unmarshal:\n" +
-            "            json:\n" +
-            "              library: Jackson\n" +
-            "        - setHeader:\n" +
-            "            name: \"txRef\"\n" +
-            "            simple: \"TXN-${random(100000,999999)}\"\n" +
-            "        - setHeader:\n" +
-            "            name: \"Content-Type\"\n" +
-            "            constant: \"application/json\"\n" +
-            "        - marshal:\n" +
-            "            json:\n" +
-            "              library: Jackson\n" +
-            "        - log: \"[Chapter 8][PAY] Canonical payment dispatched: ref=${header.txRef}\"\n" +
-            "        - setBody:\n" +
-            "            simple: '{\"txRef\":\"${header.txRef}\",\"status\":\"ACCEPTED\",\"timestamp\":\"${date:now:yyyy-MM-dd HH:mm:ss\"}'\n" +
-            "        - setHeader:\n" +
-            "            name: \"CamelHttpResponseCode\"\n" +
-            "            constant: \"202\"\n");
-
-        write.accept(new String[]{"chapter-08-rest-server", "05-rest-proxy-gateway.camel.yaml"},
-            "# ID: rest-proxy-gateway\n" +
-            "# ENABLED: true\n" +
-            "# DESCRIPTION: API Gateway pattern — receives HTTP requests and proxies them to a\n" +
-            "#   downstream service (stubbed here). Adds correlation ID, auth header, logging.\n" +
-            "#\n" +
-            "#   curl http://localhost:8080/gateway/products\n" +
-            "#   curl http://localhost:8080/gateway/products/42\n" +
-            "# STUB: stub:http:downstream-service (replaces real downstream)\n" +
-            "# AUTHOR: Camel Studio\n\n" +
-            "- route:\n" +
-            "    id: \"api-gateway\"\n" +
-            "    from:\n" +
-            "      uri: \"platform-http:/gateway/{resource}\"\n" +
-            "      steps:\n" +
-            "        - setHeader:\n" +
-            "            name: \"X-Correlation-ID\"\n" +
-            "            simple: \"COR-${random(100000,999999)}\"\n" +
-            "        - setHeader:\n" +
-            "            name: \"X-Gateway-Timestamp\"\n" +
-            "            simple: \"${date:now:yyyy-MM-dd HH:mm:ss}\"\n" +
-            "        - log: \"[Chapter 8][GW] Routing ${header.CamelHttpMethod} /${header.resource} — CorID: ${header.X-Correlation-ID}\"\n" +
-            "        - circuitBreaker:\n" +
-            "            steps:\n" +
-            "              - setHeader:\n" +
-            "                  name: \"Authorization\"\n" +
-            "                  constant: \"Bearer internal-service-token\"\n" +
-            "              - to: \"stub:http:downstream-service/api/${header.resource}\"\n" +
-            "              - log: \"[Chapter 8][GW] Downstream responded: ${body}\"\n" +
-            "            onFallback:\n" +
-            "              steps:\n" +
-            "                - log: \"[Chapter 8][GW] Downstream unreachable — returning 503\"\n" +
-            "                - setHeader:\n" +
-            "                    name: \"CamelHttpResponseCode\"\n" +
-            "                    constant: \"503\"\n" +
-            "                - setBody:\n" +
-            "                    constant: '{\"error\":\"Service Unavailable\",\"retryAfter\":30}'\n" +
-            "        - setHeader:\n" +
-            "            name: \"Content-Type\"\n" +
-            "            constant: \"application/json\"\n");
-
-        write.accept(new String[]{"chapter-08-rest-server", "06-rest-streaming-sse.camel.yaml"},
-            "# ID: rest-streaming-sse\n" +
-            "# ENABLED: true\n" +
-            "# DESCRIPTION: Server-Sent Events (SSE) style streaming endpoint.\n" +
-            "#   Pushes a stream of price-tick events to the caller every second.\n" +
-            "#\n" +
-            "#   curl -N http://localhost:8080/stream/prices\n" +
-            "#\n" +
-            "# AUTHOR: Camel Studio\n" +
-            "# STUB: none — live HTTP server\n\n" +
-            "- route:\n" +
-            "    id: \"price-feed-producer\"\n" +
-            "    from:\n" +
-            "      uri: \"timer:price-tick?period=1000\"\n" +
-            "      steps:\n" +
-            "        - setBody:\n" +
-            "            simple: \"data: {\\\"symbol\\\":\\\"EUR/USD\\\",\\\"price\\\":\\\"${random(10800,10900)}\\\",\\\"ts\\\":\\\"${date:now:HH:mm:ss}\\\"}\\n\\n\"\n" +
-            "        - to: \"direct:price-broadcaster\"\n\n" +
-            "- route:\n" +
-            "    id: \"sse-endpoint\"\n" +
-            "    from:\n" +
-            "      uri: \"platform-http:/stream/prices\"\n" +
-            "      parameters:\n" +
-            "        httpMethodRestrict: \"GET\"\n" +
-            "      steps:\n" +
-            "        - setHeader:\n" +
-            "            name: \"Content-Type\"\n" +
-            "            constant: \"text/event-stream\"\n" +
-            "        - setHeader:\n" +
-            "            name: \"Cache-Control\"\n" +
-            "            constant: \"no-cache\"\n" +
-            "        - setBody:\n" +
-            "            constant: \"data: {\\\"message\\\":\\\"Connected to Camel price stream\\\"}\\n\\n\"\n" +
-            "        - log: \"[Chapter 8][SSE] Client connected to price stream\"\n");
-
-        write.accept(new String[]{"chapter-08-rest-server", "07-rest-file-upload.camel.yaml"},
-            "# ID: rest-file-upload\n" +
-            "# ENABLED: true\n" +
-            "# DESCRIPTION: Multipart file upload endpoint — receives a file and saves it.\n" +
-            "#\n" +
-            "#   curl -X POST http://localhost:8080/upload \\\n" +
-            "#     -F 'file=@/path/to/yourfile.xml'\n" +
-            "#\n" +
-            "# AUTHOR: Camel Studio\n" +
-            "# STUB: none — live HTTP server\n\n" +
-            "- route:\n" +
-            "    id: \"file-upload-handler\"\n" +
-            "    from:\n" +
-            "      uri: \"platform-http:/upload\"\n" +
-            "      parameters:\n" +
-            "        httpMethodRestrict: \"POST\"\n" +
-            "      steps:\n" +
-            "        - log: \"[Chapter 8][UPLOAD] Received upload — Content-Type: ${header.Content-Type}\"\n" +
-            "        - choice:\n" +
-            "            when:\n" +
-            "              - simple: \"${body} != null\"\n" +
-            "                steps:\n" +
-            "                  - setHeader:\n" +
-            "                      name: \"CamelFileName\"\n" +
-            "                      simple: \"upload-${date:now:yyyyMMdd-HHmmss}.bin\"\n" +
-            "                  - to: \"file:uploads\"\n" +
-            "                  - log: \"[Chapter 8][UPLOAD] Saved file: ${header.CamelFileName}\"\n" +
-            "                  - setBody:\n" +
-            "                      simple: '{\"status\":\"uploaded\",\"file\":\"${header.CamelFileName}\",\"size\":\"${body.length}\"}'\n" +
-            "            otherwise:\n" +
-            "              steps:\n" +
-            "                - setHeader:\n" +
-            "                    name: \"CamelHttpResponseCode\"\n" +
-            "                    constant: \"400\"\n" +
-            "                - setBody:\n" +
-            "                    constant: '{\"error\":\"No file received\"}'\n" +
-            "        - setHeader:\n" +
-            "            name: \"Content-Type\"\n" +
-            "            constant: \"application/json\"\n");
-
-        write.accept(new String[]{"chapter-08-rest-server", "08-rest-health-metrics.camel.yaml"},
-            "# ID: rest-health-metrics\n" +
-            "# ENABLED: true\n" +
-            "# DESCRIPTION: Health-check and metrics endpoints (standard in microservices).\n" +
-            "#\n" +
-            "#   curl http://localhost:8080/health\n" +
-            "#   curl http://localhost:8080/health/live\n" +
-            "#   curl http://localhost:8080/health/ready\n" +
-            "#   curl http://localhost:8080/metrics\n" +
-            "#\n" +
-            "# AUTHOR: Camel Studio\n" +
-            "# STUB: none — live HTTP server\n\n" +
-            "- route:\n" +
-            "    id: \"health-overall\"\n" +
-            "    from:\n" +
-            "      uri: \"platform-http:/health\"\n" +
-            "      parameters:\n" +
-            "        httpMethodRestrict: \"GET\"\n" +
-            "      steps:\n" +
-            "        - setHeader:\n" +
-            "            name: \"Content-Type\"\n" +
-            "            constant: \"application/json\"\n" +
-            "        - setBody:\n" +
-            "            simple: '{\"status\":\"UP\",\"timestamp\":\"${date:now:yyyy-MM-dd HH:mm:ss}\",\"components\":{\"camel\":{\"status\":\"UP\"},\"db\":{\"status\":\"UP\"}}}'\n\n" +
-            "- route:\n" +
-            "    id: \"health-live\"\n" +
-            "    from:\n" +
-            "      uri: \"platform-http:/health/live\"\n" +
-            "      parameters:\n" +
-            "        httpMethodRestrict: \"GET\"\n" +
-            "      steps:\n" +
-            "        - setHeader:\n" +
-            "            name: \"Content-Type\"\n" +
-            "            constant: \"application/json\"\n" +
-            "        - setBody:\n" +
-            "            constant: '{\"status\":\"UP\"}'\n\n" +
-            "- route:\n" +
-            "    id: \"health-ready\"\n" +
-            "    from:\n" +
-            "      uri: \"platform-http:/health/ready\"\n" +
-            "      parameters:\n" +
-            "        httpMethodRestrict: \"GET\"\n" +
-            "      steps:\n" +
-            "        - setHeader:\n" +
-            "            name: \"Content-Type\"\n" +
-            "            constant: \"application/json\"\n" +
-            "        - setBody:\n" +
-            "            constant: '{\"status\":\"UP\",\"checks\":[{\"name\":\"camel-context\",\"status\":\"UP\"}]}'\n\n" +
-            "- route:\n" +
-            "    id: \"metrics-endpoint\"\n" +
-            "    from:\n" +
-            "      uri: \"platform-http:/metrics\"\n" +
-            "      parameters:\n" +
-            "        httpMethodRestrict: \"GET\"\n" +
-            "      steps:\n" +
-            "        - setHeader:\n" +
-            "            name: \"Content-Type\"\n" +
-            "            constant: \"text/plain\"\n" +
-            "        - setBody:\n" +
-            "            simple: \"# HELP camel_routes_running_routes Number of running routes\\n# TYPE camel_routes_running_routes gauge\\ncamel_routes_running_routes 4\\n# HELP camel_exchanges_total Total exchanges processed\\n# TYPE camel_exchanges_total counter\\ncamel_exchanges_total ${exchangeProperty.CamelTimerCounter}\\n\"\n");
-
-        // ── Chapter 9: Cryptography & Auditing ──────────────────────────────
-        write.accept(new String[]{"chapter-09-crypto-audit", "01-audit-stream-exclude.camel.yaml"},
-            "# ID: mongo-audit-exclude\n" +
-            "# ENABLED: true\n" +
-            "# DESCRIPTION: MongoDB Change Stream audit consumer demonstrating exclusion rules and host metadata resolution.\n" +
-            "# AUTHOR: Camel Studio\n" +
-            "# STUB: stub:mongodb:audit (replaces real database connection)\n\n" +
-            "- route:\n" +
-            "    id: \"mongo-change-stream-audit\"\n" +
-            "    from:\n" +
-            "      uri: \"stub:mongodb:myDb?consumerType=changeStream&database=audit&collection=transactions\"\n" +
-            "      steps:\n" +
-            "        - log: \"[Chapter 9][AUDIT] Captured mutation payload: ${body}\"\n" +
-            "        - to: \"mock:filtered-audit\"\n");
-
-        write.accept(new String[]{"chapter-09-crypto-audit", "02-aes-gcm-encrypt-config.camel.yaml"},
-            "# ID: aes-gcm-properties\n" +
-            "# ENABLED: true\n" +
-            "# DESCRIPTION: Demonstrates decryption of credentials in properties files using PBKDF2 GCM key derivation.\n" +
-            "# AUTHOR: Camel Studio\n" +
-            "# STUB: none\n\n" +
-            "- route:\n" +
-            "    id: \"secure-properties-loader\"\n" +
-            "    from:\n" +
-            "      uri: \"timer:secure-props?period=5000&repeatCount=2\"\n" +
-            "      steps:\n" +
-            "        - log: \"[Chapter 9] Database Username: ${properties:db.username:admin}\"\n" +
-            "        - log: \"[Chapter 9] Encrypted Password resolved: ${properties:db.password:ENC(g21A/98s/8da12k=)}\"\n");
-
-        write.accept(new String[]{"chapter-09-crypto-audit", "03-ibmmq-xa-narayana.camel.yaml"},
-            "# ID: ibmmq-xa-narayana\n" +
-            "# ENABLED: true\n" +
-            "# DESCRIPTION: Demonstrates IBM MQ Jakarta 9.4.5.1 Client configuration with JmsPoolXAConnectionFactory.\n" +
-            "# AUTHOR: Camel Studio\n" +
-            "# STUB: stub:jms:queue:XA.REQUEST\n\n" +
-            "- route:\n" +
-            "    id: \"ibmmq-xa-consumer\"\n" +
-            "    from:\n" +
-            "      uri: \"stub:jms:queue:XA.REQUEST?cacheLevelName=CACHE_NONE&transacted=false\"\n" +
-            "      steps:\n" +
-            "        - log: \"[Chapter 9][XA] Coordinated transaction message: ${body}\"\n" +
-            "        - to: \"mock:xa-processed\"\n");
-
-        // ── Chapter 10: Beans & Java DSL ─────────────────────────────────────
-        write.accept(new String[]{"chapter-10-beans-java", "MyServiceBean.java"},
-            "package com.example;\n\n" +
-            "public class MyServiceBean {\n" +
-            "    private String prefix = \"DEFAULT\";\n\n" +
-            "    public void setPrefix(String prefix) {\n" +
-            "        this.prefix = prefix;\n" +
-            "    }\n\n" +
-            "    public String formatMessage(String body) {\n" +
-            "        return \"[\" + prefix + \"] >> \" + body;\n" +
-            "    }\n" +
-            "}\n");
-
-        write.accept(new String[]{"chapter-10-beans-java", "01-yaml-beans.camel.yaml"},
-            "# ID: yaml-beans-example\n" +
-            "# ENABLED: true\n" +
-            "# DESCRIPTION: Declares local beans in YAML and invokes them in a Camel route step\n" +
-            "# AUTHOR: Camel Studio\n\n" +
-            "- beans:\n" +
-            "    - name: myBean\n" +
-            "      type: com.example.MyServiceBean\n" +
-            "      properties:\n" +
-            "        prefix: \"YAML-BEAN-LOG\"\n\n" +
-            "- route:\n" +
-            "    id: \"yaml-bean-route\"\n" +
-            "    from:\n" +
-            "      uri: \"timer:yaml-bean?period=3000&repeatCount=3\"\n" +
-            "      steps:\n" +
-            "        - setBody:\n" +
-            "            constant: \"Message from YAML DSL\"\n" +
-            "        - bean:\n" +
-            "            ref: \"myBean\"\n" +
-            "            method: \"formatMessage\"\n" +
-            "        - log:\n" +
-            "            message: \"Result: ${body}\"\n");
-
-        write.accept(new String[]{"chapter-10-beans-java", "02-java-route.java"},
-            "// camel-k: language=java\n" +
-            "//DEPS org.apache.camel:camel-timer:4.20.0\n\n" +
-            "import org.apache.camel.builder.RouteBuilder;\n" +
-            "import org.apache.camel.BindToRegistry;\n\n" +
-            "public class MyBeanRoute extends RouteBuilder {\n\n" +
-            "    @Override\n" +
-            "    public void configure() throws Exception {\n" +
-            "        from(\"timer:java-bean?period=4000&repeatCount=3\")\n" +
-            "            .setBody().constant(\"Message from Java DSL\")\n" +
-            "            .bean(\"myJavaFormatter\", \"format\")\n" +
-            "            .log(\"Result: ${body}\");\n" +
-            "    }\n\n" +
-            "    @BindToRegistry(\"myJavaFormatter\")\n" +
-            "    public static class JavaFormatter {\n" +
-            "        public String format(String input) {\n" +
-            "            return \"[JAVA-BEAN-LOG] \" + input;\n" +
-            "        }\n" +
-            "    }\n" +
-            "}\n");
-
-        treePane.refresh();
+    private String readResource(String path) {
+        try (java.io.InputStream is = RouteBuilderApp.class.getResourceAsStream(path)) {
+            if (is == null) {
+                return "";
+            }
+            return new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
 
@@ -1836,5 +1480,123 @@ public class RouteBuilderApp extends Application {
             catalogFile = new java.io.File(new java.io.File(System.getProperty("user.dir"), "route-builder"), "jbang-catalog.json");
         }
         return catalogFile.exists() ? catalogFile.getAbsolutePath().replace("\\", "/") : null;
+    }
+
+    public static String getCamelVersion() {
+        String catalogPath = getJbangCatalog();
+        if (catalogPath != null) {
+            try {
+                String content = java.nio.file.Files.readString(java.nio.file.Paths.get(catalogPath));
+                int idx = content.indexOf("org.apache.camel:camel-jbang-main:");
+                if (idx != -1) {
+                    int start = idx + "org.apache.camel:camel-jbang-main:".length();
+                    int end = content.indexOf('"', start);
+                    if (end != -1) {
+                        return content.substring(start, end).trim();
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        return "4.18.0"; // default fallback
+    }
+
+    private static void collectAllRouteFiles(java.io.File dir, java.util.List<java.io.File> collected) {
+        java.io.File[] files = dir.listFiles();
+        if (files == null) return;
+        for (java.io.File f : files) {
+            if (f.isDirectory()) {
+                if (!f.getName().startsWith(".")) {
+                    collectAllRouteFiles(f, collected);
+                }
+            } else {
+                String name = f.getName().toLowerCase();
+                if (name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".groovy")) {
+                    collected.add(f);
+                }
+            }
+        }
+    }
+
+    private static java.util.List<java.io.File> findCamelKSources(java.io.File file) {
+        java.util.List<java.io.File> sources = new java.util.ArrayList<>();
+        java.util.Set<String> visited = new java.util.HashSet<>();
+        findCamelKSourcesRecursive(file, sources, visited);
+        return sources;
+    }
+
+    private static void findCamelKSourcesRecursive(java.io.File file, java.util.List<java.io.File> sources, java.util.Set<String> visited) {
+        if (file == null || !file.exists() || !file.isFile()) return;
+        String canonicalPath;
+        try {
+            canonicalPath = file.getCanonicalPath();
+        } catch (Exception ex) {
+            canonicalPath = file.getAbsolutePath();
+        }
+        if (!visited.add(canonicalPath)) return;
+
+        try {
+            java.util.List<String> lines = java.nio.file.Files.readAllLines(file.toPath());
+            java.io.File parent = file.getParentFile();
+            for (String line : lines) {
+                line = line.trim();
+                if (line.startsWith("#") && line.contains("camel-k:") && line.contains("source=")) {
+                    String src = line.substring(line.indexOf("source=") + 7).trim();
+                    if (!src.isEmpty()) {
+                        java.io.File srcFile = new java.io.File(parent, src);
+                        if (srcFile.exists()) {
+                            sources.add(srcFile);
+                            findCamelKSourcesRecursive(srcFile, sources, visited);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private static java.util.List<String> findCamelKDependencies(java.io.File file) {
+        java.util.List<String> deps = new java.util.ArrayList<>();
+        java.util.Set<String> visited = new java.util.HashSet<>();
+        findCamelKDependenciesRecursive(file, deps, visited);
+        return deps;
+    }
+
+    private static void findCamelKDependenciesRecursive(java.io.File file, java.util.List<String> deps, java.util.Set<String> visited) {
+        if (file == null || !file.exists() || !file.isFile()) return;
+        String canonicalPath;
+        try {
+            canonicalPath = file.getCanonicalPath();
+        } catch (Exception ex) {
+            canonicalPath = file.getAbsolutePath();
+        }
+        if (!visited.add(canonicalPath)) return;
+
+        try {
+            java.util.List<String> lines = java.nio.file.Files.readAllLines(file.toPath());
+            java.io.File parent = file.getParentFile();
+            for (String line : lines) {
+                line = line.trim();
+                if (line.startsWith("#") && line.contains("camel-k:")) {
+                    if (line.contains("dependency=")) {
+                        String dep = line.substring(line.indexOf("dependency=") + 11).trim();
+                        if (!dep.isEmpty()) {
+                            if (dep.startsWith("mvn:")) {
+                                dep = dep.substring(4);
+                            }
+                            if (!deps.contains(dep)) {
+                                deps.add(dep);
+                            }
+                        }
+                    } else if (line.contains("source=")) {
+                        String src = line.substring(line.indexOf("source=") + 7).trim();
+                        if (!src.isEmpty()) {
+                            java.io.File srcFile = new java.io.File(parent, src);
+                            if (srcFile.exists()) {
+                                findCamelKDependenciesRecursive(srcFile, deps, visited);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
     }
 }

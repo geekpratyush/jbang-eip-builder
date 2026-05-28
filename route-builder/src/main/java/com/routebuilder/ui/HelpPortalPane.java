@@ -207,15 +207,13 @@ public class HelpPortalPane extends BorderPane {
             "                                                           |\n" +
             "                                        +------------------+------------------+\n" +
             "                                        |                  |                  |\n" +
-            "                                [Offline / Stub]       [Local Live]     [Live Configured]\n" +
-            "                                (--stub=all)         (Standard run)     (infra.properties)\n" +
+            "                                [Offline / Stub]       [Local Live]\n" +
+            "                                (--stub=all)         (Standard run)\n" +
             "```\n\n" +
             "## 1. Play Offline (Stub Mode)\n" +
             "Stubs out all external endpoints using Apache Camel's stub component. Recommended for local route structure testing without external infrastructure dependency.\n\n" +
             "## 2. Play (Local Live)\n" +
-            "Runs the integration live on Camel Main, reflecting changes in real-time. Great for verification against local instances.\n\n" +
-            "## 3. Play (Configured Infra)\n" +
-            "Runs against your actual physical development infrastructure using environment configuration loaded from `infra.properties`."
+            "Runs the integration live on Camel Main, reflecting changes in real-time. Great for verification against local instances."
         ));
 
         allTopics.add(new HelpTopic("2. IBM MQ Connector (JMS 3.0 & XA)", "Messaging",
@@ -345,6 +343,88 @@ public class HelpPortalPane extends BorderPane {
             "**Important:** Never bundle credentials (keystores, passwords, krb5 keytabs) in container filesystems. Resolve them dynamically at runtime via:\n" +
             "* Kubernetes ConfigMaps & Secrets mounts.\n" +
             "* HashiCorp Vault or Cloud Secret Managers via environment variables."
+        ));
+
+        allTopics.add(new HelpTopic("9. Validation Studio", "Validation",
+            "# Validation Studio User Manual\n\n" +
+            "Validation Studio validates messages of various formats against schemas or custom rules.\n\n" +
+            "## Supported Formats\n" +
+            "* **XML + XSD**: Standard XML instance schema matching.\n" +
+            "* **JSON + Schema**: Property-level validation against draft-07 JSON Schema.\n" +
+            "* **YAML + Schema**: Automated translation and JSON Schema evaluation.\n" +
+            "* **SWIFT MT Message**: Standard syntax validation & custom JSON rules.\n" +
+            "* **ISO 20022 MX**: ISO standard XSD schema matching.\n" +
+            "* **CSV + CSVW**: Table-level data validation.\n" +
+            "* **Flat File**: Parses and checks fixed-width columns using character offset layouts.\n\n" +
+            "## Executing Validations\n" +
+            "1. Select a validation scenario from the sidebar tree.\n" +
+            "2. Click **Validate** in the toolbar or press **F5**.\n" +
+            "3. Analyze the results in the Validation Report editor."
+        ));
+
+        allTopics.add(new HelpTopic("10. Crypto Studio", "Security",
+            "# Crypto Studio\n\n" +
+            "Crypto Studio manages encryption and decryption of configuration secrets.\n\n" +
+            "## Cryptographic Specifications\n" +
+            "* **Algorithm**: `AES-256-GCM`\n" +
+            "* **Key Derivation**: `PBKDF2WithHmacSHA256` (65,536 iterations)\n" +
+            "* **Salt / IV**: `16 bytes` salt & `12 bytes` IV prefixed to ciphertext.\n\n" +
+            "## Using the Decryption Tool\n" +
+            "1. Select **Edit -> Decrypt Ciphertext...** from the menu.\n" +
+            "2. Enter the secret password.\n" +
+            "3. Paste the Base64 ciphertext into the payload text box.\n" +
+            "4. Click **Decrypt Payload** to review plaintext secrets."
+        ));
+
+        allTopics.add(new HelpTopic("11. Schema Mapping Studio (MAP)", "Transformation",
+            "# Schema Mapping Studio (MAP)\n\n" +
+            "The MAP Studio defines mappings between message structures and schemas.\n\n" +
+            "## Core Features\n" +
+            "* **Visual Mapping**: Drag-and-drop source tree properties onto target tree properties.\n" +
+            "* **Live Flowchart**: Renders active relationship structures using Mermaid.js flowcharts.\n" +
+            "* **Registry Sync**: Updates are written to the global registry `validation-mapping.json`."
+        ));
+
+        allTopics.add(new HelpTopic("12. Transformation Studio (Transform)", "Transformation",
+            "# Transformation Studio (Transform)\n\n" +
+            "Transformation Studio converts messages between different messaging formats.\n\n" +
+            "## Supported Engines\n" +
+            "* **Smooks**: High-performance streaming transformation engine.\n" +
+            "* **FreeMarker (FTL)**: Generates text outputs (XML, JSON) using template parameters.\n" +
+            "* **JSLT**: Declarative JSON-to-JSON mapper.\n" +
+            "* **Groovy Scripting**: Evaluates dynamic mapping scripts.\n" +
+            "* **jOOR Java Mapper**: Compiles custom Java mappings at runtime."
+        ));
+
+        allTopics.add(new HelpTopic("13. Diagram Studio", "Visualization",
+            "# Diagram Studio\n\n" +
+            "Diagram Studio renders Apache Camel integration routes as flowcharts.\n\n" +
+            "## Key Features\n" +
+            "* **Mermaid.js Flowcharts**: Renders routes automatically as you type.\n" +
+            "* **Endpoint Visuals**: Displays custom icons representing databases, messaging queues, and HTTP endpoints.\n" +
+            "* **Logical Flow Visualizer**: Formats routing steps (Splitters, Aggregators, Filters) as decision nodes."
+        ));
+
+        allTopics.add(new HelpTopic("14. Faker Studio", "Simulation",
+            "# Faker Studio\n\n" +
+            "Faker Studio generates mock datasets to simulate transaction workloads.\n\n" +
+            "## Features\n" +
+            "* **Data-Driven Templates**: Inject synthetic properties using double-braces:\n" +
+            "  * `{{name.fullName}}` -> Random full names.\n" +
+            "  * `{{finance.iban}}` / `{{finance.bic}}` -> Bank identifiers.\n" +
+            "* **Continuous Simulation**: Streams generated files to directories at custom rates."
+        ));
+
+        allTopics.add(new HelpTopic("15. Export Studio & DB Mappings", "Export",
+            "# Export Studio (Liquibase, SQL, File System)\n\n" +
+            "Export Studio packages Camel integrations and databases for target environments.\n\n" +
+            "## Database & Storage Exports\n\n" +
+            "### 1. Liquibase Migration Export\n" +
+            "Packages database schema migrations into Liquibase XML changelogs (`changelog.xml`) for Oracle, Postgres, and SQL database engines.\n\n" +
+            "### 2. SQL Database Export\n" +
+            "Generates DDL and DML scripts tailored for PostgreSQL or Oracle database engines.\n\n" +
+            "### 3. File System Export\n" +
+            "Generates complete directory structures containing runnable shell scripts (`run.sh` / `run.bat`), properties files, and routing configurations."
         ));
 
         topicListView.setItems(FXCollections.observableArrayList(allTopics));

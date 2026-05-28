@@ -1,0 +1,84 @@
+# ID: rest-enrichment
+# DESCRIPTION: Query simulated REST API for original pacs.008 message using MsgId and perform XSLT enrichment
+# camel-k: dependency=mvn:org.apache.camel:camel-http:4.18.0
+# camel-k: dependency=mvn:org.apache.camel:camel-xslt-saxon:4.18.0
+
+- route:
+    id: rest-enrichment-route
+    from:
+      uri: "timer:trigger?repeatCount=1&delay=1000"
+      steps:
+        # Step 1: Seed the database with original.xml via direct mongo-gateway (for convenience)
+        - setBody:
+            simple: "resource:file:chapter-11-enrichment/original.xml"
+        - convertBodyTo: "java.lang.String"
+        - setHeader:
+            name: "originalXml"
+            simple: "${body}"
+        - transform:
+            groovy: |
+              String xml = request.headers.originalXml
+              String escaped = xml.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")
+              return """{
+                "operation": "insert",
+                "collection": "pacs008",
+                "document": {
+                  "id": "MSG-pacs008-20260521-001",
+                  "payload": "${escaped}"
+                }
+              }"""
+        - to: "direct:mongo-gateway"
+        - log: "Database seeded: ${body}"
+
+        # Step 2: Load truncated.xml and extract MsgId
+        - setBody:
+            simple: "resource:file:chapter-11-enrichment/truncated.xml"
+        - convertBodyTo: "java.lang.String"
+        - transform:
+            groovy: |
+              String body = request.getBody(String.class)
+              int idx = body.indexOf("?>")
+              return idx != -1 ? body.substring(idx + 2).trim() : body
+        - setHeader:
+            name: "truncatedXml"
+            simple: "${body}"
+        - setHeader:
+            name: "msgId"
+            xpath:
+              expression: "/*[local-name()='Document']/*[local-name()='FIToFICstmrCdtTrf']/*[local-name()='GrpHdr']/*[local-name()='MsgId']/text()"
+              resultType: "String"
+        - log: "Extracted MsgId: ${header.msgId}"
+
+        # Step 3: Query simulated REST API (requires SimulatorsRestApi to be running)
+        - toD: "http://localhost:9999/api/mongo/query?collection=pacs008&id=${header.msgId}"
+        - setHeader:
+            name: "originalXml"
+            jsonpath: "$.payload"
+        - setBody:
+            simple: "${header.originalXml}"
+        - transform:
+            groovy: |
+              String body = request.getBody(String.class)
+              int idx = body.indexOf("?>")
+              return idx != -1 ? body.substring(idx + 2).trim() : body
+        - setHeader:
+            name: "originalXml"
+            simple: "${body}"
+        - log: "Retrieved original message from REST endpoint"
+
+        # Step 4: Wrap both XMLs inside an <envelope>
+        - setBody:
+            simple: |
+              <envelope>
+                <original>
+                  ${header.originalXml}
+                </original>
+                <truncated>
+                  ${header.truncatedXml}
+                </truncated>
+              </envelope>
+
+        # Step 5: Perform XSLT enrichment
+        - to: "xslt-saxon:file:chapter-11-enrichment/enrich.xslt"
+        - log: "Enrichment complete!"
+        - log: "Enriched Document:\n${body}"

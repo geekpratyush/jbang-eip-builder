@@ -42,7 +42,7 @@ This is a self-contained distribution package. To start the Route Builder IDE:
 - **Multi-File Selection**: Full support for `Ctrl+Click` and `Shift+Click` for batch selections.
 - **Advanced Drag and Drop**: Robust D&D payload handling supporting mass-movement and mass-copy of multiple files/folders simultaneously.
 - **Intelligent Collision Detection**: Automatically prevents file overwrite during copy operations by appending numbered suffixes (e.g., `file_1.yaml`).
-- **Context Menu Operations**: Mass-Delete, Mass-Cut, Mass-Copy capabilities, and a context-aware **"Run Route(s)..."** submenu allowing developers to launch selected files or directories recursively under three runtime profiles: *Run Offline (Stub Mode)*, *Run as Dev Service*, and *Run as Configured Infra*.
+- **Context Menu Operations**: Mass-Delete, Mass-Cut, Mass-Copy capabilities, and a context-aware **"Run Route(s)..."** submenu allowing developers to launch selected files or directories recursively under two runtime profiles: *Run Offline (Stub Mode)* and *Run Live (Standard)*.
 
 ### Code Editor & Workspace
 - **Layout Management**: Fully customizable workspace through the `View` menu. Toggle visibility for the Explorer, Code Editor, and Diagram panels independently.

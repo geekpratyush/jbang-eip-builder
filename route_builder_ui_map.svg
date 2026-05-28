@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #0f172a; }
+      .title { font-family: 'Inter', system-ui, sans-serif; font-weight: 700; font-size: 22px; fill: #f8fafc; }
+      .subtitle { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; fill: #94a3b8; }
+      .window-bg { fill: #1e293b; stroke: #334155; stroke-width: 2; rx: 8; }
+      .window-header { fill: #0f172a; rx: 8; }
+      .window-bar { fill: #334155; }
+      .window-tree { fill: #090d16; stroke: #1e293b; }
+      .window-editor { fill: #020617; stroke: #1e293b; }
+      .window-console { fill: #000000; stroke: #1e293b; }
+      .btn-blue { fill: #3b82f6; rx: 4; }
+      .btn-green { fill: #10b981; rx: 4; }
+      .btn-amber { fill: #f59e0b; rx: 4; }
+      .btn-gray { fill: #475569; rx: 4; }
+      .text-ui { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; fill: #e2e8f0; }
+      .text-code { font-family: 'Courier New', monospace; font-size: 9px; fill: #38bdf8; }
+      .text-log { font-family: 'Courier New', monospace; font-size: 8px; fill: #4ade80; }
+      .label-title { font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 14px; fill: #3b82f6; }
+      .label-desc { font-family: 'Inter', system-ui, sans-serif; font-size: 12px; fill: #cbd5e1; }
+      .pointer { stroke: #3b82f6; stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; }
+      .pointer-circle { fill: #3b82f6; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="540" class="bg" />
+
+  <!-- Page Title -->
+  <text x="40" y="45" class="title">Route Builder Studio Interface Map</text>
+  <text x="40" y="65" class="subtitle">A visual walkthrough of the studio layout, control points, and runtime feedback systems</text>
+
+  <!-- The UI App Window Mockup -->
+  <g id="app-window">
+    <rect x="40" y="90" width="540" height="400" class="window-bg" />
+    
+    <!-- Title Bar -->
+    <rect x="40" y="90" width="540" height="24" class="window-header" />
+    <circle cx="55" cy="102" r="5" fill="#ef4444" />
+    <circle cx="70" cy="102" r="5" fill="#f59e0b" />
+    <circle cx="85" cy="102" r="5" fill="#10b981" />
+    <text x="260" y="106" class="text-ui" font-weight="600" text-anchor="middle">Route Builder Studio - /workspace</text>
+    
+    <!-- Menu Bar -->
+    <rect x="40" y="114" width="540" height="20" class="window-bar" />
+    <text x="55" y="127" class="text-ui">File</text>
+    <text x="90" y="127" class="text-ui">Project</text>
+    <text x="140" y="127" class="text-ui">Help</text>
+
+    <!-- Toolbar -->
+    <rect x="40" y="134" width="540" height="35" fill="#1e293b" />
+    
+    <!-- Toolbar Buttons -->
+    <rect x="50" y="140" width="65" height="22" class="btn-blue" />
+    <text x="82" y="154" class="text-ui" text-anchor="middle" font-weight="600">New Proj</text>
+
+    <rect x="122" y="140" width="60" height="22" class="btn-gray" />
+    <text x="152" y="154" class="text-ui" text-anchor="middle">Transform</text>
+
+    <rect x="189" y="140" width="55" height="22" class="btn-gray" />
+    <text x="216" y="154" class="text-ui" text-anchor="middle">Validate</text>
+
+    <rect x="251" y="140" width="55" height="22" class="btn-gray" />
+    <text x="278" y="154" class="text-ui" text-anchor="middle">Diagram</text>
+
+    <rect x="313" y="140" width="45" height="22" class="btn-gray" />
+    <text x="335" y="154" class="text-ui" text-anchor="middle">Faker</text>
+
+    <rect x="365" y="140" width="50" height="22" class="btn-gray" />
+    <text x="390" y="154" class="text-ui" text-anchor="middle">Export</text>
+
+    <rect x="422" y="140" width="45" height="22" class="btn-gray" />
+    <text x="444" y="154" class="text-ui" text-anchor="middle">Clean</text>
+
+    <rect x="520" y="140" width="45" height="22" class="btn-green" />
+    <text x="542" y="154" class="text-ui" text-anchor="middle" font-weight="600">Run</text>
+
+    <!-- Content Workspace Pane Split -->
+    <!-- Left Tree Explorer -->
+    <rect x="40" y="169" width="130" height="321" class="window-tree" />
+    <text x="50" y="187" class="text-ui" fill="#64748b" font-weight="600">PROJECT FILES</text>
+    
+    <text x="60" y="207" class="text-ui">📁 chapter-11-enrichment</text>
+    <text x="70" y="222" class="text-ui" fill="#38bdf8">📄 01-mongodb-enrich.yaml</text>
+    <text x="70" y="237" class="text-ui">📄 02-oracle-enrich.yaml</text>
+    <text x="70" y="252" class="text-ui">📄 03-rest-enrich.yaml</text>
+    
+    <text x="60" y="277" class="text-ui" font-weight="600" fill="#64748b">TRANSFORMATIONS</text>
+    <text x="70" y="295" class="text-ui">⚙️ smooks-csv-mapping</text>
+    <text x="70" y="310" class="text-ui">⚙️ saxon-xml-merger</text>
+
+    <!-- Center/Right Code Editor -->
+    <rect x="170" y="169" width="410" height="200" class="window-editor" />
+    <text x="180" y="185" class="text-code" fill="#f43f5e"># ID: mongodb-enrichment</text>
+    <text x="180" y="198" class="text-code" fill="#94a3b8">- route:</text>
+    <text x="195" y="211" class="text-code" fill="#94a3b8">id: mongodb-enrichment-route</text>
+    <text x="195" y="224" class="text-code" fill="#94a3b8">from:</text>
+    <text x="210" y="237" class="text-code" fill="#f59e0b">uri: "timer:trigger?repeatCount=1"</text>
+    <text x="210" y="250" class="text-code" fill="#94a3b8">steps:</text>
+    <text x="225" y="263" class="text-code" fill="#38bdf8">  - to: "direct:mongo-gateway"</text>
+    <text x="225" y="276" class="text-code" fill="#38bdf8">  - to: "xslt-saxon:file:enrich.xslt"</text>
+    <text x="225" y="289" class="text-code" fill="#10b981">  - log: "Enrichment complete!"</text>
+
+    <!-- Bottom Log Terminal Console -->
+    <rect x="170" y="369" width="410" height="121" class="window-console" />
+    <text x="180" y="385" class="text-log" fill="#64748b">--- Camel JBang Running ---</text>
+    <text x="180" y="398" class="text-log">[timer] INFO: Extracted MsgId: MSG-pacs008-20260521-001</text>
+    <text x="180" y="411" class="text-log">[timer] INFO: Retrieved original message from MongoDB</text>
+    <text x="180" y="424" class="text-log">[timer] INFO: Enrichment complete!</text>
+    <text x="180" y="437" class="text-log">[timer] INFO: Enriched Document Output successfully printed.</text>
+  </g>
+
+  <!-- Explanatory Callout Annotations -->
+  <g id="annotations">
+    
+    <!-- 1. Menu Bar -->
+    <path class="pointer" d="M 120 120 L 640 120" />
+    <circle cx="120" cy="120" r="4" class="pointer-circle" />
+    <text x="650" y="118" class="label-title">1. Menu Bar Options</text>
+    <text x="650" y="133" class="label-desc">Create sample projects, open workspace directories,</text>
+    <text x="650" y="148" class="label-desc">and access help document templates.</text>
+
+    <!-- 2. Toolbar Actions -->
+    <path class="pointer" d="M 280 152 L 640 200" />
+    <circle cx="280" cy="152" r="4" class="pointer-circle" />
+    <text x="650" y="195" class="label-title">2. EIP Action Controls</text>
+    <text x="650" y="210" class="label-desc"><tspan font-weight="600" fill="#3b82f6">Transform:</tspan> Manage custom mapping rules and Smooks configs.</text>
+    <text x="650" y="225" class="label-desc"><tspan font-weight="600" fill="#3b82f6">Validate:</tspan> Verify syntax errors and schema models.</text>
+    <text x="650" y="240" class="label-desc"><tspan font-weight="600" fill="#3b82f6">Diagram:</tspan> Generate visual workflow graphs of routes.</text>
+    <text x="650" y="255" class="label-desc"><tspan font-weight="600" fill="#3b82f6">Faker:</tspan> Populate random enterprise mock payloads.</text>
+    <text x="650" y="270" class="label-desc"><tspan font-weight="600" fill="#3b82f6">Export:</tspan> Compile to standalone Quarkus / Spring Boot projects.</text>
+    <text x="650" y="285" class="label-desc"><tspan font-weight="600" fill="#10b981">Run:</tspan> Start live hot-reload local JBang execution environment.</text>
+
+    <!-- 3. Left Tree Explorer -->
+    <path class="pointer" d="M 120 230 L 640 330" />
+    <circle cx="120" cy="230" r="4" class="pointer-circle" />
+    <text x="650" y="325" class="label-title">3. Explorer Sidebar Pane</text>
+    <text x="650" y="340" class="label-desc">Browse EIP examples, modify active route files,</text>
+    <text x="650" y="355" class="label-desc">and inspect configured mapping templates dynamically.</text>
+
+    <!-- 4. Code Editor -->
+    <path class="pointer" d="M 380 250 L 640 400" />
+    <circle cx="380" cy="250" r="4" class="pointer-circle" />
+    <text x="650" y="395" class="label-title">4. Main Editor Canvas</text>
+    <text x="650" y="410" class="label-desc">Develop integration flows using YAML or Java DSL.</text>
+    <text x="650" y="425" class="label-desc">Supports syntax highlighting, auto-completion, and links.</text>
+
+    <!-- 5. Console Outputs -->
+    <path class="pointer" d="M 380 430 L 640 470" />
+    <circle cx="380" cy="430" r="4" class="pointer-circle" />
+    <text x="650" y="465" class="label-title">5. Terminal Console &amp; Simulators</text>
+    <text x="650" y="480" class="label-desc">Tracks routing state, compiles Java beans on the fly,</text>
+    <text x="650" y="495" class="label-desc">and displays database simulator logs.</text>
+
+  </g>
+</svg>

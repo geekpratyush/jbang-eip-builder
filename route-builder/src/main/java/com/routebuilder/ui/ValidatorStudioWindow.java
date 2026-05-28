@@ -1,8 +1,10 @@
 package com.routebuilder.ui;
 
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
@@ -14,12 +16,14 @@ import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.json.JSONObject;
 import org.json.JSONArray;
-import netscape.javascript.JSObject;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,44 +33,58 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 public class ValidatorStudioWindow {
-    public static final java.util.List<ValidatorStudioWindow> activeInstances = new java.util.ArrayList<>();
+    public static final List<ValidatorStudioWindow> activeInstances = new ArrayList<>();
 
     private final Stage stage;
     private File workspaceRoot;
-    private TreeView<File> treeView;
-    private TextField txtSearch;
-    private TabPane tabPane;
-    private final Map<File, Tab> openTabs = new HashMap<>();
-    private final Map<Tab, WebEngine> tabEngines = new HashMap<>();
-    private final Map<Tab, File> tabFiles = new HashMap<>();
 
-    private ComboBox<String> studioThemeBox;
+    // Sidebar Components
+    private TreeView<String> treeView;
+    private TextArea consoleArea;
+
+    // Toolbar Components
     private ComboBox<String> cmbValidatorType;
+    private ComboBox<String> studioThemeBox;
     private RadioButton radStandard;
     private RadioButton radEnhanced;
 
-    // Results panel components
-    private Label lblStatus;
-    private Label lblStats;
-    private ListView<String> lstResults;
+    // Monaco Editor components
+    private WebView webViewSource;
+    private WebView webViewSchema;
+    private WebView webViewResult;
 
-    // Mapping fields
-    private Label lblMappedSchema;
-    private Button btnLinkSchema;
-    private Button btnMappingStudio;
+    private WebEngine engineSource;
+    private WebEngine engineSchema;
+    private WebEngine engineResult;
+
+    private Label lblSourceTitle;
+    private Label lblSchemaTitle;
+
+    // State Variables
     private String currentThemeName = RouteBuilderApp.currentThemeName;
-    private String mermaidScriptTag = "";
-    private WebView webViewMappingMap;
-    private TreeView<File> treeMapMessage;
-    private TreeView<File> treeMapSchema;
-    private ComboBox<String> cmbMapFormat;
+    private ValidationMapping activeMapping = null;
+    private final Map<TreeItem<String>, ValidationMapping> treeItemMappingMap = new HashMap<>();
+    private final List<ValidationMapping> mappingsList = new ArrayList<>();
+
+    public static class ValidationMapping {
+        public String name;
+        public String messagePath;
+        public String schemaPath;
+        public String type;
+
+        public ValidationMapping(String name, String messagePath, String schemaPath, String type) {
+            this.name = name;
+            this.messagePath = messagePath;
+            this.schemaPath = schemaPath;
+            this.type = type;
+        }
+    }
 
     public ValidatorStudioWindow() {
         activeInstances.add(this);
         this.stage = new Stage();
         this.workspaceRoot = new File(System.getProperty("user.dir"), "validator-workspace");
         initializeWorkspace();
-        loadMermaidJs();
     }
 
     public ValidatorStudioWindow(boolean forTestOnly) {
@@ -159,17 +177,21 @@ public class ValidatorStudioWindow {
 
             String defaultMappings = "{\n" +
                 "  \"mappings\": [\n" +
-                "    { \"messagePath\": \"messages/xml/invoice-valid.xml\", \"schemaPath\": \"schemas/xsd/invoice-schema.xsd\", \"type\": \"XML + XSD\" },\n" +
-                "    { \"messagePath\": \"messages/xml/invoice-invalid.xml\", \"schemaPath\": \"schemas/xsd/invoice-schema.xsd\", \"type\": \"XML + XSD\" },\n" +
-                "    { \"messagePath\": \"messages/json/customer-valid.json\", \"schemaPath\": \"schemas/json-schema/customer-schema.json\", \"type\": \"JSON + Schema\" },\n" +
-                "    { \"messagePath\": \"messages/json/customer-invalid.json\", \"schemaPath\": \"schemas/json-schema/customer-schema.json\", \"type\": \"JSON + Schema\" },\n" +
-                "    { \"messagePath\": \"messages/yaml/config-valid.yaml\", \"schemaPath\": \"schemas/json-schema/config-schema.json\", \"type\": \"YAML + Schema\" },\n" +
-                "    { \"messagePath\": \"messages/yaml/config-invalid.yaml\", \"schemaPath\": \"schemas/json-schema/config-schema.json\", \"type\": \"YAML + Schema\" },\n" +
-                "    { \"messagePath\": \"messages/csv/transactions-valid.csv\", \"schemaPath\": \"schemas/csv/transactions-metadata.json\", \"type\": \"CSV + CSVW\" },\n" +
-                "    { \"messagePath\": \"messages/csv/transactions-invalid.csv\", \"schemaPath\": \"schemas/csv/transactions-metadata.json\", \"type\": \"CSV + CSVW\" },\n" +
-                "    { \"messagePath\": \"messages/flatfile/fixedwidth-valid.txt\", \"schemaPath\": \"schemas/flatfile/fixedwidth-schema.json\", \"type\": \"Flat File\" },\n" +
-                "    { \"messagePath\": \"messages/iso20022/pacs008-valid.xml\", \"schemaPath\": \"schemas/iso20022/pacs008-schema.xsd\", \"type\": \"ISO 20022 MX\" },\n" +
-                "    { \"messagePath\": \"messages/iso20022/pacs008-invalid.xml\", \"schemaPath\": \"schemas/iso20022/pacs008-schema.xsd\", \"type\": \"ISO 20022 MX\" }\n" +
+                "    { \"name\": \"Invoice XML (Valid)\", \"messagePath\": \"messages/xml/invoice-valid.xml\", \"schemaPath\": \"schemas/xsd/invoice-schema.xsd\", \"type\": \"XML + XSD\" },\n" +
+                "    { \"name\": \"Invoice XML (Invalid)\", \"messagePath\": \"messages/xml/invoice-invalid.xml\", \"schemaPath\": \"schemas/xsd/invoice-schema.xsd\", \"type\": \"XML + XSD\" },\n" +
+                "    { \"name\": \"Customer JSON (Valid)\", \"messagePath\": \"messages/json/customer-valid.json\", \"schemaPath\": \"schemas/json-schema/customer-schema.json\", \"type\": \"JSON + Schema\" },\n" +
+                "    { \"name\": \"Customer JSON (Invalid)\", \"messagePath\": \"messages/json/customer-invalid.json\", \"schemaPath\": \"schemas/json-schema/customer-schema.json\", \"type\": \"JSON + Schema\" },\n" +
+                "    { \"name\": \"App Config YAML (Valid)\", \"messagePath\": \"messages/yaml/config-valid.yaml\", \"schemaPath\": \"schemas/json-schema/config-schema.json\", \"type\": \"YAML + Schema\" },\n" +
+                "    { \"name\": \"App Config YAML (Invalid)\", \"messagePath\": \"messages/yaml/config-invalid.yaml\", \"schemaPath\": \"schemas/json-schema/config-schema.json\", \"type\": \"YAML + Schema\" },\n" +
+                "    { \"name\": \"Swift MT103 (Valid)\", \"messagePath\": \"messages/mt/standard/mt103-valid.txt\", \"schemaPath\": \"\", \"type\": \"SWIFT MT Message\" },\n" +
+                "    { \"name\": \"Swift MT103 (Invalid)\", \"messagePath\": \"messages/mt/standard/mt103-invalid.txt\", \"schemaPath\": \"\", \"type\": \"SWIFT MT Message\" },\n" +
+                "    { \"name\": \"Swift MT103 Enhanced (Valid)\", \"messagePath\": \"messages/mt/enhanced/mt103-valid-enhanced.txt\", \"schemaPath\": \"validators/custom-mt-rules.json\", \"type\": \"SWIFT MT Message\" },\n" +
+                "    { \"name\": \"Swift MT103 Enhanced (Invalid)\", \"messagePath\": \"messages/mt/enhanced/mt103-invalid-enhanced.txt\", \"schemaPath\": \"validators/custom-mt-rules.json\", \"type\": \"SWIFT MT Message\" },\n" +
+                "    { \"name\": \"Transactions CSV (Valid)\", \"messagePath\": \"messages/csv/transactions-valid.csv\", \"schemaPath\": \"schemas/csv/transactions-metadata.json\", \"type\": \"CSV + CSVW\" },\n" +
+                "    { \"name\": \"Transactions CSV (Invalid)\", \"messagePath\": \"messages/csv/transactions-invalid.csv\", \"schemaPath\": \"schemas/csv/transactions-metadata.json\", \"type\": \"CSV + CSVW\" },\n" +
+                "    { \"name\": \"FixedWidth Flat File (Valid)\", \"messagePath\": \"messages/flatfile/fixedwidth-valid.txt\", \"schemaPath\": \"schemas/flatfile/fixedwidth-schema.json\", \"type\": \"Flat File\" },\n" +
+                "    { \"name\": \"ISO20022 Pacs008 (Valid)\", \"messagePath\": \"messages/iso20022/pacs008-valid.xml\", \"schemaPath\": \"schemas/iso20022/pacs008-schema.xsd\", \"type\": \"ISO 20022 MX\" },\n" +
+                "    { \"name\": \"ISO20022 Pacs008 (Invalid)\", \"messagePath\": \"messages/iso20022/pacs008-invalid.xml\", \"schemaPath\": \"schemas/iso20022/pacs008-schema.xsd\", \"type\": \"ISO 20022 MX\" }\n" +
                 "  ]\n" +
                 "}";
             writeString(new File(workspaceRoot, "validation-mapping.json"), defaultMappings);
@@ -187,7 +209,7 @@ public class ValidatorStudioWindow {
     }
 
     public void show() {
-        stage.setTitle("Universal Message & Schema Validator IDE");
+        stage.setTitle("Validation Studio - Rules, Schemas & Messages Validator");
 
         BorderPane root = new BorderPane();
         root.getStyleClass().add("app-root");
@@ -201,149 +223,147 @@ public class ValidatorStudioWindow {
         btnValidate.getStyleClass().addAll("toolbar-btn", "btn-validate");
         btnValidate.setOnAction(e -> runValidation());
 
-        Button btnSave = new Button("Save", new FontIcon("fas-save"));
+        Button btnSave = new Button("Save Scenario Content", new FontIcon("fas-save"));
         btnSave.getStyleClass().addAll("toolbar-btn", "btn-save");
-        btnSave.setOnAction(e -> saveCurrentTab());
+        btnSave.setOnAction(e -> saveCurrentContent());
 
         cmbValidatorType = new ComboBox<>();
-        cmbValidatorType.getItems().addAll("Auto-Detect", "XML + XSD", "JSON + Schema", "YAML + Schema", "SWIFT MT Message", "ISO 20022 MX", "CSV + CSVW", "Flat File");
-        cmbValidatorType.setValue("Auto-Detect");
-        cmbValidatorType.setTooltip(new Tooltip("Select validator mode or let it auto-detect based on file extension"));
+        cmbValidatorType.getItems().addAll("XML + XSD", "JSON + Schema", "YAML + Schema", "SWIFT MT Message", "ISO 20022 MX", "CSV + CSVW", "Flat File");
+        cmbValidatorType.setValue("XML + XSD");
+        cmbValidatorType.setOnAction(e -> updateEditorLanguages(cmbValidatorType.getValue()));
 
         ToggleGroup modeGroup = new ToggleGroup();
         radStandard = new RadioButton("Standard");
         radStandard.setToggleGroup(modeGroup);
         radStandard.setSelected(true);
         radStandard.getStyleClass().add("radio-theme-standard");
+        radStandard.setOnAction(e -> log("INFO", "SWIFT mode set to Standard."));
+
         radEnhanced = new RadioButton("Enhanced (+Rules)");
         radEnhanced.setToggleGroup(modeGroup);
         radEnhanced.getStyleClass().add("radio-theme-enhanced");
+        radEnhanced.setOnAction(e -> log("INFO", "SWIFT mode set to Enhanced (incorporating custom JSON rules)."));
 
         studioThemeBox = new ComboBox<>();
         studioThemeBox.getItems().addAll("VSCode Dark", "IntelliJ Light", "Dracula", "Monokai", "Hacker");
         studioThemeBox.setValue(RouteBuilderApp.currentThemeName);
-        studioThemeBox.setTooltip(new Tooltip("Change Theme"));
         studioThemeBox.setOnAction(e -> RouteBuilderApp.setGlobalTheme(studioThemeBox.getValue()));
-
-        lblMappedSchema = new Label("Schema: None");
-        lblMappedSchema.getStyleClass().add("mapped-schema-label");
-        lblMappedSchema.setMaxWidth(200);
-
-        btnLinkSchema = new Button("Link Schema", new FontIcon("fas-link"));
-        btnLinkSchema.getStyleClass().addAll("toolbar-btn", "btn-link-schema");
-        btnLinkSchema.setOnAction(e -> openLinkSchemaDialogForActiveFile());
-
-        btnMappingStudio = new Button("Mapping Studio", new FontIcon("fas-project-diagram"));
-        btnMappingStudio.getStyleClass().addAll("toolbar-btn", "btn-mapping-studio");
-        btnMappingStudio.setOnAction(e -> openMappingStudioTab());
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         toolBar.getItems().addAll(
             btnValidate, btnSave, new Separator(),
-            new Label("Format:"), cmbValidatorType, new Separator(),
-            lblMappedSchema, btnLinkSchema, btnMappingStudio, new Separator(),
+            new Label("Validation Type:"), cmbValidatorType, new Separator(),
             new Label("SWIFT Mode:"), radStandard, radEnhanced, new Separator(),
             spacer, studioThemeBox
         );
         root.setTop(toolBar);
 
-        // --- Sidebar (Explorer) ---
-        VBox sidebar = new VBox();
-        sidebar.setPrefWidth(260);
+        // --- Center Split Layout ---
+        SplitPane horizontalSplit = new SplitPane();
+        horizontalSplit.setDividerPositions(0.20);
+
+        // --- Sidebar (Left Split) ---
+        VBox sidebar = new VBox(8);
         sidebar.setPadding(new Insets(8));
-        sidebar.setSpacing(5);
         sidebar.getStyleClass().add("studio-sidebar");
 
-        Label lblExplorer = new Label("VALIDATOR EXPLORER");
+        Label lblExplorer = new Label("VALIDATION HISTORY / SCENARIOS");
         lblExplorer.getStyleClass().add("studio-explorer-label");
-
-        txtSearch = new TextField();
-        txtSearch.setPromptText("Filter files...");
-        txtSearch.getStyleClass().add("sidebar-search-box");
-        txtSearch.textProperty().addListener((obs, old, newVal) -> refreshTree());
+        lblExplorer.setMaxWidth(Double.MAX_VALUE);
 
         treeView = new TreeView<>();
         treeView.getStyleClass().add("sidebar-tree-view");
+        treeView.setShowRoot(false);
         VBox.setVgrow(treeView, Priority.ALWAYS);
 
         treeView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
-                TreeItem<File> item = treeView.getSelectionModel().getSelectedItem();
-                if (item != null && item.getValue().isFile()) {
-                    openFile(item.getValue());
+                TreeItem<String> item = treeView.getSelectionModel().getSelectedItem();
+                if (item != null && treeItemMappingMap.containsKey(item)) {
+                    loadValidationMapping(treeItemMappingMap.get(item));
                 }
             }
         });
 
         setupTreeContextMenu();
 
-        sidebar.getChildren().addAll(lblExplorer, txtSearch, treeView);
+        Label lblConsole = new Label("CONSOLE");
+        lblConsole.getStyleClass().add("studio-explorer-label");
 
-        // --- Editors Area ---
-        tabPane = new TabPane();
-        tabPane.getStyleClass().add("editor-tab-pane");
-        tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-            updateToolbarForTab(newTab);
-        });
+        consoleArea = new TextArea();
+        consoleArea.setEditable(false);
+        consoleArea.setWrapText(true);
+        consoleArea.setPrefHeight(220);
+        consoleArea.setStyle("-fx-font-family: 'Consolas', 'Courier New', monospace; -fx-font-size: 11px; -fx-control-inner-background: #0f0f11; -fx-text-fill: #e1e1e6;");
 
-        // --- Bottom Results Panel ---
-        BorderPane resultsPane = new BorderPane();
-        resultsPane.getStyleClass().add("results-pane");
-        resultsPane.setPrefHeight(250);
+        sidebar.getChildren().addAll(lblExplorer, treeView, new Separator(), lblConsole, consoleArea);
 
-        HBox resultsHeader = new HBox(10);
-        resultsHeader.setPadding(new Insets(5, 10, 5, 10));
-        resultsHeader.getStyleClass().add("results-header");
-        resultsHeader.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        // --- Editors Panel (Right Split) ---
+        SplitPane editorsSplit = new SplitPane();
+        editorsSplit.setDividerPositions(0.33, 0.66);
 
-        lblStatus = new Label("Ready");
-        lblStatus.getStyleClass().add("results-status-label");
+        // Left Section: Source Message (Data)
+        VBox paneSource = new VBox(4);
+        VBox.setVgrow(paneSource, Priority.ALWAYS);
+        HBox headerSource = new HBox(8);
+        headerSource.setPadding(new Insets(6));
+        headerSource.getStyleClass().add("editor-header");
+        headerSource.setAlignment(Pos.CENTER_LEFT);
+        headerSource.setStyle("-fx-background-color: #252526;");
+        Label lblSourceIcon = new Label("", new FontIcon("fas-file-code"));
+        lblSourceTitle = new Label("Source Message (Data) - None");
+        lblSourceTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #cccccc;");
+        headerSource.getChildren().addAll(lblSourceIcon, lblSourceTitle);
 
-        lblStats = new Label("");
-        lblStats.getStyleClass().add("results-stats-label");
+        webViewSource = new WebView();
+        VBox.setVgrow(webViewSource, Priority.ALWAYS);
+        engineSource = webViewSource.getEngine();
+        paneSource.getChildren().addAll(headerSource, webViewSource);
 
-        Region resultsSpacer = new Region();
-        HBox.setHgrow(resultsSpacer, Priority.ALWAYS);
+        // Middle Section: Schema / Rules
+        VBox paneSchema = new VBox(4);
+        VBox.setVgrow(paneSchema, Priority.ALWAYS);
+        HBox headerSchema = new HBox(8);
+        headerSchema.setPadding(new Insets(6));
+        headerSchema.getStyleClass().add("editor-header");
+        headerSchema.setAlignment(Pos.CENTER_LEFT);
+        headerSchema.setStyle("-fx-background-color: #252526;");
+        Label lblSchemaIcon = new Label("", new FontIcon("fas-project-diagram"));
+        lblSchemaTitle = new Label("Schema / Rules / Context - None");
+        lblSchemaTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #cccccc;");
+        headerSchema.getChildren().addAll(lblSchemaIcon, lblSchemaTitle);
 
-        Button btnClear = new Button("Clear", new FontIcon("fas-eraser"));
-        btnClear.getStyleClass().add("small-action-btn");
-        btnClear.setOnAction(e -> {
-            lstResults.getItems().clear();
-            lblStatus.setText("Ready");
-            lblStats.setText("");
-        });
+        webViewSchema = new WebView();
+        VBox.setVgrow(webViewSchema, Priority.ALWAYS);
+        engineSchema = webViewSchema.getEngine();
+        paneSchema.getChildren().addAll(headerSchema, webViewSchema);
 
-        resultsHeader.getChildren().addAll(lblStatus, lblStats, resultsSpacer, btnClear);
-        resultsPane.setTop(resultsHeader);
+        // Right Section: Results / Errors
+        VBox paneResult = new VBox(4);
+        VBox.setVgrow(paneResult, Priority.ALWAYS);
+        HBox headerResult = new HBox(8);
+        headerResult.setPadding(new Insets(6));
+        headerResult.getStyleClass().add("editor-header");
+        headerResult.setAlignment(Pos.CENTER_LEFT);
+        headerResult.setStyle("-fx-background-color: #252526;");
+        Label lblResultIcon = new Label("", new FontIcon("fas-poll-h"));
+        Label lblResultTitle = new Label("Validation Results / Report");
+        lblResultTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #cccccc;");
+        headerResult.getChildren().addAll(lblResultIcon, lblResultTitle);
 
-        lstResults = new ListView<>();
-        lstResults.getStyleClass().add("results-list-view");
-        lstResults.setOnMouseClicked(e -> {
-            if (e.getClickCount() == 1) {
-                String selected = lstResults.getSelectionModel().getSelectedItem();
-                if (selected != null) {
-                    navigateEditorToErrorLine(selected);
-                }
-            }
-        });
-        resultsPane.setCenter(lstResults);
+        webViewResult = new WebView();
+        VBox.setVgrow(webViewResult, Priority.ALWAYS);
+        engineResult = webViewResult.getEngine();
+        paneResult.getChildren().addAll(headerResult, webViewResult);
 
-        // Split Editor & Results
-        SplitPane mainSplit = new SplitPane();
-        mainSplit.setOrientation(Orientation.VERTICAL);
-        mainSplit.getItems().addAll(tabPane, resultsPane);
-        mainSplit.setDividerPositions(0.7);
-
-        // Left sidebar & right workspace split
-        SplitPane horizontalSplit = new SplitPane();
-        horizontalSplit.getItems().addAll(sidebar, mainSplit);
-        horizontalSplit.setDividerPositions(0.18);
+        editorsSplit.getItems().addAll(paneSource, paneSchema, paneResult);
+        horizontalSplit.getItems().addAll(sidebar, editorsSplit);
 
         root.setCenter(horizontalSplit);
 
-        Scene scene = new Scene(root, 1400, 900);
+        Scene scene = new Scene(root, 1500, 950);
         scene.getStylesheets().add(ValidatorStudioWindow.class.getResource("/styles/main.css").toExternalForm());
         if (RouteBuilderApp.currentDynamicCssUri != null) {
             scene.getStylesheets().add(RouteBuilderApp.currentDynamicCssUri);
@@ -356,45 +376,49 @@ public class ValidatorStudioWindow {
             RouteBuilderApp.themedRoots.remove(root);
         });
 
-        // Add keyboard shortcuts
+        // Shortcuts
         scene.getAccelerators().put(
             new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN),
-            () -> saveCurrentTab()
+            () -> saveCurrentContent()
         );
         scene.getAccelerators().put(
             new KeyCodeCombination(KeyCode.F5),
             () -> runValidation()
         );
-        scene.getAccelerators().put(
-            new KeyCodeCombination(KeyCode.B, KeyCombination.SHORTCUT_DOWN),
-            () -> {
-                if (horizontalSplit.getDividerPositions()[0] > 0.05) {
-                    horizontalSplit.setDividerPositions(0.0);
-                } else {
-                    horizontalSplit.setDividerPositions(0.18);
-                }
-            }
-        );
 
         stage.setMaximized(true);
         stage.show();
 
+        // Monaco Initializers
+        setupMonaco(webViewSource, engineSource, "xml", "<!-- Choose a validation scenario from the left tree panel, or right-click to add a new validation pair -->");
+        setupMonaco(webViewSchema, engineSchema, "xml", "<!-- Schema definition / Rules definition will load here -->");
+        setupMonaco(webViewResult, engineResult, "markdown", "# Validation Studio\n" +
+            "Double-click a scenario in the left history tree to load it.\n" +
+            "Modify contents dynamically, and click **Validate** to view standard/enhanced output.");
+
+        log("INFO", "Validation Studio workspace loaded.");
         refreshTree();
     }
 
+    private void log(String level, String msg) {
+        String ts = new SimpleDateFormat("HH:mm:ss").format(new Date());
+        String out = String.format("[%s] [%s] %s\n", ts, level, msg);
+        Platform.runLater(() -> {
+            consoleArea.appendText(out);
+            consoleArea.setScrollTop(Double.MAX_VALUE);
+        });
+    }
+
     public void setTheme(String themeName) {
+        this.currentThemeName = themeName;
         String themeClass = "theme-" + themeName.toLowerCase().replace(" ", "-");
         Platform.runLater(() -> {
             if (studioThemeBox != null && !themeName.equals(studioThemeBox.getValue())) {
                 studioThemeBox.setValue(themeName);
             }
-            for (WebEngine engine : tabEngines.values()) {
-                applyMonacoTheme(engine, themeClass);
-            }
-            this.currentThemeName = themeName;
-            if (webViewMappingMap != null) {
-                webViewMappingMap.getEngine().loadContent(generateMappingBaseHtml(mermaidScriptTag, themeName));
-            }
+            applyMonacoTheme(engineSource, themeClass);
+            applyMonacoTheme(engineSchema, themeClass);
+            applyMonacoTheme(engineResult, themeClass);
         });
     }
 
@@ -406,295 +430,16 @@ public class ValidatorStudioWindow {
                 else if ("theme-dracula".equals(themeClass)) bg = "#282a36";
                 else if ("theme-monokai".equals(themeClass)) bg = "#272822";
                 else if ("theme-hacker".equals(themeClass)) bg = "#050505";
-                
+
                 engine.executeScript("if(window.editor) { monaco.editor.setTheme('" + themeClass + "'); document.body.style.backgroundColor = '" + bg + "'; }");
             } catch (Exception ignored) {}
         }
     }
 
-    private void refreshTree() {
-        File rootDir = workspaceRoot;
-        if (!rootDir.exists()) {
-            rootDir.mkdirs();
-        }
-        TreeItem<File> rootItem = new TreeItem<>(rootDir);
-        rootItem.setExpanded(true);
-        buildFileTree(rootDir, rootItem, txtSearch.getText().trim().toLowerCase());
-        treeView.setRoot(rootItem);
-    }
-
-    private void buildFileTree(File dir, TreeItem<File> parentItem, String filter) {
-        File[] files = dir.listFiles();
-        if (files == null) return;
-        Arrays.sort(files, (f1, f2) -> {
-            if (f1.isDirectory() && !f2.isDirectory()) return -1;
-            if (!f1.isDirectory() && f2.isDirectory()) return 1;
-            return f1.getName().compareToIgnoreCase(f2.getName());
-        });
-
-        for (File file : files) {
-            if (file.isDirectory()) {
-                TreeItem<File> dirItem = new TreeItem<>(file);
-                // Simple representation check
-                if (filter.isEmpty() || matchesFilterRecursive(file, filter)) {
-                    parentItem.getChildren().add(dirItem);
-                    dirItem.setExpanded(true);
-                    buildFileTree(file, dirItem, filter);
-                }
-            } else {
-                if (filter.isEmpty() || file.getName().toLowerCase().contains(filter)) {
-                    TreeItem<File> fileItem = new TreeItem<>(file);
-                    parentItem.getChildren().add(fileItem);
-                }
-            }
-        }
-    }
-
-    private boolean matchesFilterRecursive(File dir, String filter) {
-        if (dir.getName().toLowerCase().contains(filter)) return true;
-        File[] children = dir.listFiles();
-        if (children != null) {
-            for (File child : children) {
-                if (child.isDirectory()) {
-                    if (matchesFilterRecursive(child, filter)) return true;
-                } else {
-                    if (child.getName().toLowerCase().contains(filter)) return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private void setupTreeContextMenu() {
-        ContextMenu contextMenu = new ContextMenu();
-
-        MenuItem mnuNewFile = new MenuItem("New File", new FontIcon("fas-file-medical"));
-        mnuNewFile.setOnAction(e -> {
-            TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
-            final File parentDir = (selected != null) ? 
-                (selected.getValue().isDirectory() ? selected.getValue() : selected.getValue().getParentFile()) : 
-                workspaceRoot;
-            TextInputDialog dialog = new TextInputDialog("new_file.txt");
-            dialog.setTitle("New File");
-            dialog.setHeaderText("Create a new file in: " + parentDir.getName());
-            dialog.setContentText("File name:");
-            dialog.showAndWait().ifPresent(name -> {
-                File f = new File(parentDir, name);
-                try {
-                    if (f.createNewFile()) {
-                        refreshTree();
-                        openFile(f);
-                    }
-                } catch (Exception ex) {
-                    showError("Create File Failed", ex.getMessage());
-                }
-            });
-        });
-
-        MenuItem mnuNewFolder = new MenuItem("New Folder", new FontIcon("fas-folder-plus"));
-        mnuNewFolder.setOnAction(e -> {
-            TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
-            final File parentDir = (selected != null) ? 
-                (selected.getValue().isDirectory() ? selected.getValue() : selected.getValue().getParentFile()) : 
-                workspaceRoot;
-            TextInputDialog dialog = new TextInputDialog("NewFolder");
-            dialog.setTitle("New Folder");
-            dialog.setHeaderText("Create a new folder in: " + parentDir.getName());
-            dialog.setContentText("Folder name:");
-            dialog.showAndWait().ifPresent(name -> {
-                File f = new File(parentDir, name);
-                if (f.mkdirs()) {
-                    refreshTree();
-                }
-            });
-        });
-
-        MenuItem mnuRename = new MenuItem("Rename", new FontIcon("fas-edit"));
-        mnuRename.setOnAction(e -> {
-            TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
-            if (selected == null || selected.getValue().equals(workspaceRoot)) return;
-            File current = selected.getValue();
-            TextInputDialog dialog = new TextInputDialog(current.getName());
-            dialog.setTitle("Rename File/Folder");
-            dialog.setHeaderText("Rename: " + current.getName());
-            dialog.setContentText("New name:");
-            dialog.showAndWait().ifPresent(name -> {
-                File dest = new File(current.getParentFile(), name);
-                if (current.renameTo(dest)) {
-                    refreshTree();
-                    // Update active tab if open
-                    Tab tab = openTabs.remove(current);
-                    if (tab != null) {
-                        tab.setText(name);
-                        openTabs.put(dest, tab);
-                        tabFiles.put(tab, dest);
-                    }
-                }
-            });
-        });
-
-        MenuItem mnuDelete = new MenuItem("Delete", new FontIcon("fas-trash"));
-        mnuDelete.setOnAction(e -> {
-            TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
-            if (selected == null || selected.getValue().equals(workspaceRoot)) return;
-            File target = selected.getValue();
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Delete " + target.getName() + "?", ButtonType.YES, ButtonType.NO);
-            alert.showAndWait().ifPresent(response -> {
-                if (response == ButtonType.YES) {
-                    deleteRecursively(target);
-                    refreshTree();
-                    Tab tab = openTabs.remove(target);
-                    if (tab != null) {
-                        tabPane.getTabs().remove(tab);
-                        tabEngines.remove(tab);
-                        tabFiles.remove(tab);
-                    }
-                }
-            });
-        });
-
-        MenuItem mnuDuplicate = new MenuItem("Duplicate", new FontIcon("fas-copy"));
-        mnuDuplicate.setOnAction(e -> {
-            TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
-            if (selected == null || !selected.getValue().isFile()) return;
-            File src = selected.getValue();
-            File dest = new File(src.getParentFile(), "copy_" + src.getName());
-            try {
-                Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                refreshTree();
-            } catch (Exception ex) {
-                showError("Duplicate Failed", ex.getMessage());
-            }
-        });
-
-        contextMenu.getItems().addAll(mnuNewFile, mnuNewFolder, new SeparatorMenuItem(), mnuRename, mnuDelete, mnuDuplicate);
-
-        treeView.setCellFactory(tv -> {
-            TreeCell<File> cell = new TreeCell<>() {
-                @Override
-                protected void updateItem(File item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setText(null);
-                        setGraphic(null);
-                    } else {
-                        setText(item.getName());
-                        if (item.isDirectory()) {
-                            setGraphic(new FontIcon("fas-folder"));
-                        } else {
-                            String ext = getFileExtension(item);
-                            switch (ext) {
-                                case "xml":
-                                case "xsd":
-                                    setGraphic(new FontIcon("fas-file-code"));
-                                    break;
-                                case "json":
-                                    setGraphic(new FontIcon("fas-file-alt"));
-                                    break;
-                                case "yaml":
-                                case "yml":
-                                    setGraphic(new FontIcon("fas-file-signature"));
-                                    break;
-                                case "csv":
-                                    setGraphic(new FontIcon("fas-file-excel"));
-                                    break;
-                                default:
-                                    setGraphic(new FontIcon("fas-file"));
-                                    break;
-                            }
-                        }
-                    }
-                }
-            };
-            cell.emptyProperty().addListener((obs, wasEmpty, isNowEmpty) -> {
-                if (isNowEmpty) {
-                    cell.setContextMenu(null);
-                } else {
-                    cell.setContextMenu(contextMenu);
-                }
-            });
-            return cell;
-        });
-    }
-
-    private void deleteRecursively(File f) {
-        if (f.isDirectory()) {
-            File[] children = f.listFiles();
-            if (children != null) {
-                for (File child : children) {
-                    deleteRecursively(child);
-                }
-            }
-        }
-        f.delete();
-    }
-
-    private void openFile(File file) {
-        if (openTabs.containsKey(file)) {
-            tabPane.getSelectionModel().select(openTabs.get(file));
-            return;
-        }
-
-        Tab tab = new Tab(file.getName());
-        WebView wv = new WebView();
-        RouteBuilderApp.installClipboardShortcuts(wv);
-        wv.setContextMenuEnabled(true);
-        WebEngine engine = wv.getEngine();
-
-        tab.setContent(wv);
-        tabPane.getTabs().add(tab);
-        tabPane.getSelectionModel().select(tab);
-
-        openTabs.put(file, tab);
-        tabEngines.put(tab, engine);
-        tabFiles.put(tab, file);
-
-        tab.setOnClosed(e -> {
-            openTabs.remove(file);
-            tabEngines.remove(tab);
-            tabFiles.remove(tab);
-        });
-
-        String ext = getFileExtension(file);
-        String lang = "plaintext";
-        if ("xml".equals(ext) || "xsd".equals(ext)) lang = "xml";
-        else if ("json".equals(ext)) lang = "json";
-        else if ("yaml".equals(ext) || "yml".equals(ext)) lang = "yaml";
-        else if ("csv".equals(ext)) lang = "csv";
-
-        final String targetLang = lang;
-        setupMonaco(engine, lang, (obs, oldVal, newVal) -> {
-            if (newVal == javafx.concurrent.Worker.State.SUCCEEDED) {
-                try {
-                    String content = Files.readString(file.toPath());
-                    setEditorText(engine, content);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-    }
-
-    private void saveCurrentTab() {
-        Tab active = tabPane.getSelectionModel().getSelectedItem();
-        if (active == null) return;
-        File f = tabFiles.get(active);
-        WebEngine engine = tabEngines.get(active);
-        if (f != null && engine != null) {
-            String content = getEditorText(engine);
-            try {
-                Files.writeString(f.toPath(), content);
-                lblStatus.setText("Saved " + f.getName());
-            } catch (Exception ex) {
-                showError("Save Failed", ex.getMessage());
-            }
-        }
-    }
-
-    private void setupMonaco(WebEngine engine, String language, javafx.beans.value.ChangeListener<javafx.concurrent.Worker.State> onSucceeded) {
+    private void setupMonaco(WebView wv, WebEngine engine, String language, String initialValue) {
         String monacoBase = getClass().getResource("/monaco/vs/loader.js").toExternalForm();
         monacoBase = monacoBase.substring(0, monacoBase.lastIndexOf("/vs/loader.js"));
-        
+
         String activeTheme = RouteBuilderApp.currentThemeClass;
         String editorBg = "#1e1e1e";
         if ("theme-intellij-light".equals(activeTheme)) editorBg = "#ffffff";
@@ -702,9 +447,15 @@ public class ValidatorStudioWindow {
         else if ("theme-monokai".equals(activeTheme)) editorBg = "#272822";
         else if ("theme-hacker".equals(activeTheme)) editorBg = "#050505";
 
-        String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><style>body{margin:0;padding:0;overflow:hidden;background-color:" + editorBg + ";}#editor{width:100vw;height:100vh;}</style></head><body><div id='editor'></div><script src='" + monacoBase + "/vs/loader.js'></script><script>\n" +
+        String html = "<!DOCTYPE html><html><head><base href='" + monacoBase + "/'/><meta charset='UTF-8'><style>body{margin:0;padding:0;overflow:hidden;background-color:" + editorBg + ";}#editor{width:100vw;height:100vh;}</style></head><body><div id='editor'></div><script src='" + monacoBase + "/vs/loader.js'></script><script>\n" +
             "window.editorValue = ''; window.setValue = function(val) { window.editorValue = val; if(window.editor) window.editor.setValue(val); };\n" +
             "window.getValue = function() { return window.editor ? window.editor.getValue() : window.editorValue; };\n" +
+            "window.setLanguage = function(lang) {\n" +
+            "  if (window.editor) {\n" +
+            "    var model = window.editor.getModel();\n" +
+            "    monaco.editor.setModelLanguage(model, lang);\n" +
+            "  }\n" +
+            "};\n" +
             "window.getSelection = function() { if(!window.editor) return ''; var sel = window.editor.getSelection(); return window.editor.getModel().getValueInRange(sel); };\n" +
             "require.config({ paths: { vs: '" + monacoBase + "/vs' }});\n" +
             "require(['vs/editor/editor.main'], function() {\n" +
@@ -715,15 +466,21 @@ public class ValidatorStudioWindow {
             "  monaco.editor.defineTheme('theme-dracula', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'ff79c6', fontStyle: 'bold' }, { token: 'metatag', foreground: 'bd93f9' } ], colors: { 'editor.background': '#282a36' } });\n" +
             "  monaco.editor.defineTheme('theme-monokai', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'f92672', fontStyle: 'bold' }, { token: 'metatag', foreground: 'ae81ff' } ], colors: { 'editor.background': '#272822' } });\n" +
             "  monaco.editor.defineTheme('theme-hacker', { base: 'hc-black', inherit: true, rules: [ { token: 'keyword', foreground: '00ff00', fontStyle: 'bold' }, { token: 'metatag', foreground: '00ff00' } ], colors: { 'editor.background': '#050505' } });\n" +
-            "  window.editor = monaco.editor.create(document.getElementById('editor'), { value: window.editorValue, language: '" + ("text".equals(language) ? "swift-mt" : language) + "', theme: '" + activeTheme + "', automaticLayout: true, minimap: { enabled: true }, fontSize: 12 });\n" +
+            "  window.editor = monaco.editor.create(document.getElementById('editor'), { value: window.editorValue, language: '" + ("text".equals(language) ? "swift-mt" : language) + "', theme: '" + activeTheme + "', automaticLayout: true, minimap: { enabled: false }, fontSize: 13 });\n" +
+            "  if (window.editorValue) window.editor.setValue(window.editorValue);\n" +
             "});\n</script></body></html>";
 
-        engine.getLoadWorker().stateProperty().addListener(onSucceeded);
+        engine.getLoadWorker().stateProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == javafx.concurrent.Worker.State.SUCCEEDED) {
+                setEditorText(engine, initialValue);
+            }
+        });
         engine.loadContent(html);
     }
 
     private void setEditorText(WebEngine engine, String text) {
-        if (text == null) text = ""; final String finalT = text;
+        if (text == null) text = "";
+        final String finalT = text;
         Platform.runLater(() -> {
             try {
                 String encoded = java.net.URLEncoder.encode(finalT, "UTF-8").replace("+", "%20");
@@ -741,131 +498,515 @@ public class ValidatorStudioWindow {
         }
     }
 
-    private void navigateEditorToErrorLine(String logLine) {
-        Tab active = tabPane.getSelectionModel().getSelectedItem();
-        if (active == null) return;
-        WebEngine engine = tabEngines.get(active);
-        if (engine == null) return;
+    private void updateEditorLanguages(String type) {
+        String sourceLang = "plaintext";
+        String schemaLang = "json";
 
-        Pattern p = Pattern.compile("Line (\\d+)");
-        Matcher m = p.matcher(logLine);
-        if (m.find()) {
-            int line = Integer.parseInt(m.group(1));
-            engine.executeScript("if(window.editor) { window.editor.revealLine(" + line + "); window.editor.setPosition({lineNumber: " + line + ", column: 1}); window.editor.focus(); }");
+        switch (type) {
+            case "XML + XSD":
+            case "ISO 20022 MX":
+                sourceLang = "xml";
+                schemaLang = "xml";
+                break;
+            case "JSON + Schema":
+                sourceLang = "json";
+                schemaLang = "json";
+                break;
+            case "YAML + Schema":
+                sourceLang = "yaml";
+                schemaLang = "json";
+                break;
+            case "SWIFT MT Message":
+                sourceLang = "swift-mt";
+                schemaLang = "json";
+                break;
+            case "CSV + CSVW":
+                sourceLang = "csv";
+                schemaLang = "json";
+                break;
+            case "Flat File":
+                sourceLang = "plaintext";
+                schemaLang = "json";
+                break;
+        }
+
+        final String srcL = sourceLang;
+        final String schL = schemaLang;
+
+        Platform.runLater(() -> {
+            try {
+                engineSource.executeScript("window.setLanguage('" + srcL + "')");
+                engineSchema.executeScript("window.setLanguage('" + schL + "')");
+            } catch (Exception ignored) {}
+        });
+    }
+
+    private void refreshTree() {
+        treeView.setRoot(new TreeItem<>("Root"));
+        treeItemMappingMap.clear();
+        mappingsList.clear();
+
+        File mappingFile = new File(workspaceRoot, "validation-mapping.json");
+        if (!mappingFile.exists()) {
+            log("WARN", "validation-mapping.json missing, recreating default workspace files.");
+            initializeWorkspace();
+        }
+
+        try {
+            String content = Files.readString(mappingFile.toPath());
+            JSONObject json = new JSONObject(content);
+            JSONArray arr = json.optJSONArray("mappings");
+            if (arr != null) {
+                Map<String, List<ValidationMapping>> grouped = new LinkedHashMap<>();
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject obj = arr.getJSONObject(i);
+                    String name = obj.optString("name", "");
+                    String messagePath = obj.optString("messagePath", "");
+                    String schemaPath = obj.optString("schemaPath", "");
+                    String type = obj.optString("type", "XML + XSD");
+
+                    if (name.isEmpty()) {
+                        name = new File(messagePath).getName();
+                    }
+
+                    ValidationMapping mapping = new ValidationMapping(name, messagePath, schemaPath, type);
+                    mappingsList.add(mapping);
+                    grouped.computeIfAbsent(type, k -> new ArrayList<>()).add(mapping);
+                }
+
+                TreeItem<String> rootItem = new TreeItem<>("Root");
+                for (Map.Entry<String, List<ValidationMapping>> entry : grouped.entrySet()) {
+                    TreeItem<String> categoryItem = new TreeItem<>(entry.getKey());
+                    categoryItem.setExpanded(true);
+                    categoryItem.setGraphic(new FontIcon("fas-folder-open"));
+                    for (ValidationMapping mapping : entry.getValue()) {
+                        TreeItem<String> item = new TreeItem<>(mapping.name);
+                        item.setGraphic(new FontIcon("fas-link"));
+                        categoryItem.getChildren().add(item);
+                        treeItemMappingMap.put(item, mapping);
+                    }
+                    rootItem.getChildren().add(categoryItem);
+                }
+                treeView.setRoot(rootItem);
+            }
+        } catch (Exception e) {
+            log("ERROR", "Failed to reload Tree Scenarios: " + e.getMessage());
+        }
+    }
+
+    private void loadValidationMapping(ValidationMapping mapping) {
+        this.activeMapping = mapping;
+        cmbValidatorType.setValue(mapping.type);
+
+        File messageFile = new File(workspaceRoot, mapping.messagePath);
+        File schemaFile = mapping.schemaPath.isEmpty() ? null : new File(workspaceRoot, mapping.schemaPath);
+
+        lblSourceTitle.setText("Source Message (Data) - " + messageFile.getName());
+        lblSchemaTitle.setText("Schema / Rules / Context - " + (schemaFile == null ? "None" : schemaFile.getName()));
+
+        String msgContent = "";
+        String schemaContent = "";
+
+        try {
+            if (messageFile.exists()) {
+                msgContent = Files.readString(messageFile.toPath());
+            } else {
+                msgContent = "<!-- ERROR: Message file " + messageFile.getName() + " does not exist -->";
+            }
+        } catch (Exception ex) {
+            msgContent = "<!-- Error reading message file: " + ex.getMessage() + " -->";
+        }
+
+        try {
+            if (schemaFile != null && schemaFile.exists()) {
+                schemaContent = Files.readString(schemaFile.toPath());
+            } else {
+                schemaContent = schemaFile == null ? "" : "<!-- ERROR: Schema file " + schemaFile.getName() + " does not exist -->";
+            }
+        } catch (Exception ex) {
+            schemaContent = "<!-- Error reading schema file: " + ex.getMessage() + " -->";
+        }
+
+        setEditorText(engineSource, msgContent);
+        setEditorText(engineSchema, schemaContent);
+
+        String welcomeMarkdown = "# Ready to Validate\n" +
+            "**Scenario:** " + mapping.name + "\n" +
+            "**Type:** " + mapping.type + "\n\n" +
+            "Click **Validate** in the toolbar to check document constraints.";
+        setEditorText(engineResult, welcomeMarkdown);
+
+        updateEditorLanguages(mapping.type);
+        log("INFO", "Loaded scenario '" + mapping.name + "' into workspace editors.");
+    }
+
+    private void saveCurrentContent() {
+        if (activeMapping == null) {
+            showError("No Scenario Active", "Select a scenario from the explorer before saving.");
+            return;
+        }
+
+        File messageFile = new File(workspaceRoot, activeMapping.messagePath);
+        File schemaFile = activeMapping.schemaPath.isEmpty() ? null : new File(workspaceRoot, activeMapping.schemaPath);
+
+        String msgText = getEditorText(engineSource);
+        String schemaText = getEditorText(engineSchema);
+
+        try {
+            if (messageFile != null) {
+                Files.writeString(messageFile.toPath(), msgText);
+            }
+            if (schemaFile != null) {
+                Files.writeString(schemaFile.toPath(), schemaText);
+            }
+            log("INFO", "Saved edits for scenario '" + activeMapping.name + "' successfully.");
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Scenario files updated successfully!", ButtonType.OK);
+            alert.setTitle("Saved Successfully");
+            alert.setHeaderText(null);
+            alert.showAndWait();
+        } catch (Exception ex) {
+            log("ERROR", "Save failed: " + ex.getMessage());
+            showError("Save Error", ex.getMessage());
         }
     }
 
     private void runValidation() {
-        Tab active = tabPane.getSelectionModel().getSelectedItem();
-        if (active == null) {
-            showError("No Active File", "Please open a file to validate.");
+        String type = cmbValidatorType.getValue();
+        if (type == null) {
+            showError("Select Validator Type", "No validation format has been chosen.");
             return;
         }
 
-        File file = tabFiles.get(active);
-        WebEngine engine = tabEngines.get(active);
-        if (file == null || engine == null) return;
+        String sourceContent = getEditorText(engineSource);
+        String schemaContent = getEditorText(engineSchema);
 
-        String content = getEditorText(engine);
-        if (content.isEmpty()) {
-            lstResults.getItems().clear();
-            lstResults.getItems().add("Error: File is empty.");
-            updateStatusLabel(false, 0);
+        if (sourceContent.trim().isEmpty()) {
+            setEditorText(engineResult, "# ❌ Validation Error\nSource content cannot be empty.");
             return;
         }
 
-        String mappedType = getMappedType(file);
-        String valType = cmbValidatorType.getValue();
-        if ("Auto-Detect".equals(valType) && mappedType != null) {
-            valType = mappedType;
-        } else if ("Auto-Detect".equals(valType)) {
-            valType = autoDetectType(file, content);
-        }
-
-        String mappedSchemaPath = getMappedSchema(file);
-        File schemaFile = null;
-        if (mappedSchemaPath != null && !mappedSchemaPath.isEmpty()) {
-            schemaFile = new File(workspaceRoot, mappedSchemaPath);
-        }
-
-        lstResults.getItems().clear();
+        log("INFO", "Executing validation suite: " + type + "...");
         long start = System.currentTimeMillis();
         List<String> errors = new ArrayList<>();
 
         try {
-            switch (valType) {
+            switch (type) {
                 case "XML + XSD":
-                    validateXmlAndXsd(content, workspaceRoot, schemaFile, errors);
+                    if (schemaContent.trim().isEmpty()) {
+                        errors.add("XSD schema data is empty.");
+                    } else {
+                        validateXmlAndXsd(sourceContent, schemaContent, errors);
+                    }
                     break;
                 case "JSON + Schema":
-                    validateJsonWithSchema(content, workspaceRoot, schemaFile, errors);
+                    if (schemaContent.trim().isEmpty()) {
+                        errors.add("JSON Schema definition is empty.");
+                    } else {
+                        validateJsonWithSchema(sourceContent, schemaContent, errors);
+                    }
                     break;
                 case "YAML + Schema":
-                    validateYamlWithSchema(content, workspaceRoot, schemaFile, errors);
+                    if (schemaContent.trim().isEmpty()) {
+                        errors.add("JSON Schema definition is empty.");
+                    } else {
+                        validateYamlWithSchema(sourceContent, schemaContent, errors);
+                    }
                     break;
                 case "SWIFT MT Message":
-                    validateSwiftMt(content, radEnhanced.isSelected(), errors);
+                    validateSwiftMtWithRules(sourceContent, schemaContent, errors);
                     break;
                 case "ISO 20022 MX":
-                    validateIso20022Mx(content, workspaceRoot, schemaFile, errors);
+                    if (schemaContent.trim().isEmpty()) {
+                        errors.add("ISO 20022 Schema XSD definition is empty.");
+                    } else {
+                        validateIso20022Mx(sourceContent, schemaContent, errors);
+                    }
                     break;
                 case "CSV + CSVW":
-                    validateCsvW(content, workspaceRoot, schemaFile, errors);
+                    if (schemaContent.trim().isEmpty()) {
+                        errors.add("CSVW JSON metadata layout is empty.");
+                    } else {
+                        validateCsvW(sourceContent, schemaContent, errors);
+                    }
                     break;
                 case "Flat File":
-                    validateFlatFile(content, workspaceRoot, schemaFile, errors);
+                    if (schemaContent.trim().isEmpty()) {
+                        errors.add("Flat file JSON constraints definition is empty.");
+                    } else {
+                        validateFlatFile(sourceContent, schemaContent, errors);
+                    }
                     break;
                 default:
-                    errors.add("Unsupported validation type: " + valType);
+                    errors.add("Unsupported validation format selected: " + type);
                     break;
             }
         } catch (Exception ex) {
-            errors.add("Validation processing error: " + ex.getMessage());
+            errors.add("Validator Engine Critical Crash: " + ex.getMessage());
         }
 
         long duration = System.currentTimeMillis() - start;
+        StringBuilder mdReport = new StringBuilder();
 
         if (errors.isEmpty()) {
-            lstResults.getItems().add("✅ Validation Successful! The file is clean and conforms to its rules.");
-            updateStatusLabel(true, duration);
+            mdReport.append("# ✅ Validation Successful!\n\n");
+            mdReport.append("- **Format Schema Type:** ").append(type).append("\n");
+            mdReport.append("- **Time Spent:** ").append(duration).append(" ms\n\n");
+            mdReport.append("---\n\n");
+            mdReport.append("🎉 The document has been checked and matches all structurally specified rules. No discrepancies found.");
+            log("INFO", "Validation completed successfully in " + duration + " ms.");
         } else {
+            mdReport.append("# ❌ Validation Failed\n\n");
+            mdReport.append("- **Format Schema Type:** ").append(type).append("\n");
+            mdReport.append("- **Time Spent:** ").append(duration).append(" ms\n");
+            mdReport.append("- **Errors Encountered:** ").append(errors.size()).append(" anomalies\n\n");
+            mdReport.append("---\n\n");
+            mdReport.append("### Diagnostic Errors Listing:\n\n");
             for (String err : errors) {
-                lstResults.getItems().add("❌ " + err);
+                mdReport.append("- ❌ ").append(err).append("\n");
             }
-            updateStatusLabel(false, duration);
+            log("WARN", "Validation completed with " + errors.size() + " anomalies.");
         }
+
+        setEditorText(engineResult, mdReport.toString());
     }
 
-    private String autoDetectType(File file, String content) {
-        String ext = getFileExtension(file);
-        if ("xsd".equals(ext)) return "XML + XSD";
-        if ("xml".equals(ext)) {
-            if (content.contains("urn:iso:std:iso:20022")) return "ISO 20022 MX";
-            return "XML + XSD";
-        }
-        if ("json".equals(ext)) return "JSON + Schema";
-        if ("yaml".equals(ext) || "yml".equals(ext)) return "YAML + Schema";
-        if ("csv".equals(ext)) return "CSV + CSVW";
-        if (content.contains("{1:") && content.contains("{4:")) return "SWIFT MT Message";
-        return "Flat File";
+    private void setupTreeContextMenu() {
+        ContextMenu contextMenu = new ContextMenu();
+
+        MenuItem mnuAdd = new MenuItem("Add Validation Pair...", new FontIcon("fas-plus-circle"));
+        mnuAdd.setOnAction(e -> openAddPairDialog());
+
+        MenuItem mnuRemove = new MenuItem("Remove Validation Pair", new FontIcon("fas-minus-circle"));
+        mnuRemove.setOnAction(e -> {
+            TreeItem<String> selected = treeView.getSelectionModel().getSelectedItem();
+            if (selected == null || !treeItemMappingMap.containsKey(selected)) {
+                showError("Selection Error", "Please select a mapping item from the tree list.");
+                return;
+            }
+            ValidationMapping mapping = treeItemMappingMap.get(selected);
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Delete mapping: '" + mapping.name + "'?", ButtonType.YES, ButtonType.NO);
+            alert.showAndWait().ifPresent(res -> {
+                if (res == ButtonType.YES) {
+                    removeMapping(mapping);
+                }
+            });
+        });
+
+        contextMenu.getItems().addAll(mnuAdd, mnuRemove);
+
+        treeView.setCellFactory(tv -> {
+            TreeCell<String> cell = new TreeCell<>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        setText(item);
+                        TreeItem<String> treeItem = getTreeItem();
+                        if (treeItem != null) {
+                            setGraphic(treeItem.getGraphic());
+                        }
+                    }
+                }
+            };
+            cell.emptyProperty().addListener((obs, wasEmpty, isNowEmpty) -> {
+                if (isNowEmpty) {
+                    cell.setContextMenu(null);
+                } else {
+                    cell.setContextMenu(contextMenu);
+                }
+            });
+            return cell;
+        });
     }
 
-    // --- Validation Engines Implementation ---
+    private void openAddPairDialog() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("New Validation Pair Scenario");
+        dialog.setHeaderText("Create and link a message file with a schema format");
 
-    public static void validateXmlAndXsd(String content, File workspaceRoot, List<String> errors) {
-        validateXmlAndXsd(content, workspaceRoot, null, errors);
+        ButtonType btnTypeSave = new ButtonType("Add Pair", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(btnTypeSave, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(15));
+
+        TextField txtName = new TextField();
+        txtName.setPromptText("e.g. pacs008 customer query");
+
+        ComboBox<String> cmbTypes = new ComboBox<>();
+        cmbTypes.getItems().addAll("XML + XSD", "JSON + Schema", "YAML + Schema", "SWIFT MT Message", "ISO 20022 MX", "CSV + CSVW", "Flat File");
+        cmbTypes.setValue("XML + XSD");
+
+        TextField txtMsgPath = new TextField();
+        txtMsgPath.setPromptText("Click Browse to choose message payload...");
+        Button btnBrowseMsg = new Button("Browse...");
+
+        TextField txtSchemaPath = new TextField();
+        txtSchemaPath.setPromptText("Click Browse to choose schema file (optional for SWIFT)...");
+        Button btnBrowseSchema = new Button("Browse...");
+
+        btnBrowseMsg.setOnAction(e -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Choose Message Payload");
+            File file = chooser.showOpenDialog(stage);
+            if (file != null) {
+                txtMsgPath.setText(file.getAbsolutePath());
+                if (txtName.getText().trim().isEmpty()) {
+                    String baseName = file.getName();
+                    int dot = baseName.lastIndexOf('.');
+                    txtName.setText((dot == -1 ? baseName : baseName.substring(0, dot)) + " Scenario");
+                }
+            }
+        });
+
+        btnBrowseSchema.setOnAction(e -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Choose Schema definition");
+            File file = chooser.showOpenDialog(stage);
+            if (file != null) {
+                txtSchemaPath.setText(file.getAbsolutePath());
+            }
+        });
+
+        grid.add(new Label("Name:"), 0, 0);
+        grid.add(txtName, 1, 0);
+        grid.add(new Label("Format Type:"), 0, 1);
+        grid.add(cmbTypes, 1, 1);
+        grid.add(new Label("Message File:"), 0, 2);
+        grid.add(txtMsgPath, 1, 2);
+        grid.add(btnBrowseMsg, 2, 2);
+        grid.add(new Label("Schema/Rules File:"), 0, 3);
+        grid.add(txtSchemaPath, 1, 3);
+        grid.add(btnBrowseSchema, 2, 3);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.showAndWait().ifPresent(response -> {
+            if (response == btnTypeSave) {
+                String name = txtName.getText().trim();
+                String type = cmbTypes.getValue();
+                String msgPathStr = txtMsgPath.getText().trim();
+                String schemaPathStr = txtSchemaPath.getText().trim();
+
+                if (name.isEmpty() || msgPathStr.isEmpty()) {
+                    showError("Missing Parameters", "Name and message files must be provided.");
+                    return;
+                }
+
+                try {
+                    File msgSrc = new File(msgPathStr);
+                    File schemaSrc = schemaPathStr.isEmpty() ? null : new File(schemaPathStr);
+
+                    String sub = type.toLowerCase().replace(" + ", "_").replace(" ", "_");
+                    File msgDest = copyFileToWorkspace(msgSrc, "messages/" + sub);
+                    File schemaDest = copyFileToWorkspace(schemaSrc, "schemas/" + sub);
+
+                    String msgRel = workspaceRoot.toURI().relativize(msgDest.toURI()).getPath();
+                    String schemaRel = schemaDest == null ? "" : workspaceRoot.toURI().relativize(schemaDest.toURI()).getPath();
+
+                    addMapping(name, msgRel, schemaRel, type);
+                } catch (Exception ex) {
+                    log("ERROR", "Failed to add mapping: " + ex.getMessage());
+                    showError("Add Scenario Failed", ex.getMessage());
+                }
+            }
+        });
     }
 
-    public static void validateXmlAndXsd(String content, File workspaceRoot, File schemaFile, List<String> errors) {
-        if (schemaFile == null) {
-            schemaFile = new File(workspaceRoot, "schemas/xsd/invoice-schema.xsd");
+    private File copyFileToWorkspace(File sourceFile, String targetSubdir) throws IOException {
+        if (sourceFile == null) return null;
+        if (sourceFile.getAbsolutePath().startsWith(workspaceRoot.getAbsolutePath())) {
+            return sourceFile;
         }
-        if (!schemaFile.exists()) {
-            errors.add("Schema schema file missing at: " + schemaFile.getAbsolutePath());
-            return;
+        File targetDir = new File(workspaceRoot, targetSubdir);
+        if (!targetDir.exists()) {
+            targetDir.mkdirs();
         }
+        File targetFile = new File(targetDir, sourceFile.getName());
+        Files.copy(sourceFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        return targetFile;
+    }
+
+    private void addMapping(String name, String msgRel, String schemaRel, String type) {
+        File mappingFile = new File(workspaceRoot, "validation-mapping.json");
         try {
-            String xsdContent = Files.readString(schemaFile.toPath());
+            JSONObject json = new JSONObject();
+            JSONArray arr = new JSONArray();
+
+            if (mappingFile.exists()) {
+                String content = Files.readString(mappingFile.toPath());
+                json = new JSONObject(content);
+                arr = json.optJSONArray("mappings");
+                if (arr == null) {
+                    arr = new JSONArray();
+                    json.put("mappings", arr);
+                }
+            } else {
+                json.put("mappings", arr);
+            }
+
+            JSONObject newMapping = new JSONObject();
+            newMapping.put("name", name);
+            newMapping.put("messagePath", msgRel);
+            newMapping.put("schemaPath", schemaRel);
+            newMapping.put("type", type);
+            arr.put(newMapping);
+
+            Files.writeString(mappingFile.toPath(), json.toString(2));
+            log("INFO", "Added validation scenario '" + name + "'.");
+            refreshTree();
+        } catch (Exception ex) {
+            log("ERROR", "Failed to write validation-mapping.json: " + ex.getMessage());
+        }
+    }
+
+    private void removeMapping(ValidationMapping mapping) {
+        File mappingFile = new File(workspaceRoot, "validation-mapping.json");
+        try {
+            if (!mappingFile.exists()) return;
+
+            String content = Files.readString(mappingFile.toPath());
+            JSONObject json = new JSONObject(content);
+            JSONArray arr = json.optJSONArray("mappings");
+            if (arr != null) {
+                JSONArray newArr = new JSONArray();
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject obj = arr.getJSONObject(i);
+                    String mPath = obj.optString("messagePath");
+                    String sPath = obj.optString("schemaPath");
+                    String type = obj.optString("type");
+
+                    if (mapping.messagePath.equals(mPath) && mapping.schemaPath.equals(sPath) && mapping.type.equals(type)) {
+                        continue;
+                    }
+                    newArr.put(obj);
+                }
+                json.put("mappings", newArr);
+                Files.writeString(mappingFile.toPath(), json.toString(2));
+                log("INFO", "Removed validation scenario '" + mapping.name + "'.");
+                refreshTree();
+
+                setEditorText(engineSource, "");
+                setEditorText(engineSchema, "");
+                setEditorText(engineResult, "# Scenario Deleted");
+                lblSourceTitle.setText("Source Message (Data) - None");
+                lblSchemaTitle.setText("Schema / Rules / Context - None");
+                activeMapping = null;
+            }
+        } catch (Exception ex) {
+            log("ERROR", "Failed to remove mapping: " + ex.getMessage());
+        }
+    }
+
+    // --- Validation Engines In-Memory String Implementation ---
+
+    public static void validateXmlAndXsd(String xmlContent, String xsdContent, List<String> errors) {
+        try {
             SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             Schema schema = factory.newSchema(new StreamSource(new StringReader(xsdContent)));
             javax.xml.validation.Validator validator = schema.newValidator();
@@ -883,54 +1024,32 @@ public class ValidatorStudioWindow {
                     errors.add("Line " + ex.getLineNumber() + ":" + ex.getColumnNumber() + " - Fatal Error: " + ex.getMessage());
                 }
             });
-            validator.validate(new StreamSource(new StringReader(content)));
+            validator.validate(new StreamSource(new StringReader(xmlContent)));
         } catch (Exception ex) {
             errors.add("XML Validation failed: " + ex.getMessage());
         }
     }
 
-    public static void validateJsonWithSchema(String content, File workspaceRoot, List<String> errors) {
-        validateJsonWithSchema(content, workspaceRoot, null, errors);
-    }
-
-    public static void validateJsonWithSchema(String content, File workspaceRoot, File schemaFile, List<String> errors) {
-        if (schemaFile == null) {
-            schemaFile = new File(workspaceRoot, "schemas/json-schema/customer-schema.json");
-        }
-        if (!schemaFile.exists()) {
-            errors.add("Schema file missing.");
-            return;
-        }
+    public static void validateJsonWithSchema(String jsonContent, String schemaContent, List<String> errors) {
         try {
-            JSONObject schemaJson = new JSONObject(Files.readString(schemaFile.toPath()));
-            JSONObject dataJson = new JSONObject(content);
+            JSONObject schemaJson = new JSONObject(schemaContent);
+            JSONObject dataJson = new JSONObject(jsonContent);
             validateJsonNode(dataJson, schemaJson, "", errors);
         } catch (Exception ex) {
             errors.add("JSON Syntax/Parsing Error: " + ex.getMessage());
         }
     }
 
-    public static void validateYamlWithSchema(String content, File workspaceRoot, List<String> errors) {
-        validateYamlWithSchema(content, workspaceRoot, null, errors);
-    }
-
-    public static void validateYamlWithSchema(String content, File workspaceRoot, File schemaFile, List<String> errors) {
-        if (schemaFile == null) {
-            schemaFile = new File(workspaceRoot, "schemas/json-schema/config-schema.json");
-        }
-        if (!schemaFile.exists()) {
-            errors.add("Schema file missing.");
-            return;
-        }
+    public static void validateYamlWithSchema(String yamlContent, String schemaContent, List<String> errors) {
         try {
-            com.fasterxml.jackson.dataformat.yaml.YAMLFactory yamlFactory = new com.fasterxml.jackson.dataformat.yaml.YAMLFactory();
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper(yamlFactory);
-            Object obj = mapper.readValue(content, Object.class);
+            YAMLFactory yamlFactory = new YAMLFactory();
+            ObjectMapper mapper = new ObjectMapper(yamlFactory);
+            Object obj = mapper.readValue(yamlContent, Object.class);
 
-            com.fasterxml.jackson.databind.ObjectMapper jsonMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            ObjectMapper jsonMapper = new ObjectMapper();
             String jsonString = jsonMapper.writeValueAsString(obj);
 
-            JSONObject schemaJson = new JSONObject(Files.readString(schemaFile.toPath()));
+            JSONObject schemaJson = new JSONObject(schemaContent);
             JSONObject dataJson = new JSONObject(jsonString);
 
             validateJsonNode(dataJson, schemaJson, "", errors);
@@ -1048,7 +1167,48 @@ public class ValidatorStudioWindow {
         }
     }
 
-    public static void validateSwiftMt(String content, boolean enhanced, List<String> errors) {
+    public void validateSwiftMtWithRules(String content, String rulesJson, List<String> errors) {
+        String refPrefix = "EXB-";
+        double amountLimit = 10000000.0;
+        List<String> restrictedCurrencies = new ArrayList<>(Arrays.asList("RUB"));
+        List<String> highRiskJurisdictions = new ArrayList<>(Arrays.asList("Iran", "Tehran"));
+        boolean enhanced = radEnhanced.isSelected();
+
+        if (enhanced && rulesJson != null && !rulesJson.trim().isEmpty()) {
+            try {
+                JSONObject rulesObj = new JSONObject(rulesJson);
+                JSONObject custom = rulesObj.optJSONObject("custom_rules");
+                if (custom == null && rulesObj.has("custom_rules")) {
+                    // Try to see if it's an array or object
+                    JSONArray customArr = rulesObj.optJSONArray("custom_rules");
+                    if (customArr != null) {
+                        // Old rules format, convert array of id/description
+                    }
+                }
+
+                if (rulesObj.has("refPrefix")) refPrefix = rulesObj.getString("refPrefix");
+                if (rulesObj.has("amountLimit")) amountLimit = rulesObj.getDouble("amountLimit");
+
+                JSONArray ccyArr = rulesObj.optJSONArray("restrictedCurrencies");
+                if (ccyArr != null) {
+                    restrictedCurrencies.clear();
+                    for (int i = 0; i < ccyArr.length(); i++) {
+                        restrictedCurrencies.add(ccyArr.getString(i));
+                    }
+                }
+
+                JSONArray jurArr = rulesObj.optJSONArray("highRiskJurisdictions");
+                if (jurArr != null) {
+                    highRiskJurisdictions.clear();
+                    for (int i = 0; i < jurArr.length(); i++) {
+                        highRiskJurisdictions.add(jurArr.getString(i));
+                    }
+                }
+            } catch (Exception ex) {
+                errors.add("Warning: Failed to parse rules JSON, using default rules. Details: " + ex.getMessage());
+            }
+        }
+
         String[] lines = content.split("\\r?\\n");
         boolean hasBlock1 = false;
         boolean hasBlock2 = false;
@@ -1066,7 +1226,7 @@ public class ValidatorStudioWindow {
         int field50kLine = -1;
         int field59Line = -1;
         int field71aLine = -1;
-        
+
         int field50kLineCount = 0;
         int field59LineCount = 0;
 
@@ -1103,8 +1263,8 @@ public class ValidatorStudioWindow {
                     } else if (ref.length() > 16) {
                         errors.add("Line " + humanLine + " - Field 20: Reference exceeds 16 chars limit.");
                     }
-                    if (enhanced && !ref.startsWith("EXB-")) {
-                        errors.add("Line " + humanLine + " - Field 20: Reference format must start with EXB- (CUSTOM-004)");
+                    if (enhanced && !ref.startsWith(refPrefix)) {
+                        errors.add("Line " + humanLine + " - Field 20: Reference format must start with " + refPrefix);
                     }
                 } else if (line.startsWith(":23B:")) {
                     field23bLine = humanLine;
@@ -1116,7 +1276,6 @@ public class ValidatorStudioWindow {
                 } else if (line.startsWith(":32A:")) {
                     field32aLine = humanLine;
                     String val = line.substring(5);
-                    // Match date(6) + currency(3) + amount
                     Pattern p = Pattern.compile("^(\\d{6})([A-Z]{3})([0-9,.]+)$");
                     Matcher m = p.matcher(val);
                     if (m.matches()) {
@@ -1128,11 +1287,11 @@ public class ValidatorStudioWindow {
                             if (valAmount < 0) {
                                 errors.add("Line " + humanLine + " - Field 32A: Amount cannot be negative.");
                             }
-                            if (enhanced && valAmount > 10000000.0) {
-                                errors.add("Line " + humanLine + " - Field 32A: Amount exceeds 10M limit (CUSTOM-001)");
+                            if (enhanced && valAmount > amountLimit) {
+                                errors.add("Line " + humanLine + " - Field 32A: Amount exceeds limit " + amountLimit);
                             }
-                            if (enhanced && "RUB".equals(valCcy)) {
-                                errors.add("Line " + humanLine + " - Field 32A: Restricted currency RUB (CUSTOM-002)");
+                            if (enhanced && restrictedCurrencies.contains(valCcy)) {
+                                errors.add("Line " + humanLine + " - Field 32A: Restricted currency " + valCcy);
                             }
                         } catch (Exception ex) {
                             errors.add("Line " + humanLine + " - Field 32A: Invalid amount formatting.");
@@ -1149,8 +1308,12 @@ public class ValidatorStudioWindow {
                     activeField = "59";
                     field59LineCount = 1;
                     String rest = line.substring(4);
-                    if (enhanced && (rest.contains("Iran") || rest.contains("Tehran"))) {
-                        errors.add("Line " + humanLine + " - Field 59: High-risk jurisdiction Iran detected (CUSTOM-003)");
+                    if (enhanced) {
+                        for (String risk : highRiskJurisdictions) {
+                            if (rest.contains(risk)) {
+                                errors.add("Line " + humanLine + " - Field 59: High-risk jurisdiction " + risk + " detected");
+                            }
+                        }
                     }
                 } else if (line.startsWith(":71A:")) {
                     field71aLine = humanLine;
@@ -1168,8 +1331,12 @@ public class ValidatorStudioWindow {
                     field50kLineCount++;
                 } else if ("59".equals(activeField)) {
                     field59LineCount++;
-                    if (enhanced && (line.contains("Iran") || line.contains("Tehran"))) {
-                        errors.add("Line " + humanLine + " - Field 59: High-risk jurisdiction Iran detected (CUSTOM-003)");
+                    if (enhanced) {
+                        for (String risk : highRiskJurisdictions) {
+                            if (line.contains(risk)) {
+                                errors.add("Line " + humanLine + " - Field 59: High-risk jurisdiction " + risk + " detected");
+                            }
+                        }
                     }
                 }
             }
@@ -1188,57 +1355,13 @@ public class ValidatorStudioWindow {
         }
     }
 
-    public static void validateIso20022Mx(String content, File workspaceRoot, List<String> errors) {
-        validateIso20022Mx(content, workspaceRoot, null, errors);
+    public static void validateIso20022Mx(String content, String xsdContent, List<String> errors) {
+        validateXmlAndXsd(content, xsdContent, errors);
     }
 
-    public static void validateIso20022Mx(String content, File workspaceRoot, File schemaFile, List<String> errors) {
-        if (schemaFile == null) {
-            schemaFile = new File(workspaceRoot, "schemas/iso20022/pacs008-schema.xsd");
-        }
-        if (!schemaFile.exists()) {
-            errors.add("ISO 20022 pacs.008 schema file missing.");
-            return;
-        }
+    public static void validateCsvW(String content, String schemaContent, List<String> errors) {
         try {
-            String xsdContent = Files.readString(schemaFile.toPath());
-            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            Schema schema = factory.newSchema(new StreamSource(new StringReader(xsdContent)));
-            javax.xml.validation.Validator validator = schema.newValidator();
-            validator.setErrorHandler(new org.xml.sax.ErrorHandler() {
-                @Override
-                public void warning(org.xml.sax.SAXParseException ex) {
-                    errors.add("Line " + ex.getLineNumber() + ":" + ex.getColumnNumber() + " - Warning: " + ex.getMessage());
-                }
-                @Override
-                public void error(org.xml.sax.SAXParseException ex) {
-                    errors.add("Line " + ex.getLineNumber() + ":" + ex.getColumnNumber() + " - Error: " + ex.getMessage());
-                }
-                @Override
-                public void fatalError(org.xml.sax.SAXParseException ex) {
-                    errors.add("Line " + ex.getLineNumber() + ":" + ex.getColumnNumber() + " - Fatal Error: " + ex.getMessage());
-                }
-            });
-            validator.validate(new StreamSource(new StringReader(content)));
-        } catch (Exception ex) {
-            errors.add("ISO XML Validation failed: " + ex.getMessage());
-        }
-    }
-
-    public static void validateCsvW(String content, File workspaceRoot, List<String> errors) {
-        validateCsvW(content, workspaceRoot, null, errors);
-    }
-
-    public static void validateCsvW(String content, File workspaceRoot, File schemaFile, List<String> errors) {
-        if (schemaFile == null) {
-            schemaFile = new File(workspaceRoot, "schemas/csv/transactions-metadata.json");
-        }
-        if (!schemaFile.exists()) {
-            errors.add("CSV Schema metadata file missing.");
-            return;
-        }
-        try {
-            JSONObject metadata = new JSONObject(Files.readString(schemaFile.toPath()));
+            JSONObject metadata = new JSONObject(schemaContent);
             JSONObject tableSchema = metadata.getJSONObject("tableSchema");
             JSONArray columns = tableSchema.getJSONArray("columns");
 
@@ -1248,7 +1371,6 @@ public class ValidatorStudioWindow {
                 return;
             }
 
-            // Header line
             String[] headers = parseCsvRow(rows[0]);
             Set<String> keys = new HashSet<>();
 
@@ -1274,7 +1396,6 @@ public class ValidatorStudioWindow {
 
                     if (val.isEmpty()) continue;
 
-                    // datatype constraints
                     String type = col.optString("datatype", "string");
                     if ("number".equals(type)) {
                         try {
@@ -1321,7 +1442,6 @@ public class ValidatorStudioWindow {
                         }
                     }
 
-                    // Primary key uniqueness
                     if (colName.equals(tableSchema.optString("primaryKey", ""))) {
                         if (!keys.add(val)) {
                             errors.add("Line " + humanLine + " - Primary key constraint violated: Duplicate key '" + val + "' found.");
@@ -1353,20 +1473,9 @@ public class ValidatorStudioWindow {
         return cells.toArray(new String[0]);
     }
 
-    public static void validateFlatFile(String content, File workspaceRoot, List<String> errors) {
-        validateFlatFile(content, workspaceRoot, null, errors);
-    }
-
-    public static void validateFlatFile(String content, File workspaceRoot, File schemaFile, List<String> errors) {
-        if (schemaFile == null) {
-            schemaFile = new File(workspaceRoot, "schemas/flatfile/fixedwidth-schema.json");
-        }
-        if (!schemaFile.exists()) {
-            errors.add("Flat file fixed-width schema missing.");
-            return;
-        }
+    public static void validateFlatFile(String content, String schemaContent, List<String> errors) {
         try {
-            JSONObject schema = new JSONObject(Files.readString(schemaFile.toPath()));
+            JSONObject schema = new JSONObject(schemaContent);
             int expectedLength = schema.optInt("recordLength", 80);
             JSONArray fields = schema.getJSONArray("fields");
 
@@ -1437,17 +1546,6 @@ public class ValidatorStudioWindow {
         } catch (Exception ex) {
             errors.add("Flat file validation error: " + ex.getMessage());
         }
-    }
-
-    private void updateStatusLabel(boolean success, long duration) {
-        if (success) {
-            lblStatus.setText("SUCCESS");
-            lblStatus.setStyle("-fx-text-fill: #4caf50; -fx-font-weight: bold;");
-        } else {
-            lblStatus.setText("INVALID");
-            lblStatus.setStyle("-fx-text-fill: #f44336; -fx-font-weight: bold;");
-        }
-        lblStats.setText("Validated in " + duration + " ms");
     }
 
     private void showError(String title, String message) {
@@ -1990,765 +2088,11 @@ public class ValidatorStudioWindow {
 
     private String getCustomMtRulesJson() {
         return "{\n" +
-            "  \"custom_rules\": [\n" +
-            "    {\n" +
-            "      \"id\": \"CUSTOM-001\",\n" +
-            "      \"description\": \"Amount limit check > 10M\"\n" +
-            "    },\n" +
-            "    {\n" +
-            "      \"id\": \"CUSTOM-002\",\n" +
-            "      \"description\": \"Restricted currency RUB\"\n" +
-            "    },\n" +
-            "    {\n" +
-            "      \"id\": \"CUSTOM-003\",\n" +
-            "      \"description\": \"High-risk jurisdiction Iran\"\n" +
-            "    },\n" +
-            "    {\n" +
-            "      \"id\": \"CUSTOM-004\",\n" +
-            "      \"description\": \"Reference format starts with EXB-\"\n" +
-            "    }\n" +
-            "  ]\n" +
+            "  \"enhanced\": true,\n" +
+            "  \"refPrefix\": \"EXB-\",\n" +
+            "  \"amountLimit\": 10000000.0,\n" +
+            "  \"restrictedCurrencies\": [\"RUB\"],\n" +
+            "  \"highRiskJurisdictions\": [\"Iran\", \"Tehran\"]\n" +
             "}";
-    }
-
-    private void loadMermaidJs() {
-        String mermaidJs = "";
-        try (java.io.InputStream is = ValidatorStudioWindow.class.getResourceAsStream("/styles/mermaid.min.js")) {
-            if (is != null) {
-                mermaidJs = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        if (!mermaidJs.isEmpty()) {
-            this.mermaidScriptTag = "<script>" + mermaidJs + "</script>";
-        } else {
-            this.mermaidScriptTag = "<script src=\"https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js\"></script>";
-        }
-    }
-
-    public String getMappedSchema(File messageFile) {
-        if (messageFile == null || workspaceRoot == null) return null;
-        File mappingFile = new File(workspaceRoot, "validation-mapping.json");
-        if (!mappingFile.exists()) return null;
-        try {
-            String content = Files.readString(mappingFile.toPath());
-            JSONObject json = new JSONObject(content);
-            JSONArray arr = json.optJSONArray("mappings");
-            if (arr != null) {
-                String relativePath = workspaceRoot.toURI().relativize(messageFile.toURI()).getPath();
-                for (int i = 0; i < arr.length(); i++) {
-                    JSONObject obj = arr.getJSONObject(i);
-                    String mPath = obj.optString("messagePath");
-                    if (relativePath.equals(mPath) || messageFile.getName().equals(mPath)) {
-                        return obj.optString("schemaPath");
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public String getMappedType(File messageFile) {
-        if (messageFile == null || workspaceRoot == null) return null;
-        File mappingFile = new File(workspaceRoot, "validation-mapping.json");
-        if (!mappingFile.exists()) return null;
-        try {
-            String content = Files.readString(mappingFile.toPath());
-            JSONObject json = new JSONObject(content);
-            JSONArray arr = json.optJSONArray("mappings");
-            if (arr != null) {
-                String relativePath = workspaceRoot.toURI().relativize(messageFile.toURI()).getPath();
-                for (int i = 0; i < arr.length(); i++) {
-                    JSONObject obj = arr.getJSONObject(i);
-                    String mPath = obj.optString("messagePath");
-                    if (relativePath.equals(mPath) || messageFile.getName().equals(mPath)) {
-                        return obj.optString("type");
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public void saveMapping(File messageFile, File schemaFile, String type) {
-        if (messageFile == null || workspaceRoot == null) return;
-        File mappingFile = new File(workspaceRoot, "validation-mapping.json");
-        JSONObject json;
-        JSONArray arr;
-        try {
-            if (mappingFile.exists()) {
-                String content = Files.readString(mappingFile.toPath());
-                json = new JSONObject(content);
-                arr = json.optJSONArray("mappings");
-                if (arr == null) {
-                    arr = new JSONArray();
-                    json.put("mappings", arr);
-                }
-            } else {
-                json = new JSONObject();
-                arr = new JSONArray();
-                json.put("mappings", arr);
-            }
-            
-            String relMsgPath = workspaceRoot.toURI().relativize(messageFile.toURI()).getPath();
-            String relSchemaPath = schemaFile != null ? workspaceRoot.toURI().relativize(schemaFile.toURI()).getPath() : "";
-            
-            // Check if already exists, then update/replace
-            boolean found = false;
-            for (int i = 0; i < arr.length(); i++) {
-                JSONObject obj = arr.getJSONObject(i);
-                if (relMsgPath.equals(obj.optString("messagePath"))) {
-                    if (schemaFile == null) {
-                        arr.remove(i);
-                    } else {
-                        obj.put("schemaPath", relSchemaPath);
-                        obj.put("type", type);
-                    }
-                    found = true;
-                    break;
-                }
-            }
-            
-            if (!found && schemaFile != null) {
-                JSONObject obj = new JSONObject();
-                obj.put("messagePath", relMsgPath);
-                obj.put("schemaPath", relSchemaPath);
-                obj.put("type", type);
-                arr.put(obj);
-            }
-            
-            Files.writeString(mappingFile.toPath(), json.toString(2));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void updateToolbarForTab(Tab tab) {
-        if (tab == null) {
-            if (lblMappedSchema != null) lblMappedSchema.setText("Schema: None");
-            if (cmbValidatorType != null) cmbValidatorType.setValue("Auto-Detect");
-            return;
-        }
-        File file = tabFiles.get(tab);
-        if (file == null) {
-            if (lblMappedSchema != null) lblMappedSchema.setText("Schema: N/A");
-            return;
-        }
-        
-        String schemaPath = getMappedSchema(file);
-        if (schemaPath != null && !schemaPath.isEmpty()) {
-            if (lblMappedSchema != null) lblMappedSchema.setText("Schema: " + new File(schemaPath).getName());
-        } else {
-            if (lblMappedSchema != null) lblMappedSchema.setText("Schema: None");
-        }
-        
-        String mappedType = getMappedType(file);
-        if (mappedType != null && !mappedType.isEmpty()) {
-            if (cmbValidatorType != null) cmbValidatorType.setValue(mappedType);
-        } else {
-            if (cmbValidatorType != null) cmbValidatorType.setValue("Auto-Detect");
-        }
-    }
-
-    private void openLinkSchemaDialogForActiveFile() {
-        Tab active = tabPane.getSelectionModel().getSelectedItem();
-        if (active == null) {
-            showError("No Active File", "Please open a file to map it to a schema.");
-            return;
-        }
-        File activeFile = tabFiles.get(active);
-        if (activeFile == null) {
-            showError("Invalid File", "Active tab is not a file editor.");
-            return;
-        }
-
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Link Schema");
-        dialog.setHeaderText("Link a schema file to: " + activeFile.getName());
-
-        ButtonType btnTypeLink = new ButtonType("Link", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(btnTypeLink, ButtonType.CANCEL);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 150, 10, 10));
-
-        ComboBox<String> cmbSchemaList = new ComboBox<>();
-        List<File> schemas = findAllSchemaFiles(workspaceRoot);
-        for (File s : schemas) {
-            String relPath = workspaceRoot.toURI().relativize(s.toURI()).getPath();
-            cmbSchemaList.getItems().add(relPath);
-        }
-        cmbSchemaList.setPromptText("Select schema file...");
-
-        ComboBox<String> cmbTypes = new ComboBox<>();
-        cmbTypes.getItems().addAll("XML + XSD", "JSON + Schema", "YAML + Schema", "ISO 20022 MX", "CSV + CSVW", "Flat File");
-        cmbTypes.setValue("XML + XSD");
-
-        cmbSchemaList.setOnAction(e -> {
-            String selected = cmbSchemaList.getValue();
-            if (selected != null) {
-                if (selected.endsWith(".xsd")) {
-                    if (selected.contains("iso20022")) {
-                        cmbTypes.setValue("ISO 20022 MX");
-                    } else {
-                        cmbTypes.setValue("XML + XSD");
-                    }
-                } else if (selected.endsWith(".json") || selected.endsWith(".csvw")) {
-                    if (selected.contains("csv")) {
-                        cmbTypes.setValue("CSV + CSVW");
-                    } else if (selected.contains("flatfile")) {
-                        cmbTypes.setValue("Flat File");
-                    } else {
-                        String actExt = getFileExtension(activeFile);
-                        if ("yaml".equals(actExt) || "yml".equals(actExt)) {
-                            cmbTypes.setValue("YAML + Schema");
-                        } else {
-                            cmbTypes.setValue("JSON + Schema");
-                        }
-                    }
-                }
-            }
-        });
-
-        String currentSchema = getMappedSchema(activeFile);
-        if (currentSchema != null && !currentSchema.isEmpty()) {
-            cmbSchemaList.setValue(currentSchema);
-            String currentType = getMappedType(activeFile);
-            if (currentType != null) {
-                cmbTypes.setValue(currentType);
-            }
-        }
-
-        grid.add(new Label("Schema File:"), 0, 0);
-        grid.add(cmbSchemaList, 1, 0);
-        grid.add(new Label("Validation Type:"), 0, 1);
-        grid.add(cmbTypes, 1, 1);
-
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.showAndWait().ifPresent(response -> {
-            if (response == btnTypeLink) {
-                String schemaRelPath = cmbSchemaList.getValue();
-                if (schemaRelPath == null || schemaRelPath.isEmpty()) {
-                    showError("No Schema Selected", "Please select a schema file.");
-                    return;
-                }
-                File schemaFile = new File(workspaceRoot, schemaRelPath);
-                String valType = cmbTypes.getValue();
-                saveMapping(activeFile, schemaFile, valType);
-                updateToolbarForTab(active);
-                
-                if (webViewMappingMap != null) {
-                    refreshMappingDiagram();
-                }
-            }
-        });
-    }
-
-    private List<File> findAllSchemaFiles(File dir) {
-        List<File> list = new ArrayList<>();
-        findAllSchemaFilesRec(dir, list);
-        return list;
-    }
-
-    private void findAllSchemaFilesRec(File file, List<File> list) {
-        if (!file.exists()) return;
-        if (file.isDirectory()) {
-            File[] children = file.listFiles();
-            if (children != null) {
-                for (File child : children) {
-                    findAllSchemaFilesRec(child, list);
-                }
-            }
-        } else {
-            String name = file.getName().toLowerCase();
-            if (name.endsWith(".xsd") || name.endsWith(".json") || name.endsWith(".csvw")) {
-                list.add(file);
-            }
-        }
-    }
-
-    private void openMappingStudioTab() {
-        for (Tab tab : tabPane.getTabs()) {
-            if ("Schema Mapping Studio".equals(tab.getText())) {
-                tabPane.getSelectionModel().select(tab);
-                refreshMappingDiagram();
-                return;
-            }
-        }
-
-        Tab tab = new Tab("Schema Mapping Studio", new FontIcon("fas-project-diagram"));
-        
-        SplitPane mainSplit = new SplitPane();
-        mainSplit.setDividerPositions(0.6);
-
-        BorderPane editorPane = new BorderPane();
-        editorPane.getStyleClass().add("mapping-editor-pane");
-
-        HBox mappingToolbar = new HBox(10);
-        mappingToolbar.setPadding(new Insets(10));
-        mappingToolbar.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-        mappingToolbar.getStyleClass().add("mapping-toolbar");
-
-        cmbMapFormat = new ComboBox<>();
-        cmbMapFormat.getItems().addAll("XML + XSD", "JSON + Schema", "YAML + Schema", "ISO 20022 MX", "CSV + CSVW", "Flat File");
-        cmbMapFormat.setValue("XML + XSD");
-
-        Button btnMapLink = new Button("Link Selected", new FontIcon("fas-link"));
-        btnMapLink.getStyleClass().addAll("editor-btn", "btn-link-schema");
-
-        Button btnMapUnlink = new Button("Unlink Message", new FontIcon("fas-unlink"));
-        btnMapUnlink.getStyleClass().addAll("editor-btn", "btn-delete");
-
-        mappingToolbar.getChildren().addAll(
-            new Label("Validation Format:"), cmbMapFormat, btnMapLink, btnMapUnlink
-        );
-        editorPane.setTop(mappingToolbar);
-
-        SplitPane treesSplit = new SplitPane();
-        treesSplit.setDividerPositions(0.5);
-
-        VBox msgBox = new VBox(5);
-        msgBox.setPadding(new Insets(10));
-        Label lblMsg = new Label("Message Files (Sources)");
-        lblMsg.setStyle("-fx-font-weight: bold;");
-        treeMapMessage = new TreeView<>();
-        VBox.setVgrow(treeMapMessage, Priority.ALWAYS);
-        msgBox.getChildren().addAll(lblMsg, treeMapMessage);
-
-        VBox schemaBox = new VBox(5);
-        schemaBox.setPadding(new Insets(10));
-        Label lblSchema = new Label("Schema Files (Targets)");
-        lblSchema.setStyle("-fx-font-weight: bold;");
-        treeMapSchema = new TreeView<>();
-        VBox.setVgrow(treeMapSchema, Priority.ALWAYS);
-        schemaBox.getChildren().addAll(lblSchema, treeMapSchema);
-
-        treesSplit.getItems().addAll(msgBox, schemaBox);
-        editorPane.setCenter(treesSplit);
-
-        VBox mapBox = new VBox(10);
-        mapBox.setPadding(new Insets(10));
-        Label lblMapTitle = new Label("Live Relationships Map");
-        lblMapTitle.setStyle("-fx-font-weight: bold;");
-        
-        webViewMappingMap = new WebView();
-        VBox.setVgrow(webViewMappingMap, Priority.ALWAYS);
-        
-        mapBox.getChildren().addAll(lblMapTitle, webViewMappingMap);
-
-        mainSplit.getItems().addAll(editorPane, mapBox);
-        tab.setContent(mainSplit);
-
-        setupDragAndDropMapping();
-
-        btnMapLink.setOnAction(e -> {
-            TreeItem<File> msgItem = treeMapMessage.getSelectionModel().getSelectedItem();
-            TreeItem<File> schemaItem = treeMapSchema.getSelectionModel().getSelectedItem();
-            if (msgItem == null || msgItem.getValue().isDirectory()) {
-                showError("Selection Required", "Please select a Message file in the left explorer.");
-                return;
-            }
-            if (schemaItem == null || schemaItem.getValue().isDirectory()) {
-                showError("Selection Required", "Please select a Schema file in the right explorer.");
-                return;
-            }
-            saveMapping(msgItem.getValue(), schemaItem.getValue(), cmbMapFormat.getValue());
-            refreshMappingDiagram();
-            
-            Tab active = tabPane.getSelectionModel().getSelectedItem();
-            if (active != null) {
-                updateToolbarForTab(active);
-            }
-        });
-
-        btnMapUnlink.setOnAction(e -> {
-            TreeItem<File> msgItem = treeMapMessage.getSelectionModel().getSelectedItem();
-            if (msgItem == null || msgItem.getValue().isDirectory()) {
-                showError("Selection Required", "Please select a Message file in the left explorer to unlink.");
-                return;
-            }
-            saveMapping(msgItem.getValue(), null, null);
-            refreshMappingDiagram();
-            
-            Tab active = tabPane.getSelectionModel().getSelectedItem();
-            if (active != null) {
-                updateToolbarForTab(active);
-            }
-        });
-
-        refreshMappingTrees();
-
-        tabPane.getTabs().add(tab);
-        tabPane.getSelectionModel().select(tab);
-
-        tab.setOnClosed(e -> {
-            webViewMappingMap = null;
-            treeMapMessage = null;
-            treeMapSchema = null;
-            cmbMapFormat = null;
-        });
-
-        webViewMappingMap.getEngine().getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
-            if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
-                refreshMappingDiagram();
-            }
-        });
-        webViewMappingMap.getEngine().loadContent(generateMappingBaseHtml(mermaidScriptTag, currentThemeName));
-    }
-
-    private void refreshMappingTrees() {
-        if (treeMapMessage == null || treeMapSchema == null) return;
-
-        TreeItem<File> rootMsg = new TreeItem<>(workspaceRoot);
-        populateTreeFiltered(workspaceRoot, rootMsg, false, null);
-        treeMapMessage.setRoot(rootMsg);
-        treeMapMessage.setShowRoot(false);
-
-        TreeItem<File> rootSchema = new TreeItem<>(workspaceRoot);
-        populateTreeFiltered(workspaceRoot, rootSchema, true, null);
-        treeMapSchema.setRoot(rootSchema);
-        treeMapSchema.setShowRoot(false);
-    }
-
-    private void populateTreeFiltered(File file, TreeItem<File> parent, boolean isSchemaFilter, String filterText) {
-        if (!file.exists()) return;
-        boolean matchesFilterText = filterText == null || filterText.isEmpty() || 
-                                    file.getName().toLowerCase().contains(filterText.toLowerCase());
-        
-        if (file.isDirectory()) {
-            String path = file.getAbsolutePath().replace('\\', '/');
-            if (isSchemaFilter && path.contains("/messages")) return;
-            if (!isSchemaFilter && path.contains("/schemas")) return;
-            
-            TreeItem<File> dirItem = new TreeItem<>(file);
-            dirItem.setExpanded(true);
-            
-            File[] children = file.listFiles();
-            if (children != null) {
-                Arrays.sort(children, (f1, f2) -> {
-                    if (f1.isDirectory() && !f2.isDirectory()) return -1;
-                    if (!f1.isDirectory() && f2.isDirectory()) return 1;
-                    return f1.getName().compareToIgnoreCase(f2.getName());
-                });
-                for (File child : children) {
-                    populateTreeFiltered(child, dirItem, isSchemaFilter, filterText);
-                }
-            }
-            if (!dirItem.getChildren().isEmpty() || matchesFilterText) {
-                parent.getChildren().add(dirItem);
-            }
-        } else {
-            String name = file.getName().toLowerCase();
-            boolean isSchemaFile = name.endsWith(".xsd") || name.endsWith(".json") || name.endsWith(".csvw");
-            boolean isMessageFile = name.endsWith(".xml") || name.endsWith(".json") || name.endsWith(".yaml") || 
-                                    name.endsWith(".csv") || name.endsWith(".txt");
-            
-            if (isSchemaFilter && !isSchemaFile) return;
-            if (!isSchemaFilter && !isMessageFile) return;
-            
-            if (matchesFilterText) {
-                parent.getChildren().add(new TreeItem<>(file));
-            }
-        }
-    }
-
-    private void setupDragAndDropMapping() {
-        if (treeMapMessage == null || treeMapSchema == null) return;
-
-        treeMapMessage.setCellFactory(tv -> {
-            TreeCell<File> cell = new TreeCell<>() {
-                @Override
-                protected void updateItem(File item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setText(null);
-                        setGraphic(null);
-                    } else {
-                        setText(item.getName());
-                        if (item.isDirectory()) {
-                            setGraphic(new FontIcon("fas-folder"));
-                        } else {
-                            String ext = getFileExtension(item);
-                            if ("xml".equals(ext)) setGraphic(new FontIcon("fas-file-code"));
-                            else if ("json".equals(ext)) setGraphic(new FontIcon("fas-file-alt"));
-                            else if ("yaml".equals(ext) || "yml".equals(ext)) setGraphic(new FontIcon("fas-file-signature"));
-                            else setGraphic(new FontIcon("fas-file"));
-                        }
-                    }
-                }
-            };
-
-            cell.setOnDragDetected(event -> {
-                if (!cell.isEmpty() && cell.getItem().isFile()) {
-                    Dragboard db = cell.startDragAndDrop(TransferMode.COPY);
-                    ClipboardContent content = new ClipboardContent();
-                    content.putString(cell.getItem().getAbsolutePath());
-                    db.setContent(content);
-                    event.consume();
-                }
-            });
-
-            return cell;
-        });
-
-        treeMapSchema.setCellFactory(tv -> {
-            TreeCell<File> cell = new TreeCell<>() {
-                @Override
-                protected void updateItem(File item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setText(null);
-                        setGraphic(null);
-                    } else {
-                        setText(item.getName());
-                        if (item.isDirectory()) {
-                            setGraphic(new FontIcon("fas-folder"));
-                        } else {
-                            setGraphic(new FontIcon("fas-file-signature"));
-                        }
-                    }
-                }
-            };
-
-            cell.setOnDragOver(event -> {
-                if (event.getGestureSource() != cell && event.getDragboard().hasString()) {
-                    File targetFile = cell.getItem();
-                    if (targetFile != null && targetFile.isFile()) {
-                        event.acceptTransferModes(TransferMode.COPY);
-                    }
-                }
-                event.consume();
-            });
-
-            cell.setOnDragDropped(event -> {
-                Dragboard db = event.getDragboard();
-                boolean success = false;
-                if (db.hasString()) {
-                    File sourceFile = new File(db.getString());
-                    File targetFile = cell.getItem();
-                    if (targetFile != null && targetFile.isFile()) {
-                        String type = "XML + XSD";
-                        String targetPath = targetFile.getAbsolutePath().replace('\\', '/');
-                        if (targetPath.endsWith(".xsd")) {
-                            if (targetPath.contains("iso20022")) {
-                                type = "ISO 20022 MX";
-                            } else {
-                                type = "XML + XSD";
-                            }
-                        } else if (targetPath.endsWith(".json") || targetPath.endsWith(".csvw")) {
-                            if (targetPath.contains("csv")) {
-                                type = "CSV + CSVW";
-                            } else if (targetPath.contains("flatfile")) {
-                                type = "Flat File";
-                            } else {
-                                String srcExt = getFileExtension(sourceFile);
-                                if ("yaml".equals(srcExt) || "yml".equals(srcExt)) {
-                                    type = "YAML + Schema";
-                                } else {
-                                    type = "JSON + Schema";
-                                }
-                            }
-                        }
-
-                        saveMapping(sourceFile, targetFile, type);
-                        refreshMappingDiagram();
-
-                        Tab active = tabPane.getSelectionModel().getSelectedItem();
-                        if (active != null) {
-                            updateToolbarForTab(active);
-                        }
-
-                        success = true;
-                    }
-                }
-                event.setDropCompleted(success);
-                event.consume();
-            });
-
-            return cell;
-        });
-    }
-
-    private void refreshMappingDiagram() {
-        if (webViewMappingMap == null) return;
-        String code = generateMermaidMappingCode();
-        try {
-            String escaped = code.replace("\\", "\\\\").replace("`", "\\`").replace("\n", "\\n").replace("'", "\\'");
-            webViewMappingMap.getEngine().executeScript("window.updateDiagram('" + escaped + "')");
-        } catch (Exception e) {
-            System.err.println("Failed to execute updateDiagram script: " + e.getMessage());
-        }
-    }
-
-    private String generateMermaidMappingCode() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("graph LR\n");
-        
-        File mappingFile = new File(workspaceRoot, "validation-mapping.json");
-        if (!mappingFile.exists()) {
-            sb.append("  subgraph No Mappings\n  hint[\"No mappings defined yet.\"]\n  end\n");
-            return sb.toString();
-        }
-        
-        try {
-            String content = Files.readString(mappingFile.toPath());
-            JSONObject json = new JSONObject(content);
-            JSONArray arr = json.optJSONArray("mappings");
-            if (arr == null || arr.length() == 0) {
-                sb.append("  subgraph No Mappings\n  hint[\"No mappings defined yet.\"]\n  end\n");
-                return sb.toString();
-            }
-            
-            sb.append("  classDef msg fill:#3a5a7c,stroke:#5c8dbf,stroke-width:2px,color:#fff;\n");
-            sb.append("  classDef schema fill:#2d6a4f,stroke:#52b788,stroke-width:2px,color:#fff;\n");
-            
-            Map<String, String> msgIds = new HashMap<>();
-            Map<String, String> schemaIds = new HashMap<>();
-            
-            for (int i = 0; i < arr.length(); i++) {
-                JSONObject obj = arr.getJSONObject(i);
-                String msgPath = obj.optString("messagePath");
-                String schemaPath = obj.optString("schemaPath");
-                String type = obj.optString("type");
-                
-                String mId = msgIds.computeIfAbsent(msgPath, k -> "M" + (msgIds.size()));
-                String sId = schemaIds.computeIfAbsent(schemaPath, k -> "S" + (schemaIds.size()));
-                
-                sb.append("  ").append(mId).append("[\"").append(msgPath).append("\"]:::msg\n");
-                sb.append("  ").append(sId).append("[\"").append(schemaPath).append("\"]:::schema\n");
-                sb.append("  ").append(mId).append(" -->|").append(type).append("| ").append(sId).append("\n");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            sb.append("  error[\"Error reading mappings: ").append(e.getMessage()).append("\"]\n");
-        }
-        
-        return sb.toString();
-    }
-
-    private String generateMappingBaseHtml(String scriptTag, String currentTheme) {
-        String bgColor = "#1e1e1e";
-        String fgColor = "white";
-        String mermaidTheme = "dark";
-        String background = "#1e1e1e";
-        String primaryColor = "#1e1e1e";
-        String primaryTextColor = "#d4d4d4";
-        String primaryBorderColor = "#3f3f46";
-        String lineColor = "#52525b";
-        String secondaryColor = "#27272a";
-        String tertiaryColor = "#27272a";
-
-        if ("IntelliJ Light".equalsIgnoreCase(currentTheme)) {
-            bgColor = "#ffffff";
-            fgColor = "#333333";
-            mermaidTheme = "default";
-            background = "#ffffff";
-            primaryColor = "#e2e8f0";
-            primaryTextColor = "#1e293b";
-            primaryBorderColor = "#cbd5e1";
-            lineColor = "#94a3b8";
-            secondaryColor = "#f1f5f9";
-            tertiaryColor = "#f1f5f9";
-        } else if ("Dracula".equalsIgnoreCase(currentTheme)) {
-            bgColor = "#282a36";
-            fgColor = "#f8f8f2";
-            mermaidTheme = "dark";
-            background = "#282a36";
-            primaryColor = "#44475a";
-            primaryTextColor = "#f8f8f2";
-            primaryBorderColor = "#6272a4";
-            lineColor = "#6272a4";
-            secondaryColor = "#282a36";
-            tertiaryColor = "#282a36";
-        } else if ("Monokai".equalsIgnoreCase(currentTheme)) {
-            bgColor = "#272822";
-            fgColor = "#f8f8f2";
-            mermaidTheme = "dark";
-            background = "#272822";
-            primaryColor = "#3e3d32";
-            primaryTextColor = "#f8f8f2";
-            primaryBorderColor = "#75715e";
-            lineColor = "#75715e";
-            secondaryColor = "#272822";
-            tertiaryColor = "#272822";
-        } else if ("Hacker".equalsIgnoreCase(currentTheme)) {
-            bgColor = "#050505";
-            fgColor = "#00ff00";
-            mermaidTheme = "dark";
-            background = "#050505";
-            primaryColor = "#001d00";
-            primaryTextColor = "#00ff00";
-            primaryBorderColor = "#00ff00";
-            lineColor = "#00ff00";
-            secondaryColor = "#000000";
-            tertiaryColor = "#000000";
-        }
-
-        return "<html>" +
-                "<head>" +
-                scriptTag +
-                "<style>" +
-                "  body { background-color: " + bgColor + "; color: " + fgColor + "; margin: 0; padding: 20px; overflow: auto; font-family: 'Segoe UI', sans-serif; }" +
-                "  .mermaid { display: flex; justify-content: center; transition: opacity 0.3s; }" +
-                "  .status { position: fixed; top: 10px; right: 10px; font-size: 10px; color: #888; }" +
-                "  #error-box { color: #f44336; padding: 10px; border: 1px solid #f44336; border-radius: 4px; display: none; font-size: 12px; margin-top: 20px; }" +
-                "</style>" +
-                "</head>" +
-                "<body>" +
-                "<div id=\"status\" class=\"status\">Ready</div>" +
-                "<div id=\"error-box\"></div>" +
-                "<div id=\"diagram-container\" class=\"mermaid\"></div>" +
-                "<script>" +
-                "  window.updateDiagram = function(code) {" +
-                "    const container = document.getElementById('diagram-container');" +
-                "    const errorBox = document.getElementById('error-box');" +
-                "    const status = document.getElementById('status');" +
-                "    errorBox.style.display = 'none';" +
-                "    status.innerHTML = 'Rendering...';" +
-                "    if (typeof mermaid === 'undefined') {" +
-                "       setTimeout(() => window.updateDiagram(code), 100);" +
-                "       return;" +
-                "    }" +
-                "    try {" +
-                "      mermaid.initialize({" +
-                "        startOnLoad: false," +
-                "        theme: '" + mermaidTheme + "'," +
-                "        securityLevel: 'loose'," +
-                "        flowchart: { useMaxWidth: false }," +
-                "        themeVariables: {" +
-                "          background: '" + background + "'," +
-                "          primaryColor: '" + primaryColor + "'," +
-                "          primaryTextColor: '" + primaryTextColor + "'," +
-                "          primaryBorderColor: '" + primaryBorderColor + "'," +
-                "          lineColor: '" + lineColor + "'," +
-                "          secondaryColor: '" + secondaryColor + "'," +
-                "          tertiaryColor: '" + tertiaryColor + "'" +
-                "        }" +
-                "      });" +
-                "      mermaid.render('graphDiv', code).then(({svg}) => {" +
-                "        container.innerHTML = svg;" +
-                "        status.innerHTML = 'Done';" +
-                "      }).catch(err => {" +
-                "        errorBox.innerHTML = 'Mermaid Error: ' + err.message;" +
-                "        errorBox.style.display = 'block';" +
-                "        status.innerHTML = 'Error';" +
-                "      });" +
-                "    } catch(e) {" +
-                "      errorBox.innerHTML = 'Critical Error: ' + e.message;" +
-                "      errorBox.style.display = 'block';" +
-                "    }" +
-                "  };" +
-                "</script>" +
-                "</body>" +
-                "</html>";
     }
 }

@@ -1,9 +1,0 @@
-appName: ""
-version: "2.1"
-database:
-  host: 192.168.1.1
-  port: 70000
-  name: "123-invalid"
-features:
-  - auth
-  - unknown_feature

@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Builder Studio - Interactive Help Manual</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #121214;
+            --bg-secondary: #1a1a1e;
+            --bg-tertiary: #26262b;
+            --text-primary: #e3e3e6;
+            --text-secondary: #a1a1aa;
+            --accent-color: #10b981;
+            --accent-hover: #059669;
+            --border-color: #2e2e35;
+            --code-bg: #1e1e24;
+            --alert-info-bg: rgba(16, 185, 129, 0.1);
+            --alert-info-border: #10b981;
+            --sidebar-width: 320px;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f4f4f5;
+            --bg-tertiary: #e4e4e7;
+            --text-primary: #18181b;
+            --text-secondary: #71717a;
+            --accent-color: #059669;
+            --accent-hover: #047857;
+            --border-color: #e4e4e7;
+            --code-bg: #fafafa;
+            --alert-info-bg: rgba(5, 150, 105, 0.05);
+            --alert-info-border: #059669;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Sidebar - Left */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .app-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 12px;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .index-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            padding: 15px 20px 5px;
+            font-weight: 600;
+        }
+
+        .index-list {
+            list-style: none;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding: 10px 15px;
+        }
+
+        .index-item {
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .index-item:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .index-item.active {
+            background-color: var(--accent-color);
+            color: #ffffff;
+        }
+
+        .theme-toggle-container {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 4px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        /* Content Area - Right */
+        .content-area {
+            flex-grow: 1;
+            height: 100%;
+            overflow-y: auto;
+            padding: 40px;
+            scroll-behavior: smooth;
+        }
+
+        .help-section {
+            display: none;
+            max-width: 880px;
+            margin: 0 auto;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .help-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 30px 0 15px;
+            color: var(--accent-color);
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 20px 0 10px;
+        }
+
+        p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        /* Alerts/Notes */
+        .alert {
+            background-color: var(--alert-info-bg);
+            border-left: 4px solid var(--alert-info-border);
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        .alert p {
+            margin-bottom: 0;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-secondary);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Code Block styles */
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--code-bg);
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #ef4444;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Visual flow diagram mock */
+        .diagram-container {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .diagram-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .flow-node {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--accent-color);
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin: 5px 0;
+            min-width: 200px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .flow-arrow {
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            margin: 2px 0;
+        }
+
+        .highlight {
+            background-color: #fbbf24;
+            color: #000000;
+            padding: 2px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Section -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="app-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                Help Portal
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-input" id="search-input" placeholder="Search manual..." onkeyup="filterIndex()">
+            </div>
+        </div>
+
+        <div class="index-title">Topics & Index</div>
+        <ul class="index-list" id="index-list">
+            <li class="index-item active" onclick="showTopic('validation-studio')">
+                <span>1. Validation Studio</span>
+            </li>
+            <li class="index-item" onclick="showTopic('crypto-studio')">
+                <span>2. Crypto Studio</span>
+            </li>
+            <li class="index-item" onclick="showTopic('map-studio')">
+                <span>3. Map Studio (MAP)</span>
+            </li>
+            <li class="index-item" onclick="showTopic('transform-studio')">
+                <span>4. Transform Studio</span>
+            </li>
+            <li class="index-item" onclick="showTopic('diagram-studio')">
+                <span>5. Diagram Studio</span>
+            </li>
+            <li class="index-item" onclick="showTopic('faker-studio')">
+                <span>6. Faker Studio</span>
+            </li>
+            <li class="index-item" onclick="showTopic('export-studio')">
+                <span>7. Export Studio</span>
+            </li>
+        </ul>
+
+        <div class="theme-toggle-container">
+            <span style="font-size: 0.8rem; color: var(--text-secondary)">Theme</span>
+            <button class="toggle-btn" onclick="toggleTheme()">Light / Dark</button>
+        </div>
+    </div>
+
+    <!-- Content Area Section -->
+    <div class="content-area" id="content-area">
+
+        <!-- 1. Validation Studio -->
+        <div class="help-section active" id="validation-studio">
+            <h1>Validation Studio</h1>
+            <p>Validation Studio is an integrated debugging and verification space for parsing and validating industrial payloads against rulesets or schema specs.</p>
+            
+            <div class="diagram-container">
+                <div class="diagram-title">Validation Engine Architecture</div>
+                <div class="flow-node">Raw Message Payload</div>
+                <div class="flow-arrow">↓</div>
+                <div class="flow-node">Validation Studio In-Memory Router</div>
+                <div class="flow-arrow">↓</div>
+                <div class="flow-node">JSON Schema / XSD Validation</div>
+                <div class="flow-arrow">↓</div>
+                <div class="flow-node">Monaco-rendered Markdown Report</div>
+            </div>
+
+            <h2>Supported Structures & Rules</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Format Type</th>
+                        <th>Validation Strategy</th>
+                        <th>Diagnostics Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>XML + XSD</strong></td>
+                        <td>Validates structures against W3C standards using schema locations.</td>
+                        <td>Displays line and column tags on schema mismatches.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>JSON Schema</strong></td>
+                        <td>Checks draft-07 formats, including regex, limits, and type maps.</td>
+                        <td>Details exact object pathways failing validation.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>SWIFT MT</strong></td>
+                        <td>Standard checks vs Enhanced JSON-defined custom rule evaluations.</td>
+                        <td>Lists block issues or flags validation policy violations.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CSV + CSVW</strong></td>
+                        <td>Validates column formats, required entries, and unique columns.</td>
+                        <td>Lists record numbers containing failures.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>SWIFT Custom Enhanced Rules Example</h2>
+            <p>Customize validation checks by editing the Schema Editor with rule definitions:</p>
+            <pre><code>{
+  "enhanced": true,
+  "refPrefix": "EXB-",
+  "amountLimit": 5000000.0,
+  "restrictedCurrencies": ["RUB", "IRR"],
+  "highRiskJurisdictions": ["Iran", "Tehran"]
+}</code></pre>
+        </div>
+
+        <!-- 2. Crypto Studio -->
+        <div class="help-section" id="crypto-studio">
+            <h1>Crypto Studio</h1>
+            <p>Crypto Studio performs secure AES-256-GCM authenticated encryption on configuration secrets, database properties, and application variables.</p>
+            
+            <h2>Cryptographic Profile</h2>
+            <ul>
+                <li><strong>Encryption Algorithm:</strong> AES-256-GCM (Galois/Counter Mode).</li>
+                <li><strong>Key Derivation Function:</strong> PBKDF2WithHmacSHA256 (65,536 iterations).</li>
+                <li><strong>Metadata:</strong> Prefixes a 16-byte random salt and a 12-byte initialization vector (IV) directly to the ciphertext.</li>
+            </ul>
+
+            <div class="alert">
+                <p><strong>Note:</strong> AES-256-GCM provides built-in integrity verification via a 128-bit authentication tag, protecting your secrets against alteration.</p>
+            </div>
+
+            <h2>How to Decrypt Secrets in the IDE</h2>
+            <p>To decrypt encrypted settings inside the workspace:</p>
+            <ol style="margin-left: 20px; line-height: 1.8;">
+                <li>Select <strong>Edit -> Decrypt Ciphertext...</strong> from the top toolbar.</li>
+                <li>Input your secret decryption key in the password prompt.</li>
+                <li>Paste the Base64 ciphertext into the payload text editor.</li>
+                <li>Click <strong>Decrypt Payload</strong> to review raw plaintext configurations.</li>
+            </ol>
+
+            <h2>Camel XML Integration Example</h2>
+            <pre><code>&lt;bean id="cryptoProcessor" class="com.routebuilder.kameletstudio.crypto.FieldCryptoProcessor"&gt;
+    &lt;property name="algorithm" value="AES-256-GCM"/&gt;
+    &lt;property name="fields" value="ssn,creditCardNumber"/&gt;
+&lt;/bean&gt;</code></pre>
+        </div>
+
+        <!-- 3. Map Studio -->
+        <div class="help-section" id="map-studio">
+            <h1>Map Studio (MAP)</h1>
+            <p>Map Studio allows visual schema matching and payload mapping. These mappings are stored in the global registry file `validation-mapping.json`.</p>
+
+            <h2>Visual Mapping Controls</h2>
+            <p>The visual mapper renders structural representations of source structures and schema definitions side-by-side:</p>
+            <ul>
+                <li><strong>Field Connection:</strong> Drag a node from the left Source Tree and drop it onto the right Target Schema to establish a link.</li>
+                <li><strong>Visual Feedback:</strong> Displays active mappings in real-time using dynamic connection lines.</li>
+                <li><strong>Interactive Controls:</strong> Right-click on trees to add or remove links.</li>
+            </ul>
+
+            <h2>`validation-mapping.json` Registry Example</h2>
+            <pre><code>{
+  "mappings": [
+    {
+      "name": "Customer XML to JSON Schema",
+      "messagePath": "messages/customer.xml",
+      "schemaPath": "schemas/customer-schema.xsd",
+      "type": "XML + XSD"
+    }
+  ]
+}</code></pre>
+        </div>
+
+        <!-- 4. Transform Studio -->
+        <div class="help-section" id="transform-studio">
+            <h1>Transform Studio</h1>
+            <p>Transform Studio designs and tests message transformations across CSV, XML, JSON, and flat file formats.</p>
+
+            <h2>Transformation Engines</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Engine</th>
+                        <th>DSL Component</th>
+                        <th>Primary Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Smooks</strong></td>
+                        <td><code>smooks://config.xml</code></td>
+                        <td>High-performance mapping and Java bean binding.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>FreeMarker</strong></td>
+                        <td><code>freemarker://template.ftl</code></td>
+                        <td>Template-based XML, JSON, or text generation.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>JSLT</strong></td>
+                        <td><code>jslt://transform.jslt</code></td>
+                        <td>JSON-to-JSON structure mappings.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Groovy</strong></td>
+                        <td><code>groovy://script.groovy</code></td>
+                        <td>Scripted message payload mapping.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>Route Integration Snippet</h2>
+            <p>Reference your transformation assets inside your Camel YAML DSL integration files:</p>
+            <pre><code>- from:
+    uri: "direct:start"
+    steps:
+      - to: "smooks:file:mappings/smooks-config.xml"
+      - to: "mock:result"</code></pre>
+        </div>
+
+        <!-- 5. Diagram Studio -->
+        <div class="help-section" id="diagram-studio">
+            <h1>Diagram Studio</h1>
+            <p>Diagram Studio visualizes Apache Camel routes from XML or YAML files in real-time using Mermaid.js.</p>
+
+            <h2>Key Features</h2>
+            <ul>
+                <li><strong>Dynamic Flowchart Renders:</strong> Renders route flowcharts automatically as you type.</li>
+                <li><strong>Endpoint Visuals:</strong> Displays distinct icons representing external systems, database endpoints (<code>sql:</code>), message queues (<code>jms:</code>), and web services.</li>
+                <li><strong>EIP Flow Representation:</strong> Visually renders content-based routers, splitters, aggregators, and filters as routing branches.</li>
+            </ul>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Visual Route Node Identification</div>
+                <div style="display: flex; gap: 20px;">
+                    <div class="flow-node" style="border-color: #3b82f6;">✉️ Queue Endpoint (JMS)</div>
+                    <div class="flow-node" style="border-color: #10b981;">💾 Database (SQL)</div>
+                    <div class="flow-node" style="border-color: #a855f7;">🌐 HTTP Web API</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Faker Studio -->
+        <div class="help-section" id="faker-studio">
+            <h1>Faker Studio</h1>
+            <p>Faker Studio creates mock datasets to simulate realistic transaction workloads.</p>
+
+            <h2>Generator Functions</h2>
+            <p>Inject fake data fields using double-brace notation in your mock templates:</p>
+            <ul>
+                <li><code>{{name.fullName}}</code> - Generates random full names.</li>
+                <li><code>{{internet.email}}</code> - Generates synthetic email addresses.</li>
+                <li><code>{{finance.iban}}</code> / <code>{{finance.bic}}</code> - Generates bank identifiers.</li>
+                <li><code>{{random.number(min, max)}}</code> - Generates integers within a specified range.</li>
+            </ul>
+
+            <h2>Continuous Background Simulation</h2>
+            <p>Faker Studio can run simulations in the background, writing generated messages to your local directories or target endpoints at a configured delivery rate (e.g., 5 files/second).</p>
+        </div>
+
+        <!-- 7. Export Studio -->
+        <div class="help-section" id="export-studio">
+            <h1>Export Studio</h1>
+            <p>Export Studio compiles, packages, and exports your Camel routes and database migration configurations for production deployment.</p>
+
+            <h2>1. Liquibase Database Migration</h2>
+            <p>Generates Liquibase-compliant XML changelogs (<code>changelog.xml</code>) to automate database migrations across test and production environments.</p>
+            <pre><code>&lt;changeSet id="1" author="routebuilder"&gt;
+    &lt;createTable tableName="CUSTOMERS"&gt;
+        &lt;column name="ID" type="numeric"&gt;
+            &lt;constraints primaryKey="true" nullable="false"/&gt;
+        &lt;/column&gt;
+        &lt;column name="NAME" type="varchar(100)"/&gt;
+    &lt;/createTable&gt;
+&lt;/changeSet&gt;</code></pre>
+
+            <h2>2. SQL Schema Export (Oracle & Postgres)</h2>
+            <p>Exports database schemas as standard SQL scripts tailored to your target database dialect.</p>
+
+            <h3>Oracle Dialect DDL Example:</h3>
+            <pre><code>CREATE TABLE CUSTOMERS (
+    ID NUMBER PRIMARY KEY,
+    NAME VARCHAR2(100) NOT NULL,
+    STATUS VARCHAR2(20) DEFAULT 'ACTIVE'
+);</code></pre>
+
+            <h3>PostgreSQL Dialect DDL Example:</h3>
+            <pre><code>CREATE TABLE IF NOT EXISTS customers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    status VARCHAR(20) DEFAULT 'ACTIVE'
+);</code></pre>
+
+            <h2>3. File System Structure Export</h2>
+            <p>Creates standardized directory layouts to organize runtime binaries, configuration properties, and file routing targets.</p>
+            <pre><code>/deployments/route-app/
+ ├── bin/
+ │    └── run.sh
+ ├── config/
+ │    └── application.properties
+ └── routes/
+      └── eip-routing.yaml</code></pre>
+        </div>
+
+    </div>
+
+    <script>
+        function showTopic(topicId) {
+            // Hide all help sections
+            const sections = document.querySelectorAll('.help-section');
+            sections.forEach(sec => sec.classList.remove('active'));
+
+            // Show selected section
+            const targetSection = document.getElementById(topicId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+
+            // Update active list item
+            const items = document.querySelectorAll('.index-item');
+            items.forEach(item => item.classList.remove('active'));
+
+            // Add active class to corresponding item
+            const indexList = document.getElementById('index-list');
+            const clickedItem = Array.from(indexList.children).find(child => 
+                child.getAttribute('onclick').includes(topicId)
+            );
+            if (clickedItem) {
+                clickedItem.classList.add('active');
+            }
+
+            // Scroll content area back to top
+            document.getElementById('content-area').scrollTop = 0;
+        }
+
+        function filterIndex() {
+            const input = document.getElementById('search-input');
+            const filter = input.value.toLowerCase();
+            const listItems = document.querySelectorAll('.index-item');
+
+            listItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(filter)) {
+                    item.style.display = "";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            if (currentTheme === 'light') {
+                document.body.removeAttribute('data-theme');
+            } else {
+                document.body.setAttribute('data-theme', 'light');
+            }
+        }
+    </script>
+</body>
+</html>

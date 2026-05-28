@@ -1,0 +1,39 @@
+# camel-k: source=../engine/MongoGatewayRoute.camel.yaml
+
+- route:
+    id: mongodb-simulator-example-route
+    from:
+      uri: timer:mongo-example?period=20000&delay=1000
+      steps:
+        - log: "--- START MONGODB SIMULATOR EXAMPLE ---"
+
+        # 1. Insert a simulated pacs.008 message
+        - setBody:
+            constant: >
+              {
+                "operation": "insert",
+                "collection": "pacs008",
+                "document": {
+                  "id": "MX-701",
+                  "messageId": "MSG-PACS-701",
+                  "amount": 45000.00,
+                  "currency": "EUR"
+                }
+              }
+        - to: "direct:mongo-gateway"
+        - log: "Step 1: Insert response: ${body}"
+
+        # 2. Query the inserted pacs.008 message by ID
+        - setBody:
+            constant: >
+              {
+                "operation": "findOne",
+                "collection": "pacs008",
+                "query": {
+                  "id": "MX-701"
+                }
+              }
+        - to: "direct:mongo-gateway"
+        - log: "Step 2: Query result for MX-701: ${body}"
+
+        - log: "--- END MONGODB SIMULATOR EXAMPLE ---"

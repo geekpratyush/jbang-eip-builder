@@ -9,11 +9,25 @@
     -fx-color: #333333;
     -fx-text-base-color: #cccccc;
     -fx-text-background-color: #cccccc;
+    
+    /* Menu & Context Menu colors */
+    -fx-menu-bar-bg: #3c3c3c;
+    -fx-menu-bar-text: #cccccc;
+    -fx-menu-hover-bg: #505050;
+    -fx-menu-hover-text: #ffffff;
+    -fx-context-menu-bg: #252526;
+    -fx-context-menu-border: #454545;
+    -fx-context-menu-text: #cccccc;
+    -fx-context-menu-hover-bg: #094771;
+    -fx-context-menu-hover-text: #ffffff;
+    -fx-context-menu-icon: #cccccc;
+    -fx-context-menu-hover-icon: #ffffff;
 }
 
 .app-root {
     -fx-background-color: #1e1e1e;
     -fx-font-family: "Inter", "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
 }
 .theme-intellij-light .app-root {
     -fx-background-color: #f3f3f3;
@@ -36,7 +50,7 @@
 
 .pane-title {
     -fx-text-fill: #cccccc;
-    -fx-font-size: 11px;
+    -fx-font-size: 13px;
     -fx-padding: 8 10 8 10;
     -fx-background-color: #2d2d2d;
     -fx-border-width: 0 0 1 0;
@@ -45,34 +59,40 @@
 
 /* Menu Bar */
 .menu-bar {
-    -fx-background-color: #3c3c3c;
+    -fx-background-color: -fx-menu-bar-bg;
     -fx-padding: 0 5;
 }
 .menu-bar .label {
-    -fx-text-fill: #cccccc;
+    -fx-text-fill: -fx-menu-bar-text;
     -fx-font-size: 12px;
 }
 .menu:hover, .menu:showing {
-    -fx-background-color: #505050;
+    -fx-background-color: -fx-menu-hover-bg;
+}
+.menu:hover .label, .menu:showing .label {
+    -fx-text-fill: -fx-menu-hover-text;
 }
 .context-menu {
-    -fx-background-color: #252526;
-    -fx-border-color: #454545;
+    -fx-background-color: -fx-context-menu-bg;
+    -fx-border-color: -fx-context-menu-border;
 }
 .menu-item {
     -fx-background-color: transparent;
 }
 .menu-item .label {
-    -fx-text-fill: #cccccc;
+    -fx-text-fill: -fx-context-menu-text;
 }
 .menu-item:focused {
-    -fx-background-color: #094771;
+    -fx-background-color: -fx-context-menu-hover-bg;
+}
+.menu-item:focused .label {
+    -fx-text-fill: -fx-context-menu-hover-text;
 }
 .context-menu .ikonli-font-icon {
-    -fx-icon-color: #cccccc;
+    -fx-icon-color: -fx-context-menu-icon;
 }
 .menu-item:focused .ikonli-font-icon {
-    -fx-icon-color: #ffffff;
+    -fx-icon-color: -fx-context-menu-hover-icon;
 }
 
 /* Status Bar */
@@ -116,8 +136,8 @@
 .custom-tree-view .tree-cell {
     -fx-background-color: transparent;
     -fx-text-fill: #cccccc;
-    -fx-padding: 4 2;
-    -fx-font-size: 13px;
+    -fx-padding: 5 2;
+    -fx-font-size: 14px;
 }
 .custom-tree-view .tree-cell:expanded, .custom-tree-view .tree-cell:collapsed {
     -fx-text-fill: #ffffff;
@@ -164,6 +184,7 @@
 .btn-new-file .ikonli-font-icon { -fx-icon-color: #4CAF50; }
 .btn-new-folder .ikonli-font-icon { -fx-icon-color: #FFC107; }
 .btn-refresh .ikonli-font-icon { -fx-icon-color: #03A9F4; }
+.btn-sample-data .ikonli-font-icon { -fx-icon-color: #E040FB; } /* Vivid neon purple */
 
 .custom-code-area {
     -fx-background-color: #1e1e1e;
@@ -341,7 +362,26 @@
 
 /* ---------------- Themes ---------------- */
 /* Theme: IntelliJ Light */
-.theme-intellij-light.app-root, .root.theme-intellij-light { -fx-background-color: #ffffff; -fx-base: #ffffff; -fx-control-inner-background: #ffffff; -fx-color: #e5e5e5; -fx-text-base-color: #333333; }
+.theme-intellij-light.app-root, .root.theme-intellij-light {
+    -fx-background-color: #ffffff;
+    -fx-base: #ffffff;
+    -fx-control-inner-background: #ffffff;
+    -fx-color: #e5e5e5;
+    -fx-text-base-color: #333333;
+    
+    /* IntelliJ Light menu overrides */
+    -fx-menu-bar-bg: #e5e5e5;
+    -fx-menu-bar-text: #333333;
+    -fx-menu-hover-bg: #d0d0d0;
+    -fx-menu-hover-text: #1a1a1a;
+    -fx-context-menu-bg: #f3f3f3;
+    -fx-context-menu-border: #cccccc;
+    -fx-context-menu-text: #333333;
+    -fx-context-menu-hover-bg: #2b79d2;
+    -fx-context-menu-hover-text: #ffffff;
+    -fx-context-menu-icon: #333333;
+    -fx-context-menu-hover-icon: #ffffff;
+}
 .theme-intellij-light .route-tree-pane, .theme-intellij-light .editor-pane, .theme-intellij-light .diagram-pane, .theme-intellij-light .console-pane { -fx-background-color: #f3f3f3; }
 .theme-intellij-light .pane-title { -fx-background-color: #e5e5e5; -fx-text-fill: #333333; -fx-border-color: #cccccc; }
 .theme-intellij-light .custom-tree-view, .theme-intellij-light .console-output { -fx-background-color: #ffffff; }
@@ -355,18 +395,13 @@
 .theme-intellij-light .tree-cell .ikonli-font-icon { -fx-icon-color: #333333; }
 .theme-intellij-light .diagram-connector { -fx-stroke: #cccccc; }
 .theme-intellij-light .diagram-arrow { -fx-fill: #cccccc; }
-.theme-intellij-light .menu-bar, .theme-intellij-light .menu:hover, .theme-intellij-light .status-bar { -fx-background-color: #e5e5e5; }
-.theme-intellij-light .menu-bar .label, .theme-intellij-light .status-bar .label, .theme-intellij-light .menu-item .label { -fx-text-fill: #333333; }
+.theme-intellij-light .status-bar { -fx-background-color: #e5e5e5; }
+.theme-intellij-light .status-bar .label { -fx-text-fill: #333333; }
 .theme-intellij-light .editor-btn { -fx-text-fill: #333333; }
+.theme-intellij-light .editor-btn:hover { -fx-background-color: #d0d0d0; -fx-text-fill: #1a1a1a; }
 .theme-intellij-light .editor-btn .ikonli-font-icon { -fx-icon-color: #333333; }
 .theme-intellij-light .editor-toolbar, .theme-intellij-light .diagram-toolbar { -fx-background-color: #f3f3f3; -fx-border-color: #cccccc; }
 .theme-intellij-light .lineno { -fx-background-color: #ffffff; -fx-text-fill: #a0a0a0; -fx-border-color: #ffffff; }
-
-/* Submenu / Context menu light theme */
-.theme-intellij-light .context-menu { -fx-background-color: #f3f3f3; -fx-border-color: #cccccc; }
-.theme-intellij-light .context-menu .menu-item:focused { -fx-background-color: #e5e5e5; }
-.theme-intellij-light .context-menu .menu-item .label { -fx-text-fill: #333333; }
-.theme-intellij-light .context-menu .ikonli-font-icon { -fx-icon-color: #333333; }
 
 /* IntelliJ Light — Diagram Canvas */
 .theme-intellij-light .diagram-scroll { -fx-background-color: #f8f8f8; }
@@ -510,6 +545,31 @@
     -fx-border-color: #1e1e1e;
     -fx-border-width: 0 1 0 0;
 }
+
+.theme-intellij-light .code-area .lineno {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #a0a0a0;
+    -fx-border-color: #ffffff;
+}
+
+.theme-dracula .code-area .lineno {
+    -fx-background-color: #282a36;
+    -fx-text-fill: #6272a4;
+    -fx-border-color: #282a36;
+}
+
+.theme-monokai .code-area .lineno {
+    -fx-background-color: #272822;
+    -fx-text-fill: #75715e;
+    -fx-border-color: #272822;
+}
+
+.theme-hacker .code-area .lineno {
+    -fx-background-color: #0d0d0d;
+    -fx-text-fill: #006600;
+    -fx-border-color: #0d0d0d;
+}
+
 
 .yaml-keyword { -fx-fill: #569cd6; -fx-font-weight: bold; }
 .yaml-string { -fx-fill: #ce9178; }
@@ -770,6 +830,9 @@
 .tool-bar .btn-diagram-studio .ikonli-font-icon {
     -fx-icon-color: #F06292; /* Flamingo pink */
 }
+.tool-bar .btn-faker-studio .ikonli-font-icon {
+    -fx-icon-color: #E040FB;
+}
 .tool-bar .btn-mapping-studio .ikonli-font-icon {
     -fx-icon-color: #E040FB; /* Vivid neon purple */
 }
@@ -842,6 +905,9 @@
 }
 .theme-intellij-light .tool-bar .btn-diagram-studio .ikonli-font-icon {
     -fx-icon-color: #ad1457; /* Rich pink */
+}
+.theme-intellij-light .tool-bar .btn-faker-studio .ikonli-font-icon {
+    -fx-icon-color: #9C27B0;
 }
 .theme-intellij-light .tool-bar .btn-mapping-studio .ikonli-font-icon {
     -fx-icon-color: #880e4f; /* Rich burgundy */
@@ -1636,6 +1702,7 @@
 .sidebar-tree-view .tree-cell {
     -fx-background-color: transparent;
     -fx-text-fill: #cccccc;
+    -fx-font-size: 14px;
 }
 .theme-intellij-light .sidebar-tree-view .tree-cell {
     -fx-text-fill: #333333;
@@ -1658,4 +1725,38 @@
 }
 .theme-intellij-light .btn-link-schema:hover {
     -fx-background-color: #4b92f9;
+}
+
+/* ---------------- Studio Search/Filter Field ---------------- */
+.studio-search-field {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #808080;
+    -fx-border-color: #333333;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 4 8;
+    -fx-font-size: 13px;
+}
+.theme-intellij-light .studio-search-field {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #333333;
+    -fx-prompt-text-fill: #808080;
+    -fx-border-color: #cccccc;
+}
+.theme-dracula .studio-search-field {
+    -fx-background-color: #282a36;
+    -fx-border-color: #44475a;
+    -fx-text-fill: #f8f8f2;
+}
+.theme-monokai .studio-search-field {
+    -fx-background-color: #272822;
+    -fx-border-color: #75715e;
+    -fx-text-fill: #f8f8f2;
+}
+.theme-hacker .studio-search-field {
+    -fx-background-color: #050505;
+    -fx-border-color: #004d00;
+    -fx-text-fill: #00ff00;
+    -fx-prompt-text-fill: #008000;
 }

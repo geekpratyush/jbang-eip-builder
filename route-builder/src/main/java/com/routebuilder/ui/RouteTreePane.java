@@ -1,6 +1,8 @@
 package com.routebuilder.ui;
 
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -22,12 +24,29 @@ public class RouteTreePane extends VBox {
     private boolean showHidden = false;
     private Label title;
 
+    private final java.util.Set<File> checkedFiles = new java.util.HashSet<>();
+    private final java.util.Set<File> conflictingFiles = new java.util.HashSet<>();
+    private Runnable onCheckedFilesChanged;
+
+    public java.util.Set<File> getCheckedFiles() {
+        return checkedFiles;
+    }
+
+    public void setOnCheckedFilesChanged(Runnable onCheckedFilesChanged) {
+        this.onCheckedFilesChanged = onCheckedFilesChanged;
+    }
+
     public void setOnRunSelected(java.util.function.BiConsumer<File, String> onRunSelected) {
         this.onRunSelected = onRunSelected;
     }
 
     private static java.util.List<File> clipboardFiles = new java.util.ArrayList<>();
     private static boolean isCutAction = false;
+    private java.util.function.Consumer<java.util.List<File>> onFilesSelected;
+
+    public void setOnFilesSelected(java.util.function.Consumer<java.util.List<File>> onFilesSelected) {
+        this.onFilesSelected = onFilesSelected;
+    }
 
     public RouteTreePane(Consumer<File> onFileSelected) {
         this.onFileSelected = onFileSelected;
@@ -76,6 +95,20 @@ public class RouteTreePane extends VBox {
 
         toolbar.getChildren().addAll(btnNewFile, btnNewFolder, btnRefresh, btnToggleHidden);
 
+        Button btnExpandAll = new Button();
+        btnExpandAll.setGraphic(new FontIcon("fas-expand-arrows-alt"));
+        btnExpandAll.setTooltip(new Tooltip("Expand All"));
+        btnExpandAll.getStyleClass().addAll("editor-btn");
+        btnExpandAll.setOnAction(e -> toggleAllNodes(rootItem, true));
+
+        Button btnCollapseAll = new Button();
+        btnCollapseAll.setGraphic(new FontIcon("fas-compress-arrows-alt"));
+        btnCollapseAll.setTooltip(new Tooltip("Collapse All"));
+        btnCollapseAll.getStyleClass().addAll("editor-btn");
+        btnCollapseAll.setOnAction(e -> toggleAllNodes(rootItem, false));
+
+        toolbar.getChildren().addAll(btnExpandAll, btnCollapseAll);
+
         baseDirectory = new File(System.getProperty("user.dir"), "routes");
         if (!baseDirectory.exists()) {
             baseDirectory.mkdirs();
@@ -86,6 +119,8 @@ public class RouteTreePane extends VBox {
         
         treeView = new TreeView<>(rootItem);
         treeView.getStyleClass().add("custom-tree-view");
+        this.setMinWidth(50);
+        this.setPrefWidth(260);
         
         treeView.setEditable(true);
         treeView.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
@@ -118,15 +153,23 @@ public class RouteTreePane extends VBox {
             @Override
             public void cancelEdit() {
                 super.cancelEdit();
-                setText(getItem().getName());
-                updateGraphic(getItem());
+                File item = getItem();
+                if (item != null) {
+                    setText(item.getName());
+                    updateGraphic(item);
+                } else {
+                    setText(null);
+                    setGraphic(null);
+                }
             }
 
             @Override
             public void commitEdit(File newFile) {
                 super.commitEdit(newFile);
-                setText(newFile.getName());
-                updateGraphic(newFile);
+                if (newFile != null) {
+                    setText(newFile.getName());
+                    updateGraphic(newFile);
+                }
                 refresh(); 
             }
 
@@ -136,14 +179,16 @@ public class RouteTreePane extends VBox {
                     if (t.getCode() == javafx.scene.input.KeyCode.ENTER) {
                         String newName = textField.getText();
                         File item = getItem();
-                        if (!item.isDirectory() && !newName.endsWith(".yaml") && !newName.endsWith(".yml")) {
-                            newName += ".yaml";
-                        }
-                        File newFile = new File(item.getParentFile(), newName);
-                        if (item.renameTo(newFile)) {
-                            commitEdit(newFile);
-                        } else {
-                            cancelEdit();
+                        if (item != null) {
+                            if (!item.isDirectory() && !newName.endsWith(".yaml") && !newName.endsWith(".yml")) {
+                                newName += ".yaml";
+                            }
+                            File newFile = new File(item.getParentFile(), newName);
+                            if (item.renameTo(newFile)) {
+                                commitEdit(newFile);
+                            } else {
+                                cancelEdit();
+                            }
                         }
                     } else if (t.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
                         cancelEdit();
@@ -152,12 +197,75 @@ public class RouteTreePane extends VBox {
             }
 
             private void updateGraphic(File item) {
+                if (item == null) return;
+                CheckBox cb = new CheckBox();
                 if (item.isDirectory()) {
-                    setGraphic(new FontIcon("fas-folder"));
-                } else if (item.getName().endsWith(".yaml") || item.getName().endsWith(".yml")) {
-                    setGraphic(new FontIcon("fas-file-code"));
+                    boolean hasNestedConflict = false;
+                    for (File f : conflictingFiles) {
+                        if (f.getAbsolutePath().startsWith(item.getAbsolutePath() + java.io.File.separator)) {
+                            hasNestedConflict = true;
+                            break;
+                        }
+                    }
+                    if (hasNestedConflict) {
+                        setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                    } else {
+                        setStyle("");
+                    }
+
+                    cb.setAllowIndeterminate(true);
+                    CheckState state = getFolderCheckState(item);
+                    if (state == CheckState.CHECKED) {
+                        cb.setSelected(true);
+                        cb.setIndeterminate(false);
+                    } else if (state == CheckState.UNCHECKED) {
+                        cb.setSelected(false);
+                        cb.setIndeterminate(false);
+                    } else {
+                        cb.setSelected(false);
+                        cb.setIndeterminate(true);
+                    }
+                    cb.setOnAction(e -> {
+                        CheckState currentState = getFolderCheckState(item);
+                        boolean targetChecked = (currentState != CheckState.CHECKED);
+                        setCheckedRecursive(item, targetChecked);
+                        updateConflicts();
+                        if (onCheckedFilesChanged != null) {
+                            onCheckedFilesChanged.run();
+                        }
+                        javafx.application.Platform.runLater(() -> treeView.refresh());
+                    });
+                    
+                    FontIcon icon = RouteBuilderApp.getFileIcon(item);
+                    HBox box = new HBox(5, cb, icon);
+                    box.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                    setGraphic(box);
                 } else {
-                    setGraphic(new FontIcon("fas-file"));
+                    if (conflictingFiles.contains(item)) {
+                        setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                    } else {
+                        setStyle("");
+                    }
+
+                    cb.setSelected(checkedFiles.contains(item));
+                    cb.setOnAction(e -> {
+                        if (cb.isSelected()) {
+                            checkedFiles.add(item);
+                        } else {
+                            checkedFiles.remove(item);
+                        }
+                        updateConflicts();
+                        if (onCheckedFilesChanged != null) {
+                            onCheckedFilesChanged.run();
+                        }
+                        // Refresh parent folders to update their check/indeterminate state
+                        javafx.application.Platform.runLater(() -> treeView.refresh());
+                    });
+                    
+                    FontIcon icon = RouteBuilderApp.getFileIcon(item);
+                    HBox box = new HBox(5, cb, icon);
+                    box.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                    setGraphic(box);
                 }
             }
 
@@ -167,6 +275,7 @@ public class RouteTreePane extends VBox {
                 if (empty || item == null) {
                     setText(null);
                     setGraphic(null);
+                    setStyle("");
                     setContextMenu(createContextMenu(baseDirectory));
                     setOnDragDetected(null);
                     setupDropTarget(this, baseDirectory);
@@ -178,7 +287,46 @@ public class RouteTreePane extends VBox {
                     } else {
                         if (item.equals(baseDirectory)) {
                             setText("Routes");
-                            setGraphic(new FontIcon("fas-project-diagram"));
+                            boolean hasNestedConflict = false;
+                            for (File f : conflictingFiles) {
+                                if (f.getAbsolutePath().startsWith(item.getAbsolutePath() + java.io.File.separator)) {
+                                    hasNestedConflict = true;
+                                    break;
+                                }
+                            }
+                            if (hasNestedConflict) {
+                                setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                            } else {
+                                setStyle("");
+                            }
+
+                            CheckBox cb = new CheckBox();
+                            cb.setAllowIndeterminate(true);
+                            CheckState state = getFolderCheckState(item);
+                            if (state == CheckState.CHECKED) {
+                                cb.setSelected(true);
+                                cb.setIndeterminate(false);
+                            } else if (state == CheckState.UNCHECKED) {
+                                cb.setSelected(false);
+                                cb.setIndeterminate(false);
+                            } else {
+                                cb.setSelected(false);
+                                cb.setIndeterminate(true);
+                            }
+                            cb.setOnAction(e -> {
+                                CheckState currentState = getFolderCheckState(item);
+                                boolean targetChecked = (currentState != CheckState.CHECKED);
+                                setCheckedRecursive(item, targetChecked);
+                                updateConflicts();
+                                if (onCheckedFilesChanged != null) {
+                                    onCheckedFilesChanged.run();
+                                }
+                                javafx.application.Platform.runLater(() -> treeView.refresh());
+                            });
+                            FontIcon icon = new FontIcon("fas-project-diagram");
+                            HBox box = new HBox(5, cb, icon);
+                            box.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                            setGraphic(box);
                         } else {
                             setText(item.getName());
                             updateGraphic(item);
@@ -226,19 +374,54 @@ public class RouteTreePane extends VBox {
         });
 
         treeView.setOnKeyPressed(event -> {
-            if (event.getCode() == javafx.scene.input.KeyCode.F2) {
+            KeyCode code = event.getCode();
+            if (code == KeyCode.F2) {
                 TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
                 if (selected != null && !selected.getValue().equals(baseDirectory)) {
                     treeView.edit(selected);
                 }
+                event.consume();
+            } else if (code == KeyCode.ENTER) {
+                TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    if (selected.getValue().isFile()) {
+                        if (this.onFileSelected != null) this.onFileSelected.accept(selected.getValue());
+                    } else {
+                        selected.setExpanded(!selected.isExpanded());
+                    }
+                }
+                event.consume();
+            } else if (code == KeyCode.DELETE || (code == KeyCode.BACK_SPACE && event.isShortcutDown())) {
+                TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    deleteItem(selected.getValue());
+                }
+                event.consume();
+            } else if (code == KeyCode.F5) {
+                refresh();
+                event.consume();
             }
         });
 
         treeView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null && newVal.getValue() != null && newVal.getValue().isFile()) {
-                if (this.onFileSelected != null) {
-                    this.onFileSelected.accept(newVal.getValue());
+            java.util.List<File> selectedFiles = new java.util.ArrayList<>();
+            for (TreeItem<File> item : treeView.getSelectionModel().getSelectedItems()) {
+                if (item != null && item.getValue() != null && item.getValue().isFile()) {
+                    selectedFiles.add(item.getValue());
                 }
+            }
+            if (this.onFilesSelected != null) {
+                this.onFilesSelected.accept(selectedFiles);
+            }
+            if (selectedFiles.size() == 1) {
+                if (this.onFileSelected != null) {
+                    this.onFileSelected.accept(selectedFiles.get(0));
+                }
+            } else if (selectedFiles.isEmpty() && newVal != null && newVal.getValue() != null && newVal.getValue().isDirectory()) {
+                 // Clear single selection if folder is clicked
+                 if (this.onFileSelected != null) {
+                     this.onFileSelected.accept(null);
+                 }
             }
         });
 
@@ -543,10 +726,19 @@ public class RouteTreePane extends VBox {
         return null;
     }
 
-    private void deleteItem(File item) {
-        if (item == null || item.equals(baseDirectory)) return;
+    private void toggleAllNodes(TreeItem<?> item, boolean expanded) {
+        if (item != null) {
+            item.setExpanded(expanded);
+            for (TreeItem<?> child : item.getChildren()) {
+                toggleAllNodes(child, expanded);
+            }
+        }
+    }
 
-        java.util.List<File> itemsToDelete = getSelectedFilesOrItem(item);
+    private void deleteItem(File fileToDelete) {
+        if (fileToDelete == null || fileToDelete.equals(baseDirectory)) return;
+
+        java.util.List<File> itemsToDelete = getSelectedFilesOrItem(fileToDelete);
         if (itemsToDelete.isEmpty()) return;
 
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -561,8 +753,8 @@ public class RouteTreePane extends VBox {
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            for (File file : itemsToDelete) {
-                deleteRecursively(file);
+            for (File f : itemsToDelete) {
+                deleteRecursively(f);
             }
             refresh();
         }
@@ -604,11 +796,20 @@ public class RouteTreePane extends VBox {
         return null;
     }
 
+    public TreeView<File> getTreeView() {
+        return treeView;
+    }
+
     public void setBaseDirectory(File newBaseDir) {
         this.baseDirectory = newBaseDir;
         this.rootItem.setValue(newBaseDir);
         if (title != null) {
             title.setText("EXPLORER: " + newBaseDir.getName().toUpperCase());
+        }
+        checkedFiles.clear();
+        updateConflicts();
+        if (onCheckedFilesChanged != null) {
+            onCheckedFilesChanged.run();
         }
         refresh();
         
@@ -625,6 +826,11 @@ public class RouteTreePane extends VBox {
     }
 
     public void refresh() {
+        checkedFiles.removeIf(file -> !file.exists());
+        updateConflicts();
+        if (onCheckedFilesChanged != null) {
+            onCheckedFilesChanged.run();
+        }
         rootItem.getChildren().clear();
         populateTree(baseDirectory, rootItem);
         rootItem.setExpanded(true);
@@ -677,14 +883,20 @@ public class RouteTreePane extends VBox {
     }
 
     public void createTemplateFileInDir(File targetDir, String name, String content) {
+        createTemplateFileInDir(targetDir, name, content, false);
+    }
+
+    public void createTemplateFileInDir(File targetDir, String name, String content, boolean overwrite) {
         try {
             File newFile = new File(targetDir, name);
-            int counter = 1;
-            while (newFile.exists()) {
-                String baseName = name.contains(".") ? name.substring(0, name.indexOf('.')) : name;
-                String ext = name.contains(".") ? name.substring(name.indexOf('.')) : "";
-                newFile = new File(targetDir, baseName + counter + ext);
-                counter++;
+            if (!overwrite) {
+                int counter = 1;
+                while (newFile.exists()) {
+                    String baseName = name.contains(".") ? name.substring(0, name.indexOf('.')) : name;
+                    String ext = name.contains(".") ? name.substring(name.indexOf('.')) : "";
+                    newFile = new File(targetDir, baseName + counter + ext);
+                    counter++;
+                }
             }
             Files.writeString(newFile.toPath(), content);
             refresh();
@@ -757,5 +969,132 @@ public class RouteTreePane extends VBox {
 
     public TreeItem<File> getRootItem() {
         return rootItem;
+    }
+
+    private enum CheckState {
+        CHECKED, UNCHECKED, INDETERMINATE
+    }
+
+    private boolean isRouteFile(File file) {
+        if (!file.isFile()) return false;
+        String name = file.getName().toLowerCase();
+        if (name.startsWith(".")) return false;
+        return name.endsWith(".java") || name.endsWith(".yaml") || name.endsWith(".yml") || 
+               name.endsWith(".xml") || name.endsWith(".txt") || name.endsWith(".template");
+    }
+
+    private CheckState getFolderCheckState(File folder) {
+        java.util.List<File> files = new java.util.ArrayList<>();
+        collectFilesRecursive(folder, files);
+        if (files.isEmpty()) {
+            return CheckState.UNCHECKED;
+        }
+        int checkedCount = 0;
+        for (File f : files) {
+            if (checkedFiles.contains(f)) {
+                checkedCount++;
+            }
+        }
+        if (checkedCount == 0) {
+            return CheckState.UNCHECKED;
+        } else if (checkedCount == files.size()) {
+            return CheckState.CHECKED;
+        } else {
+            return CheckState.INDETERMINATE;
+        }
+    }
+
+    private void collectFilesRecursive(File file, java.util.List<File> list) {
+        if (isRouteFile(file)) {
+            list.add(file);
+        } else if (file.isDirectory()) {
+            if (!file.getName().startsWith(".")) {
+                File[] children = file.listFiles();
+                if (children != null) {
+                    for (File child : children) {
+                        collectFilesRecursive(child, list);
+                    }
+                }
+            }
+        }
+    }
+
+    private void setCheckedRecursive(File file, boolean checked) {
+        if (isRouteFile(file)) {
+            if (checked) {
+                checkedFiles.add(file);
+            } else {
+                checkedFiles.remove(file);
+            }
+        } else if (file.isDirectory()) {
+            if (!file.getName().startsWith(".")) {
+                File[] children = file.listFiles();
+                if (children != null) {
+                    for (File child : children) {
+                        setCheckedRecursive(child, checked);
+                    }
+                }
+            }
+        }
+    }
+
+    public void updateConflicts() {
+        conflictingFiles.clear();
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper(new com.fasterxml.jackson.dataformat.yaml.YAMLFactory());
+        java.util.Map<String, java.util.List<File>> idMap = new java.util.HashMap<>();
+        
+        for (File f : checkedFiles) {
+            if (f == null || !f.isFile()) continue;
+            String name = f.getName().toLowerCase();
+            if (name.endsWith(".yaml") || name.endsWith(".yml")) {
+                try {
+                    String content = java.nio.file.Files.readString(f.toPath());
+                    com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(content);
+                    if (node != null) {
+                        java.util.List<com.fasterxml.jackson.databind.JsonNode> items = new java.util.ArrayList<>();
+                        if (node.isArray()) {
+                            for (com.fasterxml.jackson.databind.JsonNode item : node) {
+                                items.add(item);
+                            }
+                        } else {
+                            items.add(node);
+                        }
+                        
+                        for (com.fasterxml.jackson.databind.JsonNode item : items) {
+                            String id = null;
+                            if (item.has("route")) {
+                                com.fasterxml.jackson.databind.JsonNode r = item.get("route");
+                                if (r.has("id")) id = r.get("id").asText();
+                            } else if (item.has("from")) {
+                                com.fasterxml.jackson.databind.JsonNode fr = item.get("from");
+                                if (fr.has("id")) id = fr.get("id").asText();
+                            } else if (item.has("id")) {
+                                id = item.get("id").asText();
+                            }
+                            if (id != null && !id.trim().isEmpty()) {
+                                idMap.computeIfAbsent(id, k -> new java.util.ArrayList<>()).add(f);
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {}
+            } else if (name.endsWith(".java")) {
+                try {
+                    String content = java.nio.file.Files.readString(f.toPath());
+                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\.routeId\\s*\\(\\s*\"([^\"]+)\"\\s*\\)").matcher(content);
+                    while (m.find()) {
+                        String id = m.group(1);
+                        if (id != null && !id.trim().isEmpty()) {
+                            idMap.computeIfAbsent(id, k -> new java.util.ArrayList<>()).add(f);
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        
+        for (java.util.List<File> list : idMap.values()) {
+            if (list.size() > 1) {
+                conflictingFiles.addAll(list);
+            }
+        }
     }
 }

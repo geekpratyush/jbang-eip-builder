@@ -18,6 +18,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
+import javafx.scene.transform.Translate;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.util.Iterator;
@@ -35,13 +36,14 @@ import javafx.scene.control.Alert;
 public class DiagramPane extends VBox {
 
     private Pane diagramContainer;
-    private Pane scrollPane;
+    private StackPane canvasPane;
     private Group zoomGroup;
     private ObjectMapper yamlMapper;
     private Scale zoomScale;
     
     private boolean isHorizontal = false;
     private String currentYaml = "";
+    private java.util.List<String> currentYamls = null;
     private java.io.File currentFile;
     public void setCurrentFile(java.io.File file) {
         this.currentFile = file;
@@ -87,6 +89,8 @@ public class DiagramPane extends VBox {
     public DiagramPane(Consumer<String> themeChanger, Consumer<String> yamlUpdater) {
         this.themeChanger = themeChanger;
         this.yamlUpdater = yamlUpdater;
+        setMinWidth(0);
+        setMinHeight(0);
         getStyleClass().add("diagram-pane");
         yamlMapper = new ObjectMapper(new YAMLFactory());
         yamlMapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
@@ -102,13 +106,18 @@ public class DiagramPane extends VBox {
 
         // Toolbar buttons
         Button layoutBtn = new Button();
-        layoutBtn.setGraphic(new FontIcon("fas-exchange-alt"));
-        layoutBtn.setTooltip(new javafx.scene.control.Tooltip("Toggle Layout (T->B / L->R)"));
+        layoutBtn.setGraphic(new FontIcon(isHorizontal ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down"));
+        layoutBtn.setTooltip(new javafx.scene.control.Tooltip("Toggle Layout (T-D / L-R)"));
         layoutBtn.getStyleClass().addAll("editor-btn", "btn-layout");
         layoutBtn.setOnAction(e -> {
             isHorizontal = !isHorizontal;
+            layoutBtn.setGraphic(new FontIcon(isHorizontal ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down"));
             rebuildContainer();
-            renderDiagram(currentYaml);
+            if (currentYamls != null && currentYamls.size() > 1) {
+                renderDiagrams(currentYamls);
+            } else {
+                renderDiagram(currentYaml);
+            }
         });
 
         zoomScale = new Scale(1.0, 1.0);
@@ -140,8 +149,10 @@ public class DiagramPane extends VBox {
         fitBtn.setOnAction(e -> {
             zoomScale.setX(1.0);
             zoomScale.setY(1.0);
-            zoomGroup.setTranslateX(0);
-            zoomGroup.setTranslateY(0);
+            if (zoomGroup != null) {
+                zoomGroup.setTranslateX(0);
+                zoomGroup.setTranslateY(0);
+            }
         });
 
         Button closeDiagramBtn = new Button();
@@ -216,16 +227,22 @@ public class DiagramPane extends VBox {
 
         zoomGroup = new Group(diagramContainer);
 
-        Group scrollContent = new Group(zoomGroup);
-        scrollPane = new Pane(scrollContent);
-        scrollPane.getStyleClass().add("diagram-scroll");
-        
-        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
-        clip.widthProperty().bind(scrollPane.widthProperty());
-        clip.heightProperty().bind(scrollPane.heightProperty());
-        scrollPane.setClip(clip);
-        
-        scrollPane.addEventFilter(javafx.scene.input.ScrollEvent.ANY, event -> {
+        canvasPane = new StackPane(zoomGroup);
+        canvasPane.getStyleClass().add("diagram-scroll");
+        canvasPane.setStyle("-fx-background-color: transparent;");
+        canvasPane.setAlignment(Pos.TOP_LEFT);
+        canvasPane.setMinWidth(0);
+        canvasPane.setMinHeight(0);
+        canvasPane.setPrefSize(100, 100);
+
+        // Clip to keep content visually bounded within the canvas area
+        Rectangle clipRect = new Rectangle();
+        clipRect.widthProperty().bind(canvasPane.widthProperty());
+        clipRect.heightProperty().bind(canvasPane.heightProperty());
+        canvasPane.setClip(clipRect);
+
+        // Zoom via mouse wheel
+        canvasPane.addEventFilter(javafx.scene.input.ScrollEvent.ANY, event -> {
             if (event.getDeltaY() != 0) {
                 double zoomFactor = event.getDeltaY() > 0 ? 1.05 : 1 / 1.05;
                 double newScale = zoomScale.getX() * zoomFactor;
@@ -237,32 +254,48 @@ public class DiagramPane extends VBox {
             }
         });
 
-        scrollPane.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, event -> {
+        // Drag-to-pan using zoomGroup.translateX/Y (post-layout, not affected by StackPane)
+        final double[] dragStart = new double[2];
+        final double[] startTranslate = new double[2];
+        final boolean[] hasDragged = new boolean[1];
+
+        canvasPane.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, event -> {
             if (activeContextMenu != null && activeContextMenu.isShowing()) {
                 activeContextMenu.hide();
                 activeContextMenu = null;
             }
-            if (event.isPrimaryButtonDown()) {
-                scrollPane.getProperties().put("mouseX", event.getScreenX());
-                scrollPane.getProperties().put("mouseY", event.getScreenY());
+            if (event.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
+                dragStart[0] = event.getScreenX();
+                dragStart[1] = event.getScreenY();
+                startTranslate[0] = zoomGroup.getTranslateX();
+                startTranslate[1] = zoomGroup.getTranslateY();
+                hasDragged[0] = false;
+                canvasPane.setCursor(javafx.scene.Cursor.CLOSED_HAND);
             }
         });
 
-        scrollPane.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_DRAGGED, event -> {
+        canvasPane.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_DRAGGED, event -> {
             if (event.isPrimaryButtonDown()) {
-                Double lastX = (Double) scrollPane.getProperties().get("mouseX");
-                Double lastY = (Double) scrollPane.getProperties().get("mouseY");
-                if (lastX != null && lastY != null) {
-                    double deltaX = event.getScreenX() - lastX;
-                    double deltaY = event.getScreenY() - lastY;
-                    zoomGroup.setTranslateX(zoomGroup.getTranslateX() + deltaX);
-                    zoomGroup.setTranslateY(zoomGroup.getTranslateY() + deltaY);
-                    scrollPane.getProperties().put("mouseX", event.getScreenX());
-                    scrollPane.getProperties().put("mouseY", event.getScreenY());
+                double deltaX = event.getScreenX() - dragStart[0];
+                double deltaY = event.getScreenY() - dragStart[1];
+                if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+                    hasDragged[0] = true;
                 }
+                zoomGroup.setTranslateX(startTranslate[0] + deltaX);
+                zoomGroup.setTranslateY(startTranslate[1] + deltaY);
                 event.consume();
             }
         });
+
+        canvasPane.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_RELEASED, event -> {
+            canvasPane.setCursor(javafx.scene.Cursor.OPEN_HAND);
+            if (hasDragged[0]) {
+                event.consume();
+                hasDragged[0] = false;
+            }
+        });
+
+        canvasPane.setCursor(javafx.scene.Cursor.OPEN_HAND);
 
         javafx.scene.control.ContextMenu canvasMenu = new javafx.scene.control.ContextMenu();
         javafx.scene.control.MenuItem addRouteItem = new javafx.scene.control.MenuItem("New Route", new FontIcon("fas-route"));
@@ -298,9 +331,9 @@ public class DiagramPane extends VBox {
         });
         canvasMenu.getItems().addAll(addRouteItem, addExceptionItem, addRestItem);
 
-        scrollPane.setOnContextMenuRequested(e -> {
+        canvasPane.setOnContextMenuRequested(e -> {
             if (activeContextMenu != null) activeContextMenu.hide();
-            canvasMenu.show(scrollPane, e.getScreenX(), e.getScreenY());
+            canvasMenu.show(canvasPane, e.getScreenX(), e.getScreenY());
             activeContextMenu = canvasMenu;
         });
 
@@ -320,7 +353,7 @@ public class DiagramPane extends VBox {
         propScroll.setMaxWidth(600);
         javafx.scene.control.SplitPane.setResizableWithParent(propScroll, false);
         
-        splitPane.getItems().add(scrollPane);
+        splitPane.getItems().add(canvasPane);
         VBox.setVgrow(splitPane, Priority.ALWAYS);
 
         getChildren().addAll(title, toolbar, splitPane);
@@ -387,10 +420,23 @@ public class DiagramPane extends VBox {
         }
     }
 
+    public void renderDiagrams(java.util.List<String> yamls) {
+        this.currentYamls = yamls;
+        this.currentYaml = String.join("\n---\n", yamls);
+        diagramContainer.getChildren().clear();
+        for (String yamlText : yamls) {
+            renderDiagramInternal(yamlText, false);
+        }
+    }
+
     public void renderDiagram(String yamlText) {
+        this.currentYamls = null;
         this.currentYaml = yamlText;
         diagramContainer.getChildren().clear();
+        renderDiagramInternal(yamlText, true);
+    }
 
+    private void renderDiagramInternal(String yamlText, boolean allowUml) {
         boolean hasBeans = false;
         try {
             JsonNode parsed = yamlMapper.readTree(yamlText);
@@ -412,15 +458,15 @@ public class DiagramPane extends VBox {
             isJava = true;
         }
 
-        boolean isUmlDiagram = isJava || hasBeans;
+        boolean isUmlDiagram = allowUml && (isJava || hasBeans);
 
         if (isUmlDiagram) {
             if (classDiagramPane == null) {
                 classDiagramPane = new ClassDiagramPane();
                 classDiagramPane.setTheme(currentTheme);
             }
-            if (splitPane.getItems().contains(scrollPane)) {
-                splitPane.getItems().remove(scrollPane);
+            if (splitPane.getItems().contains(canvasPane)) {
+                splitPane.getItems().remove(canvasPane);
             }
             if (!splitPane.getItems().contains(classDiagramPane)) {
                 splitPane.getItems().add(0, classDiagramPane);
@@ -438,8 +484,8 @@ public class DiagramPane extends VBox {
         if (classDiagramPane != null && splitPane.getItems().contains(classDiagramPane)) {
             splitPane.getItems().remove(classDiagramPane);
         }
-        if (!splitPane.getItems().contains(scrollPane)) {
-            splitPane.getItems().add(0, scrollPane);
+        if (!splitPane.getItems().contains(canvasPane)) {
+            splitPane.getItems().add(0, canvasPane);
         }
 
         // YAML / JSON processing
@@ -1141,43 +1187,66 @@ public class DiagramPane extends VBox {
         if (input == null || input.trim().isEmpty()) return input;
         String trimmed = input.trim();
         
-        // Strip outer single/double quotes if they wrap the entire string
-        if (trimmed.startsWith("'") && trimmed.endsWith("'") && trimmed.length() >= 2) {
-            trimmed = trimmed.substring(1, trimmed.length() - 1).trim();
-        } else if (trimmed.startsWith("\"") && trimmed.endsWith("\"") && trimmed.length() >= 2) {
-            trimmed = trimmed.substring(1, trimmed.length() - 1).trim();
-        }
-        
-        // Unescape internal quotes if it looks like escaped JSON/XML
-        if (trimmed.contains("\\\"")) {
-            trimmed = trimmed.replace("\\\"", "\"");
-        }
-        if (trimmed.contains("\\n")) {
-            trimmed = trimmed.replace("\\n", "\n");
-        }
-        if (trimmed.contains("\\t")) {
-            trimmed = trimmed.replace("\\t", "\t");
-        }
-        
+        // 1. Try to parse directly as JSON first (safe, avoids corrupting internal escapes)
         if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
             try {
                 com.fasterxml.jackson.databind.ObjectMapper jsonMapper = new com.fasterxml.jackson.databind.ObjectMapper();
                 Object json = jsonMapper.readValue(trimmed, Object.class);
                 return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
-            } catch (Exception e) { return input; }
-        } else if (trimmed.startsWith("<") && trimmed.endsWith(">")) {
+            } catch (Exception ignored) {}
+        }
+        
+        // 2. Try to parse directly as XML first (safe)
+        if (trimmed.startsWith("<") && trimmed.endsWith(">")) {
             try {
                 javax.xml.transform.Transformer transformer = javax.xml.transform.TransformerFactory.newInstance().newTransformer();
                 transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
                 transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-                // Remove standalone XML declaration to keep it clean if it wasn't there
                 transformer.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
                 javax.xml.transform.stream.StreamResult result = new javax.xml.transform.stream.StreamResult(new java.io.StringWriter());
                 javax.xml.transform.stream.StreamSource source = new javax.xml.transform.stream.StreamSource(new java.io.StringReader(trimmed));
                 transformer.transform(source, result);
                 return result.getWriter().toString();
-            } catch (Exception e) { return input; }
+            } catch (Exception ignored) {}
         }
+
+        // 3. Fallback: Only unescape if direct parsing failed (useful if input was wrapped/escaped string)
+        String unescaped = trimmed;
+        if (unescaped.startsWith("'") && unescaped.endsWith("'") && unescaped.length() >= 2) {
+            unescaped = unescaped.substring(1, unescaped.length() - 1).trim();
+        } else if (unescaped.startsWith("\"") && unescaped.endsWith("\"") && unescaped.length() >= 2) {
+            unescaped = unescaped.substring(1, unescaped.length() - 1).trim();
+        }
+        
+        if (unescaped.contains("\\\"")) {
+            unescaped = unescaped.replace("\\\"", "\"");
+        }
+        if (unescaped.contains("\\n")) {
+            unescaped = unescaped.replace("\\n", "\n");
+        }
+        if (unescaped.contains("\\t")) {
+            unescaped = unescaped.replace("\\t", "\t");
+        }
+
+        if ((unescaped.startsWith("{") && unescaped.endsWith("}")) || (unescaped.startsWith("[") && unescaped.endsWith("]"))) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper jsonMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                Object json = jsonMapper.readValue(unescaped, Object.class);
+                return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+            } catch (Exception ignored) {}
+        } else if (unescaped.startsWith("<") && unescaped.endsWith(">")) {
+            try {
+                javax.xml.transform.Transformer transformer = javax.xml.transform.TransformerFactory.newInstance().newTransformer();
+                transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
+                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+                transformer.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
+                javax.xml.transform.stream.StreamResult result = new javax.xml.transform.stream.StreamResult(new java.io.StringWriter());
+                javax.xml.transform.stream.StreamSource source = new javax.xml.transform.stream.StreamSource(new java.io.StringReader(unescaped));
+                transformer.transform(source, result);
+                return result.getWriter().toString();
+            } catch (Exception ignored) {}
+        }
+        
         return input;
     }
 
@@ -2016,9 +2085,9 @@ public class DiagramPane extends VBox {
         return box;
     }
     private javafx.scene.image.WritableImage snapshotDiagram() {
-        if (scrollPane == null) return null;
+        if (diagramContainer == null) return null;
         javafx.scene.SnapshotParameters params = new javafx.scene.SnapshotParameters();
         params.setFill(javafx.scene.paint.Color.TRANSPARENT);
-        return scrollPane.snapshot(params, null);
+        return diagramContainer.snapshot(params, null);
     }
 }

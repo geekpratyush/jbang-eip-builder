@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.054.001.14">
+    <BkToCstmrDbtCdtNtfctn>
+        <GrpHdr>
+            <MsgId>{{type:msgId}}</MsgId>
+            <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+        </GrpHdr>
+        <Ntfctn>
+            <Id>NTF-20260521-001</Id>
+            <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+            <Acct>
+                <Id>
+                    <IBAN>{{type:iban:debtor}}</IBAN>
+                </Id>
+            </Acct>
+            <Ntry>
+                <Amt Ccy="GBP">100.00</Amt>
+                <CdtDbtInd>CRDT</CdtDbtInd>
+                <Sts>
+                    <Cd>BOOK</Cd>
+                </Sts>
+                <BkTxCd>
+                    <Domn>
+                        <Cd>PMNT</Cd>
+                        <Fmly>
+                            <Cd>ICDT</Cd>
+                            <SubFmlyCd>OTHR</SubFmlyCd>
+                        </Fmly>
+                    </Domn>
+                </BkTxCd>
+                <NtryDtls>
+                    <TxDtls>
+                        <Refs>
+                            <EndToEndId>{{type:uid:16}}</EndToEndId>
+                        </Refs>
+                    </TxDtls>
+                </NtryDtls>
+            </Ntry>
+        </Ntfctn>
+    </BkToCstmrDbtCdtNtfctn>
+</Document>

@@ -1,0 +1,7 @@
+{
+  "type": "xslt",
+  "name": "ISO pacs.008 to SWIFT MT103",
+  "source": { "type": "xml", "file": "source.xml" },
+  "logic": { "type": "xslt", "file": "transform.xslt" },
+  "target": { "type": "mt" }
+}

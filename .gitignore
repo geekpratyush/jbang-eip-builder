@@ -26,3 +26,13 @@ Thumbs.db
 # Log files
 *.log
 lsp_log*.txt
+
+# Generated Sandbox Workspace Directories
+/route-builder/chapter-*/
+/route-builder/infra-simulator/
+/route-builder/FAKER/
+/route-builder/application.properties
+/test-project-workspace/FAKER/
+/test-project-workspace/infra-simulator/
+/infra-simulator/
+
