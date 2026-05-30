@@ -54,13 +54,15 @@ public class ConsolePane extends VBox {
 
         FontIcon copyIcon = new FontIcon("fas-copy");
         copyIcon.getStyleClass().add("console-icon");
-        Button btnCopy = new Button("Copy Logs", copyIcon);
+        Button btnCopy = new Button("", copyIcon);
+        btnCopy.setTooltip(new javafx.scene.control.Tooltip("Copy All Logs"));
         btnCopy.getStyleClass().add("console-button");
         btnCopy.setOnAction(e -> copyAllToClipboard());
 
         FontIcon clearIcon = new FontIcon("fas-trash-alt");
         clearIcon.getStyleClass().add("console-icon");
-        Button btnClear = new Button("Clear", clearIcon);
+        Button btnClear = new Button("", clearIcon);
+        btnClear.setTooltip(new javafx.scene.control.Tooltip("Clear Console"));
         btnClear.getStyleClass().add("console-button");
         btnClear.setOnAction(e -> clear());
 

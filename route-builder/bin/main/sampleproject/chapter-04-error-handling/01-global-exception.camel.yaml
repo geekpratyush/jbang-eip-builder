@@ -1,0 +1,33 @@
+# ID: global-exception-handler
+# ENABLED: true
+# DESCRIPTION: Global onException with retry, exponential backoff, and dead-letter channel
+# AUTHOR: Camel Studio
+# STUB: stub:jms:queue:DLQ (dead letter queue)
+
+- onException:
+    exception:
+      - "java.io.IOException"
+      - "java.net.ConnectException"
+    redeliveryPolicy:
+      maximumRedeliveries: 3
+      redeliveryDelay: 1000
+      backOffMultiplier: 2.0
+      useExponentialBackOff: true
+    handled:
+      constant: true
+    steps:
+      - log:
+          loggingLevel: ERROR
+          message: "[Chapter 4][DLQ] Routing to dead-letter after ${header.CamelRedeliveryCounter} retries: ${exception.message}"
+      - to: "{{dlq.uri}}"
+
+- route:
+    id: "flaky-downstream"
+    from:
+      uri: "timer:errors?period=3000&repeatCount=5"
+      steps:
+        - setBody:
+            simple: "Payload-${random(1,100)}"
+        - log: "[Chapter 4] Attempting to send: ${body}"
+        - to: "{{dlq.uri}}"
+        - log: "[Chapter 4] Sent successfully"

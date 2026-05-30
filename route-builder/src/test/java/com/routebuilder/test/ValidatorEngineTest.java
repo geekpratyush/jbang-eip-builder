@@ -41,8 +41,13 @@ public class ValidatorEngineTest {
         File validXmlFile = new File(tempWorkspace, "messages/xml/invoice-valid.xml");
         assertTrue(validXmlFile.exists());
         String validContent = Files.readString(validXmlFile.toPath());
+
+        File schemaFile = new File(tempWorkspace, "schemas/xsd/invoice-schema.xsd");
+        assertTrue(schemaFile.exists());
+        String schemaContent = Files.readString(schemaFile.toPath());
+
         List<String> errors = new ArrayList<>();
-        ValidatorStudioWindow.validateXmlAndXsd(validContent, tempWorkspace, errors);
+        ValidatorStudioWindow.validateXmlAndXsd(validContent, schemaContent, errors);
         assertTrue(errors.isEmpty(), "Valid XML should have no errors: " + errors);
 
         // Invalid XML
@@ -50,7 +55,7 @@ public class ValidatorEngineTest {
         assertTrue(invalidXmlFile.exists());
         String invalidContent = Files.readString(invalidXmlFile.toPath());
         errors.clear();
-        ValidatorStudioWindow.validateXmlAndXsd(invalidContent, tempWorkspace, errors);
+        ValidatorStudioWindow.validateXmlAndXsd(invalidContent, schemaContent, errors);
         assertFalse(errors.isEmpty(), "Invalid XML should report errors");
         assertTrue(errors.stream().anyMatch(e -> e.contains("Line")), "Errors should specify line number");
     }
@@ -61,8 +66,13 @@ public class ValidatorEngineTest {
         File validJsonFile = new File(tempWorkspace, "messages/json/customer-valid.json");
         assertTrue(validJsonFile.exists());
         String validContent = Files.readString(validJsonFile.toPath());
+
+        File schemaFile = new File(tempWorkspace, "schemas/json-schema/customer-schema.json");
+        assertTrue(schemaFile.exists());
+        String schemaContent = Files.readString(schemaFile.toPath());
+
         List<String> errors = new ArrayList<>();
-        ValidatorStudioWindow.validateJsonWithSchema(validContent, tempWorkspace, errors);
+        ValidatorStudioWindow.validateJsonWithSchema(validContent, schemaContent, errors);
         assertTrue(errors.isEmpty(), "Valid JSON should have no errors: " + errors);
 
         // Invalid JSON
@@ -70,7 +80,7 @@ public class ValidatorEngineTest {
         assertTrue(invalidJsonFile.exists());
         String invalidContent = Files.readString(invalidJsonFile.toPath());
         errors.clear();
-        ValidatorStudioWindow.validateJsonWithSchema(invalidContent, tempWorkspace, errors);
+        ValidatorStudioWindow.validateJsonWithSchema(invalidContent, schemaContent, errors);
         assertFalse(errors.isEmpty(), "Invalid JSON should report errors");
         assertTrue(errors.stream().anyMatch(e -> e.contains("email") || e.contains("pattern")), "Errors should report validation constraint violations");
     }
@@ -81,8 +91,13 @@ public class ValidatorEngineTest {
         File validYamlFile = new File(tempWorkspace, "messages/yaml/config-valid.yaml");
         assertTrue(validYamlFile.exists());
         String validContent = Files.readString(validYamlFile.toPath());
+
+        File schemaFile = new File(tempWorkspace, "schemas/json-schema/config-schema.json");
+        assertTrue(schemaFile.exists());
+        String schemaContent = Files.readString(schemaFile.toPath());
+
         List<String> errors = new ArrayList<>();
-        ValidatorStudioWindow.validateYamlWithSchema(validContent, tempWorkspace, errors);
+        ValidatorStudioWindow.validateYamlWithSchema(validContent, schemaContent, errors);
         assertTrue(errors.isEmpty(), "Valid YAML should have no errors: " + errors);
 
         // Invalid YAML
@@ -90,7 +105,7 @@ public class ValidatorEngineTest {
         assertTrue(invalidYamlFile.exists());
         String invalidContent = Files.readString(invalidYamlFile.toPath());
         errors.clear();
-        ValidatorStudioWindow.validateYamlWithSchema(invalidContent, tempWorkspace, errors);
+        ValidatorStudioWindow.validateYamlWithSchema(invalidContent, schemaContent, errors);
         assertFalse(errors.isEmpty(), "Invalid YAML should report errors");
     }
 
@@ -101,7 +116,7 @@ public class ValidatorEngineTest {
         assertTrue(validMtFile.exists());
         String validContent = Files.readString(validMtFile.toPath());
         List<String> errors = new ArrayList<>();
-        ValidatorStudioWindow.validateSwiftMt(validContent, false, errors);
+        ValidatorStudioWindow.validateSwiftMt(validContent, false, null, errors);
         assertTrue(errors.isEmpty(), "Valid MT103 should have no standard errors: " + errors);
 
         // Invalid MT103 (Standard)
@@ -109,15 +124,19 @@ public class ValidatorEngineTest {
         assertTrue(invalidMtFile.exists());
         String invalidContent = Files.readString(invalidMtFile.toPath());
         errors.clear();
-        ValidatorStudioWindow.validateSwiftMt(invalidContent, false, errors);
+        ValidatorStudioWindow.validateSwiftMt(invalidContent, false, null, errors);
         assertFalse(errors.isEmpty(), "Invalid MT103 should report standard errors");
 
         // Enhanced Mode: Valid Enhanced
         File validEnhMtFile = new File(tempWorkspace, "messages/mt/enhanced/mt103-valid-enhanced.txt");
         assertTrue(validEnhMtFile.exists());
         String validEnhContent = Files.readString(validEnhMtFile.toPath());
+
+        File rulesFile = new File(tempWorkspace, "validators/custom-mt-rules.json");
+        String rulesContent = rulesFile.exists() ? Files.readString(rulesFile.toPath()) : null;
+
         errors.clear();
-        ValidatorStudioWindow.validateSwiftMt(validEnhContent, true, errors);
+        ValidatorStudioWindow.validateSwiftMt(validEnhContent, true, rulesContent, errors);
         assertTrue(errors.isEmpty(), "Valid Enhanced MT103 should have no errors under enhanced mode: " + errors);
 
         // Enhanced Mode: Invalid Enhanced (Iran jurisdiction block, amount > 10M, etc.)
@@ -125,9 +144,10 @@ public class ValidatorEngineTest {
         assertTrue(invalidEnhMtFile.exists());
         String invalidEnhContent = Files.readString(invalidEnhMtFile.toPath());
         errors.clear();
-        ValidatorStudioWindow.validateSwiftMt(invalidEnhContent, true, errors);
+        ValidatorStudioWindow.validateSwiftMt(invalidEnhContent, true, rulesContent, errors);
+        System.out.println("DEBUG Swift MT errors: " + errors);
         assertFalse(errors.isEmpty(), "Invalid Enhanced MT103 should report enhanced rules violations");
-        assertTrue(errors.stream().anyMatch(e -> e.contains("Iran") || e.contains("exceeds 10M limit")), 
+        assertTrue(errors.stream().anyMatch(e -> e.contains("Iran") || e.contains("exceeds limit")), 
                    "Should report custom-rule violations");
     }
 
@@ -137,8 +157,13 @@ public class ValidatorEngineTest {
         File validIsoFile = new File(tempWorkspace, "messages/iso20022/pacs008-valid.xml");
         assertTrue(validIsoFile.exists());
         String validContent = Files.readString(validIsoFile.toPath());
+
+        File schemaFile = new File(tempWorkspace, "schemas/iso20022/pacs008-schema.xsd");
+        assertTrue(schemaFile.exists());
+        String schemaContent = Files.readString(schemaFile.toPath());
+
         List<String> errors = new ArrayList<>();
-        ValidatorStudioWindow.validateIso20022Mx(validContent, tempWorkspace, errors);
+        ValidatorStudioWindow.validateIso20022Mx(validContent, schemaContent, errors);
         assertTrue(errors.isEmpty(), "Valid MX should have no errors: " + errors);
 
         // Invalid pacs.008
@@ -146,7 +171,7 @@ public class ValidatorEngineTest {
         assertTrue(invalidIsoFile.exists());
         String invalidContent = Files.readString(invalidIsoFile.toPath());
         errors.clear();
-        ValidatorStudioWindow.validateIso20022Mx(invalidContent, tempWorkspace, errors);
+        ValidatorStudioWindow.validateIso20022Mx(invalidContent, schemaContent, errors);
         assertFalse(errors.isEmpty(), "Invalid MX should report errors");
     }
 
@@ -156,8 +181,13 @@ public class ValidatorEngineTest {
         File validCsvFile = new File(tempWorkspace, "messages/csv/transactions-valid.csv");
         assertTrue(validCsvFile.exists());
         String validContent = Files.readString(validCsvFile.toPath());
+
+        File schemaFile = new File(tempWorkspace, "schemas/csv/transactions-metadata.json");
+        assertTrue(schemaFile.exists());
+        String schemaContent = Files.readString(schemaFile.toPath());
+
         List<String> errors = new ArrayList<>();
-        ValidatorStudioWindow.validateCsvW(validContent, tempWorkspace, errors);
+        ValidatorStudioWindow.validateCsvW(validContent, schemaContent, errors);
         assertTrue(errors.isEmpty(), "Valid CSV should have no errors: " + errors);
 
         // Invalid CSV
@@ -165,7 +195,7 @@ public class ValidatorEngineTest {
         assertTrue(invalidCsvFile.exists());
         String invalidContent = Files.readString(invalidCsvFile.toPath());
         errors.clear();
-        ValidatorStudioWindow.validateCsvW(invalidContent, tempWorkspace, errors);
+        ValidatorStudioWindow.validateCsvW(invalidContent, schemaContent, errors);
         assertFalse(errors.isEmpty(), "Invalid CSV should report errors");
     }
 
@@ -175,8 +205,13 @@ public class ValidatorEngineTest {
         File validFlatFile = new File(tempWorkspace, "messages/flatfile/fixedwidth-valid.txt");
         assertTrue(validFlatFile.exists());
         String validContent = Files.readString(validFlatFile.toPath());
+
+        File schemaFile = new File(tempWorkspace, "schemas/flatfile/fixedwidth-schema.json");
+        assertTrue(schemaFile.exists());
+        String schemaContent = Files.readString(schemaFile.toPath());
+
         List<String> errors = new ArrayList<>();
-        ValidatorStudioWindow.validateFlatFile(validContent, tempWorkspace, errors);
+        ValidatorStudioWindow.validateFlatFile(validContent, schemaContent, errors);
         assertTrue(errors.isEmpty(), "Valid Flat File should have no errors: " + errors);
     }
 }

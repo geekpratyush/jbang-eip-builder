@@ -153,7 +153,24 @@ public class TransformationStudioWindow {
             LiquibaseExportWindow.showForTransformations(currentMappingsPath, checkedFiles);
         });
 
-        toolBar.getItems().addAll(btnRun, btnValidate, btnBrowseXsd, btnSave, new Separator(), btnConfig, btnSampleData, btnExport, new Separator(), lblStudioTitle, spacer, studioThemeBox);
+        Button btnDeployRemote = new Button("Copy to Remote", new FontIcon("fas-share-square"));
+        btnDeployRemote.getStyleClass().addAll("editor-btn", "btn-deploy");
+        btnDeployRemote.setTooltip(new Tooltip("Copy Selected Transformations to Remote Container Path"));
+        btnDeployRemote.setOnAction(e -> {
+            if (checkedFiles.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.WARNING, "Please select one or more transformations using the checkboxes in the Explorer.");
+                RouteBuilderApp.themeDialog(alert);
+                alert.showAndWait();
+                return;
+            }
+            RemoteDeployWindow.showForTransformations(currentMappingsPath, checkedFiles);
+        });
+
+        Button btnHelp = new Button("Help Guide", new FontIcon("fas-question-circle"));
+        btnHelp.getStyleClass().addAll("editor-btn", "btn-help");
+        btnHelp.setOnAction(e -> new RouteBuilderHelpWindow("Advanced Tools", "Transformation").show());
+
+        toolBar.getItems().addAll(btnRun, btnValidate, btnBrowseXsd, btnSave, new Separator(), btnConfig, btnSampleData, btnDeployRemote, btnExport, new Separator(), lblStudioTitle, spacer, btnHelp, new Separator(), studioThemeBox);
         root.setTop(toolBar);
 
         // --- Left Sidebar ---
@@ -396,65 +413,67 @@ public class TransformationStudioWindow {
     }
 
     private void buildTransformationUI() {
-        mainContentArea.setCenter(null);
-        SplitPane horizontalSplit = new SplitPane();
-        horizontalSplit.setOrientation(Orientation.HORIZONTAL);
+        Platform.runLater(() -> {
+            mainContentArea.setCenter(null);
+            SplitPane horizontalSplit = new SplitPane();
+            horizontalSplit.setOrientation(Orientation.HORIZONTAL);
 
-        sourceRawWebView = createWebView();
-        sourceXmlWebView = createWebView();
-        sourceRawEngine = sourceRawWebView.getEngine();
-        sourceXmlEngine = sourceXmlWebView.getEngine();
+            sourceRawWebView = createWebView();
+            sourceXmlWebView = createWebView();
+            sourceRawEngine = sourceRawWebView.getEngine();
+            sourceXmlEngine = sourceXmlWebView.getEngine();
 
-        VBox sourcePanel = new VBox();
-        if (isEnrichment || isMtToMx) {
-            SplitPane sourceSplit = new SplitPane();
-            sourceSplit.setOrientation(Orientation.VERTICAL);
-            VBox topBox = new VBox(createHeader(isEnrichment ? "Original Source" : "Raw Source", sourceRawEngine, true, f -> sourceRawFile = f), sourceRawWebView);
-            VBox.setVgrow(sourceRawWebView, Priority.ALWAYS);
-            VBox bottomBox = new VBox(createHeader(isEnrichment ? "Truncated Source" : "Converted XML", sourceXmlEngine, isEnrichment, f -> sourceXmlFile = f), sourceXmlWebView);
-            VBox.setVgrow(sourceXmlWebView, Priority.ALWAYS);
-            sourceSplit.getItems().addAll(topBox, bottomBox);
-            sourcePanel.getChildren().add(sourceSplit);
-            VBox.setVgrow(sourceSplit, Priority.ALWAYS);
-        } else {
-            sourcePanel.getChildren().addAll(createHeader("SOURCE", sourceXmlEngine, true, f -> sourceXmlFile = f), sourceXmlWebView);
-            VBox.setVgrow(sourceXmlWebView, Priority.ALWAYS);
-        }
+            VBox sourcePanel = new VBox();
+            if (isEnrichment || isMtToMx) {
+                SplitPane sourceSplit = new SplitPane();
+                sourceSplit.setOrientation(Orientation.VERTICAL);
+                VBox topBox = new VBox(createHeader(isEnrichment ? "Original Source" : "Raw Source", sourceRawEngine, true, f -> sourceRawFile = f), sourceRawWebView);
+                VBox.setVgrow(sourceRawWebView, Priority.ALWAYS);
+                VBox bottomBox = new VBox(createHeader(isEnrichment ? "Truncated Source" : "Converted XML", sourceXmlEngine, isEnrichment, f -> sourceXmlFile = f), sourceXmlWebView);
+                VBox.setVgrow(sourceXmlWebView, Priority.ALWAYS);
+                sourceSplit.getItems().addAll(topBox, bottomBox);
+                sourcePanel.getChildren().add(sourceSplit);
+                VBox.setVgrow(sourceSplit, Priority.ALWAYS);
+            } else {
+                sourcePanel.getChildren().addAll(createHeader("SOURCE", sourceXmlEngine, true, f -> sourceXmlFile = f), sourceXmlWebView);
+                VBox.setVgrow(sourceXmlWebView, Priority.ALWAYS);
+            }
 
-        VBox logicPanel = new VBox();
-        logicWebView = createWebView();
-        logicEngine = logicWebView.getEngine();
-        
-        org.json.JSONArray logicArr = currentConfig.optJSONArray("logic");
-        boolean isSmooks = "smooks".equalsIgnoreCase(transformationType);
-        if (logicArr != null && logicArr.length() > 1 && !isSmooks) {
-            logicSecondaryWebView = createWebView();
-            logicSecondaryEngine = logicSecondaryWebView.getEngine();
-            SplitPane logicSplit = new SplitPane();
-            logicSplit.setOrientation(Orientation.VERTICAL);
-            VBox topBox = new VBox(createHeader("CONFIG (" + transformationType.toUpperCase() + ")", logicEngine, true, f -> logicFile = f), logicWebView);
-            VBox.setVgrow(logicWebView, Priority.ALWAYS);
-            VBox bottomBox = new VBox(createHeader("SCHEMA / MODEL", logicSecondaryEngine, true, f -> logicSecondaryFile = f), logicSecondaryWebView);
-            VBox.setVgrow(logicSecondaryWebView, Priority.ALWAYS);
-            logicSplit.getItems().addAll(topBox, bottomBox);
-            logicPanel.getChildren().add(logicSplit);
-            VBox.setVgrow(logicSplit, Priority.ALWAYS);
-        } else {
-            logicSecondaryEngine = null;
-            logicPanel.getChildren().addAll(createHeader("LOGIC (" + transformationType.toUpperCase() + ")", logicEngine, true, f -> logicFile = f), logicWebView);
-            VBox.setVgrow(logicWebView, Priority.ALWAYS);
-        }
+            VBox logicPanel = new VBox();
+            logicWebView = createWebView();
+            logicEngine = logicWebView.getEngine();
+            
+            org.json.JSONArray logicArr = currentConfig.optJSONArray("logic");
+            boolean isSmooks = "smooks".equalsIgnoreCase(transformationType);
+            if (logicArr != null && logicArr.length() > 1 && !isSmooks) {
+                logicSecondaryWebView = createWebView();
+                logicSecondaryEngine = logicSecondaryWebView.getEngine();
+                SplitPane logicSplit = new SplitPane();
+                logicSplit.setOrientation(Orientation.VERTICAL);
+                VBox topBox = new VBox(createHeader("CONFIG (" + transformationType.toUpperCase() + ")", logicEngine, true, f -> logicFile = f), logicWebView);
+                VBox.setVgrow(logicWebView, Priority.ALWAYS);
+                VBox bottomBox = new VBox(createHeader("SCHEMA / MODEL", logicSecondaryEngine, true, f -> logicSecondaryFile = f), logicSecondaryWebView);
+                VBox.setVgrow(logicSecondaryWebView, Priority.ALWAYS);
+                logicSplit.getItems().addAll(topBox, bottomBox);
+                logicPanel.getChildren().add(logicSplit);
+                VBox.setVgrow(logicSplit, Priority.ALWAYS);
+            } else {
+                logicSecondaryEngine = null;
+                logicPanel.getChildren().addAll(createHeader("LOGIC (" + transformationType.toUpperCase() + ")", logicEngine, true, f -> logicFile = f), logicWebView);
+                VBox.setVgrow(logicWebView, Priority.ALWAYS);
+            }
 
-        VBox targetPanel = new VBox();
-        targetWebView = createWebView();
-        targetEngine = targetWebView.getEngine();
-        targetPanel.getChildren().addAll(createHeader("TARGET", targetEngine, false, null), targetWebView);
-        VBox.setVgrow(targetWebView, Priority.ALWAYS);
+            VBox targetPanel = new VBox();
+            targetWebView = createWebView();
+            targetEngine = targetWebView.getEngine();
+            targetPanel.getChildren().addAll(createHeader("TARGET", targetEngine, false, null), targetWebView);
+            VBox.setVgrow(targetWebView, Priority.ALWAYS);
 
-        horizontalSplit.getItems().addAll(sourcePanel, logicPanel, targetPanel);
-        horizontalSplit.setDividerPositions(0.33, 0.66);
-        mainContentArea.setCenter(horizontalSplit);
-        initEditors();
+            horizontalSplit.getItems().addAll(sourcePanel, logicPanel, targetPanel);
+            horizontalSplit.setDividerPositions(0.33, 0.66);
+            mainContentArea.setCenter(horizontalSplit);
+            initEditors();
+        });
     }
 
     private WebView createWebView() {
@@ -506,6 +525,18 @@ public class TransformationStudioWindow {
             btnSave.setOnAction(e -> saveEditorToFile(engine, false, onFileRefUpdated));
             header.getChildren().addAll(btnOpen, btnSave);
             if (title.contains("LOGIC") || title.contains("CONFIG")) {
+                Button btnVisualMap = createSmallButton("fas-map-marked-alt", "Sovereign Mapping Architect");
+                btnVisualMap.getStyleClass().add("btn-map-cyan");
+                boolean isMapApplicable = transformationType != null && (transformationType.equalsIgnoreCase("xslt") || transformationType.equalsIgnoreCase("jslt") || transformationType.toLowerCase().contains("enrichment") || transformationType.toLowerCase().contains("mt"));
+                btnVisualMap.setDisable(!isMapApplicable);
+                if (isMapApplicable) {
+                    btnVisualMap.setStyle("-fx-text-fill: #00e5ff; -fx-border-color: #00e5ff; -fx-border-radius: 4; -fx-border-width: 1px; -fx-padding: 1 5;");
+                } else {
+                    btnVisualMap.setStyle("-fx-text-fill: #555; -fx-border-color: #444; -fx-border-radius: 4; -fx-border-width: 1px; -fx-padding: 1 5;");
+                }
+                btnVisualMap.setOnAction(e -> showMappingArchitect());
+                header.getChildren().add(btnVisualMap);
+
                 Button btnSnippet = createSmallButton("fas-code", "Camel Route Snippet Info");
                 btnSnippet.getStyleClass().add("btn-snippet-info");
                 btnSnippet.setOnAction(e -> showSnippetWindow());
@@ -529,6 +560,21 @@ public class TransformationStudioWindow {
         });
         header.getChildren().addAll(btnSaveAs, btnCopy);
         return header;
+    }
+
+    private void showMappingArchitect() {
+        if (currentFolder == null) return;
+        try {
+            Object logicVal = logicEngine.executeScript("window.getValue()");
+            Object sourceVal = sourceXmlEngine.executeScript("window.getValue()");
+            String logicContent = (logicVal instanceof String) ? (String) logicVal : "";
+            String sourceContent = (sourceVal instanceof String) ? (String) sourceVal : "";
+            
+            MappingArchitectWindow architect = new MappingArchitectWindow();
+            architect.show("Visual Mapper - " + transformationType.toUpperCase(), logicContent, sourceContent);
+        } catch (Exception e) {
+            log("Error launching visual mapper: " + e.getMessage());
+        }
     }
 
     private Button createSmallButton(String icon, String tooltip) {
@@ -1572,6 +1618,7 @@ public class TransformationStudioWindow {
             }
             command.add("camel");
             command.add("run");
+            command.add("--port=0");
             command.add(tempFile.getAbsolutePath());
             for (String dep : deps) {
                 command.add("--dependency=" + dep);

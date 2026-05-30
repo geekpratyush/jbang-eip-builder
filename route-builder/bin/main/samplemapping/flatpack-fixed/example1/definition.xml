@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flatpack>
+  <column name="FIRSTNAME" length="10" />
+  <column name="LASTNAME" length="10" />
+  <column name="ADDRESS" length="15" />
+  <column name="CITY" length="10" />
+  <column name="STATE" length="2" />
+</flatpack>

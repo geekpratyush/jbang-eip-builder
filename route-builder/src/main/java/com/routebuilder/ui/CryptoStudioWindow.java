@@ -35,7 +35,20 @@ public class CryptoStudioWindow {
         tabPane.getTabs().add(createUrlTab(true));
         tabPane.getTabs().add(createUrlTab(false));
 
-        VBox layout = new VBox(tabPane);
+        HBox topBar = new HBox(10);
+        topBar.setPadding(new Insets(10, 15, 0, 15));
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        Label titleLbl = new Label("Crypto Studio");
+        titleLbl.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #eee;");
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Button btnHelp = new Button("Help Guide", new FontIcon("fas-question-circle"));
+        btnHelp.getStyleClass().add("toolbar-btn");
+        btnHelp.setOnAction(e -> new RouteBuilderHelpWindow("Advanced Tools", "Crypto").show());
+        topBar.getChildren().addAll(titleLbl, spacer, btnHelp);
+
+        VBox layout = new VBox(10, topBar, tabPane);
+        VBox.setVgrow(tabPane, Priority.ALWAYS);
         layout.getStyleClass().add("app-root");
         layout.getStyleClass().add(RouteBuilderApp.currentThemeClass);
         RouteBuilderApp.themedRoots.add(layout);

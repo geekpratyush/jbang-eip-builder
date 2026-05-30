@@ -1,0 +1,9 @@
+{
+  "type": "smooks",
+  "name": "Smooks Camel Routing Example",
+  "source": { "type": "xml", "file": "source.xml" },
+  "logic": [
+    { "type": "xml", "file": "smooks-config.xml" }
+  ],
+  "target": { "type": "xml" }
+}

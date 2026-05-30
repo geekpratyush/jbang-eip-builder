@@ -162,7 +162,8 @@ public class ClassDiagramPane extends VBox {
                 "          tertiaryColor: '" + tertiaryColor + "'" +
                 "        }" +
                 "      });" +
-                "      mermaid.render('graphDiv', code).then(({svg}) => {" +
+                "      const uniqueId = 'graphDiv_' + Math.floor(Math.random() * 1000000);" +
+                "      mermaid.render(uniqueId, code).then(({svg}) => {" +
                 "        container.innerHTML = svg;" +
                 "        status.innerHTML = 'Done';" +
                 "      }).catch(err => {" +
@@ -192,14 +193,23 @@ public class ClassDiagramPane extends VBox {
 
     private void renderCode(String mermaidCode) {
         lastMermaidCode = mermaidCode;
-        if (isInitialized) {
-            try {
+        if (engine.getLoadWorker().getState() == javafx.concurrent.Worker.State.RUNNING) {
+            return;
+        }
+        try {
+            Object res = engine.executeScript("typeof window.updateDiagram !== 'undefined'");
+            if (Boolean.TRUE.equals(res)) {
                 // Escape backticks and backslashes for JS string
                 String escaped = mermaidCode.replace("\\", "\\\\").replace("`", "\\`").replace("\n", "\\n").replace("'", "\\'");
                 engine.executeScript("window.updateDiagram('" + escaped + "')");
-            } catch (Exception e) {
-                // Fallback if script fails
-                System.err.println("JS Execution failed: " + e.getMessage());
+            } else {
+                engine.loadContent(generateBaseHtml());
+            }
+        } catch (Exception e) {
+            try {
+                engine.loadContent(generateBaseHtml());
+            } catch (Exception ex) {
+                System.err.println("Failed to reload WebView content: " + ex.getMessage());
             }
         }
     }
@@ -332,6 +342,10 @@ public class ClassDiagramPane extends VBox {
         java.util.Map<String, String> instanceTypes = new java.util.HashMap<>();
         java.util.Set<String> parsedJavaClasses = new java.util.HashSet<>();
 
+        java.util.List<String> routeSources = new java.util.ArrayList<>();
+        java.util.List<String> routeSteps = new java.util.ArrayList<>();
+        java.util.List<String> beanInstances = new java.util.ArrayList<>();
+
         try {
             JsonNode root = yamlMapper.readTree(yamlText);
             if (root != null && root.isArray()) {
@@ -340,11 +354,15 @@ public class ClassDiagramPane extends VBox {
                         for (JsonNode bean : item.get("beans")) {
                             String name = bean.has("name") ? bean.get("name").asText() : "Unnamed";
                             String type = bean.has("type") ? bean.get("type").asText() : "Object";
+                            if (type.startsWith("#class:")) {
+                                type = type.substring(7);
+                            }
                             String simpleType = type.contains(".") ? type.substring(type.lastIndexOf('.') + 1) : type;
 
                             String safeName = sanitize(name);
                             String safeSimpleType = sanitize(simpleType);
                             instanceTypes.put(safeName, safeSimpleType);
+                            beanInstances.add(safeName);
                             
                             java.util.List<String> members = classMembers.computeIfAbsent(safeName, k -> new java.util.ArrayList<>());
 
@@ -354,7 +372,16 @@ public class ClassDiagramPane extends VBox {
                                     String val = entry.getValue().asText();
                                     
                                     if (val.startsWith("#")) {
-                                        String targetBean = sanitize(val.substring(1));
+                                        String cleanVal = val.substring(1);
+                                        if (cleanVal.startsWith("bean:")) {
+                                            cleanVal = cleanVal.substring(5);
+                                        } else if (cleanVal.startsWith("class:")) {
+                                            cleanVal = cleanVal.substring(6);
+                                        }
+                                        if (cleanVal.startsWith("{{") && cleanVal.endsWith("}}")) {
+                                            cleanVal = cleanVal.substring(2, cleanVal.length() - 2);
+                                        }
+                                        String targetBean = sanitize(cleanVal);
                                         relations.add(safeName + " --> " + targetBean + " : depends");
                                         members.add(sanitize(key) + " : " + targetBean);
                                     } else {
@@ -368,6 +395,77 @@ public class ClassDiagramPane extends VBox {
 
                             // Resolve local Java class files
                             resolveJavaClassLocally(safeSimpleType, currentFile, classMembers, relations, externalClasses, parsedJavaClasses);
+                        }
+                    }
+
+                    // Extract route steps and relations to beans
+                    if (item.has("route") || item.has("from")) {
+                        JsonNode fromNode = item.has("from") ? item.get("from") : (item.has("route") ? item.get("route").get("from") : null);
+                        if (fromNode != null) {
+                            String fromUri = fromNode.has("uri") ? fromNode.get("uri").asText() : "direct:start";
+                            String sourceName = "Source_" + sanitize(fromUri);
+                            classMembers.computeIfAbsent(sourceName, k -> new java.util.ArrayList<>()).add("<<Camel Route Source>>");
+                            instanceTypes.put(sourceName, "Endpoint");
+                            routeSources.add(sourceName);
+
+                            String lastStepNode = sourceName;
+                            if (fromNode.has("steps") && fromNode.get("steps").isArray()) {
+                                int stepIdx = 1;
+                                for (JsonNode step : fromNode.get("steps")) {
+                                    String stepType = step.fieldNames().hasNext() ? step.fieldNames().next() : "step";
+                                    JsonNode stepDetails = step.get(stepType);
+
+                                    String stepLabel = stepType;
+                                    java.util.List<String> stepRefs = new java.util.ArrayList<>();
+
+                                    if (stepDetails != null) {
+                                        if (stepDetails.isTextual()) {
+                                            stepLabel = stepType + ": " + stepDetails.asText();
+                                        } else if (stepDetails.has("uri")) {
+                                            stepLabel = stepType + ": " + stepDetails.get("uri").asText();
+                                            String uriVal = stepDetails.get("uri").asText();
+                                            if (uriVal.startsWith("bean:")) {
+                                                String r = uriVal.substring(5);
+                                                if (r.contains("?")) {
+                                                    r = r.substring(0, r.indexOf('?'));
+                                                }
+                                                stepRefs.add(r);
+                                            }
+                                        } else if (stepDetails.has("ref")) {
+                                            stepRefs.add(stepDetails.get("ref").asText());
+                                            stepLabel = stepType + " ref: " + stepDetails.get("ref").asText();
+                                        }
+                                        
+                                        // Also search parameters/properties for bean references
+                                        if (stepDetails.has("parameters") && stepDetails.get("parameters").isObject()) {
+                                            scanForBeanReferences(stepDetails.get("parameters"), stepRefs);
+                                        }
+                                        scanForBeanReferences(stepDetails, stepRefs);
+                                    } else if (step.isTextual()) {
+                                        stepLabel = stepType + ": " + step.asText();
+                                    }
+
+                                    String stepNodeName = "Step_" + stepIdx + "_" + sanitize(stepType);
+                                    java.util.List<String> stepMembers = classMembers.computeIfAbsent(stepNodeName, k -> new java.util.ArrayList<>());
+                                    stepMembers.add("<<Route Step>>");
+                                    stepMembers.add(sanitize(stepLabel));
+                                    instanceTypes.put(stepNodeName, stepType);
+                                    routeSteps.add(stepNodeName);
+
+                                    relations.add(lastStepNode + " --> " + stepNodeName + " : flow");
+
+                                    for (String ref : stepRefs) {
+                                        if (ref.startsWith("{{") && ref.endsWith("}}")) {
+                                            ref = ref.substring(2, ref.length() - 2);
+                                        }
+                                        String safeBeanRef = sanitize(ref);
+                                        relations.add(stepNodeName + " ..> " + safeBeanRef + " : references");
+                                    }
+
+                                    lastStepNode = stepNodeName;
+                                    stepIdx++;
+                                }
+                            }
                         }
                     }
                 }
@@ -397,6 +495,17 @@ public class ClassDiagramPane extends VBox {
 
             for (String rel : relations) {
                 sb.append(rel).append("\n");
+            }
+
+            // Apply stunning themed styles
+            for (String src : routeSources) {
+                sb.append(getEndpointStyleString(src));
+            }
+            for (String step : routeSteps) {
+                sb.append(getStepStyleString(step));
+            }
+            for (String bn : beanInstances) {
+                sb.append(getBeanStyleString(bn));
             }
 
         } catch (Exception e) {
@@ -524,5 +633,101 @@ public class ClassDiagramPane extends VBox {
         }
         
         return "style " + ext + " fill:" + fill + ",stroke:" + stroke + ",stroke-width:2px,color:" + color + "\n";
+    }
+
+    private String getEndpointStyleString(String ext) {
+        String fill = "#1b4d3e"; 
+        String stroke = "#2e7d32";
+        String color = "#fff";
+        
+        if ("IntelliJ Light".equalsIgnoreCase(currentTheme)) {
+            fill = "#d1fae5"; 
+            stroke = "#10b981";
+            color = "#065f46";
+        } else if ("Dracula".equalsIgnoreCase(currentTheme)) {
+            fill = "#1b4d3e";
+            stroke = "#50fa7b";
+            color = "#f8f8f2";
+        } else if ("Monokai".equalsIgnoreCase(currentTheme)) {
+            fill = "#272822";
+            stroke = "#a6e22e";
+            color = "#f8f8f2";
+        } else if ("Hacker".equalsIgnoreCase(currentTheme)) {
+            fill = "#001a00";
+            stroke = "#00ff00";
+            color = "#00ff00";
+        }
+        return "style " + ext + " fill:" + fill + ",stroke:" + stroke + ",stroke-width:2px,color:" + color + "\n";
+    }
+
+    private String getStepStyleString(String ext) {
+        String fill = "#1a365d"; 
+        String stroke = "#3182ce";
+        String color = "#fff";
+        
+        if ("IntelliJ Light".equalsIgnoreCase(currentTheme)) {
+            fill = "#dbeafe"; 
+            stroke = "#3b82f6";
+            color = "#1e3a8a";
+        } else if ("Dracula".equalsIgnoreCase(currentTheme)) {
+            fill = "#2d3748";
+            stroke = "#8be9fd";
+            color = "#f8f8f2";
+        } else if ("Monokai".equalsIgnoreCase(currentTheme)) {
+            fill = "#272822";
+            stroke = "#66d9ef";
+            color = "#f8f8f2";
+        } else if ("Hacker".equalsIgnoreCase(currentTheme)) {
+            fill = "#000033";
+            stroke = "#00ffff";
+            color = "#00ffff";
+        }
+        return "style " + ext + " fill:" + fill + ",stroke:" + stroke + ",stroke-width:2px,color:" + color + "\n";
+    }
+
+    private String getBeanStyleString(String ext) {
+        String fill = "#4c1d95"; 
+        String stroke = "#8b5cf6";
+        String color = "#fff";
+        
+        if ("IntelliJ Light".equalsIgnoreCase(currentTheme)) {
+            fill = "#f3e8ff"; 
+            stroke = "#a855f7";
+            color = "#5b21b6";
+        } else if ("Dracula".equalsIgnoreCase(currentTheme)) {
+            fill = "#4c1d95";
+            stroke = "#bd93f9";
+            color = "#f8f8f2";
+        } else if ("Monokai".equalsIgnoreCase(currentTheme)) {
+            fill = "#272822";
+            stroke = "#ae81ff";
+            color = "#f8f8f2";
+        } else if ("Hacker".equalsIgnoreCase(currentTheme)) {
+            fill = "#1a001a";
+            stroke = "#ff00ff";
+            color = "#ff00ff";
+        }
+        return "style " + ext + " fill:" + fill + ",stroke:" + stroke + ",stroke-width:2px,color:" + color + "\n";
+    }
+
+    private void scanForBeanReferences(JsonNode node, java.util.List<String> refsList) {
+        if (node.isObject()) {
+            node.fields().forEachRemaining(entry -> {
+                JsonNode valNode = entry.getValue();
+                if (valNode.isTextual()) {
+                    String val = valNode.asText();
+                    if (val.startsWith("#")) {
+                        String clean = val.substring(1);
+                        if (clean.startsWith("bean:")) {
+                            clean = clean.substring(5);
+                        }
+                        if (clean.startsWith("class:")) {
+                            clean = clean.substring(6);
+                        }
+                        refsList.add(clean);
+                    }
+                }
+            });
+        }
     }
 }

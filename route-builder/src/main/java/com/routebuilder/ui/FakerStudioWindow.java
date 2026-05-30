@@ -209,6 +209,10 @@ public class FakerStudioWindow {
         Label lblDb = new Label("Database:");
         lblDb.setStyle("-fx-text-fill: -fx-text-background-color;");
 
+        Button btnHelp = new Button("Help Guide", new FontIcon("fas-question-circle"));
+        btnHelp.getStyleClass().add("toolbar-btn");
+        btnHelp.setOnAction(e -> new RouteBuilderHelpWindow("Advanced Tools", "Faker").show());
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
@@ -216,7 +220,7 @@ public class FakerStudioWindow {
             btnNew, btnSave, btnRefresh, new Separator(),
             btnGenerate, btnStartFaking, btnStopFaking, lblDelay, delaySpinner,
             new Separator(), lblDb, dbComboBox,
-            spacer, studioThemeBox
+            spacer, btnHelp, new Separator(), studioThemeBox
         );
         root.setTop(toolBar);
 

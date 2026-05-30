@@ -1,0 +1,21 @@
+# ID: rest-producer
+# ENABLED: true
+# DESCRIPTION: Calls an external REST API using the http component (stubbed for offline)
+# AUTHOR: Camel Studio
+# STUB: stub:http:api.example.com (replaces real HTTP)
+
+- route:
+    id: "rest-api-caller"
+    from:
+      uri: "timer:http?period=5000&repeatCount=4"
+      steps:
+        - setHeader:
+            name: "CamelHttpMethod"
+            constant: "GET"
+        - setHeader:
+            name: "Accept"
+            constant: "application/json"
+        - log: "[Chapter 6][REST] Calling external API..."
+        - to: "stub:http:api.example.com/api/v1/products"
+        - log: "[Chapter 6][REST] API Response: ${body}"
+        - to: "mock:api-result"

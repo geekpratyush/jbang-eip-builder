@@ -1,0 +1,25 @@
+# ID: wiretap-audit
+# ENABLED: true
+# DESCRIPTION: WireTap pattern — async audit copy without slowing main flow
+# AUTHOR: Camel Studio
+# STUB: mock (stub replaces JMS audit queue)
+
+- route:
+    id: "main-payment-flow"
+    from:
+      uri: "timer:payment?period=3000&repeatCount=4"
+      steps:
+        - setBody:
+            constant: '{"txId":"TX-${random(1000,9999)}","amount":500}'
+        - log: "[Chapter 2] Processing payment: ${body}"
+        - wireTap:
+            uri: "{{wiretap.audit.uri}}"
+        - to: "mock:payment-processed"
+
+- route:
+    id: "audit-consumer"
+    from:
+      uri: "{{wiretap.audit.uri}}"
+      steps:
+        - log: "[Chapter 2][AUDIT] Captured audit event: ${body}"
+        - to: "mock:audit-log"

@@ -1,0 +1,22 @@
+# ID: split-aggregate
+# ENABLED: true
+# DESCRIPTION: Splitter + Aggregator pattern — split batch, process items, recombine
+# AUTHOR: Camel Studio
+# STUB: none
+
+- route:
+    id: "batch-splitter"
+    from:
+      uri: "timer:batch?period=6000&repeatCount=3"
+      steps:
+        - setBody:
+            constant: "item1,item2,item3,item4,item5"
+        - log: "[Chapter 5][SPLIT] Splitting batch: ${body}"
+        - split:
+            simple: "${body}"
+            delimiter: ","
+            steps:
+              - log: "[Chapter 5][SPLIT] Processing item: ${body}"
+              - setBody:
+                  simple: "PROCESSED:${body}:${date:now:HH:mm:ss}"
+              - to: "mock:split-item"

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "MX-401",
+    "username": "alice_db",
+    "role": "DATABASE_ADMIN",
+    "status": "ACTIVE"
+  },
+  {
+    "id": "MX-402",
+    "username": "bob_db",
+    "role": "REPORT_WRITER",
+    "status": "SUSPENDED"
+  }
+]

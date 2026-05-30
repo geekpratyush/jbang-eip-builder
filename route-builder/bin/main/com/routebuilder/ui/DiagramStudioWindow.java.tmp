@@ -1,0 +1,28 @@
+    private void loadMonacoForTab(Tab tab, String content, String language) {
+        WebEngine engine = tabEngines.get(tab);
+        String activeTheme = RouteBuilderApp.currentThemeClass;
+        
+        String monacoBase = getClass().getResource("/monaco/vs/loader.js").toExternalForm();
+        monacoBase = monacoBase.substring(0, monacoBase.lastIndexOf("/vs/loader.js"));
+
+        String html = getMonacoHtml(content, language);
+        
+        engine.getLoadWorker().stateProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == javafx.concurrent.Worker.State.SUCCEEDED) {
+                JSObject window = (JSObject) engine.executeScript("window");
+                window.setMember("javaBridge", new DiagramBridge(tab));
+                
+                // Ensure theme is set after load
+                String mTheme = activeTheme.contains("light") ? "vs" : "vs-dark";
+                engine.executeScript("if(window.setTheme) window.setTheme('" + mTheme + "');");
+            }
+        });
+        
+        engine.loadContent(html, "text/html", "UTF-8", monacoBase + "/");
+    }
+
+    private void loadCanvasForTab(Tab tab, String content, String type) {
+        WebEngine engine = tabCanvasEngines.get(tab);
+        String html = getCanvasHtml(content, type);
+        engine.loadContent(html);
+    }

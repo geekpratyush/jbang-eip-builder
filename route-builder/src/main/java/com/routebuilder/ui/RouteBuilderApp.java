@@ -108,7 +108,7 @@ public class RouteBuilderApp extends Application {
         return new FontIcon("fas-file");
     }
 
-    private YamlEditorPane editorPane;
+    public YamlEditorPane editorPane;
     private DiagramPane diagramPane;
     private RouteTreePane treePane;
     private com.routebuilder.lsp.LspManager lspManager;
@@ -138,7 +138,7 @@ public class RouteBuilderApp extends Application {
         dialog.setOnCloseRequest(e -> themedRoots.remove(dialog.getDialogPane()));
     }
 
-    private void showConsole(Process process, String title) {
+    public void showConsole(Process process, String title) {
         javafx.application.Platform.runLater(() -> {
             if (consolePane != null) {
                 consolePane.clear();
@@ -180,6 +180,23 @@ public class RouteBuilderApp extends Application {
         }
     }
 
+    public void stopCurrentProcess() {
+        if (runnerProcess[0] != null && runnerProcess[0].isAlive()) {
+            runnerProcess[0].destroy();
+            runnerProcess[0].descendants().forEach(ProcessHandle::destroyForcibly);
+            runnerProcess[0] = null;
+        }
+        if (btnStop != null) {
+            btnStop.setDisable(true);
+        }
+    }
+
+    public void setRunnerProcess(Process p) {
+        this.runnerProcess[0] = p;
+        if (btnStop != null) {
+            btnStop.setDisable(false);
+        }
+    }
 
     private void showManual() {
         javafx.scene.web.WebView webView = new javafx.scene.web.WebView();
@@ -319,15 +336,123 @@ public class RouteBuilderApp extends Application {
         searchBox.setPromptText("Search Manual...");
         javafx.scene.control.CustomMenuItem searchItem = new javafx.scene.control.CustomMenuItem(searchBox, false);
         
+        javafx.scene.control.MenuItem helpGuideItem = new javafx.scene.control.MenuItem("Open Help Guide...", new org.kordamp.ikonli.javafx.FontIcon("fas-question-circle"));
+        helpGuideItem.setOnAction(e -> new RouteBuilderHelpWindow().show());
+
         javafx.scene.control.MenuItem manualItem = new javafx.scene.control.MenuItem("Open User Manual");
         manualItem.setOnAction(e -> showManual());
 
         javafx.scene.control.MenuItem interactiveHelpItem = new javafx.scene.control.MenuItem("Open Help Portal");
         interactiveHelpItem.setOnAction(e -> viewHelpItem.setSelected(true));
 
-        helpMenu.getItems().addAll(maxItem, restoreItem, new javafx.scene.control.SeparatorMenuItem(), searchItem, manualItem, interactiveHelpItem);
+        helpMenu.getItems().addAll(maxItem, restoreItem, new javafx.scene.control.SeparatorMenuItem(), searchItem, helpGuideItem, manualItem, interactiveHelpItem);
         
-        menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, helpMenu);
+        javafx.scene.control.Menu toolsMenu = new javafx.scene.control.Menu("_Tools");
+        
+        javafx.scene.control.MenuItem variablesItem = new javafx.scene.control.MenuItem("Variables Editor...");
+        variablesItem.setOnAction(e -> {
+            java.io.File baseDir = treePane.getBaseDirectory();
+            if (baseDir != null) {
+                VariablesEditorWindow.show(baseDir, null);
+            } else {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Please open a folder or workspace first.");
+                themeDialog(alert);
+                alert.showAndWait();
+            }
+        });
+
+        javafx.scene.control.MenuItem toolsCryptoItem = new javafx.scene.control.MenuItem("Crypto Studio...");
+        toolsCryptoItem.setOnAction(e -> CryptoStudioWindow.show());
+
+        javafx.scene.control.MenuItem transformItem = new javafx.scene.control.MenuItem("Data Transformation Studio...");
+        transformItem.setOnAction(e -> {
+            TransformationStudioWindow studio = new TransformationStudioWindow();
+            studio.show();
+        });
+
+        javafx.scene.control.MenuItem validateItem = new javafx.scene.control.MenuItem("Universal Validator Studio...");
+        validateItem.setOnAction(e -> {
+            ValidatorStudioWindow validatorStudio = new ValidatorStudioWindow();
+            validatorStudio.show();
+        });
+
+        javafx.scene.control.MenuItem diagramItem = new javafx.scene.control.MenuItem("Universal Diagram Studio...");
+        diagramItem.setOnAction(e -> {
+            DiagramStudioWindow diagramStudio = new DiagramStudioWindow();
+            diagramStudio.show();
+        });
+
+        javafx.scene.control.MenuItem fakerItem = new javafx.scene.control.MenuItem("Faker & Template Studio...");
+        fakerItem.setOnAction(e -> {
+            java.io.File baseDir = treePane.getBaseDirectory();
+            FakerStudioWindow fakerStudio = new FakerStudioWindow(baseDir);
+            fakerStudio.show();
+        });
+
+        javafx.scene.control.MenuItem kameletBuilderItem = new javafx.scene.control.MenuItem("Kamelet Builder...");
+        kameletBuilderItem.setOnAction(e -> {
+            java.io.File baseDir = treePane.getBaseDirectory();
+            if (baseDir != null) {
+                KameletStudioWindow.show(baseDir);
+            } else {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Please open a folder or workspace first.");
+                themeDialog(alert);
+                alert.showAndWait();
+            }
+        });
+
+        javafx.scene.control.MenuItem dependencyCatalogItem = new javafx.scene.control.MenuItem("Dependency Catalog...");
+        dependencyCatalogItem.setOnAction(e -> {
+            java.io.File baseDir = treePane.getBaseDirectory();
+            if (baseDir != null) {
+                DependencyCatalogWindow.show(baseDir);
+            } else {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Please open a folder or workspace first.");
+                themeDialog(alert);
+                alert.showAndWait();
+            }
+        });
+
+        javafx.scene.control.MenuItem exportItem = new javafx.scene.control.MenuItem("Export to Liquibase...");
+        exportItem.setOnAction(e -> {
+            java.util.Set<java.io.File> checked = treePane.getCheckedFiles();
+            if (checked.isEmpty()) {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Please select one or more routes using the checkboxes in the Explorer.");
+                themeDialog(alert);
+                alert.showAndWait();
+                return;
+            }
+            LiquibaseExportWindow.showForRoutes(treePane.getBaseDirectory(), checked);
+        });
+
+        javafx.scene.control.MenuItem remoteDeployItem = new javafx.scene.control.MenuItem("Deploy Remotely...");
+        remoteDeployItem.setOnAction(e -> {
+            java.util.Set<java.io.File> checked = treePane.getCheckedFiles();
+            if (checked.isEmpty()) {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Please select one or more routes using the checkboxes in the Explorer.");
+                themeDialog(alert);
+                alert.showAndWait();
+                return;
+            }
+            RemoteDeployWindow.showForRoutes(treePane.getBaseDirectory(), checked);
+        });
+
+        toolsMenu.getItems().addAll(
+            variablesItem,
+            toolsCryptoItem,
+            transformItem,
+            validateItem,
+            diagramItem,
+            fakerItem,
+            new javafx.scene.control.SeparatorMenuItem(),
+            kameletBuilderItem,
+            dependencyCatalogItem,
+            new javafx.scene.control.SeparatorMenuItem(),
+            remoteDeployItem,
+            exportItem
+        );
+
+        menuBar.getMenus().addAll(fileMenu, editMenu, toolsMenu, viewMenu, helpMenu);
         
         javafx.scene.control.ToolBar toolBar = new javafx.scene.control.ToolBar();
         javafx.scene.control.ToggleButton btnViewExplorer = new javafx.scene.control.ToggleButton("Explorer", new org.kordamp.ikonli.javafx.FontIcon("fas-folder"));
@@ -367,10 +492,24 @@ public class RouteBuilderApp extends Application {
             }
             LiquibaseExportWindow.showForRoutes(treePane.getBaseDirectory(), checked);
         });
+
+        javafx.scene.control.Button btnRemoteDeploy = new javafx.scene.control.Button("Run Remotely", new org.kordamp.ikonli.javafx.FontIcon("fas-server"));
+        btnRemoteDeploy.getStyleClass().addAll("toolbar-btn", "btn-deploy");
+        btnRemoteDeploy.setTooltip(new javafx.scene.control.Tooltip("Deploy & Test Selected Routes on Remote Container"));
+        btnRemoteDeploy.setOnAction(e -> {
+            java.util.Set<java.io.File> checked = treePane.getCheckedFiles();
+            if (checked.isEmpty()) {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Please select one or more routes using the checkboxes in the Explorer.");
+                themeDialog(alert);
+                alert.showAndWait();
+                return;
+            }
+            RemoteDeployWindow.showForRoutes(treePane.getBaseDirectory(), checked);
+        });
         
-        javafx.scene.control.Button btnManual = new javafx.scene.control.Button("Manual", new org.kordamp.ikonli.javafx.FontIcon("fas-book"));
+        javafx.scene.control.Button btnManual = new javafx.scene.control.Button("Help Guide", new org.kordamp.ikonli.javafx.FontIcon("fas-question-circle"));
         btnManual.getStyleClass().addAll("toolbar-btn", "btn-manual");
-        btnManual.setOnAction(e -> showManual());
+        btnManual.setOnAction(e -> new RouteBuilderHelpWindow().show());
 
         javafx.scene.control.Button btnVariables = new javafx.scene.control.Button("Variables", new org.kordamp.ikonli.javafx.FontIcon("fas-cube"));
         btnVariables.getStyleClass().addAll("toolbar-btn", "btn-variables");
@@ -392,11 +531,6 @@ public class RouteBuilderApp extends Application {
         btnCrypto.getStyleClass().addAll("toolbar-btn", "btn-decrypt");
         btnCrypto.setTooltip(new javafx.scene.control.Tooltip("Open Universal Crypto Studio (AES, Base64, URL)"));
         btnCrypto.setOnAction(e -> CryptoStudioWindow.show());
-
-        javafx.scene.control.Button btnXsltMapper = new javafx.scene.control.Button("Map", new org.kordamp.ikonli.javafx.FontIcon("fas-map-marked-alt"));
-        btnXsltMapper.getStyleClass().addAll("toolbar-btn", "btn-xslt");
-        btnXsltMapper.setTooltip(new javafx.scene.control.Tooltip("Open Visual XSLT Data Mapper"));
-        btnXsltMapper.setOnAction(e -> XsltMapperWindow.show());
 
         javafx.scene.control.Button btnTransform = new javafx.scene.control.Button("Transform", new org.kordamp.ikonli.javafx.FontIcon("fas-random"));
         btnTransform.getStyleClass().addAll("toolbar-btn", "btn-transform");
@@ -431,19 +565,47 @@ public class RouteBuilderApp extends Application {
             fakerStudio.show();
         });
 
+        javafx.scene.control.Button btnKamelets = new javafx.scene.control.Button("Kamelets", new org.kordamp.ikonli.javafx.FontIcon("fas-puzzle-piece"));
+        btnKamelets.getStyleClass().addAll("toolbar-btn", "btn-kamelets");
+        btnKamelets.setTooltip(new javafx.scene.control.Tooltip("Open Kamelet Studio Builder"));
+        btnKamelets.setOnAction(e -> {
+            java.io.File base = treePane.getBaseDirectory();
+            if (base != null) {
+                KameletStudioWindow.show(base);
+            } else {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Please open a folder or workspace first.");
+                themeDialog(alert);
+                alert.showAndWait();
+            }
+        });
+
+        javafx.scene.control.Button btnDeps = new javafx.scene.control.Button("Dependencies", new org.kordamp.ikonli.javafx.FontIcon("fas-list"));
+        btnDeps.getStyleClass().addAll("toolbar-btn", "btn-dependencies");
+        btnDeps.setTooltip(new javafx.scene.control.Tooltip("Open Dependency Catalog Manager"));
+        btnDeps.setOnAction(e -> {
+            java.io.File base = treePane.getBaseDirectory();
+            if (base != null) {
+                DependencyCatalogWindow.show(base);
+            } else {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Please open a folder or workspace first.");
+                themeDialog(alert);
+                alert.showAndWait();
+            }
+        });
+
         java.util.prefs.Preferences startupPrefs = java.util.prefs.Preferences.userNodeForPackage(RouteBuilderApp.class);
         String savedTheme = startupPrefs.get("themeName", "VSCode Dark");
         currentThemeName = savedTheme;
         currentThemeClass = "theme-" + savedTheme.toLowerCase().replace(" ", "-");
 
         javafx.scene.control.ComboBox<String> themeBox = new javafx.scene.control.ComboBox<>();
-        themeBox.getItems().addAll("VSCode Dark", "IntelliJ Light", "Dracula", "Monokai", "Hacker");
+        themeBox.getItems().addAll("VSCode Dark", "IntelliJ Light", "One Dark", "Dracula", "Monokai", "Solarized Dark", "GitHub Light", "Hacker");
         themeBox.setValue(savedTheme);
         globalThemeBox = themeBox;
         themeBox.setTooltip(new javafx.scene.control.Tooltip("Change IDE Theme"));
         themeBox.setOnAction(e -> applyTheme(themeBox.getValue(), root));
 
-        toolBar.getItems().addAll(btnViewExplorer, btnViewCode, btnViewDiagram, new javafx.scene.control.Separator(), btnSwapPanels, new javafx.scene.control.Separator(), btnPlay, btnStop, new javafx.scene.control.Separator(), btnVariables, btnCrypto, btnXsltMapper, btnTransform, btnValidateStudio, btnDiagramStudio, btnFakerStudio, btnExport, btnManual, new javafx.scene.control.Separator(), themeBox);
+        toolBar.getItems().addAll(btnViewExplorer, btnViewCode, btnViewDiagram, new javafx.scene.control.Separator(), btnSwapPanels, new javafx.scene.control.Separator(), btnPlay, btnStop, new javafx.scene.control.Separator(), btnVariables, btnCrypto, btnTransform, btnValidateStudio, btnDiagramStudio, btnFakerStudio, btnKamelets, btnDeps, btnRemoteDeploy, btnExport, btnManual, new javafx.scene.control.Separator(), themeBox);
 
         boolean[] swapCodeDiagram = {false};
 
@@ -459,59 +621,56 @@ public class RouteBuilderApp extends Application {
         mainSplitPane.setOrientation(Orientation.HORIZONTAL);
         mainSplitPane.getStyleClass().add("main-split-pane");
 
-        // 1. Left Panel: Route Tree (Passes file to editor when clicked)
-        treePane = new RouteTreePane(file -> {
-            if (file == null) {
-                editorPane.closeFile();
-                if (mainSplitPane.getItems().contains(editorPane)) {
-                    mainSplitPane.getItems().remove(editorPane);
-                }
-            } else {
-                if (!mainSplitPane.getItems().contains(editorPane) && viewCodeItem.isSelected()) {
-                    mainSplitPane.getItems().add(1, editorPane);
-                    mainSplitPane.setDividerPositions(0.18, 0.6);
-                }
-                editorPane.loadFile(file);
-            }
-        });
-        
-        treePane.setOnCheckedFilesChanged(() -> {
+        // Helper to refresh layout based on selection/checks
+        Runnable refreshGlobalLayout = () -> {
             java.util.Set<java.io.File> checked = treePane.getCheckedFiles();
-            java.util.List<java.io.File> files = new java.util.ArrayList<>(checked);
-            if (files.size() > 1) {
+            java.util.List<java.io.File> checkedList = new java.util.ArrayList<>(checked);
+            javafx.scene.control.TreeItem<java.io.File> selectedItem = treePane.getTreeView().getSelectionModel().getSelectedItem();
+            java.io.File selectedFile = (selectedItem != null && selectedItem.getValue().isFile()) ? selectedItem.getValue() : null;
+
+            if (checkedList.size() > 1) {
+                // Multi-route mode: Hide code, show all diagrams
                 viewCodeItem.setSelected(false);
-                
-                // Render all diagrams
                 java.util.List<String> contents = new java.util.ArrayList<>();
-                for (java.io.File f : files) {
-                    try {
-                        contents.add(java.nio.file.Files.readString(f.toPath()));
-                    } catch (Exception ignored) {}
+                for (java.io.File f : checkedList) {
+                    try { contents.add(java.nio.file.Files.readString(f.toPath())); } catch (Exception ignored) {}
                 }
                 diagramPane.setCurrentFile(null);
                 diagramPane.renderDiagrams(contents);
-            } else if (files.size() == 1) {
-                viewCodeItem.setSelected(true);
-                try {
-                    String content = java.nio.file.Files.readString(files.get(0).toPath());
-                    diagramPane.setCurrentFile(files.get(0));
-                    diagramPane.renderDiagram(content);
-                } catch (Exception ignored) {}
             } else {
-                diagramPane.renderDiagram("");
+                // Single route mode: Show code panel
+                viewCodeItem.setSelected(true);
+                java.io.File target = (checkedList.size() == 1) ? checkedList.get(0) : selectedFile;
+                
+                if (target != null) {
+                    editorPane.loadFile(target);
+                    try {
+                        String content = java.nio.file.Files.readString(target.toPath());
+                        diagramPane.setCurrentFile(target);
+                        diagramPane.renderDiagram(content);
+                    } catch (Exception ignored) {}
+                } else {
+                    editorPane.closeFile();
+                    diagramPane.renderDiagram("");
+                }
             }
             
             boolean hasChecked = !checked.isEmpty();
-            boolean hasSelected = treePane.getTreeView().getSelectionModel().getSelectedItem() != null;
+            boolean hasSelected = selectedFile != null;
             boolean isRunning = runnerProcess[0] != null && runnerProcess[0].isAlive();
             btnPlay.setDisable(isRunning || (!hasChecked && !hasSelected));
+        };
+
+        // 1. Left Panel: Route Tree
+        treePane = new RouteTreePane(file -> {
+            // This is called on single-click or double-click selection
+            refreshGlobalLayout.run();
         });
         
+        treePane.setOnCheckedFilesChanged(refreshGlobalLayout);
+        
         treePane.getTreeView().getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            boolean hasChecked = !treePane.getCheckedFiles().isEmpty();
-            boolean hasSelected = newVal != null;
-            boolean isRunning = runnerProcess[0] != null && runnerProcess[0].isAlive();
-            btnPlay.setDisable(isRunning || (!hasChecked && !hasSelected));
+            refreshGlobalLayout.run();
         });
 
         themedRoots.add(treePane);
@@ -549,6 +708,7 @@ public class RouteBuilderApp extends Application {
                 if (offline) command.add("--offline");
                 command.add("camel");
                 command.add("run");
+                command.add("--port=0");
                 command.add("--console"); // Enable interactive-style output
                 command.add("--logging-level=info");
                 
@@ -631,6 +791,9 @@ public class RouteBuilderApp extends Application {
                 }
 
                 for (String dep : dependencies) {
+                    command.add("--dependency=" + dep);
+                }
+                for (String dep : DependencyCatalogWindow.getEnabledDependencies(baseDir)) {
                     command.add("--dependency=" + dep);
                 }
                 
@@ -779,6 +942,7 @@ public class RouteBuilderApp extends Application {
                 if (offline) command.add("--offline");
                 command.add("camel");
                 command.add("run");
+                command.add("--port=0");
                 command.add("--console"); // Enable interactive-style output
                 command.add("--logging-level=info");
                 
@@ -815,6 +979,9 @@ public class RouteBuilderApp extends Application {
                     }
                 }
                 for (String dep : findCamelKDependencies(file)) {
+                    command.add("--dependency=" + dep);
+                }
+                for (String dep : DependencyCatalogWindow.getEnabledDependencies(baseDir)) {
                     command.add("--dependency=" + dep);
                 }
                 boolean dev = "dev".equals(mode);
@@ -1079,14 +1246,18 @@ public class RouteBuilderApp extends Application {
                 javafx.application.Platform.runLater(() -> globalThemeBox.setValue(theme));
             }
 
-            root.getStyleClass().removeAll("theme-vscode-dark", "theme-intellij-light", "theme-dracula", "theme-monokai", "theme-hacker");
+            root.getStyleClass().removeAll("theme-vscode-dark", "theme-intellij-light", "theme-dracula", "theme-monokai", "theme-hacker", "theme-one-dark", "theme-github-light", "theme-solarized-dark");
             String cssClass = "theme-" + theme.toLowerCase().replace(" ", "-");
             currentThemeClass = cssClass;
             root.getStyleClass().add(cssClass);
             
-            if (cssClass.equals("theme-intellij-light")) editorPane.setTheme("vs");
-            else if (cssClass.equals("theme-hacker")) editorPane.setTheme("hc-black");
-            else editorPane.setTheme("vs-dark");
+            if (cssClass.equals("theme-intellij-light") || cssClass.equals("theme-github-light")) {
+                editorPane.setTheme("vs");
+            } else if (cssClass.equals("theme-hacker")) {
+                editorPane.setTheme("hc-black");
+            } else {
+                editorPane.setTheme("vs-dark");
+            }
 
             if (diagramPane != null) {
                 diagramPane.setTheme(theme);
@@ -1233,12 +1404,8 @@ public class RouteBuilderApp extends Application {
                     parentDir.mkdirs();
                 }
 
-                // Write the file content
-                if (treePane != null) {
-                    treePane.createTemplateFileInDir(parentDir, targetFile.getName(), content, true);
-                } else {
-                    java.nio.file.Files.writeString(targetFile.toPath(), content);
-                }
+                // Write the file content directly to disk
+                java.nio.file.Files.writeString(targetFile.toPath(), content);
             }
         } catch (Exception e) {
             e.printStackTrace();

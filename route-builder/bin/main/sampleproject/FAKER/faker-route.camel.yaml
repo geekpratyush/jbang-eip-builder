@@ -1,0 +1,16 @@
+- beans:
+    - name: "myFaker"
+      type: "beans.UniversalFaker"
+      properties:
+        database: "financial"
+- route:
+    id: "faker-demo"
+    from:
+      uri: "timer:faker?period=3000"
+      steps:
+        - setBody:
+            constant: "mt103"
+        - bean:
+            ref: "myFaker"
+            method: "generate(${body})"
+        - log: "Generated Message:\n${body}"

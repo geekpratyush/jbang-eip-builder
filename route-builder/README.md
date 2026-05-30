@@ -31,35 +31,42 @@ This is a self-contained distribution package. To start the Route Builder IDE:
 
 ---
 
-## Current Features & Implementations
+## Feature Documentation Index
 
-### Visual Diagram Designer
-- **Infinite Canvas**: Unrestricted panning and zooming capabilities across an infinite workspace.
-- **Intelligent Connectors**: Smooth, modern SVG Bézier curves for complex EIPs (Splits, Multicasts, Aggregators) rather than basic icons.
-- **Geometric Arrows**: Pixel-perfect directional arrows for standard route connections.
+For detailed guides, architecture diagrams, and configurations of specific IDE components, see the separate feature guides:
 
-### Project & File Explorer
-- **Multi-File Selection**: Full support for `Ctrl+Click` and `Shift+Click` for batch selections.
-- **Advanced Drag and Drop**: Robust D&D payload handling supporting mass-movement and mass-copy of multiple files/folders simultaneously.
-- **Intelligent Collision Detection**: Automatically prevents file overwrite during copy operations by appending numbered suffixes (e.g., `file_1.yaml`).
-- **Context Menu Operations**: Mass-Delete, Mass-Cut, Mass-Copy capabilities, and a context-aware **"Run Route(s)..."** submenu allowing developers to launch selected files or directories recursively under two runtime profiles: *Run Offline (Stub Mode)* and *Run Live (Standard)*.
+1. **[Visual Route Designer](../docs/visual_route_designer.md)**: Real-time Monaco YAML editors, infinite canvas, and hot reloading EIP diagrams.
+2. **[Custom Kamelet Builder Studio](../docs/kamelet_studio.md)**: Step-by-step chapter tutorials, parameter forms generation, and JBang test runners.
+3. **[Managed Dependency Catalog](../docs/dependency_catalog.md)**: Inline coordinates tables, wildcard Maven injections, and Monaco header writers.
+4. **[Universal Validator Studio](../docs/validator_studio.md)**: Standard & Advanced SWIFT parsing, XML schemas (XSD), CSVW metadata, and validator pairs overrides.
+5. **[Data Transformation & XSLT Studio](../docs/data_transformation_xslt.md)**: Structural converters, dynamic output previews, and two-tree drag-and-drop XSLT mapping lines.
+6. **[Faker Mock & Template Studio](../docs/faker_mock_studio.md)**: Tokenized JSON/YAML mock generators and high-performance direct-to-disk unpacking.
+7. **[Cryptography & Security Studio](../docs/crypto_studio.md)**: PBKDF2 salt derivation, AES-256-GCM symmetric bean processors, and manual Decrypt UI verifiers.
+8. **[Project Explorer & Database Export](../docs/project_explorer_exports.md)**: Recursive trees, batch runs, drag-and-drop file operations, and Liquibase database changelog exporters.
+9. **[Workspace Variables Editor](../docs/variables_editor.md)**: Environment properties, placeholders, overrides, and automated properties exports.
+10. **[In-App Help Guide Portal](../docs/help_guide_portal.md)**: Searchable indexing, category trees, HTML viewer, and context-aware toolbar links.
+11. **[Dynamic Route & Kamelet Loader](../docs/camel-management.md)**: Design blueprint for loading routes dynamically from SQL, MongoDB, and filesystems with TLS/mTLS parameters.
+12. **[Remote Deploy Center & Connectivity Monitor](../docs/camel-management.md#14-heartbeat-api-client-connectivity-status--environment-config-toggles)**: Remote deployment dialog to push routes/transformers, poll container heartbeat (GET `/admin/heartbeat`), and display green/red status indicators with warning drop alerts.
 
-### Code Editor & Workspace
-- **Layout Management**: Fully customizable workspace through the `View` menu. Toggle visibility for the Explorer, Code Editor, and Diagram panels independently.
-- **Panel Swapping**: Instantly swap the horizontal positions of the Code Editor and Diagram Canvas via the toolbar or View menu.
-- **Dynamic Syntax Highlighting**: Reactive Monaco-style tokenization built directly into the UI text areas.
-- **Integrated Language Server**: Boots alongside the IDE (`camel-lsp-server.jar`), pre-configured to utilize the **Quarkus** catalog provider for precise, framework-aware autocomplete and validation.
+---
 
-### Enterprise Connectivity & Security (Kamelet Studio Integration)
-- **Unified Kamelet Connectors**:
-  - **IBM MQ (Local & XA)**: Integrates JMS 3.0 client libraries (`com.ibm.mq.jakarta.client`) and pooled connection factories (`pooled-jms`) with Narayana JTA transaction controls.
-  - **Solace PubSub+ (Local & XA)**: Supports plain SMF and secure SMFS TLS connection VPNs with certificate verification.
-  - **MongoDB Connectors**: Aggregation pipeline-based Change Streams and mid-route CRUD actions (`findOneByQuery`, `update`, `bulkWrite`).
-  - **SQL Action CRUD**: Dynamically compiles JSON request payloads into parameterized SQL statements (`select`, `update`, `delete`) via dynamic data sources.
-- **Field-Level Cryptography**: PBKDF2 key derivation and AES-256-GCM authenticated encryption/decryption processor beans.
-- **Canonical Audit Pipeline**: Built-in logs capturing operation steps, environment tags, dynamic node hostnames, and host IP addresses.
-- **In-IDE Decrypt Tool**: Interactive JavaFX pane executing GCM salt/IV extraction and decryption verification.
-- **Interactive Help Portal**: Embedded SplitPane utility containing a top search bar, left collapsible index tree, and right-hand documentation viewer rendering architecture diagrams and code templates.
+## Remote Deploy & Heartbeat Connectivity
+
+The Route Builder Studio includes a integrated **Remote Deploy & Run Test** facility that communicates with running Camel Quarkus containers:
+
+*   **Deploy Operations**: Push Camel routes (YAML/XML/Java) and transform schemas (XSLT/Smooks/JSLT) directly to the target environment.
+    *   *Persistent Strategy*: Uploads and seeds database engines (SQL and MongoDB).
+    *   *Temporary Strategy*: Loads routes directly into memory via Camel's `RoutesLoader` and writes templates to temporary sandbox directories on the container disk.
+*   **Connectivity Heartbeat (`GET /admin/heartbeat`)**: Every 5 seconds, the studio pings the remote container:
+    *   **Online (Green)**: UI connection icon turns green; sandbox deployment remains active.
+    *   **Offline (Red)**: UI connection icon turns red, and the client displays a connection lost warning alert.
+*   **Environment Config Toggles**: Protect production systems by disabling management endpoints:
+    ```properties
+    # Deactivate /admin/* upload/health endpoints
+    loader.management.api.enabled=false
+    ```
+
+---
 
 ## Next Steps & Roadmap
 
@@ -67,7 +74,7 @@ This is a self-contained distribution package. To start the Route Builder IDE:
   - Auto-generate Liquibase YAML changelogs for SQL tables and MongoDB JSON arrays upon project export.
 - **Phase 2: Decrypt UI Panel** [COMPLETED]
   - Integrate a secure, in-IDE JavaFX Decrypt tool supporting PBKDF2 with HMAC-SHA256 and AES-256-GCM.
-- **Phase 3: Interactive Help Portal** [COMPLETED]
-  - Embedded collapsible SplitPane panel supporting real-time filter search and dark-mode HTML rendering of EIP scenarios.
+- **Phase 3: Interactive Help Portal & Remote Monitoring** [COMPLETED]
+  - Collapsible Search Panel, dark-mode HTML renderers, Remote Deploy controls, and Live Heartbeat status indicators.
 - **Phase 4: Undo/Redo Engine** [NOT STARTED]
   - Provide multi-step Undo/Redo capabilities tracking file edits and canvas movements synchronously.

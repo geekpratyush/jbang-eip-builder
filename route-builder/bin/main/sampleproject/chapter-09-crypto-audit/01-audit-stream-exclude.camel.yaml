@@ -1,0 +1,13 @@
+# ID: mongo-audit-exclude
+# ENABLED: true
+# DESCRIPTION: MongoDB Change Stream audit consumer demonstrating exclusion rules and host metadata resolution.
+# AUTHOR: Camel Studio
+# STUB: stub:mongodb:audit (replaces real database connection)
+
+- route:
+    id: "mongo-change-stream-audit"
+    from:
+      uri: "stub:mongodb:myDb?consumerType=changeStream&database=audit&collection=transactions"
+      steps:
+        - log: "[Chapter 9][AUDIT] Captured mutation payload: ${body}"
+        - to: "mock:filtered-audit"

@@ -153,6 +153,7 @@ public class VariablesEditorWindow {
 
         // Standard properties required by this app
         Map<String, String> defaultValues = new java.util.LinkedHashMap<>();
+        defaultValues.put("API_URL", "http://localhost:8080");
         defaultValues.put("kafka.orders.endpoint", "stub:kafka:topic:orders");
         defaultValues.put("ibmmq-endpoint", "stub:jms:queue:IBMMQ.Q");
         defaultValues.put("ibmmq.request.queue", "stub:jms:queue:REQUEST.Q");
@@ -167,9 +168,10 @@ public class VariablesEditorWindow {
         defaultValues.put("http.orders.endpoint", "stub:http:api.example.com/orders");
         defaultValues.put("http.downstream.endpoint", "stub:http:downstream-service/api");
         defaultValues.put("enricher.customer.service", "stub:direct:fetch-customer");
-        defaultValues.put("camel.server.port", "9999");
+        defaultValues.put("camel.jbang.platform-http.port", "9999");
 
         Map<String, String> defaultDescs = new HashMap<>();
+        defaultDescs.put("API_URL", "Remote target container host API URL for Deploy & Run Remotely");
         defaultDescs.put("kafka.orders.endpoint", "Kafka Orders endpoint");
         defaultDescs.put("ibmmq-endpoint", "IBM MQ default endpoint");
         defaultDescs.put("ibmmq.request.queue", "IBM MQ Request queue");
@@ -184,7 +186,7 @@ public class VariablesEditorWindow {
         defaultDescs.put("http.orders.endpoint", "HTTP Orders endpoint");
         defaultDescs.put("http.downstream.endpoint", "HTTP Downstream API endpoint");
         defaultDescs.put("enricher.customer.service", "Customer Service direct stub");
-        defaultDescs.put("camel.server.port", "HTTP server port");
+        defaultDescs.put("camel.jbang.platform-http.port", "Camel JBang HTTP server port (controls Vert.x platform-http server port)");
 
         // Merge missing default values into the loaded list
         for (Map.Entry<String, String> entry : defaultValues.entrySet()) {
@@ -297,7 +299,11 @@ public class VariablesEditorWindow {
         btnCancel.getStyleClass().add("variables-btn-cancel");
         btnCancel.setOnAction(e -> stage.close());
 
-        actionBox.getChildren().addAll(btnDelete, spacer, btnSave, btnCancel);
+        Button btnHelp = new Button("Help");
+        btnHelp.getStyleClass().add("variables-btn-cancel");
+        btnHelp.setOnAction(e -> new RouteBuilderHelpWindow("Studio Configuration", "Variables").show());
+
+        actionBox.getChildren().addAll(btnDelete, btnHelp, spacer, btnSave, btnCancel);
 
         layout.getChildren().addAll(titleLbl, descLbl, table, inputBox, actionBox);
         VBox.setVgrow(table, Priority.ALWAYS);

@@ -48,6 +48,7 @@ public class RouteTreePane extends VBox {
         this.onFilesSelected = onFilesSelected;
     }
 
+    private boolean isRefreshing = false;
     public RouteTreePane(Consumer<File> onFileSelected) {
         this.onFileSelected = onFileSelected;
         
@@ -404,6 +405,7 @@ public class RouteTreePane extends VBox {
         });
 
         treeView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (isRefreshing) return;
             java.util.List<File> selectedFiles = new java.util.ArrayList<>();
             for (TreeItem<File> item : treeView.getSelectionModel().getSelectedItems()) {
                 if (item != null && item.getValue() != null && item.getValue().isFile()) {
@@ -826,14 +828,56 @@ public class RouteTreePane extends VBox {
     }
 
     public void refresh() {
-        checkedFiles.removeIf(file -> !file.exists());
-        updateConflicts();
-        if (onCheckedFilesChanged != null) {
-            onCheckedFilesChanged.run();
+        // Capture current state
+        File selectedFile = getSelectedFile();
+        java.util.List<File> expandedFiles = new java.util.ArrayList<>();
+        collectExpandedFiles(rootItem, expandedFiles);
+
+        isRefreshing = true;
+        try {
+            checkedFiles.removeIf(file -> !file.exists());
+            updateConflicts();
+            if (onCheckedFilesChanged != null) {
+                onCheckedFilesChanged.run();
+            }
+            rootItem.getChildren().clear();
+            populateTree(baseDirectory, rootItem);
+            rootItem.setExpanded(true);
+
+            // Restore expansion
+            restoreExpansion(rootItem, expandedFiles);
+        } finally {
+            isRefreshing = false;
         }
-        rootItem.getChildren().clear();
-        populateTree(baseDirectory, rootItem);
-        rootItem.setExpanded(true);
+
+        // Restore selection - this will trigger events normally but after population is complete
+        if (selectedFile != null) {
+            TreeItem<File> item = findTreeItem(rootItem, selectedFile);
+            if (item != null) {
+                treeView.getSelectionModel().clearSelection();
+                treeView.getSelectionModel().select(item);
+            }
+        }
+    }
+
+    private void collectExpandedFiles(TreeItem<File> item, java.util.List<File> expanded) {
+        if (item == null) return;
+        if (item.isExpanded() && item.getValue() != null) {
+            expanded.add(item.getValue());
+        }
+        for (TreeItem<File> child : item.getChildren()) {
+            collectExpandedFiles(child, expanded);
+        }
+    }
+
+    private void restoreExpansion(TreeItem<File> item, java.util.List<File> expanded) {
+        if (item == null || item.getValue() == null) return;
+        if (expanded.contains(item.getValue())) {
+            item.setExpanded(true);
+        }
+        for (TreeItem<File> child : item.getChildren()) {
+            restoreExpansion(child, expanded);
+        }
     }
 
     private void populateTree(File dir, TreeItem<File> parentItem) {

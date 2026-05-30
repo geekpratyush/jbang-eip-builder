@@ -1,0 +1,5 @@
+{1:F01{{type:bic:sender}}XXXX0000000000}{2:I199{{type:bic:receiver}}XXXXN}{4:
+:20:{{type:uuid}}
+:21:MSG-PAIN001-20260521-001
+:79:PAYMENT EXECUTED SUCCESSFULLY.
+-}

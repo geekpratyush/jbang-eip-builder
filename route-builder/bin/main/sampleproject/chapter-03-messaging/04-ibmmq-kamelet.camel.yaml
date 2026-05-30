@@ -1,0 +1,28 @@
+# ID: ibmmq-kamelet
+# ENABLED: true
+# DESCRIPTION: IBM MQ messaging integration using Kamelet connectors over mTLS
+# PROPERTIES: ibmmq-endpoint=stub:jms:queue:IBMMQ.Q
+
+# ID: ibmmq-kamelet
+# ENABLED: true
+# DESCRIPTION: IBM MQ messaging integration using Kamelet connectors over mTLS
+# PROPERTIES: ibmmq-source=kamelet:ibmmq-source, ibmmq-sink=kamelet:ibmmq-sink, ibmmq.queue=IBMMQ.INBOUND.Q
+
+- route:
+    id: ibmmq-producer-route
+    from:
+      uri: timer:tick
+      parameters:
+        period: 5000
+      steps:
+        - setBody:
+            constant: "Hello from dynamic IBM MQ mTLS Route!"
+        - log: "Sending message to IBM MQ: ${body}"
+        - to: "{{ibmmq-sink}}?queuename={{ibmmq.queue}}"
+
+- route:
+    id: ibmmq-consumer-route
+    from:
+      uri: "{{ibmmq-source}}?queuename={{ibmmq.queue}}"
+      steps:
+        - log: "Successfully received message from IBM MQ: ${body}"

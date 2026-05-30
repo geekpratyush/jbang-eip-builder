@@ -1,0 +1,39 @@
+# ID: choice-routing
+# ENABLED: true
+# DESCRIPTION: Content-Based Router pattern using Choice/When/Otherwise EIPs
+# AUTHOR: Camel Studio
+# STUB: none
+
+- route:
+    id: "cbr-injector"
+    from:
+      uri: "timer:cbr?period=2000&repeatCount=6"
+      steps:
+        - setBody:
+            simple: "${random(1,4)}"
+        - log: "[Chapter 2] Routing message with type: ${body}"
+        - to: "direct:cbr-router"
+
+- route:
+    id: "cbr-router"
+    from:
+      uri: "direct:cbr-router"
+      steps:
+        - choice:
+            when:
+              - simple: "${body} == '1'"
+                steps:
+                  - log: "[Chapter 2] >> Priority GOLD order"
+                  - to: "mock:gold"
+              - simple: "${body} == '2'"
+                steps:
+                  - log: "[Chapter 2] >> Priority SILVER order"
+                  - to: "mock:silver"
+              - simple: "${body} == '3'"
+                steps:
+                  - log: "[Chapter 2] >> Priority BRONZE order"
+                  - to: "mock:bronze"
+            otherwise:
+              steps:
+                - log: "[Chapter 2] >> Unknown priority, rejecting"
+                - to: "mock:rejected"

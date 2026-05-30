@@ -88,8 +88,18 @@ public class YamlEditorPane extends VBox {
         Button btnCopy = new Button();
         btnCopy.setGraphic(new FontIcon("fas-copy"));
         btnCopy.setTooltip(new Tooltip("Copy Selection"));
-        btnCopy.getStyleClass().addAll("editor-btn");
+        btnCopy.getStyleClass().addAll("editor-btn", "btn-copy-text");
         btnCopy.setOnAction(e -> copy());
+
+        Button btnCopyAll = new Button();
+        btnCopyAll.setGraphic(new FontIcon("fas-clipboard-list"));
+        btnCopyAll.setTooltip(new Tooltip("Copy All Content"));
+        btnCopyAll.getStyleClass().addAll("editor-btn", "btn-copy-all-text");
+        btnCopyAll.setOnAction(e -> {
+            javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
+            content.putString(getText());
+            javafx.scene.input.Clipboard.getSystemClipboard().setContent(content);
+        });
 
         Button btnToggleDiagram = new Button();
         btnToggleDiagram.setGraphic(new FontIcon("fas-columns"));
@@ -123,7 +133,7 @@ public class YamlEditorPane extends VBox {
             if (onStopFile != null) onStopFile.run();
         });
 
-        toolbar.getChildren().addAll(btnSave, btnSaveAs, btnCopy, btnToggleDiagram, btnDeploy, new javafx.scene.control.Separator(), btnPlayFile, btnStopFile, new javafx.scene.control.Separator(), btnClose);
+        toolbar.getChildren().addAll(btnSave, btnSaveAs, btnCopy, btnCopyAll, btnToggleDiagram, btnDeploy, new javafx.scene.control.Separator(), btnPlayFile, btnStopFile, new javafx.scene.control.Separator(), btnClose);
 
         webView = new WebView();
         engine = webView.getEngine();
@@ -369,6 +379,8 @@ public class YamlEditorPane extends VBox {
         return this.currentFile;
     }
 
+    private java.util.Timer debounceTimer;
+
     public class JavaBridge {
         public void logError(String msg) {
             System.err.println("WebView JS Error: " + msg);
@@ -388,11 +400,20 @@ public class YamlEditorPane extends VBox {
         public void onContentChanged(String content) {
             if (isUpdatingFromBridge) return;
             if (lspManager != null) lspManager.updateDocument(content);
-            Platform.runLater(() -> {
-                if (onTextChanged != null) {
-                    onTextChanged.accept(content);
+            
+            // Live Update Debouncing
+            if (debounceTimer != null) debounceTimer.cancel();
+            debounceTimer = new java.util.Timer();
+            debounceTimer.schedule(new java.util.TimerTask() {
+                @Override
+                public void run() {
+                    Platform.runLater(() -> {
+                        if (onTextChanged != null) {
+                            onTextChanged.accept(content);
+                        }
+                    });
                 }
-            });
+            }, 500); // 500ms delay
         }
 
         public void requestCompletions(int callbackId, int line, int col) {
@@ -489,8 +510,15 @@ public class YamlEditorPane extends VBox {
     }
 
     public void loadFile(File file) {
+        if (file == null) return;
         try {
             String content = Files.readString(file.toPath());
+            
+            // Avoid redundant reloads if content is the same and it's the same file
+            if (file.equals(currentFile) && content.equals(getText())) {
+                return;
+            }
+
             currentFile = file;
             title.setText("EDITOR: " + file.getName());
             

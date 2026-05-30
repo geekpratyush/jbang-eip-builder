@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Resilience Engine - Mapping Architect</title>
+    <!-- Use a CDN for D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #010101; /* Deep dark background */
+            overflow: hidden;
+            font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+        }
+
+        /* Cyberpunk Grid Background */
+        #grid-pattern {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        /* Glowing Connections */
+        .link {
+            fill: none;
+            stroke-linecap: round;
+            opacity: 0.85; /* Increased opacity */
+            stroke-width: 3.5px; /* Thicker baseline */
+            transition: stroke-width 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
+            filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 10px currentColor); /* Double glow */
+        }
+        .link:hover {
+            opacity: 1;
+            stroke-width: 6px;
+            filter: drop-shadow(0 0 12px currentColor) drop-shadow(0 0 20px currentColor);
+        }
+
+        /* Particles for data flow */
+        .particle {
+            fill: #ffffff;
+            filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 12px #fff); /* Bright glowing core */
+        }
+
+        /* Node Styling */
+        .node-rect {
+            rx: 8px; ry: 8px;
+            fill: #111;
+            stroke-width: 2px;
+            cursor: pointer;
+            transition: filter 0.3s ease;
+        }
+        .node-rect:hover {
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        .node-label {
+            fill: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            pointer-events: none;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        .node-type {
+            font-size: 9px;
+            font-weight: bold;
+            pointer-events: none;
+            text-anchor: middle;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="grid-pattern"></div>
+    <svg id="diagram"></svg>
+
+    <script>
+        const svg = d3.select("#diagram");
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        // Container for zoom/pan
+        const g = svg.append("g");
+
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
+
+        // Color palette based on node type
+        const colors = {
+            "SOURCE": "#00FF41",  // Hacker Green
+            "TEMPLATE": "#00E5FF", // Neon Cyan
+            "LOGIC": "#adff2f",    // YellowGreen
+            "TARGET": "#FF00FF",   // Neon Pink
+            "VARIABLE": "#FFFF00", // Yellow
+            "CONDITION": "#FF9800",// Orange
+            "BRANCH": "#FF5722",   // Deep Orange
+            "ERROR": "#F44336"     // Red
+        };
+
+        function renderGraph(jsonString) {
+            console.log("Raw JSON received:", jsonString);
+            g.selectAll("*").remove(); // Clear existing
+
+            let data;
+            try {
+                data = JSON.parse(jsonString);
+            } catch (e) {
+                console.error("Failed to parse JSON", e);
+                return;
+            }
+
+            if (!data.nodes || data.nodes.length === 0) return;
+
+            // Compute hierarchy using strict left-to-right grid layout
+            const nodeWidth = 160;
+            const nodeHeight = 50;
+            
+            // Fixed columns
+            const typeX = { "SOURCE": 100, "TEMPLATE": 400, "VARIABLE": 400, "CONDITION": 650, "BRANCH": 900, "LOGIC": 1150, "TARGET": 1450 };
+            
+            let colCounts = {};
+            data.nodes.forEach(d => {
+                let colX = typeX[d.type] || 600;
+                colCounts[colX] = (colCounts[colX] || 0) + 1;
+                d.fx = colX;
+                d.y = colCounts[colX] * 80;
+                d.color = colors[d.type] || "#FFFFFF";
+            });
+
+            const nodeById = d3.index(data.nodes, d => d.id);
+            const graphLinks = data.links.map(l => ({
+                source: nodeById.get(l.source),
+                target: nodeById.get(l.target)
+            })).filter(l => l.source && l.target);
+
+            const simulation = d3.forceSimulation(data.nodes)
+                .force("link", d3.forceLink(graphLinks).distance(0).strength(0.01))
+                .force("collide", d3.forceCollide().radius(nodeHeight/2 + 20).strength(1))
+                .force("y", d3.forceY(d => d.y).strength(0.05));
+
+            // Draw Links (Bezier curves)
+            const linkPath = d3.linkHorizontal().x(d => d[0]).y(d => d[1]);
+
+            const link = g.selectAll(".link")
+                .data(graphLinks)
+                .enter().append("path")
+                .attr("class", "link")
+                .attr("stroke", d => d.source.color)
+                .attr("stroke-width", 2.5);
+
+            // Draw Nodes
+            const nodeGroup = g.selectAll(".node")
+                .data(data.nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+
+            nodeGroup.append("rect")
+                .attr("class", "node-rect")
+                .attr("width", nodeWidth)
+                .attr("height", nodeHeight)
+                .attr("x", -nodeWidth/2)
+                .attr("y", -nodeHeight/2)
+                .attr("stroke", d => d.color)
+                .style("color", d => d.color);
+
+            nodeGroup.append("rect")
+                .attr("x", -nodeWidth/2 + 4).attr("y", -15)
+                .attr("width", 4).attr("height", 30)
+                .attr("rx", 2).attr("ry", 2)
+                .attr("fill", d => d.color);
+
+            nodeGroup.append("text")
+                .attr("class", "node-type")
+                .attr("y", -10)
+                .attr("fill", d => d.color)
+                .text(d => `:: ${d.type} ::`);
+
+            nodeGroup.append("text")
+                .attr("class", "node-label")
+                .attr("y", 10)
+                .text(d => d.name.length > 20 ? d.name.substring(0, 18) + '...' : d.name);
+
+            simulation.on("tick", () => {
+                link.attr("d", d => {
+                    const sourceX = d.source.x + nodeWidth/2;
+                    const sourceY = d.source.y;
+                    const targetX = d.target.x - nodeWidth/2;
+                    const targetY = d.target.y;
+                    return linkPath({source: [sourceX, sourceY], target: [targetX, targetY]});
+                });
+
+                nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+
+            // Particles
+            setTimeout(() => {
+                g.selectAll(".link").each(function(d) {
+                    const path = this;
+                    const length = path.getTotalLength();
+                    if(length > 0) {
+                        const particle = g.append("circle")
+                            .attr("class", "particle")
+                            .attr("r", 3);
+                        
+                        function transition() {
+                            particle.transition()
+                                .duration(3000)
+                                .ease(d3.easeLinear)
+                                .attrTween("transform", function() {
+                                    return function(t) {
+                                        const p = path.getPointAtLength(t * length);
+                                        return `translate(${p.x},${p.y})`;
+                                    }
+                                })
+                                .on("end", transition);
+                        }
+                        transition();
+                    }
+                });
+            }, 1000); // Wait for simulation to settle slightly
+
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d3.select(this).raise().classed("active", true);
+            }
+
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d3.select(this).classed("active", false);
+            }
+            
+            // Auto-fit after render
+            setTimeout(() => {
+                const bounds = g.node().getBBox();
+                const fullWidth = width;
+                const fullHeight = height;
+                const widthScale = fullWidth / (bounds.width + 100);
+                const heightScale = fullHeight / (bounds.height + 100);
+                const scale = Math.min(widthScale, heightScale, 1.2);
+                
+                const midX = bounds.x + bounds.width / 2;
+                const midY = bounds.y + bounds.height / 2;
+                
+                svg.transition().duration(1000).call(
+                    zoom.transform,
+                    d3.zoomIdentity
+                        .translate(fullWidth / 2, fullHeight / 2)
+                        .scale(scale)
+                        .translate(-midX, -midY)
+                );
+            }, 1500); // Give force layout time to settle
+        }
+
+
+        // Expose renderGraph globally for JavaFX WebEngine
+        window.renderGraph = renderGraph;
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            svg.attr("width", window.innerWidth).attr("height", window.innerHeight);
+        });
+    </script>
+</body>
+</html>

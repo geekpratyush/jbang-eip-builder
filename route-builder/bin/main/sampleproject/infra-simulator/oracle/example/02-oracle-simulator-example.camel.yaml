@@ -1,0 +1,37 @@
+# camel-k: source=../engine/OracleGatewayRoute.camel.yaml
+
+- route:
+    id: oracle-simulator-example-route
+    from:
+      uri: timer:oracle-example?period=20000&delay=5000
+      steps:
+        - log: "--- START ORACLE SIMULATOR EXAMPLE ---"
+
+        # 1. Insert a simulated customer record
+        - setBody:
+            constant: >
+              {
+                "queryType": "insert",
+                "table": "customers_table",
+                "row": {
+                  "id": "MX-801",
+                  "name": "Acme Corp",
+                  "tier": "Gold"
+                }
+              }
+        - to: "direct:oracle-gateway"
+        - log: "Step 1: SQL Insert response: ${body}"
+
+        # 2. Select the inserted customer record by ID column
+        - setBody:
+            constant: >
+              {
+                "queryType": "select",
+                "table": "customers_table",
+                "column": "id",
+                "value": "MX-801"
+              }
+        - to: "direct:oracle-gateway"
+        - log: "Step 2: SQL SELECT query result: ${body}"
+
+        - log: "--- END ORACLE SIMULATOR EXAMPLE ---"

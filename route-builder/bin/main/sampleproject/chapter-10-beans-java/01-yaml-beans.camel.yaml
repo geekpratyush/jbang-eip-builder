@@ -1,0 +1,23 @@
+# ID: yaml-beans-example
+# ENABLED: true
+# DESCRIPTION: Declares local beans in YAML and invokes them in a Camel route step
+# AUTHOR: Camel Studio
+
+- beans:
+    - name: myBean
+      type: com.example.MyServiceBean
+      properties:
+        prefix: "YAML-BEAN-LOG"
+
+- route:
+    id: "yaml-bean-route"
+    from:
+      uri: "timer:yaml-bean?period=3000&repeatCount=3"
+      steps:
+        - setBody:
+            constant: "Message from YAML DSL"
+        - bean:
+            ref: "myBean"
+            method: "formatMessage"
+        - log:
+            message: "Result: ${body}"

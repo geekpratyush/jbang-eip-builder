@@ -249,6 +249,10 @@ public class ValidatorStudioWindow {
         studioThemeBox.setValue(RouteBuilderApp.currentThemeName);
         studioThemeBox.setOnAction(e -> RouteBuilderApp.setGlobalTheme(studioThemeBox.getValue()));
 
+        Button btnHelp = new Button("Help Guide", new FontIcon("fas-question-circle"));
+        btnHelp.getStyleClass().addAll("toolbar-btn", "btn-manual");
+        btnHelp.setOnAction(e -> new RouteBuilderHelpWindow("Validation Studio", null).show());
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
@@ -256,7 +260,7 @@ public class ValidatorStudioWindow {
             btnValidate, btnSave, new Separator(),
             new Label("Validation Type:"), cmbValidatorType, new Separator(),
             new Label("SWIFT Mode:"), radStandard, radEnhanced, new Separator(),
-            spacer, studioThemeBox
+            spacer, btnHelp, new Separator(), studioThemeBox
         );
         root.setTop(toolBar);
 
@@ -334,7 +338,54 @@ public class ValidatorStudioWindow {
         Label lblSchemaIcon = new Label("", new FontIcon("fas-project-diagram"));
         lblSchemaTitle = new Label("Schema / Rules / Context - None");
         lblSchemaTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #cccccc;");
-        headerSchema.getChildren().addAll(lblSchemaIcon, lblSchemaTitle);
+        
+        Region schemaHeaderSpacer = new Region();
+        HBox.setHgrow(schemaHeaderSpacer, Priority.ALWAYS);
+        
+        Button btnUpdateSchema = new Button("Overwrite Schema...", new FontIcon("fas-upload"));
+        btnUpdateSchema.getStyleClass().addAll("toolbar-btn", "btn-save");
+        btnUpdateSchema.setTooltip(new Tooltip("Overwrite active schema file with a local file"));
+        btnUpdateSchema.setOnAction(e -> {
+            if (activeMapping == null) {
+                showError("No Scenario Active", "Please select a scenario from the explorer first.");
+                return;
+            }
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Select Schema/Rules File to Overwrite");
+            File selectedFile = chooser.showOpenDialog(stage);
+            if (selectedFile != null) {
+                try {
+                    String content = Files.readString(selectedFile.toPath());
+                    setEditorText(engineSchema, content);
+                    
+                    if (activeMapping.schemaPath.isEmpty()) {
+                        String sub = activeMapping.type.toLowerCase().replace(" + ", "_").replace(" ", "_");
+                        File schemaDir = new File(workspaceRoot, "schemas/" + sub);
+                        schemaDir.mkdirs();
+                        File schemaFile = new File(schemaDir, selectedFile.getName());
+                        Files.writeString(schemaFile.toPath(), content);
+                        activeMapping.schemaPath = workspaceRoot.toURI().relativize(schemaFile.toURI()).getPath();
+                        
+                        updateMappingInJson(activeMapping);
+                        refreshTree();
+                    } else {
+                        File schemaFile = new File(workspaceRoot, activeMapping.schemaPath);
+                        schemaFile.getParentFile().mkdirs();
+                        Files.writeString(schemaFile.toPath(), content);
+                    }
+                    lblSchemaTitle.setText("Schema / Rules / Context - " + new File(activeMapping.schemaPath).getName());
+                    log("INFO", "Schema overwritten from " + selectedFile.getName());
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Schema file updated and overwritten successfully!", ButtonType.OK);
+                    alert.setTitle("Schema Overwritten");
+                    alert.setHeaderText(null);
+                    alert.showAndWait();
+                } catch (Exception ex) {
+                    showError("Upload Error", ex.getMessage());
+                }
+            }
+        });
+        
+        headerSchema.getChildren().addAll(lblSchemaIcon, lblSchemaTitle, schemaHeaderSpacer, btnUpdateSchema);
 
         webViewSchema = new WebView();
         RouteBuilderApp.installClipboardShortcuts(webViewSchema);
@@ -779,6 +830,17 @@ public class ValidatorStudioWindow {
         MenuItem mnuAdd = new MenuItem("Add Validation Pair...", new FontIcon("fas-plus-circle"));
         mnuAdd.setOnAction(e -> openAddPairDialog());
 
+        MenuItem mnuUpdate = new MenuItem("Update Validation Pair...", new FontIcon("fas-edit"));
+        mnuUpdate.setOnAction(e -> {
+            TreeItem<String> selected = treeView.getSelectionModel().getSelectedItem();
+            if (selected == null || !treeItemMappingMap.containsKey(selected)) {
+                showError("Selection Error", "Please select a mapping item from the tree list.");
+                return;
+            }
+            ValidationMapping mapping = treeItemMappingMap.get(selected);
+            openUpdatePairDialog(mapping);
+        });
+
         MenuItem mnuRemove = new MenuItem("Remove Validation Pair", new FontIcon("fas-minus-circle"));
         mnuRemove.setOnAction(e -> {
             TreeItem<String> selected = treeView.getSelectionModel().getSelectedItem();
@@ -795,7 +857,7 @@ public class ValidatorStudioWindow {
             });
         });
 
-        contextMenu.getItems().addAll(mnuAdd, mnuRemove);
+        contextMenu.getItems().addAll(mnuAdd, mnuUpdate, mnuRemove);
 
         treeView.setCellFactory(tv -> {
             TreeCell<String> cell = new TreeCell<>() {
@@ -823,6 +885,155 @@ public class ValidatorStudioWindow {
             });
             return cell;
         });
+    }
+
+    private void updateMappingInJson(ValidationMapping mapping) {
+        File mappingFile = new File(workspaceRoot, "validation-mapping.json");
+        try {
+            if (!mappingFile.exists()) return;
+            String content = Files.readString(mappingFile.toPath());
+            JSONObject json = new JSONObject(content);
+            JSONArray arr = json.optJSONArray("mappings");
+            if (arr != null) {
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject obj = arr.getJSONObject(i);
+                    String mPath = obj.optString("messagePath");
+                    String type = obj.optString("type");
+                    if (mapping.messagePath.equals(mPath) && mapping.type.equals(type)) {
+                        obj.put("schemaPath", mapping.schemaPath);
+                        obj.put("name", mapping.name);
+                        break;
+                    }
+                }
+                Files.writeString(mappingFile.toPath(), json.toString(2));
+            }
+        } catch (Exception ex) {
+            log("ERROR", "Failed to update mapping in JSON: " + ex.getMessage());
+        }
+    }
+
+    private void openUpdatePairDialog(ValidationMapping mapping) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Update Validation Pair Scenario");
+        dialog.setHeaderText("Update name, type, or files for '" + mapping.name + "'");
+
+        ButtonType btnTypeSave = new ButtonType("Update Pair", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(btnTypeSave, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(15));
+
+        TextField txtName = new TextField(mapping.name);
+
+        ComboBox<String> cmbTypes = new ComboBox<>();
+        cmbTypes.getItems().addAll("XML + XSD", "JSON + Schema", "YAML + Schema", "SWIFT MT Message", "ISO 20022 MX", "CSV + CSVW", "Flat File");
+        cmbTypes.setValue(mapping.type);
+
+        File oldMsgFile = new File(workspaceRoot, mapping.messagePath);
+        TextField txtMsgPath = new TextField(oldMsgFile.getAbsolutePath());
+        Button btnBrowseMsg = new Button("Browse...");
+
+        File oldSchemaFile = mapping.schemaPath.isEmpty() ? null : new File(workspaceRoot, mapping.schemaPath);
+        TextField txtSchemaPath = new TextField(oldSchemaFile == null ? "" : oldSchemaFile.getAbsolutePath());
+        Button btnBrowseSchema = new Button("Browse...");
+
+        btnBrowseMsg.setOnAction(e -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Choose Message Payload");
+            File file = chooser.showOpenDialog(stage);
+            if (file != null) {
+                txtMsgPath.setText(file.getAbsolutePath());
+            }
+        });
+
+        btnBrowseSchema.setOnAction(e -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Choose Schema definition");
+            File file = chooser.showOpenDialog(stage);
+            if (file != null) {
+                txtSchemaPath.setText(file.getAbsolutePath());
+            }
+        });
+
+        grid.add(new Label("Name:"), 0, 0);
+        grid.add(txtName, 1, 0);
+        grid.add(new Label("Format Type:"), 0, 1);
+        grid.add(cmbTypes, 1, 1);
+        grid.add(new Label("Message File:"), 0, 2);
+        grid.add(txtMsgPath, 1, 2);
+        grid.add(btnBrowseMsg, 2, 2);
+        grid.add(new Label("Schema/Rules File:"), 0, 3);
+        grid.add(txtSchemaPath, 1, 3);
+        grid.add(btnBrowseSchema, 2, 3);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.showAndWait().ifPresent(response -> {
+            if (response == btnTypeSave) {
+                String newName = txtName.getText().trim();
+                String newType = cmbTypes.getValue();
+                String msgPathStr = txtMsgPath.getText().trim();
+                String schemaPathStr = txtSchemaPath.getText().trim();
+
+                if (newName.isEmpty() || msgPathStr.isEmpty()) {
+                    showError("Missing Parameters", "Name and message files must be provided.");
+                    return;
+                }
+
+                try {
+                    File msgSrc = new File(msgPathStr);
+                    File schemaSrc = schemaPathStr.isEmpty() ? null : new File(schemaPathStr);
+
+                    String sub = newType.toLowerCase().replace(" + ", "_").replace(" ", "_");
+                    File msgDest = copyFileToWorkspace(msgSrc, "messages/" + sub);
+                    File schemaDest = copyFileToWorkspace(schemaSrc, "schemas/" + sub);
+
+                    String msgRel = workspaceRoot.toURI().relativize(msgDest.toURI()).getPath();
+                    String schemaRel = schemaDest == null ? "" : workspaceRoot.toURI().relativize(schemaDest.toURI()).getPath();
+
+                    updateMappingDetails(mapping, newName, msgRel, schemaRel, newType);
+                } catch (Exception ex) {
+                    log("ERROR", "Failed to update mapping: " + ex.getMessage());
+                    showError("Update Scenario Failed", ex.getMessage());
+                }
+            }
+        });
+    }
+
+    private void updateMappingDetails(ValidationMapping oldMapping, String newName, String newMsgRel, String newSchemaRel, String newType) {
+        File mappingFile = new File(workspaceRoot, "validation-mapping.json");
+        try {
+            if (!mappingFile.exists()) return;
+            String content = Files.readString(mappingFile.toPath());
+            JSONObject json = new JSONObject(content);
+            JSONArray arr = json.optJSONArray("mappings");
+            if (arr != null) {
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject obj = arr.getJSONObject(i);
+                    String mPath = obj.optString("messagePath");
+                    String type = obj.optString("type");
+                    if (oldMapping.messagePath.equals(mPath) && oldMapping.type.equals(type)) {
+                        obj.put("name", newName);
+                        obj.put("messagePath", newMsgRel);
+                        obj.put("schemaPath", newSchemaRel);
+                        obj.put("type", newType);
+                        break;
+                    }
+                }
+                Files.writeString(mappingFile.toPath(), json.toString(2));
+                log("INFO", "Updated scenario '" + oldMapping.name + "' to '" + newName + "'.");
+                refreshTree();
+                
+                if (activeMapping != null && activeMapping.messagePath.equals(oldMapping.messagePath) && activeMapping.type.equals(oldMapping.type)) {
+                    ValidationMapping updatedMapping = new ValidationMapping(newName, newMsgRel, newSchemaRel, newType);
+                    loadValidationMapping(updatedMapping);
+                }
+            }
+        } catch (Exception ex) {
+            log("ERROR", "Failed to update mapping details in JSON: " + ex.getMessage());
+        }
     }
 
     private void openAddPairDialog() {
@@ -1171,11 +1382,14 @@ public class ValidatorStudioWindow {
     }
 
     public void validateSwiftMtWithRules(String content, String rulesJson, List<String> errors) {
+        validateSwiftMt(content, radEnhanced.isSelected(), rulesJson, errors);
+    }
+
+    public static void validateSwiftMt(String content, boolean enhanced, String rulesJson, List<String> errors) {
         String refPrefix = "EXB-";
         double amountLimit = 10000000.0;
         List<String> restrictedCurrencies = new ArrayList<>(Arrays.asList("RUB"));
         List<String> highRiskJurisdictions = new ArrayList<>(Arrays.asList("Iran", "Tehran"));
-        boolean enhanced = radEnhanced.isSelected();
 
         if (enhanced && rulesJson != null && !rulesJson.trim().isEmpty()) {
             try {
