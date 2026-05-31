@@ -1,0 +1,11 @@
+stateDiagram-v2
+    [*] --> Pending
+    Pending --> Processing: Payment Confirmed
+    Processing --> Shipped: Package Picked Up
+    Shipped --> Delivered: Customer Received
+    Shipped --> Returned: Delivery Failed
+    Returned --> Refunded
+    Pending --> Cancelled: User Cancelled
+    Cancelled --> [*]
+    Delivered --> [*]
+    Refunded --> [*]

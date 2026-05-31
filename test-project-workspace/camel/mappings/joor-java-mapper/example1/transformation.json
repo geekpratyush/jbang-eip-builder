@@ -1,0 +1,7 @@
+{
+  "type": "joor",
+  "name": "Java (Joor) Object Mapping",
+  "source": { "type": "xml", "file": "source.xml" },
+  "logic": { "type": "java", "file": "Transform.java" },
+  "target": { "type": "xml" }
+}

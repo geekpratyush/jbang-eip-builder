@@ -1,0 +1,9 @@
+digraph Org {
+  node [shape=box, style=filled, fillcolor=lightyellow];
+  CEO -> CTO;
+  CEO -> CFO;
+  CTO -> EngineeringManager;
+  CTO -> ProductManager;
+  EngineeringManager -> Developer1;
+  EngineeringManager -> Developer2;
+}

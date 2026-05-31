@@ -1,2059 +1,299 @@
-/* Main Layout - VSCode Theme */
-.node-svg-icon { -fx-fill: #b0b0b0; }
-.tree-cell .ikonli-font-icon { -fx-icon-color: #cccccc; }
+/* ==========================================================================
+   Sovereign UI (SUI) - Core Design System Stylesheet
+   Powered by Design Tokens defined in ThemeManager
+   ========================================================================== */
 
+/* Default Design Tokens - Fallbacks to prevent CSS resolution warnings */
 .root {
-    -fx-background-color: #1e1e1e;
-    -fx-base: #1e1e1e;
-    -fx-control-inner-background: #1e1e1e;
-    -fx-color: #333333;
-    -fx-text-base-color: #cccccc;
-    -fx-text-background-color: #cccccc;
-    
-    /* Menu & Context Menu colors */
-    -fx-menu-bar-bg: #3c3c3c;
-    -fx-menu-bar-text: #cccccc;
-    -fx-menu-hover-bg: #505050;
-    -fx-menu-hover-text: #ffffff;
-    -fx-context-menu-bg: #252526;
-    -fx-context-menu-border: #454545;
-    -fx-context-menu-text: #cccccc;
-    -fx-context-menu-hover-bg: #094771;
-    -fx-context-menu-hover-text: #ffffff;
-    -fx-context-menu-icon: #cccccc;
-    -fx-context-menu-hover-icon: #ffffff;
+    -sui-bg-primary: #1e1e1e;
+    -sui-bg-secondary: #252526;
+    -sui-accent-primary: #007acc;
+    -sui-text-main: #d4d4d4;
+    -sui-text-dim: #909090;
+    -sui-border-color: #404040;
+    -sui-selection: #264f78;
+    -sui-icon-color: #d4d4d4;
+
+    /* Legacy & Console Support */
+    -console-fg: -sui-text-main;
+    -console-dim-fg: -sui-text-dim;
+
+    -fx-font-family: "Inter", "Segoe UI", "Helvetica", sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: -sui-bg-primary;
+    -fx-base: -sui-bg-primary;
+    -fx-control-inner-background: -sui-bg-primary;
+    -fx-text-base-color: -sui-text-main;
+    -fx-text-background-color: -sui-text-main;
+}
+
+/* Theme Specific Token Overrides */
+.theme-intellij-light {
+    -sui-bg-primary: #ffffff;
+    -sui-bg-secondary: #f3f3f3;
+    -sui-accent-primary: #005fb8;
+    -sui-text-main: #1a1a1a;
+    -sui-text-dim: #5a5a5a;
+    -sui-border-color: #c8c8c8;
+    -sui-selection: #add6ff;
+    -sui-icon-color: #1a1a1a;
+}
+
+.theme-dracula {
+    -sui-bg-primary: #282a36;
+    -sui-bg-secondary: #1e1f29;
+    -sui-accent-primary: #bd93f9;
+    -sui-text-main: #f8f8f2;
+    -sui-text-dim: #6272a4;
+    -sui-border-color: #44475a;
+    -sui-selection: #44475a;
+    -sui-icon-color: #f8f8f2;
+}
+
+.theme-nordic {
+    -sui-bg-primary: #2e3440;
+    -sui-bg-secondary: #3b4252;
+    -sui-accent-primary: #88c0d0;
+    -sui-text-main: #eceff4;
+    -sui-text-dim: #d8dee9;
+    -sui-border-color: #4c566a;
+    -sui-selection: #434c5e;
+    -sui-icon-color: #8fbcbb;
+}
+
+.theme-material-light {
+    -sui-bg-primary: #fafafa;
+    -sui-bg-secondary: #ffffff;
+    -sui-accent-primary: #00bcd4;
+    -sui-text-main: #212121;
+    -sui-text-dim: #757575;
+    -sui-border-color: #e0e0e0;
+    -sui-selection: #b2ebf2;
+    -sui-icon-color: #212121;
+}
+
+.theme-cyberpunk {
+    -sui-bg-primary: #000000;
+    -sui-bg-secondary: #0d0208;
+    -sui-accent-primary: #f3f315;
+    -sui-text-main: #f3f315;
+    -sui-text-dim: #00ff41;
+    -sui-border-color: #003b00;
+    -sui-selection: #333300;
+    -sui-icon-color: #f3f315;
+}
+
+.theme-solarized-light {
+    -sui-bg-primary: #fdf6e3;
+    -sui-bg-secondary: #eee8d5;
+    -sui-accent-primary: #b58900;
+    -sui-text-main: #657b83;
+    -sui-text-dim: #93a1a1;
+    -sui-border-color: #ccc4b0;
+    -sui-selection: #eee8d5;
+    -sui-icon-color: #268bd2;
+}
+
+.theme-tokyo-light {
+    -sui-bg-primary: #d5d6db;
+    -sui-bg-secondary: #cbccd1;
+    -sui-accent-primary: #0f4b6e;
+    -sui-text-main: #343b58;
+    -sui-text-dim: #5c6166;
+    -sui-border-color: #a4a5a8;
+    -sui-selection: #9ab4c7;
+    -sui-icon-color: #8c4351;
+}
+
+.theme-neon-dreams {
+    -sui-bg-primary: #0a0a1a;
+    -sui-bg-secondary: #05050f;
+    -sui-accent-primary: #ff0055;
+    -sui-text-main: #00ffff;
+    -sui-text-dim: #ff00aa;
+    -sui-border-color: #330033;
+    -sui-selection: #660022;
+    -sui-icon-color: #00ffff;
+}
+
+.theme-cyber-glow {
+    -sui-bg-primary: #000b18;
+    -sui-bg-secondary: #00050a;
+    -sui-accent-primary: #00ffcc;
+    -sui-text-main: #e6ffff;
+    -sui-text-dim: #00aa88;
+    -sui-border-color: #003322;
+    -sui-selection: #004433;
+    -sui-icon-color: #00ffcc;
+}
+
+.theme-electric-violet {
+    -sui-bg-primary: #12001f;
+    -sui-bg-secondary: #0a0011;
+    -sui-accent-primary: #b700ff;
+    -sui-text-main: #eebbff;
+    -sui-text-dim: #8800cc;
+    -sui-border-color: #330055;
+    -sui-selection: #440066;
+    -sui-icon-color: #b700ff;
 }
 
 .app-root {
-    -fx-background-color: #1e1e1e;
-    -fx-font-family: "Inter", "Segoe UI", sans-serif;
-    -fx-font-size: 14px;
-}
-.theme-intellij-light .app-root {
-    -fx-background-color: #f3f3f3;
+    -fx-background-color: -sui-bg-primary;
 }
 
-.main-split-pane {
-    -fx-background-color: transparent;
-    -fx-padding: 0;
+/* Console Pane - High Contrast */
+.console-pane {
+    -fx-background-color: -sui-bg-secondary;
+}
+.console-scroll-pane {
+    -fx-background-color: -sui-bg-primary;
+}
+.console-text-area {
+    -fx-background-color: -sui-bg-primary;
+}
+/* Ensure RichTextFX internal viewport is dark */
+.console-text-area .styled-text-area {
+    -fx-background-color: -sui-bg-primary;
 }
 
-.split-pane *.split-pane-divider {
-    -fx-padding: 0 1 0 1;
-    -fx-background-color: #333333;
+/* Explorer / Route Tree */
+.route-tree-pane {
+    -fx-background-color: -sui-bg-secondary;
 }
-
-/* Common Pane Styling */
-.route-tree-pane, .editor-pane, .diagram-pane {
-    -fx-background-color: #252526;
-}
-
-.pane-title {
-    -fx-text-fill: #cccccc;
-    -fx-font-size: 13px;
-    -fx-padding: 8 10 8 10;
-    -fx-background-color: #2d2d2d;
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: #333333;
-}
-
-/* Menu Bar */
-.menu-bar {
-    -fx-background-color: -fx-menu-bar-bg;
-    -fx-padding: 0 5;
-}
-.menu-bar .label {
-    -fx-text-fill: -fx-menu-bar-text;
-    -fx-font-size: 12px;
-}
-.menu:hover, .menu:showing {
-    -fx-background-color: -fx-menu-hover-bg;
-}
-.menu:hover .label, .menu:showing .label {
-    -fx-text-fill: -fx-menu-hover-text;
-}
-.context-menu {
-    -fx-background-color: -fx-context-menu-bg;
-    -fx-border-color: -fx-context-menu-border;
-}
-.menu-item {
-    -fx-background-color: transparent;
-}
-.menu-item .label {
-    -fx-text-fill: -fx-context-menu-text;
-}
-.menu-item:focused {
-    -fx-background-color: -fx-context-menu-hover-bg;
-}
-.menu-item:focused .label {
-    -fx-text-fill: -fx-context-menu-hover-text;
-}
-.context-menu .ikonli-font-icon {
-    -fx-icon-color: -fx-context-menu-icon;
-}
-.menu-item:focused .ikonli-font-icon {
-    -fx-icon-color: -fx-context-menu-hover-icon;
-}
-
-/* Status Bar */
-.status-bar {
-    -fx-background-color: #007acc;
-}
-.status-bar .label {
-    -fx-text-fill: #ffffff;
-    -fx-font-size: 12px;
-}
-
-/* ScrollBar */
-.scroll-bar:vertical, .scroll-bar:horizontal {
-    -fx-background-color: transparent;
-}
-.scroll-bar:vertical .track, .scroll-bar:horizontal .track {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-background-radius: 0;
-}
-.scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
-    -fx-background-color: #424242;
-    -fx-background-radius: 0;
-}
-.scroll-bar:vertical .thumb:hover, .scroll-bar:horizontal .thumb:hover {
-    -fx-background-color: #4f4f4f;
-}
-.scroll-bar .increment-button, .scroll-bar .decrement-button {
-    -fx-background-color: transparent;
-    -fx-padding: 0;
-}
-.scroll-bar .increment-arrow, .scroll-bar .decrement-arrow {
-    -fx-shape: " ";
-}
-
-/* Route Explorer Tree (Left Panel) */
 .custom-tree-view {
-    -fx-background-color: #252526;
+    -fx-background-color: -sui-bg-secondary;
     -fx-border-width: 0;
 }
 .custom-tree-view .tree-cell {
-    -fx-background-color: transparent;
-    -fx-text-fill: #cccccc;
-    -fx-padding: 5 2;
-    -fx-font-size: 14px;
+    -fx-background-color: -sui-bg-secondary;
+    -fx-text-fill: -sui-text-main;
 }
-.custom-tree-view .tree-cell:expanded, .custom-tree-view .tree-cell:collapsed {
-    -fx-text-fill: #ffffff;
-}
-.custom-tree-view .tree-cell:hover {
-    -fx-background-color: #2a2d2e;
-}
-.custom-tree-view .tree-cell:selected {
-    -fx-background-color: #37373d;
-    -fx-text-fill: #ffffff;
-}
-
-/* VSCode-like Yaml Editor (Middle Panel) */
-.editor-toolbar, .diagram-toolbar {
-    -fx-background-color: #252526;
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: #333333;
-}
-
-.editor-btn {
-    -fx-background-color: transparent;
-    -fx-text-fill: #cccccc;
-    -fx-cursor: hand;
-    -fx-padding: 5 10;
-}
-.editor-btn .ikonli-font-icon {
-    -fx-icon-color: #ffffff; /* Default to white for dark modes */
-}
-.editor-btn:hover {
-    -fx-background-color: #37373d;
-    -fx-text-fill: #ffffff;
-}
-.editor-btn:hover .ikonli-font-icon {
-    -fx-icon-color: #ffffff;
-}
-
-/* Specific Toolbar Icon Colors */
-.btn-save .ikonli-font-icon { -fx-icon-color: #4CAF50; } /* Green */
-.btn-save-as .ikonli-font-icon { -fx-icon-color: #2196F3; } /* Blue */
-.btn-deploy .ikonli-font-icon { -fx-icon-color: #E91E63; } /* Pink */
-.btn-layout .ikonli-font-icon { -fx-icon-color: #FF9800; } /* Orange */
-.btn-zoom .ikonli-font-icon { -fx-icon-color: #00BCD4; } /* Cyan */
-.btn-theme .ikonli-font-icon { -fx-icon-color: #9C27B0; } /* Purple */
-.btn-new-file .ikonli-font-icon { -fx-icon-color: #4CAF50; }
-.btn-new-folder .ikonli-font-icon { -fx-icon-color: #FFC107; }
-.btn-refresh .ikonli-font-icon { -fx-icon-color: #03A9F4; }
-.btn-sample-data .ikonli-font-icon { -fx-icon-color: #E040FB; } /* Vivid neon purple */
-
-.custom-code-area {
-    -fx-background-color: #1e1e1e;
-    -fx-text-fill: #d4d4d4;
-    -fx-font-family: "Consolas", "Courier New", monospace;
-    -fx-font-size: 14px;
-}
-.custom-code-area .lineno {
-    -fx-text-fill: #858585;
-    -fx-background-color: #1e1e1e;
-    -fx-padding: 0 10 0 0;
-}
-
-/* Syntax Highlighting */
-.yaml-key {
-    -fx-fill: #569cd6; /* VSCode Blue */
-    -fx-font-weight: bold;
-}
-.yaml-string {
-    -fx-fill: #ce9178; /* VSCode String Orange */
-}
-.yaml-comment {
-    -fx-fill: #6a9955; /* VSCode Green */
-}
-
-/* Visual Diagram (Right Panel) */
-.diagram-scroll {
-    -fx-background-color: #1e1e1e;
-    -fx-border-width: 0;
-}
-.diagram-scroll .viewport {
-    -fx-background-color: transparent;
-}
-.diagram-node {
-    -fx-background-color: #252526;
-    -fx-border-width: 1.5px;
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
-    -fx-padding: 10 20;
-    -fx-min-width: 180px;
-    -fx-max-width: 180px;
-    -fx-min-height: 80px;
-    -fx-max-height: 80px;
-    -fx-alignment: center;
-    -fx-cursor: hand;
-}
-
-.diagram-connector {
-    -fx-stroke: #888888;
-}
-
-.diagram-arrow {
-    -fx-fill: #888888;
-}
-
-.node-from {
-    -fx-border-color: #4CAF50; /* Green */
-}
-
-.node-step {
-    -fx-border-color: #2196F3; /* Blue */
-}
-
-.node-title {
-    -fx-text-fill: #ffffff;
-    -fx-font-weight: bold;
-    -fx-font-size: 14px;
-}
-
-.node-details {
-    -fx-text-fill: #aaaaaa;
-    -fx-font-size: 12px;
-}
-
-/* Console Styling */
-.console-pane {
-    -fx-background-color: #1e1e1e;
-}
-.console-output {
-    -fx-background-color: #1e1e1e;
-    -fx-control-inner-background: #1e1e1e;
-    -fx-text-fill: #cccccc;
-    -fx-font-family: "Consolas", "Courier New", monospace;
-    -fx-font-size: 13px;
-    -fx-border-width: 0;
-}
-.console-output .content {
-    -fx-background-color: #1e1e1e;
-}
-
-/* ---- Suppress JavaFX 21 ComboBox CSS WARNING (ClassCastException on Paint) ---- */
-/* JavaFX 21 fails to resolve derived lookup colors in combo-box popup hover states. */
-/* Providing explicit Paint values here stops the internal cast error. */
-.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
-    -fx-background-color: #252526;
-    -fx-text-fill: #cccccc;
-}
-.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:hover {
-    -fx-background-color: #2a2d2e;
-    -fx-text-fill: #ffffff;
-}
-.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected,
-.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:hover:filled:selected {
-    -fx-background-color: #094771;
-    -fx-text-fill: #ffffff;
-}
-.combo-box-popup > .list-view {
-    -fx-background-color: #252526;
-    -fx-border-color: #454545;
-}
-
-/* Auto-complete Popup */
-.autocomplete-list {
-    -fx-background-color: #252526;
-    -fx-border-color: #454545;
-    -fx-border-width: 1px;
-    -fx-padding: 0;
-    -fx-max-height: 200px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 10, 0, 0, 5);
-}
-.autocomplete-list .list-cell {
-    -fx-background-color: transparent;
-    -fx-text-fill: #d4d4d4;
-    -fx-font-family: "Consolas", "Courier New", monospace;
-    -fx-padding: 5 10;
-}
-.autocomplete-list .list-cell:selected {
-    -fx-background-color: #094771;
-    -fx-text-fill: #ffffff;
-}
-
-/* Camel Specific Keyword Highlighting */
-.camel-keyword {
-    -fx-fill: #c586c0; /* VSCode Purple for Keywords */
-    -fx-font-weight: bold;
-}
-
-/* EIP Diagram specific styling */
-.diagram-node-shape {
-    -fx-fill: transparent;
-    -fx-stroke-width: 0;
-}
-
-.node-choice {
-    -fx-stroke: #FF9800; /* Orange for Choice */
-    -fx-border-color: #FF9800; /* Fallback */
-}
-
-.node-nested {
-    -fx-border-color: #9C27B0; /* Purple for Multicast/Split/Aggregate */
-}
-
-.node-to {
-    -fx-border-color: #F44336; /* Red for To */
-}
-
-.node-icon {
-    -fx-icon-color: #ffffff;
-}
-
-.branch-title {
-    -fx-text-fill: #FF9800;
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-padding: 0 0 10 0;
-}
-
-.nested-container {
-    -fx-border-color: #555555;
-    -fx-border-style: dashed;
-    -fx-border-width: 1 0 0 0;
-    -fx-padding: 15 0 0 0;
-    -fx-margin: 15 0 0 0;
-}
-
-/* ---------------- Themes ---------------- */
-/* Theme: IntelliJ Light */
-.theme-intellij-light.app-root, .root.theme-intellij-light {
-    -fx-background-color: #ffffff;
-    -fx-base: #ffffff;
-    -fx-control-inner-background: #ffffff;
-    -fx-color: #e5e5e5;
-    -fx-text-base-color: #333333;
-    
-    /* IntelliJ Light menu overrides */
-    -fx-menu-bar-bg: #e5e5e5;
-    -fx-menu-bar-text: #333333;
-    -fx-menu-hover-bg: #d0d0d0;
-    -fx-menu-hover-text: #1a1a1a;
-    -fx-context-menu-bg: #f3f3f3;
-    -fx-context-menu-border: #cccccc;
-    -fx-context-menu-text: #333333;
-    -fx-context-menu-hover-bg: #2b79d2;
-    -fx-context-menu-hover-text: #ffffff;
-    -fx-context-menu-icon: #333333;
-    -fx-context-menu-hover-icon: #ffffff;
-}
-.theme-intellij-light .route-tree-pane, .theme-intellij-light .editor-pane, .theme-intellij-light .diagram-pane, .theme-intellij-light .console-pane { -fx-background-color: #f3f3f3; }
-.theme-intellij-light .pane-title { -fx-background-color: #e5e5e5; -fx-text-fill: #333333; -fx-border-color: #cccccc; }
-.theme-intellij-light .custom-tree-view, .theme-intellij-light .console-output { -fx-background-color: #ffffff; }
-.theme-intellij-light .custom-tree-view .tree-cell { -fx-text-fill: #333333; }
-.theme-intellij-light .custom-tree-view .tree-cell:hover { -fx-background-color: #e5e5e5; }
-.theme-intellij-light .custom-tree-view .tree-cell:selected { -fx-background-color: #2b79d2; -fx-text-fill: #ffffff; }
-.theme-intellij-light .console-output { -fx-text-fill: #333333; }
-.theme-intellij-light .node-title, .theme-intellij-light .node-details { -fx-text-fill: #333333; }
-.theme-intellij-light .node-icon { -fx-icon-color: #333333; }
-.theme-intellij-light .node-svg-icon { -fx-fill: #333333; }
-.theme-intellij-light .tree-cell .ikonli-font-icon { -fx-icon-color: #333333; }
-.theme-intellij-light .diagram-connector { -fx-stroke: #cccccc; }
-.theme-intellij-light .diagram-arrow { -fx-fill: #cccccc; }
-.theme-intellij-light .status-bar { -fx-background-color: #e5e5e5; }
-.theme-intellij-light .status-bar .label { -fx-text-fill: #333333; }
-.theme-intellij-light .editor-btn { -fx-text-fill: #333333; }
-.theme-intellij-light .editor-btn:hover { -fx-background-color: #d0d0d0; -fx-text-fill: #1a1a1a; }
-.theme-intellij-light .editor-btn .ikonli-font-icon { -fx-icon-color: #333333; }
-.theme-intellij-light .editor-toolbar, .theme-intellij-light .diagram-toolbar { -fx-background-color: #f3f3f3; -fx-border-color: #cccccc; }
-.theme-intellij-light .lineno { -fx-background-color: #ffffff; -fx-text-fill: #a0a0a0; -fx-border-color: #ffffff; }
-
-/* IntelliJ Light — Diagram Canvas */
-.theme-intellij-light .diagram-scroll { -fx-background-color: #f8f8f8; }
-.theme-intellij-light .diagram-scroll .viewport { -fx-background-color: #f8f8f8; }
-.theme-intellij-light .nested-container { -fx-border-color: #cccccc; }
-.theme-intellij-light .branch-title { -fx-text-fill: #cc7700; }
-.theme-intellij-light .diagram-node { -fx-background-color: #ffffff; -fx-effect: dropshadow(two-pass-box, rgba(0,0,0,0.12), 4, 0, 0, 2); }
-.theme-intellij-light .node-from { -fx-border-color: #2e8b57; }
-.theme-intellij-light .node-step { -fx-border-color: #1565c0; }
-.theme-intellij-light .node-to { -fx-border-color: #c62828; }
-.theme-intellij-light .node-choice { -fx-border-color: #e65100; }
-.theme-intellij-light .node-nested { -fx-border-color: #6a1b9a; }
-.theme-intellij-light .diagram-connector { -fx-stroke: #aaaaaa; }
-.theme-intellij-light .diagram-arrow { -fx-fill: #aaaaaa; }
-
-/* Theme: Dracula */
-.theme-dracula.app-root, .root.theme-dracula { -fx-background-color: #282a36; -fx-base: #282a36; -fx-control-inner-background: #282a36; -fx-color: #44475a; -fx-text-base-color: #f8f8f2; }
-.theme-dracula .route-tree-pane, .theme-dracula .editor-pane, .theme-dracula .diagram-pane, .theme-dracula .console-pane { -fx-background-color: #282a36; }
-.theme-dracula .pane-title { -fx-background-color: #44475a; -fx-text-fill: #f8f8f2; -fx-border-color: #6272a4; }
-.theme-dracula .custom-tree-view, .theme-dracula .console-output { -fx-background-color: #282a36; }
-.theme-dracula .custom-tree-view .tree-cell { -fx-text-fill: #f8f8f2; }
-.theme-dracula .custom-tree-view .tree-cell:hover { -fx-background-color: #44475a; }
-.theme-dracula .custom-tree-view .tree-cell:selected { -fx-background-color: #6272a4; -fx-text-fill: #f8f8f2; }
-.theme-dracula .console-output { -fx-text-fill: #f8f8f2; }
-.theme-dracula .node-title, .theme-dracula .node-details { -fx-text-fill: #f8f8f2; }
-.theme-dracula .node-icon { -fx-icon-color: #f8f8f2; }
-.theme-dracula .node-svg-icon { -fx-fill: #f8f8f2; }
-.theme-dracula .tree-cell .ikonli-font-icon { -fx-icon-color: #f8f8f2; }
-.theme-dracula .diagram-connector { -fx-stroke: #6272a4; }
-.theme-dracula .diagram-arrow { -fx-fill: #6272a4; }
-.theme-dracula .menu-bar, .theme-dracula .menu:hover { -fx-background-color: #44475a; }
-.theme-dracula .status-bar { -fx-background-color: #bd93f9; }
-.theme-dracula .menu-bar .label, .theme-dracula .status-bar .label, .theme-dracula .menu-item .label { -fx-text-fill: #f8f8f2; }
-.theme-dracula .editor-btn { -fx-text-fill: #f8f8f2; }
-.theme-dracula .editor-btn .ikonli-font-icon { -fx-icon-color: #f8f8f2; }
-.theme-dracula .editor-toolbar, .theme-dracula .diagram-toolbar { -fx-background-color: #282a36; -fx-border-color: #6272a4; }
-.theme-dracula .lineno { -fx-background-color: #282a36; -fx-text-fill: #6272a4; -fx-border-color: #282a36; }
-
-/* Theme: Monokai */
-.theme-monokai.app-root, .root.theme-monokai { -fx-background-color: #272822; -fx-base: #272822; -fx-control-inner-background: #272822; -fx-color: #3e3d32; -fx-text-base-color: #f8f8f2; }
-.theme-monokai .route-tree-pane, .theme-monokai .editor-pane, .theme-monokai .diagram-pane, .theme-monokai .console-pane { -fx-background-color: #272822; }
-.theme-monokai .pane-title { -fx-background-color: #3e3d32; -fx-text-fill: #f8f8f2; -fx-border-color: #75715e; }
-.theme-monokai .custom-tree-view, .theme-monokai .console-output { -fx-background-color: #272822; }
-.theme-monokai .custom-tree-view .tree-cell { -fx-text-fill: #f8f8f2; }
-.theme-monokai .custom-tree-view .tree-cell:hover { -fx-background-color: #3e3d32; }
-.theme-monokai .custom-tree-view .tree-cell:selected { -fx-background-color: #75715e; -fx-text-fill: #f8f8f2; }
-.theme-monokai .console-output { -fx-text-fill: #f8f8f2; }
-.theme-monokai .node-title, .theme-monokai .node-details { -fx-text-fill: #f8f8f2; }
-.theme-monokai .node-icon { -fx-icon-color: #f8f8f2; }
-.theme-monokai .node-svg-icon { -fx-fill: #f8f8f2; }
-.theme-monokai .tree-cell .ikonli-font-icon { -fx-icon-color: #f8f8f2; }
-.theme-monokai .diagram-connector { -fx-stroke: #75715e; }
-.theme-monokai .diagram-arrow { -fx-fill: #75715e; }
-.theme-monokai .menu-bar, .theme-monokai .menu:hover { -fx-background-color: #3e3d32; }
-.theme-monokai .status-bar { -fx-background-color: #fd971f; }
-.theme-monokai .menu-bar .label, .theme-monokai .status-bar .label, .theme-monokai .menu-item .label { -fx-text-fill: #f8f8f2; }
-.theme-monokai .editor-btn { -fx-text-fill: #f8f8f2; }
-.theme-monokai .editor-btn .ikonli-font-icon { -fx-icon-color: #f8f8f2; }
-.theme-monokai .editor-toolbar, .theme-monokai .diagram-toolbar { -fx-background-color: #272822; -fx-border-color: #75715e; }
-.theme-monokai .lineno { -fx-background-color: #272822; -fx-text-fill: #75715e; -fx-border-color: #272822; }
-
-/* Theme: Hacker */
-.theme-hacker.app-root, .root.theme-hacker { -fx-background-color: #000000; -fx-base: #000000; -fx-control-inner-background: #000000; -fx-color: #001a00; -fx-text-base-color: #00ff00; }
-.theme-hacker .route-tree-pane, .theme-hacker .editor-pane, .theme-hacker .diagram-pane, .theme-hacker .console-pane { -fx-background-color: #0d0d0d; }
-.theme-hacker .pane-title { -fx-background-color: #001a00; -fx-text-fill: #00ff00; -fx-border-color: #004d00; }
-.theme-hacker .custom-tree-view, .theme-hacker .console-output { -fx-background-color: #050505; }
-.theme-hacker .custom-tree-view .tree-cell { -fx-text-fill: #00cc00; }
-.theme-hacker .custom-tree-view .tree-cell:hover { -fx-background-color: #001a00; }
-.theme-hacker .custom-tree-view .tree-cell:selected { -fx-background-color: #004d00; -fx-text-fill: #00ff00; }
-.theme-hacker .console-output { -fx-text-fill: #00ff00; }
-.theme-hacker .node-title, .theme-hacker .node-details { -fx-text-fill: #00ff00; }
-.theme-hacker .node-icon { -fx-icon-color: #00ff00; }
-.theme-hacker .node-svg-icon { -fx-fill: #00ff00; }
-.theme-hacker .tree-cell .ikonli-font-icon { -fx-icon-color: #00cc00; }
-.theme-hacker .diagram-connector { -fx-stroke: #006600; }
-.theme-hacker .diagram-arrow { -fx-fill: #006600; }
-.theme-hacker .menu-bar, .theme-hacker .menu:hover { -fx-background-color: #001a00; }
-.theme-hacker .status-bar { -fx-background-color: #004d00; }
-.theme-hacker .menu-bar .label, .theme-hacker .status-bar .label, .theme-hacker .menu-item .label { -fx-text-fill: #00ff00; }
-.theme-hacker .editor-btn { -fx-text-fill: #00ff00; }
-.theme-hacker .editor-btn .ikonli-font-icon { 
-    -fx-icon-color: #00ff00; 
-    -fx-effect: dropshadow(three-pass-box, #00ff00, 10, 0.5, 0, 0);
-}
-.theme-hacker .editor-toolbar, .theme-hacker .diagram-toolbar { -fx-background-color: #0d0d0d; -fx-border-color: #004d00; }
-.theme-hacker .lineno { -fx-background-color: #0d0d0d; -fx-text-fill: #006600; -fx-border-color: #0d0d0d; }
-
-
-/* XML / XSLT Syntax Highlighting (High Contrast) */
-.xml-tag { -fx-fill: #569cd6; -fx-font-weight: bold; }
-.xml-attr { -fx-fill: #9cdcfe; }
-.xml-string { -fx-fill: #ce9178; }
-.xml-comment { -fx-fill: #6a9955; -fx-font-style: italic; }
-.xml-entity { -fx-fill: #d7ba7d; }
-.xml-text { -fx-fill: #d4d4d4; }
-
-/* Data Mapper UI */
-.mapper-tree-toolbar {
-    -fx-background-color: #2d2d2d;
-    -fx-padding: 2 5;
-    -fx-border-color: #333333;
-    -fx-border-width: 0 0 1 0;
-}
-.mapper-tool-btn {
-    -fx-background-color: transparent;
-    -fx-text-fill: #aaaaaa;
-    -fx-font-size: 10px;
-    -fx-padding: 3 6;
-    -fx-cursor: hand;
-}
-.mapper-tool-btn:hover {
-    -fx-background-color: #3e3e3e;
-    -fx-text-fill: #ffffff;
-}
-.mapping-node {
-    -fx-background-color: #333333;
-    -fx-border-color: #007acc;
-    -fx-border-radius: 4;
-    -fx-background-radius: 4;
-    -fx-padding: 5 10;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 5, 0, 0, 3);
-}
-.mapping-node-title {
-    -fx-text-fill: #007acc;
-    -fx-font-size: 10px;
-    -fx-font-weight: bold;
-}
-.mapping-node-expr {
-    -fx-text-fill: #cccccc;
-    -fx-font-family: 'Monospaced';
-    -fx-font-size: 9px;
-}
-
-
-.code-area .lineno {
-    -fx-background-color: #1e1e1e;
-    -fx-text-fill: #858585;
-    -fx-font-family: 'Consolas', 'Courier New', monospace;
-    -fx-font-size: 14px;
-    -fx-padding: 0 10 0 5;
-    -fx-border-color: #1e1e1e;
-    -fx-border-width: 0 1 0 0;
-}
-
-.theme-intellij-light .code-area .lineno {
-    -fx-background-color: #ffffff;
-    -fx-text-fill: #a0a0a0;
-    -fx-border-color: #ffffff;
-}
-
-.theme-dracula .code-area .lineno {
-    -fx-background-color: #282a36;
-    -fx-text-fill: #6272a4;
-    -fx-border-color: #282a36;
-}
-
-.theme-monokai .code-area .lineno {
-    -fx-background-color: #272822;
-    -fx-text-fill: #75715e;
-    -fx-border-color: #272822;
-}
-
-.theme-hacker .code-area .lineno {
-    -fx-background-color: #0d0d0d;
-    -fx-text-fill: #006600;
-    -fx-border-color: #0d0d0d;
-}
-
-
-.yaml-keyword { -fx-fill: #569cd6; -fx-font-weight: bold; }
-.yaml-string { -fx-fill: #ce9178; }
-.yaml-comment { -fx-fill: #6a9955; -fx-font-style: italic; }
-
-.node-bean {
-    -fx-background-color: #2c3e50;
-    -fx-border-color: #34495e;
-    -fx-border-width: 1px;
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 10, 0, 0, 5);
-}
-
-.theme-intellij-light .node-bean {
-    -fx-background-color: #f0f0f0;
-    -fx-border-color: #d0d0d0;
-    -fx-text-fill: #333333;
-}
-
-/* Property Pane styling */
-.property-pane {
-    -fx-background-color: -fx-control-inner-background;
-    -fx-text-fill: -fx-text-base-color;
-}
-.property-pane .label {
-    -fx-text-fill: -fx-text-base-color;
-    -fx-font-size: 13px;
-}
-.property-pane .text-field {
-    -fx-background-color: -fx-control-inner-background;
-    -fx-text-fill: -fx-text-base-color;
-    -fx-border-color: -fx-color;
-    -fx-border-radius: 3px;
-    -fx-padding: 6 10;
-}
-.property-pane .text-field:focused {
-    -fx-border-color: #007acc;
-}
-.property-pane .button {
-    -fx-cursor: hand;
-}
-
-.property-scroll {
-    -fx-background-color: transparent;
-    -fx-border-width: 0;
-}
-.property-scroll .viewport {
-    -fx-background-color: transparent;
-}
-
-/* RichTextFX Syntax Highlighting Styles in Property Pane */
-.syntax-editor {
-    -fx-background-color: -fx-control-inner-background;
-    -fx-font-family: 'Consolas', 'Courier New', monospace;
-    -fx-font-size: 13px;
-}
-.syntax-editor .text {
-    -fx-fill: -fx-text-base-color;
-}
-.syntax-editor .syntax-keyword {
-    -fx-fill: #569cd6;
-    -fx-font-weight: bold;
-}
-.syntax-editor .syntax-string {
-    -fx-fill: #ce9178;
-}
-.syntax-editor .syntax-comment {
-    -fx-fill: #6a9955;
-    -fx-font-style: italic;
-}
-.syntax-editor .syntax-number {
-    -fx-fill: #b5cea8;
-}
-.syntax-editor .syntax-key {
-    -fx-fill: #9cdcfe;
-}
-.syntax-editor .syntax-tag {
-    -fx-fill: #569cd6;
-}
-.syntax-editor .syntax-attr {
-    -fx-fill: #9cdcfe;
-}
-
-/* IntelliJ Light Syntax Highlighting overrides */
-.theme-intellij-light .syntax-editor .syntax-keyword {
-    -fx-fill: #000080;
-}
-.theme-intellij-light .syntax-editor .syntax-string {
-    -fx-fill: #008000;
-}
-.theme-intellij-light .syntax-editor .syntax-comment {
-    -fx-fill: #808080;
-}
-.theme-intellij-light .syntax-editor .syntax-number {
-    -fx-fill: #0000ff;
-}
-.theme-intellij-light .syntax-editor .syntax-key {
-    -fx-fill: #660e7a;
-}
-.theme-intellij-light .syntax-editor .syntax-tag {
-    -fx-fill: #000080;
-}
-.theme-intellij-light .syntax-editor .syntax-attr {
-    -fx-fill: #0000ff;
-}
-
-/* TableView Theme Adaptability */
-.table-view {
-    -fx-background-color: transparent;
-    -fx-border-color: -fx-color;
-    -fx-border-width: 1px;
-    -fx-border-radius: 3px;
-}
-.table-view .column-header-background {
-    -fx-background-color: -fx-color;
-}
-.table-view .column-header {
-    -fx-background-color: transparent;
-    -fx-size: 30px;
-}
-.table-view .column-header .label {
-    -fx-text-fill: -fx-text-base-color;
-    -fx-font-weight: bold;
-}
-.table-view .table-cell {
-    -fx-text-fill: -fx-text-base-color;
-    -fx-alignment: center-left;
-    -fx-padding: 5 10;
-}
-.table-view .table-row-cell:odd {
-    -fx-background-color: derive(-fx-control-inner-background, -3%);
-}
-.table-view .table-row-cell:even {
-    -fx-background-color: -fx-control-inner-background;
-}
-.table-view .table-row-cell:filled:selected {
-    -fx-background-color: #007acc;
-}
-.table-view .table-row-cell:filled:selected .table-cell {
-    -fx-text-fill: #ffffff;
-}
-
-/* Variables Editor Window Theming */
-.variables-title {
-    -fx-text-fill: #4CAF50;
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-}
-.variables-desc {
-    -fx-text-fill: -fx-text-base-color;
-    -fx-opacity: 0.8;
-    -fx-font-size: 11px;
-}
-.variables-field {
-    -fx-background-color: -fx-control-inner-background;
-    -fx-text-fill: -fx-text-base-color;
-    -fx-border-color: -fx-color;
-    -fx-border-width: 1px;
-    -fx-border-radius: 3px;
-}
-.variables-field:focused {
-    -fx-border-color: #007acc;
-}
-.variables-btn-add {
-    -fx-background-color: #4CAF50;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-}
-.variables-btn-add:hover {
-    -fx-background-color: #45a049;
-}
-.variables-btn-delete {
-    -fx-background-color: #F44336;
-    -fx-text-fill: white;
-}
-.variables-btn-delete:hover {
-    -fx-background-color: #da190b;
-}
-.variables-btn-save {
-    -fx-background-color: #007acc;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-}
-.variables-btn-save:hover {
-    -fx-background-color: #0062a3;
-}
-.variables-btn-cancel {
-    -fx-background-color: #555555;
-    -fx-text-fill: white;
-}
-.variables-btn-cancel:hover {
-    -fx-background-color: #444444;
-}
-
-/* --- ToolBar & Icon Style Enhancements (High Contrast & Premium) --- */
-
-.tool-bar {
-    -fx-background-color: #2d2d2d;
-    -fx-border-color: #3d3d3d;
-    -fx-border-width: 0 0 1 0;
-    -fx-padding: 6 12 6 12;
-}
-
-.tool-bar .toolbar-btn {
-    -fx-background-color: transparent;
-    -fx-background-radius: 4px;
-    -fx-border-radius: 4px;
-    -fx-padding: 6 10;
-    -fx-cursor: hand;
-    -fx-transition: all 0.15s ease-in-out;
-}
-
-.tool-bar .toolbar-btn:hover {
-    -fx-background-color: #3e3e3e;
-}
-
-.tool-bar .toolbar-btn:selected {
-    -fx-background-color: #007acc;
-}
-
-.tool-bar .toolbar-btn:selected:hover {
-    -fx-background-color: #0062a3;
-}
-
-/* Base high-contrast icon color for dark mode */
-.tool-bar .toolbar-btn .ikonli-font-icon {
-    -fx-icon-color: #ffffff;
-    -fx-icon-size: 15px;
-}
-
-.tool-bar .toolbar-btn:selected .ikonli-font-icon {
-    -fx-icon-color: #ffffff;
-}
-
-/* Premium High-Contrast Color Accents for Dark Mode */
-.tool-bar .btn-play .ikonli-font-icon {
-    -fx-icon-color: #00E676; /* Vivid emerald green */
-}
-.tool-bar .btn-stop .ikonli-font-icon {
-    -fx-icon-color: #FF1744; /* Vivid cherry red */
-}
-.tool-bar .btn-variables .ikonli-font-icon {
-    -fx-icon-color: #00E5FF; /* Electric cyan */
-}
-.tool-bar .btn-decrypt .ikonli-font-icon {
-    -fx-icon-color: #FFD600; /* Bright gold */
-}
-.tool-bar .btn-xslt .ikonli-font-icon {
-    -fx-icon-color: #FF9100; /* Safety orange */
-}
-.tool-bar .btn-transform .ikonli-font-icon {
-    -fx-icon-color: #E040FB; /* Vivid neon purple */
-}
-.tool-bar .btn-validate-studio .ikonli-font-icon {
-    -fx-icon-color: #00E5FF; /* Electric cyan */
-}
-.tool-bar .btn-diagram-studio .ikonli-font-icon {
-    -fx-icon-color: #F06292; /* Flamingo pink */
-}
-.tool-bar .btn-faker-studio .ikonli-font-icon {
-    -fx-icon-color: #E040FB;
-}
-.tool-bar .btn-mapping-studio .ikonli-font-icon {
-    -fx-icon-color: #E040FB; /* Vivid neon purple */
-}
-.tool-bar .btn-link-schema .ikonli-font-icon {
-    -fx-icon-color: #2196F3; /* Blue */
-}
-.tool-bar .btn-export .ikonli-font-icon {
-    -fx-icon-color: #2979FF; /* Brilliant royal blue */
-}
-.tool-bar .btn-manual .ikonli-font-icon {
-    -fx-icon-color: #76FF03; /* Lime green */
-}
-
-/* Disabled state */
-.tool-bar .toolbar-btn:disabled {
-    -fx-opacity: 0.35;
-}
-
-/* ---------------- IntelliJ Light Theme Overrides ---------------- */
-.theme-intellij-light .tool-bar {
-    -fx-background-color: #f3f3f3;
-    -fx-border-color: #cccccc;
-}
-
-.theme-intellij-light .tool-bar .toolbar-btn:hover {
-    -fx-background-color: #e5e5e5;
-}
-
-.theme-intellij-light .tool-bar .toolbar-btn:selected {
-    -fx-background-color: #2b79d2;
-}
-
-.theme-intellij-light .tool-bar .toolbar-btn:selected:hover {
-    -fx-background-color: #1a5ea8;
-}
-
-/* Base high-contrast icon color for light mode */
-.theme-intellij-light .tool-bar .toolbar-btn {
-    -fx-text-fill: #333333;
-}
-.theme-intellij-light .tool-bar .toolbar-btn .ikonli-font-icon {
-    -fx-icon-color: #333333;
-}
-
-.theme-intellij-light .tool-bar .toolbar-btn:selected .ikonli-font-icon {
-    -fx-icon-color: #ffffff;
-}
-
-/* Color Accents for Light Mode */
-.theme-intellij-light .tool-bar .btn-play .ikonli-font-icon {
-    -fx-icon-color: #2e7d32; /* Rich forest green */
-}
-.theme-intellij-light .tool-bar .btn-stop .ikonli-font-icon {
-    -fx-icon-color: #c62828; /* Rich crimson red */
-}
-.theme-intellij-light .tool-bar .btn-variables .ikonli-font-icon {
-    -fx-icon-color: #00838f; /* Rich dark cyan */
-}
-.theme-intellij-light .tool-bar .btn-decrypt .ikonli-font-icon {
-    -fx-icon-color: #f57f17; /* Rich dark gold/amber */
-}
-.theme-intellij-light .tool-bar .btn-xslt .ikonli-font-icon {
-    -fx-icon-color: #e65100; /* Rich burnt orange */
-}
-.theme-intellij-light .tool-bar .btn-transform .ikonli-font-icon {
-    -fx-icon-color: #880e4f; /* Rich burgundy */
-}
-.theme-intellij-light .tool-bar .btn-validate-studio .ikonli-font-icon {
-    -fx-icon-color: #00838f; /* Rich dark cyan */
-}
-.theme-intellij-light .tool-bar .btn-diagram-studio .ikonli-font-icon {
-    -fx-icon-color: #ad1457; /* Rich pink */
-}
-.theme-intellij-light .tool-bar .btn-faker-studio .ikonli-font-icon {
-    -fx-icon-color: #9C27B0;
-}
-.theme-intellij-light .tool-bar .btn-mapping-studio .ikonli-font-icon {
-    -fx-icon-color: #880e4f; /* Rich burgundy */
-}
-.theme-intellij-light .tool-bar .btn-link-schema .ikonli-font-icon {
-    -fx-icon-color: #1565c0; /* Rich navy blue */
-}
-.theme-intellij-light .tool-bar .btn-export .ikonli-font-icon {
-    -fx-icon-color: #1565c0; /* Rich navy blue */
-}
-.theme-intellij-light .tool-bar .btn-manual .ikonli-font-icon {
-    -fx-icon-color: #33691e; /* Rich olive green */
-}
-
-/* ---------------- Dracula Theme Overrides ---------------- */
-.theme-dracula .tool-bar {
-    -fx-background-color: #282a36;
-    -fx-border-color: #6272a4;
-}
-.theme-dracula .tool-bar .toolbar-btn:hover {
-    -fx-background-color: #44475a;
-}
-.theme-dracula .tool-bar .toolbar-btn:selected {
-    -fx-background-color: #6272a4;
-}
-
-/* ---------------- Monokai Theme Overrides ---------------- */
-.theme-monokai .tool-bar {
-    -fx-background-color: #272822;
-    -fx-border-color: #75715e;
-}
-.theme-monokai .tool-bar .toolbar-btn:hover {
-    -fx-background-color: #3e3d32;
-}
-.theme-monokai .tool-bar .toolbar-btn:selected {
-    -fx-background-color: #75715e;
-}
-
-/* ---------------- Hacker Theme Overrides ---------------- */
-.theme-hacker .tool-bar {
-    -fx-background-color: #000000;
-    -fx-border-color: #004d00;
-}
-.theme-hacker .tool-bar .toolbar-btn:hover {
-    -fx-background-color: #001a00;
-}
-.theme-hacker .tool-bar .toolbar-btn:selected {
-    -fx-background-color: #004d00;
-}
-.theme-hacker .tool-bar .toolbar-btn .ikonli-font-icon {
-    -fx-icon-color: #00ff00;
-}
-.theme-hacker .tool-bar .toolbar-btn:selected .ikonli-font-icon {
-    -fx-icon-color: #ffffff;
-}
-
-/* ---------------- Data Transformation Studio & Snippet Window Buttons ---------------- */
-.btn-run { -fx-text-fill: #4CAF50 !important; }
-.theme-vscode-dark .editor-btn.btn-run .ikonli-font-icon,
-.theme-dracula .editor-btn.btn-run .ikonli-font-icon,
-.theme-monokai .editor-btn.btn-run .ikonli-font-icon,
-.theme-hacker .editor-btn.btn-run .ikonli-font-icon {
-    -fx-icon-color: #00E676 !important;
-}
-
-.btn-validate { -fx-text-fill: #2196F3 !important; }
-.theme-vscode-dark .editor-btn.btn-validate .ikonli-font-icon,
-.theme-dracula .editor-btn.btn-validate .ikonli-font-icon,
-.theme-monokai .editor-btn.btn-validate .ikonli-font-icon,
-.theme-hacker .editor-btn.btn-validate .ikonli-font-icon {
-    -fx-icon-color: #00E5FF !important;
-}
-
-.btn-browse-xsd { -fx-text-fill: #FF9100 !important; }
-.theme-vscode-dark .editor-btn.btn-browse-xsd .ikonli-font-icon,
-.theme-dracula .editor-btn.btn-browse-xsd .ikonli-font-icon,
-.theme-monokai .editor-btn.btn-browse-xsd .ikonli-font-icon,
-.theme-hacker .editor-btn.btn-browse-xsd .ikonli-font-icon {
-    -fx-icon-color: #FF9100 !important;
-}
-
-.btn-save-config { -fx-text-fill: #FFD600 !important; }
-.theme-vscode-dark .editor-btn.btn-save-config .ikonli-font-icon,
-.theme-dracula .editor-btn.btn-save-config .ikonli-font-icon,
-.theme-monokai .editor-btn.btn-save-config .ikonli-font-icon,
-.theme-hacker .editor-btn.btn-save-config .ikonli-font-icon {
-    -fx-icon-color: #FFD600 !important;
-}
-
-.btn-set-mappings { -fx-text-fill: #E040FB !important; }
-.theme-vscode-dark .editor-btn.btn-set-mappings .ikonli-font-icon,
-.theme-dracula .editor-btn.btn-set-mappings .ikonli-font-icon,
-.theme-monokai .editor-btn.btn-set-mappings .ikonli-font-icon,
-.theme-hacker .editor-btn.btn-set-mappings .ikonli-font-icon {
-    -fx-icon-color: #E040FB !important;
-}
-
-/* Small action buttons in headers and snippet windows */
-.small-action-btn {
-    -fx-background-color: #2d2d30;
-    -fx-border-color: #3f3f46;
-    -fx-border-width: 1px;
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
-    -fx-padding: 4 8;
-    -fx-cursor: hand;
-}
-.small-action-btn .ikonli-font-icon {
-    -fx-icon-color: #cccccc;
-}
-.small-action-btn:hover {
-    -fx-background-color: #3f3f46;
-    -fx-border-color: #00E5FF;
-}
-.small-action-btn:hover .ikonli-font-icon {
-    -fx-icon-color: #ffffff !important;
-}
-
-.btn-open-file .ikonli-font-icon { -fx-icon-color: #FFD600 !important; }
-.btn-save-file .ikonli-font-icon { -fx-icon-color: #00E676 !important; }
-.btn-save-as-file .ikonli-font-icon { -fx-icon-color: #00E676 !important; }
-.btn-snippet-info .ikonli-font-icon { -fx-icon-color: #E040FB !important; }
-.btn-copy-text .ikonli-font-icon { -fx-icon-color: #00E5FF !important; }
-
-/* Big Copy button in the dialog */
-.btn-copy-all {
-    -fx-background-color: #00E5FF;
-    -fx-text-fill: #121212 !important;
-    -fx-font-weight: bold;
-    -fx-padding: 8 16;
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
-    -fx-cursor: hand;
-    -fx-alignment: center;
-}
-.btn-copy-all:hover {
-    -fx-background-color: #00B0FF;
-}
-.btn-copy-all .ikonli-font-icon {
-    -fx-icon-color: #121212 !important;
-}
-
-/* Light Theme Overrides */
-.theme-intellij-light .btn-run { -fx-text-fill: #2e7d32 !important; }
-.theme-intellij-light .btn-run .ikonli-font-icon { -fx-icon-color: #2e7d32 !important; }
-
-.theme-intellij-light .btn-validate { -fx-text-fill: #1565c0 !important; }
-.theme-intellij-light .btn-validate .ikonli-font-icon { -fx-icon-color: #1565c0 !important; }
-
-.theme-intellij-light .btn-browse-xsd { -fx-text-fill: #e65100 !important; }
-.theme-intellij-light .btn-browse-xsd .ikonli-font-icon { -fx-icon-color: #e65100 !important; }
-
-.theme-intellij-light .btn-save-config { -fx-text-fill: #f57f17 !important; }
-.theme-intellij-light .btn-save-config .ikonli-font-icon { -fx-icon-color: #f57f17 !important; }
-
-.theme-intellij-light .btn-set-mappings { -fx-text-fill: #6a1b9a !important; }
-.theme-intellij-light .btn-set-mappings .ikonli-font-icon { -fx-icon-color: #6a1b9a !important; }
-
-.theme-intellij-light .small-action-btn {
-    -fx-background-color: #f3f3f3;
-    -fx-border-color: #cccccc;
-}
-.theme-intellij-light .small-action-btn:hover {
-    -fx-background-color: #e5e5e5;
-    -fx-border-color: #007ACC;
-}
-.theme-intellij-light .small-action-btn .ikonli-font-icon {
-    -fx-icon-color: #007ACC !important;
-}
-.theme-intellij-light .small-action-btn:hover .ikonli-font-icon {
-    -fx-icon-color: #005A9E !important;
-}
-/* Editor Panel Headers */
-.editor-panel-header {
-    -fx-background-color: #2d2d30;
-    -fx-border-color: #3f3f46;
-    -fx-border-width: 0 0 1px 0;
-}
-.editor-panel-header-label {
-    -fx-text-fill: #aaaaaa;
-    -fx-font-size: 10px;
-    -fx-font-weight: bold;
-}
-
-/* Theme overrides for Editor Panel Headers */
-.theme-intellij-light .editor-panel-header {
-    -fx-background-color: #f3f3f3;
-    -fx-border-color: #cccccc;
-}
-.theme-intellij-light .editor-panel-header-label {
-    -fx-text-fill: #333333;
-}
-
-/* Bean Diagram Node Styles (Default / Dark) */
-.node-bean-local {
-    -fx-background-color: linear-gradient(to bottom right, #2b3e50, #1e2b37);
-    -fx-padding: 10;
-    -fx-border-radius: 8;
-    -fx-background-radius: 8;
-    -fx-border-color: #3498db;
-    -fx-border-width: 1.5;
-}
-
-.node-bean-ref {
-    -fx-background-color: linear-gradient(to bottom right, #2d2d30, #252526);
-    -fx-padding: 10;
-    -fx-border-radius: 8;
-    -fx-background-radius: 8;
-    -fx-border-color: #7a7a7a;
-    -fx-border-width: 1.5;
-    -fx-border-style: dashed;
-}
-
-.node-bean-title {
-    -fx-font-weight: bold;
-    -fx-text-fill: #ffffff;
-    -fx-font-size: 13px;
-}
-
-.node-bean-type-local {
-    -fx-font-style: italic;
-    -fx-text-fill: #3498db;
-    -fx-font-size: 11px;
-}
-
-.node-bean-type-ref {
-    -fx-font-style: italic;
-    -fx-text-fill: #aaaaaa;
-    -fx-font-size: 11px;
-}
-
-.node-bean-prop {
-    -fx-text-fill: #cccccc;
-    -fx-font-size: 10px;
-}
-
-.node-bean-props-box {
-    -fx-padding: 5 0 0 0;
-    -fx-border-color: #3f3f46;
-    -fx-border-width: 0.5 0 0 0;
-}
-
-.node-bean-prop-more {
-    -fx-text-fill: #71717a;
-    -fx-font-size: 10px;
-}
-
-/* Theme: IntelliJ Light */
-.theme-intellij-light .node-bean-local {
-    -fx-background-color: linear-gradient(to bottom right, #eef2f7, #dbeafe);
-    -fx-border-color: #2563eb;
-}
-
-.theme-intellij-light .node-bean-ref {
-    -fx-background-color: linear-gradient(to bottom right, #f4f4f5, #e4e4e7);
-    -fx-border-color: #a1a1aa;
-}
-
-.theme-intellij-light .node-bean-title {
-    -fx-text-fill: #1e293b;
-}
-
-.theme-intellij-light .node-bean-type-local {
-    -fx-text-fill: #2563eb;
-}
-
-.theme-intellij-light .node-bean-type-ref {
-    -fx-text-fill: #71717a;
-}
-
-.theme-intellij-light .node-bean-prop {
-    -fx-text-fill: #52525b;
-}
-
-.theme-intellij-light .node-bean-props-box {
-    -fx-border-color: #cbd5e1;
-}
-
-.theme-intellij-light .node-bean-prop-more {
-    -fx-text-fill: #94a3b8;
-}
-
-/* Theme: Dracula */
-.theme-dracula .node-bean-local {
-    -fx-background-color: linear-gradient(to bottom right, #282a36, #44475a);
-    -fx-border-color: #bd93f9;
-}
-.theme-dracula .node-bean-ref {
-    -fx-background-color: linear-gradient(to bottom right, #21222c, #282a36);
-    -fx-border-color: #6272a4;
-}
-.theme-dracula .node-bean-title { -fx-text-fill: #f8f8f2; }
-.theme-dracula .node-bean-type-local { -fx-text-fill: #bd93f9; }
-.theme-dracula .node-bean-type-ref { -fx-text-fill: #6272a4; }
-.theme-dracula .node-bean-prop { -fx-text-fill: #f8f8f2; }
-.theme-dracula .node-bean-props-box { -fx-border-color: #6272a4; }
-.theme-dracula .node-bean-prop-more { -fx-text-fill: #6272a4; }
-
-/* Theme: Monokai */
-.theme-monokai .node-bean-local {
-    -fx-background-color: linear-gradient(to bottom right, #272822, #3e3d32);
-    -fx-border-color: #a6e22e;
-}
-.theme-monokai .node-bean-ref {
-    -fx-background-color: linear-gradient(to bottom right, #1e1f1c, #272822);
-    -fx-border-color: #75715e;
-}
-.theme-monokai .node-bean-title { -fx-text-fill: #f8f8f2; }
-.theme-monokai .node-bean-type-local { -fx-text-fill: #a6e22e; }
-.theme-monokai .node-bean-type-ref { -fx-text-fill: #75715e; }
-.theme-monokai .node-bean-prop { -fx-text-fill: #f8f8f2; }
-.theme-monokai .node-bean-props-box { -fx-border-color: #75715e; }
-.theme-monokai .node-bean-prop-more { -fx-text-fill: #75715e; }
-
-/* Theme: Hacker */
-.theme-hacker .node-bean-local {
-    -fx-background-color: linear-gradient(to bottom right, #000000, #001a00);
-    -fx-border-color: #00ff00;
-}
-.theme-hacker .node-bean-ref {
-    -fx-background-color: linear-gradient(to bottom right, #000000, #000d00);
-    -fx-border-color: #006600;
-}
-.theme-hacker .node-bean-title { -fx-text-fill: #00ff00; }
-.theme-hacker .node-bean-type-local { -fx-text-fill: #00ff00; }
-.theme-hacker .node-bean-type-ref { -fx-text-fill: #00cc00; }
-.theme-hacker .node-bean-prop { -fx-text-fill: #00ff00; }
-.theme-hacker .node-bean-props-box { -fx-border-color: #00ff00; }
-.theme-hacker .node-bean-prop-more { -fx-text-fill: #00cc00; }
-
-
-/* ==========================================================================
-   Data Transformation Studio and Console Styling
-   ========================================================================== */
-
-/* 1. Theme Variable Tokens (Looked-up Colors) */
-.root {
-    -console-fg: #e6edf3;
-    -console-dim-fg: #737679;
-    -console-bg: #0d1117;
-    -console-border: #30363d;
-    -console-header-bg: #161b22;
-    -console-title-fg: #8b949e;
-    -console-btn-bg: #21262d;
-    -console-btn-hover-bg: #30363d;
-}
-
-.root.theme-intellij-light {
-    -console-fg: #333333;
-    -console-dim-fg: #808080;
-    -console-bg: #ffffff;
-    -console-border: #cccccc;
-    -console-header-bg: #f3f3f3;
-    -console-title-fg: #666666;
-    -console-btn-bg: #e5e5e5;
-    -console-btn-hover-bg: #cccccc;
-}
-
-.root.theme-dracula {
-    -console-fg: #f8f8f2;
-    -console-dim-fg: #7c7e89;
-    -console-bg: #282a36;
-    -console-border: #6272a4;
-    -console-header-bg: #21222c;
-    -console-title-fg: #6272a4;
-    -console-btn-bg: #44475a;
-    -console-btn-hover-bg: #6272a4;
-}
-
-.root.theme-monokai {
-    -console-fg: #f8f8f2;
-    -console-dim-fg: #75715e;
-    -console-bg: #272822;
-    -console-border: #75715e;
-    -console-header-bg: #1e1f29;
-    -console-title-fg: #75715e;
-    -console-btn-bg: #3e3d32;
-    -console-btn-hover-bg: #75715e;
-}
-
-.root.theme-hacker {
-    -console-fg: #00ff00;
-    -console-dim-fg: #008000;
-    -console-bg: #050505;
-    -console-border: #004d00;
-    -console-header-bg: #0d0d0d;
-    -console-title-fg: #00ff00;
-    -console-btn-bg: #002200;
-    -console-btn-hover-bg: #004400;
-}
-
-/* 2. Studio Layout Components */
-.studio-sidebar {
-    -fx-background-color: #252526;
-    -fx-border-color: #333333;
-    -fx-border-width: 0 1 0 0;
-}
-.theme-intellij-light .studio-sidebar {
-    -fx-background-color: #f3f3f3;
-    -fx-border-color: #cccccc;
-}
-.theme-dracula .studio-sidebar {
-    -fx-background-color: #282a36;
-    -fx-border-color: #44475a;
-}
-.theme-monokai .studio-sidebar {
-    -fx-background-color: #272822;
-    -fx-border-color: #3e3d32;
-}
-.theme-hacker .studio-sidebar {
-    -fx-background-color: #0d0d0d;
-    -fx-border-color: #004d00;
-}
-
-.studio-content {
-    -fx-background-color: #1e1e1e;
-}
-.theme-intellij-light .studio-content {
-    -fx-background-color: #ffffff;
-}
-.theme-dracula .studio-content {
-    -fx-background-color: #282a36;
-}
-.theme-monokai .studio-content {
-    -fx-background-color: #272822;
-}
-.theme-hacker .studio-content {
-    -fx-background-color: #000000;
-}
-
-/* 3. Text and Label Styles */
-.studio-title-label {
-    -fx-font-weight: bold;
-    -fx-padding: 0 20;
-    -fx-text-fill: -fx-text-base-color;
-}
-.studio-explorer-label {
-    -fx-font-size: 10;
-    -fx-text-fill: #858585;
-    -fx-font-weight: bold;
-}
-.studio-placeholder-label {
-    -fx-text-fill: #555555;
-    -fx-font-size: 18;
-}
-.theme-intellij-light .studio-placeholder-label {
-    -fx-text-fill: #999999;
-}
-
-.mapping-tree-item {
-    -fx-text-fill: #4fc1ff;
-}
-.theme-intellij-light .mapping-tree-item {
-    -fx-text-fill: #0066cc;
-}
-.folder-tree-item {
-    -fx-text-fill: -fx-text-base-color;
-}
-
-/* 4. Terminal/Console Component Styles */
-.console-header {
-    -fx-background-color: -console-header-bg;
-    -fx-border-color: -console-border;
-    -fx-border-width: 0 0 1 0;
-}
-.console-title {
-    -fx-text-fill: -console-title-fg;
-    -fx-font-weight: bold;
-}
-.console-icon {
-    -fx-icon-color: -console-fg;
-}
-.console-button {
-    -fx-background-color: -console-btn-bg;
-    -fx-text-fill: -console-fg;
-    -fx-border-color: -console-border;
-    -fx-border-radius: 3;
-    -fx-cursor: hand;
-    -fx-font-size: 11px;
-}
-.console-button:hover {
-    -fx-background-color: -console-btn-hover-bg;
-}
-.console-scroll-pane {
-    -fx-background: -console-bg;
-    -fx-background-color: -console-bg;
-    -fx-border-color: -console-border;
-    -fx-border-width: 1 0 0 0;
-}
-.console-text-area {
-    -fx-background-color: -console-bg;
-    -fx-padding: 6 8 6 8;
-}
-.console-text-area .content {
-    -fx-background-color: -console-bg;
-}
-
-
-/* Validator Studio Mapping Studio Styles */
-/* Help Portal Pane */
-/* Decrypt Tool Window */
-.decrypt-window {
-    -fx-background-color: #1e1e1e;
-}
-.decrypt-title {
-    -fx-text-fill: #4CAF50;
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-}
-.decrypt-label {
-    -fx-text-fill: #cccccc;
-}
-.decrypt-field {
-    -fx-background-color: #3c3c3c;
-    -fx-text-fill: white;
-    -fx-prompt-text-fill: #808080;
-}
-.decrypt-area, .decrypt-output-area {
-    -fx-control-inner-background: #2d2d2d;
-    -fx-text-fill: white;
-}
-.decrypt-output-area {
-    -fx-text-fill: #9cdcfe;
-    -fx-font-family: 'Monospaced';
-}
-.decrypt-btn {
-    -fx-background-color: #4CAF50;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-}
-
-/* Theme: IntelliJ Light Overrides for Decrypt Tool */
-.theme-intellij-light .decrypt-window {
-    -fx-background-color: #ffffff;
-}
-.theme-intellij-light .decrypt-title {
-    -fx-text-fill: #2e7d32;
-}
-.theme-intellij-light .decrypt-label {
-    -fx-text-fill: #333333;
-}
-.theme-intellij-light .decrypt-field {
-    -fx-background-color: #ffffff;
-    -fx-text-fill: #333333;
-    -fx-border-color: #cccccc;
-}
-.theme-intellij-light .decrypt-area, .theme-intellij-light .decrypt-output-area {
-    -fx-control-inner-background: #ffffff;
-    -fx-text-fill: #333333;
-}
-.theme-intellij-light .decrypt-output-area {
-    -fx-text-fill: #000080;
-}
-.theme-intellij-light .decrypt-btn {
-    -fx-background-color: #2b79d2;
-}
-
-.btn-play-file {
-    -fx-text-fill: #4CAF50;
-}
-.btn-stop-file {
-    -fx-text-fill: #F44336;
-}
-.theme-intellij-light .btn-play-file {
-    -fx-text-fill: #2e7d32;
-}
-.theme-intellij-light .btn-stop-file {
-    -fx-text-fill: #c62828;
-}
-
-.mapped-schema-label {
-    -fx-text-fill: -fx-text-inner-color;
-    -fx-padding: 2 6 2 6;
-    -fx-background-color: rgba(128,128,128,0.15);
-    -fx-background-radius: 3;
-    -fx-font-size: 11px;
-}
-.theme-intellij-light .mapped-schema-label {
-    -fx-background-color: #e5e5e5;
-}
-
-.transformation-name-label {
-    -fx-font-weight: bold;
-    -fx-padding: 0 20;
-    -fx-text-fill: white;
-}
-.theme-intellij-light .transformation-name-label {
-    -fx-text-fill: #333333;
-}
-
-.studio-console-area {
-    -fx-control-inner-background: #000000;
-    -fx-text-fill: #00ff00;
-    -fx-font-family: 'Consolas', monospace;
-}
-.theme-intellij-light .studio-console-area {
-    -fx-control-inner-background: #ffffff;
-    -fx-text-fill: #333333;
-    -fx-border-color: #cccccc;
-}
-
-.results-pane {
-    -fx-background-color: #252526;
-    -fx-border-color: #333333;
-    -fx-border-width: 1 0 0 0;
-}
-.theme-intellij-light .results-pane {
-    -fx-background-color: #f3f3f3;
-    -fx-border-color: #cccccc;
-}
-
-.results-header {
-    -fx-background-color: #2d2d2d;
-    -fx-border-color: #333333;
-    -fx-border-width: 0 0 1 0;
-}
-.theme-intellij-light .results-header {
-    -fx-background-color: #e5e5e5;
-    -fx-border-color: #cccccc;
-}
-
-.results-status-label {
-    -fx-text-fill: #4CAF50;
-    -fx-font-weight: bold;
-}
-.theme-intellij-light .results-status-label {
-    -fx-text-fill: #2e7d32;
-}
-
-.results-stats-label {
-    -fx-text-fill: #aaaaaa;
-    -fx-font-size: 11px;
-}
-.theme-intellij-light .results-stats-label {
-    -fx-text-fill: #666666;
-}
-
-.results-list-view {
-    -fx-background-color: #1e1e1e;
-}
-.theme-intellij-light .results-list-view {
-    -fx-background-color: #ffffff;
-}
-
-.results-list-view .list-cell {
-    -fx-text-fill: #cccccc;
-}
-.theme-intellij-light .results-list-view .list-cell {
-    -fx-text-fill: #333333;
-}
-
-.results-list-view .list-cell:selected {
-    -fx-background-color: #094771;
-}
-.theme-intellij-light .results-list-view .list-cell:selected {
-    -fx-background-color: #2b79d2;
-}
-
-.help-portal-pane {
-    -fx-background-color: #252526;
-}
-.help-header {
-    -fx-background-color: #252526;
-    -fx-border-color: #333333;
-    -fx-border-width: 0 0 1 0;
-}
-.help-title {
-    -fx-text-fill: #4CAF50;
-    -fx-font-weight: bold;
-    -fx-font-size: 14px;
-}
-.help-search-field {
-    -fx-background-color: #3c3c3c;
-    -fx-text-fill: white;
-    -fx-prompt-text-fill: #808080;
-}
-.help-close-btn {
-    -fx-background-color: transparent;
-    -fx-text-fill: #cccccc;
-}
-.help-split-pane {
-    -fx-background-color: #1e1e1e;
-}
-.help-topic-list {
-    -fx-background-color: #252526;
-    -fx-control-inner-background: #252526;
-}
-.help-topic-list .list-cell {
-    -fx-text-fill: #cccccc;
-    -fx-padding: 8 12;
-    -fx-background-color: transparent;
-}
-.help-topic-list .list-cell:hover {
-    -fx-background-color: #2a2d2e;
-}
-.help-topic-list .list-cell:selected {
-    -fx-background-color: #37373d;
-    -fx-text-fill: #ffffff;
-}
-
-/* Theme: IntelliJ Light Overrides for Help Portal */
-.theme-intellij-light .help-portal-pane, .theme-intellij-light .help-header {
-    -fx-background-color: #f3f3f3;
-    -fx-border-color: #cccccc;
-}
-.theme-intellij-light .help-title {
-    -fx-text-fill: #2e7d32;
-}
-.theme-intellij-light .help-search-field {
-    -fx-background-color: #ffffff;
-    -fx-text-fill: #333333;
-    -fx-prompt-text-fill: #808080;
-    -fx-border-color: #cccccc;
-}
-.theme-intellij-light .help-close-btn {
-    -fx-text-fill: #333333;
-}
-.theme-intellij-light .help-split-pane {
-    -fx-background-color: #ffffff;
-}
-.theme-intellij-light .help-topic-list {
-    -fx-background-color: #f3f3f3;
-    -fx-control-inner-background: #ffffff;
-}
-.theme-intellij-light .help-topic-list .list-cell {
-    -fx-text-fill: #333333;
-}
-.theme-intellij-light .help-topic-list .list-cell:hover {
-    -fx-background-color: #e5e5e5;
-}
-.theme-intellij-light .help-topic-list .list-cell:selected {
-    -fx-background-color: #2b79d2;
-    -fx-text-fill: #ffffff;
-}
-
-.help-web-view {
-    -fx-background-color: #1e1e1e;
-}
-.theme-intellij-light .help-web-view {
-    -fx-background-color: #ffffff;
-}
-
-/* Theme: Dracula Overrides for Help Portal */
-.theme-dracula .help-portal-pane, .theme-dracula .help-header { -fx-background-color: #282a36; -fx-border-color: #6272a4; }
-.theme-dracula .help-topic-list { -fx-background-color: #282a36; -fx-control-inner-background: #282a36; }
-.theme-dracula .help-topic-list .list-cell:selected { -fx-background-color: #6272a4; }
-
-/* Theme: Monokai Overrides for Help Portal */
-.theme-monokai .help-portal-pane, .theme-monokai .help-header { -fx-background-color: #272822; -fx-border-color: #75715e; }
-.theme-monokai .help-topic-list { -fx-background-color: #272822; -fx-control-inner-background: #272822; }
-.theme-monokai .help-topic-list .list-cell:selected { -fx-background-color: #75715e; }
-
-/* Theme: Hacker Overrides for Help Portal */
-.theme-hacker .help-portal-pane, .theme-hacker .help-header { -fx-background-color: #050505; -fx-border-color: #004d00; }
-.theme-hacker .help-topic-list { -fx-background-color: #050505; -fx-control-inner-background: #050505; }
-.theme-hacker .help-topic-list .list-cell { -fx-text-fill: #00cc00; }
-.theme-hacker .help-topic-list .list-cell:selected { -fx-background-color: #004d00; -fx-text-fill: #00ff00; }
 
-.mapping-editor-pane {
-    -fx-background-color: transparent;
+/* ScrollBars - High Visibility */
+.scroll-bar { -fx-background-color: transparent; }
+.scroll-bar .thumb { 
+    -fx-background-color: -sui-border-color; 
+    -fx-background-radius: 4px; 
 }
-.mapping-toolbar {
-    -fx-background-color: -fx-base;
-    -fx-border-color: -fx-color;
-    -fx-border-width: 0 0 1 0;
-}
-
-/* Diagram Studio Specifics */
-.studio-sidebar {
-    -fx-background-color: #252526;
-    -fx-border-color: #333333;
-    -fx-border-width: 0 1 0 0;
-}
-.theme-intellij-light .studio-sidebar {
-    -fx-background-color: #f3f3f3;
-    -fx-border-color: #cccccc;
-}
-
-.studio-explorer-label {
-    -fx-text-fill: #aaaaaa;
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-padding: 5 0 10 5;
-}
-.theme-intellij-light .studio-explorer-label {
-    -fx-text-fill: #666666;
-}
-
-.sidebar-tree-view {
-    -fx-background-color: transparent;
-}
-.sidebar-tree-view .tree-cell {
-    -fx-background-color: transparent;
-    -fx-text-fill: #cccccc;
-    -fx-font-size: 14px;
-}
-.theme-intellij-light .sidebar-tree-view .tree-cell {
-    -fx-text-fill: #333333;
-}
-.sidebar-tree-view .tree-cell:selected {
-    -fx-background-color: #37373d;
-}
-.theme-intellij-light .sidebar-tree-view .tree-cell:selected {
-    -fx-background-color: #e5e5e5;
-}
-.btn-link-schema {
-    -fx-background-color: #0e639c;
-    -fx-text-fill: white;
-}
-.btn-link-schema:hover {
-    -fx-background-color: #1177bb;
-}
-.theme-intellij-light .btn-link-schema {
-    -fx-background-color: #2b78e4;
-}
-.theme-intellij-light .btn-link-schema:hover {
-    -fx-background-color: #4b92f9;
-}
-
-/* ---------------- Studio Search/Filter Field ---------------- */
-.studio-search-field {
-    -fx-background-color: #3c3c3c;
-    -fx-text-fill: white;
-    -fx-prompt-text-fill: #808080;
-    -fx-border-color: #333333;
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
-    -fx-padding: 4 8;
-    -fx-font-size: 13px;
-}
-.theme-intellij-light .studio-search-field {
-    -fx-background-color: #ffffff;
-    -fx-text-fill: #333333;
-    -fx-prompt-text-fill: #808080;
-    -fx-border-color: #cccccc;
-}
-.theme-dracula .studio-search-field {
-    -fx-background-color: #282a36;
-    -fx-border-color: #44475a;
-    -fx-text-fill: #f8f8f2;
-}
-.theme-monokai .studio-search-field {
-    -fx-background-color: #272822;
-    -fx-border-color: #75715e;
-    -fx-text-fill: #f8f8f2;
-}
-.theme-hacker .studio-search-field {
-    -fx-background-color: #050505;
-    -fx-border-color: #004d00;
-    -fx-text-fill: #00ff00;
-    -fx-prompt-text-fill: #008000;
-}
-
-/* Editor View Container and Header Bar */
-.editor-view-container {
-    -fx-background-color: #1e1e1e;
-}
-.editor-header-bar {
-    -fx-background-color: #252526;
-    -fx-border-color: #3c3c3c;
-    -fx-border-width: 0 0 1px 0;
-}
-.editor-header-bar .label {
-    -fx-text-fill: #cccccc;
-}
-.editor-header-bar .combo-box {
-    -fx-background-color: #3c3c3c;
-    -fx-text-fill: #ffffff;
-    -fx-border-color: #555555;
-    -fx-border-radius: 3px;
-    -fx-background-radius: 3px;
-}
-
-/* Theme: IntelliJ Light overrides */
-.theme-intellij-light .editor-view-container {
-    -fx-background-color: #ffffff;
-}
-.theme-intellij-light .editor-header-bar {
-    -fx-background-color: #f3f3f3;
-    -fx-border-color: #cccccc;
-}
-.theme-intellij-light .editor-header-bar .label {
-    -fx-text-fill: #333333;
-}
-.theme-intellij-light .editor-header-bar .combo-box {
-    -fx-background-color: #ffffff;
-    -fx-text-fill: #333333;
-    -fx-border-color: #cccccc;
-}
-
-/* Theme: Dracula overrides */
-.theme-dracula .editor-view-container {
-    -fx-background-color: #282a36;
-}
-.theme-dracula .editor-header-bar {
-    -fx-background-color: #282a36;
-    -fx-border-color: #6272a4;
-}
-
-/* Theme: Monokai overrides */
-.theme-monokai .editor-view-container {
-    -fx-background-color: #272822;
-}
-.theme-monokai .editor-header-bar {
-    -fx-background-color: #272822;
-    -fx-border-color: #75715e;
-}
-
-/* Theme: Hacker overrides */
-.theme-hacker .editor-view-container {
-    -fx-background-color: #000000;
-}
-.theme-hacker .editor-header-bar {
-    -fx-background-color: #0d0d0d;
-    -fx-border-color: #004d00;
-}
-.theme-hacker .editor-header-bar .label {
-    -fx-text-fill: #00ff00;
-}
-.theme-hacker .editor-header-bar .combo-box {
-    -fx-background-color: #050505;
-    -fx-text-fill: #00ff00;
-    -fx-border-color: #004d00;
-}
-
+.scroll-bar .thumb:hover { -fx-background-color: -sui-accent-primary; }
 
-/* Kamelet Designer and Dependency Catalog Toolbar Buttons */
-.tool-bar .btn-kamelets .ikonli-font-icon {
-    -fx-icon-color: #FF80AB; /* Flamingo pink/rose */
-}
-.tool-bar .btn-dependencies .ikonli-font-icon {
-    -fx-icon-color: #00E5FF; /* Electric cyan */
-}
-
-.theme-intellij-light .tool-bar .btn-kamelets .ikonli-font-icon {
-    -fx-icon-color: #ad1457; /* Rich pink */
-}
-.theme-intellij-light .tool-bar .btn-dependencies .ikonli-font-icon {
-    -fx-icon-color: #00838f; /* Rich dark cyan */
-}
-
-/* Theme: One Dark */
-.theme-one-dark.app-root, .root.theme-one-dark {
-    -fx-background-color: #282c34;
-    -fx-base: #282c34;
-    -fx-control-inner-background: #282c34;
-    -fx-color: #353b45;
-    -fx-text-base-color: #abb2bf;
-    -console-fg: #abb2bf;
-    -console-dim-fg: #5c6370;
-    -console-bg: #282c34;
-    -console-border: #3e4451;
-    -console-header-bg: #21252b;
-    -console-title-fg: #61afef;
-    -console-btn-bg: #353b45;
-    -console-btn-hover-bg: #3e4451;
-}
-.theme-one-dark .pane-title { -fx-background-color: #21252b; -fx-text-fill: #abb2bf; -fx-border-color: #181a1f; }
-.theme-one-dark .status-bar { -fx-background-color: #61afef; }
-
-/* Theme: GitHub Light */
-.theme-github-light.app-root, .root.theme-github-light {
-    -fx-background-color: #ffffff;
-    -fx-base: #ffffff;
-    -fx-control-inner-background: #ffffff;
-    -fx-color: #f6f8fa;
-    -fx-text-base-color: #24292f;
-    -console-fg: #24292f;
-    -console-dim-fg: #57606a;
-    -console-bg: #ffffff;
-    -console-border: #d0d7de;
-    -console-header-bg: #f6f8fa;
-    -console-title-fg: #0969da;
-    -console-btn-bg: #ebf0f4;
-    -console-btn-hover-bg: #d0d7de;
-}
-.theme-github-light .pane-title { -fx-background-color: #f6f8fa; -fx-text-fill: #24292f; -fx-border-color: #d0d7de; }
-.theme-github-light .status-bar { -fx-background-color: #0969da; }
-
-/* Theme: Solarized Dark */
-.theme-solarized-dark.app-root, .root.theme-solarized-dark {
-    -fx-background-color: #002b36;
-    -fx-base: #002b36;
-    -fx-control-inner-background: #002b36;
-    -fx-color: #073642;
-    -fx-text-base-color: #839496;
-    -console-fg: #839496;
-    -console-dim-fg: #586e75;
-    -console-bg: #002b36;
-    -console-border: #073642;
-    -console-header-bg: #073642;
-    -console-title-fg: #268bd2;
-    -console-btn-bg: #073642;
-    -console-btn-hover-bg: #586e75;
-}
-.theme-solarized-dark .pane-title { -fx-background-color: #073642; -fx-text-fill: #839496; -fx-border-color: #002b36; }
-.theme-solarized-dark .status-bar { -fx-background-color: #268bd2; }
-
-/* Global Consistency Overrides */
-.root {
-    -fx-font-smoothing-type: gray;
-}
-.editor-toolbar, .diagram-toolbar, .tool-bar {
-    -fx-background-color: -fx-base;
-    -fx-border-color: -fx-color;
-}
-.editor-btn:hover {
-    -fx-background-color: -fx-color;
-}
+/* Labels & Typography */
+.label { -fx-text-fill: -sui-text-main; }
 .pane-title {
-    -fx-background-color: -fx-color;
-    -fx-text-fill: -fx-text-base-color;
-    -fx-border-color: -fx-base;
+    -fx-text-fill: -sui-text-main;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-background-color: -sui-bg-secondary;
+    -fx-border-color: -sui-border-color;
+    -fx-border-width: 0 0 1 0;
 }
 
-/* Specialized Button Styling */
-.btn-copy-text .ikonli-font-icon { -fx-icon-color: #00BCD4; }
-.btn-copy-all-text .ikonli-font-icon { -fx-icon-color: #00E5FF; }
-.btn-clear-console .ikonli-font-icon { -fx-icon-color: #F44336; }
-
-.theme-intellij-light .btn-copy-text .ikonli-font-icon { -fx-icon-color: #0097A7; }
-.theme-intellij-light .btn-copy-all-text .ikonli-font-icon { -fx-icon-color: #00ACC1; }
-
-/* Enhanced theme transitions */
-.root {
-    -fx-transition: all 0.3s ease-in-out;
+/* Toolbars */
+.tool-bar, .editor-toolbar {
+    -fx-background-color: -sui-bg-secondary;
+    -fx-border-color: -sui-border-color;
+    -fx-border-width: 0 0 1 0;
 }
 
-/* --- Comprehensive Property Editor (CodeArea) Theming --- */
-.syntax-editor {
-    -fx-background-color: -fx-control-inner-background;
-    -fx-border-color: -fx-color;
-    -fx-border-width: 1px;
+.sui-button, .editor-btn, .toolbar-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -sui-text-main;
+}
+.sui-button:hover, .editor-btn:hover { -fx-background-color: -sui-selection; }
+
+/* Icons - Force token color */
+.ikonli-font-icon {
+    -fx-icon-color: -sui-text-main;
 }
 
-.syntax-editor .styled-text-area {
-    -fx-background-color: -fx-control-inner-background;
+/* TreeViews & Sidebars */
+.tree-view, .sidebar-tree-view {
+    -fx-background-color: -sui-bg-secondary;
+    -fx-border-width: 0;
+}
+.tree-cell {
+    -fx-background-color: -sui-bg-secondary;
+    -fx-text-fill: -sui-text-main;
+}
+.tree-cell:selected,
+.custom-tree-view .tree-cell:selected,
+.sidebar-tree-view .tree-cell:selected {
+    -fx-background-color: -sui-accent-primary;
+    -fx-text-fill: white;
+}
+.tree-cell:selected .label, 
+.tree-cell:selected .text { 
+    -fx-text-fill: white; 
+}
+.tree-cell:selected .ikonli-font-icon { -fx-icon-color: white; }
+.tree-cell:selected .check-box .box {
+    -fx-border-color: white;
+}
+.tree-cell:selected .check-box {
+    -fx-text-fill: white;
 }
 
-/* Line Number Gutter */
-.syntax-editor .lineno {
-    -fx-background-color: -fx-base;
-    -fx-text-fill: -console-dim-fg;
-    -fx-border-color: -fx-color;
-    -fx-border-width: 0 1 0 0;
+/* Context Menus & Menus - CRITICAL CONTRAST */
+.context-menu, .menu-bar {
+    -fx-background-color: -sui-bg-secondary;
+    -fx-border-color: -sui-border-color;
+}
+.menu-item .label, .menu .label {
+    -fx-text-fill: -sui-text-main;
+}
+.menu-item:focused, .menu:focused {
+    -fx-background-color: -sui-selection;
+}
+.menu-item:focused .label, .menu:focused .label {
+    -fx-text-fill: white;
 }
 
-/* Theme specific overrides for Syntax Editor */
-.theme-one-dark .syntax-editor { -fx-background-color: #282c34; }
-.theme-one-dark .syntax-editor .lineno { -fx-background-color: #21252b; -fx-text-fill: #5c6370; }
-
-.theme-github-light .syntax-editor { -fx-background-color: #ffffff; }
-.theme-github-light .syntax-editor .lineno { -fx-background-color: #f6f8fa; -fx-text-fill: #57606a; }
-
-.theme-solarized-dark .syntax-editor { -fx-background-color: #002b36; }
-.theme-solarized-dark .syntax-editor .lineno { -fx-background-color: #073642; -fx-text-fill: #586e75; }
-
-.theme-dracula .syntax-editor { -fx-background-color: #282a36; }
-.theme-dracula .syntax-editor .lineno { -fx-background-color: #282a36; -fx-text-fill: #6272a4; }
-
-.theme-hacker .syntax-editor { -fx-background-color: #000000; }
-.theme-hacker .syntax-editor .lineno { -fx-background-color: #0d0d0d; -fx-text-fill: #008000; }
-
-/* Selection and Caret */
-.syntax-editor .selection {
-    -fx-fill: rgba(0, 122, 204, 0.4);
+/* Diagram Nodes */
+.diagram-node {
+    -fx-background-color: -sui-bg-secondary;
+    -fx-border-color: -sui-border-color;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-min-width: 120px;
+    -fx-max-width: 120px;
+    -fx-min-height: 70px;
+    -fx-max-height: 70px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 4);
 }
-.theme-intellij-light .syntax-editor .selection {
-    -fx-fill: rgba(43, 121, 210, 0.2);
+.diagram-node:hover {
+    -fx-background-color: -sui-selection;
+    -fx-border-color: -sui-accent-primary;
+    -fx-effect: dropshadow(three-pass-box, -sui-accent-primary, 15, 0, 0, 0);
+}
+.node-title { 
+    -fx-text-fill: -sui-text-main !important; 
+    -fx-font-weight: bold; 
+    -fx-font-size: 11px;
+}
+.node-details { 
+    -fx-text-fill: -sui-text-dim !important; 
+    -fx-font-size: 10px;
+}
+.node-icon { 
+    -fx-icon-color: -sui-text-main !important; 
 }
 
-.syntax-editor .caret {
-    -fx-stroke: -fx-text-base-color;
+/* Branch & Container Layouts */
+.branch-title {
+    -fx-text-fill: -sui-accent-primary;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 5 0;
 }
 
-/* ==========================================================================
-   Camel Route Snippet & Dependency Dialog — theme-aware TextArea
-   ========================================================================== */
-.snippet-code-area {
-    -fx-control-inner-background: #252526;
-    -fx-text-fill: #9cdcfe;
+/* Consoles */
+.console-output {
+    -fx-background-color: -sui-bg-primary;
+    -fx-text-fill: -sui-text-main;
     -fx-font-family: monospace;
 }
-.snippet-code-area.snippet-dsl {
-    -fx-text-fill: #ce9178;
-}
 
-/* IntelliJ Light */
-.theme-intellij-light .snippet-code-area {
-    -fx-control-inner-background: #ffffff;
-    -fx-text-fill: #003d73;
-}
-.theme-intellij-light .snippet-code-area.snippet-dsl {
-    -fx-text-fill: #7a3e9d;
-}
 
-/* Dracula */
-.theme-dracula .snippet-code-area {
-    -fx-control-inner-background: #282a36;
-    -fx-text-fill: #8be9fd;
-}
-.theme-dracula .snippet-code-area.snippet-dsl {
-    -fx-text-fill: #ffb86c;
-}
-
-/* Monokai */
-.theme-monokai .snippet-code-area {
-    -fx-control-inner-background: #272822;
-    -fx-text-fill: #66d9e8;
-}
-.theme-monokai .snippet-code-area.snippet-dsl {
-    -fx-text-fill: #e6db74;
-}
-
-/* Hacker */
-.theme-hacker .snippet-code-area {
-    -fx-control-inner-background: #050505;
-    -fx-text-fill: #00cc00;
-}
-.theme-hacker .snippet-code-area.snippet-dsl {
-    -fx-text-fill: #00ff41;
-}
-
-/* One Dark */
-.theme-one-dark .snippet-code-area {
-    -fx-control-inner-background: #21252b;
-    -fx-text-fill: #61afef;
-}
-.theme-one-dark .snippet-code-area.snippet-dsl {
-    -fx-text-fill: #e5c07b;
-}
-
-/* GitHub Light */
-.theme-github-light .snippet-code-area {
-    -fx-control-inner-background: #f6f8fa;
-    -fx-text-fill: #0550ae;
-}
-.theme-github-light .snippet-code-area.snippet-dsl {
-    -fx-text-fill: #953800;
-}
-
-/* Solarized Dark */
-.theme-solarized-dark .snippet-code-area {
-    -fx-control-inner-background: #073642;
-    -fx-text-fill: #268bd2;
-}
-.theme-solarized-dark .snippet-code-area.snippet-dsl {
-    -fx-text-fill: #cb4b16;
-}

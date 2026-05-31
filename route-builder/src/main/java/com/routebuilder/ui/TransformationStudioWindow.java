@@ -64,9 +64,17 @@ public class TransformationStudioWindow {
     public TransformationStudioWindow() {
         activeInstances.add(this);
         this.prefs = Preferences.userNodeForPackage(TransformationStudioWindow.class);
-        String defaultPath = new File(System.getProperty("user.dir"), "test-mapping").exists()
-                ? new File(System.getProperty("user.dir"), "test-mapping").getAbsolutePath()
-                : new File(System.getProperty("user.dir"), "transformation-samples").getAbsolutePath();
+        File userDir = new File(System.getProperty("user.dir"));
+        String defaultPath;
+        if (new File(userDir, "mappings").exists()) {
+            defaultPath = new File(userDir, "mappings").getAbsolutePath();
+        } else if (new File(userDir, "test-mapping").exists()) {
+            defaultPath = new File(userDir, "test-mapping").getAbsolutePath();
+        } else if (new File(userDir, "transformation-samples").exists()) {
+            defaultPath = new File(userDir, "transformation-samples").getAbsolutePath();
+        } else {
+            defaultPath = new File(userDir, "mappings").getAbsolutePath();
+        }
         String savedPath = prefs.get("mappingsPath", defaultPath);
         this.currentMappingsPath = new File(savedPath);
         if (!this.currentMappingsPath.exists()) {
@@ -82,6 +90,7 @@ public class TransformationStudioWindow {
 
         BorderPane root = new BorderPane();
         root.getStyleClass().addAll("app-root", RouteBuilderApp.currentThemeClass);
+        com.routebuilder.ui.components.ThemeManager.registerRoot(root);
 
         // --- Toolbar ---
         ToolBar toolBar = new ToolBar();
@@ -243,6 +252,7 @@ public class TransformationStudioWindow {
 
         consolePane = new com.routebuilder.ui.components.ConsolePane();
         consolePane.setPrefHeight(150);
+        com.routebuilder.ui.components.ThemeManager.registerRoot(consolePane);
 
         SplitPane verticalSplit = new SplitPane();
         verticalSplit.setOrientation(Orientation.VERTICAL);
@@ -670,7 +680,7 @@ public class TransformationStudioWindow {
     }
 
     private void initEditors() {
-        if (isMtToMx || isEnrichment) {
+        if (isMtToMx) {
             sourceRawEditor.setLanguage("text");
         }
 
@@ -684,6 +694,10 @@ public class TransformationStudioWindow {
                 sourceLang = "text";
         }
         sourceXmlEditor.setLanguage(sourceLang);
+
+        if (isEnrichment) {
+            sourceRawEditor.setLanguage(sourceLang);
+        }
 
         String logicLang = "jslt".equals(transformationType) ? "json"
                 : ("groovy".equals(transformationType) || "joor".equals(transformationType) ? "java" : "xml");

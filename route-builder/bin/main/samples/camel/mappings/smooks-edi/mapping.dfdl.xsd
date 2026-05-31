@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:dfdl="http://www.ogf.org/dfdl/dfdl-1.0/"
+           targetNamespace="http://example.com"
+           elementFormDefault="unqualified">
+  <xs:annotation>
+    <xs:appinfo source="http://www.ogf.org/dfdl/">
+      <dfdl:format 
+        alignment="1" 
+        alignmentUnits="bytes"
+        encoding="UTF-8" 
+        byteOrder="bigEndian"
+        ignoreCase="yes" 
+        utf16Width="fixed"
+        textNumberRep="standard" 
+        lengthKind="delimited"
+        initiator="" 
+        terminator="" 
+        separator=""
+        separatorPosition="infix"
+        occursCountKind="implicit"
+        representation="text" 
+        truncateSpecifiedLengthString="no"
+        textBidi="no" 
+        floating="no"
+        sequenceKind="ordered"
+        escapeSchemeRef=""
+        leadingSkip="0"
+        trailingSkip="0"
+        encodingErrorPolicy="replace"
+        nilValueDelimiterPolicy="none"
+        emptyValueDelimiterPolicy="none"
+        documentFinalTerminatorCanBeMissing="yes"
+        textOutputMinLength="0"
+        textPadKind="none"
+        textTrimKind="none"
+        initiatedContent="no"
+        outputNewLine="%LF;"
+        fillByte="%#r20;"
+        separatorSuppressionPolicy="anyEmpty"
+      />
+    </xs:appinfo>
+  </xs:annotation>
+  <xs:element name="Interchange">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Segment">
+          <xs:complexType>
+            <xs:sequence dfdl:separator="*" dfdl:separatorPosition="infix">
+              <xs:element name="Tag" type="xs:string" />
+              <xs:element name="ID" type="xs:string" />
+              <xs:element name="Status" type="xs:string" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

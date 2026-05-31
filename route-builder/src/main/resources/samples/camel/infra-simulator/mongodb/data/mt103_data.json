@@ -1,0 +1,38 @@
+[
+  {
+    "id": "MT103-001",
+    "messageType": "MT103",
+    "sender": "CHASEUS33XXX",
+    "receiver": "CITIUS33XXX",
+    "transactionReference": "TRN20260527-991",
+    "valueDate": "2026-05-27",
+    "amount": 125000.00,
+    "currency": "USD",
+    "headers": {
+      "applicationId": "F",
+      "serviceId": "01",
+      "logicalTerminal": "CHASEUS33AXXX",
+      "sessionNumber": "4321",
+      "sequenceNumber": "098765"
+    },
+    "payload": "{1:F01CHASEUS33AXXX4321098765}{2:I103CITIUS33XXXXN}{3:{108:TRN20260527-991}}{4:\n:20:TRN20260527-991\n:23B:CRED\n:32A:260527USD125000,00\n:50K:/12345678\nJOHN DOE\n123 ELM STREET\nNEW YORK NY 10001\n:59:/87654321\nJANE SMITH\n456 OAK AVENUE\nLONDON EC1A 1BB\n:71A:SHA\n-}"
+  },
+  {
+    "id": "MT103-002",
+    "messageType": "MT103",
+    "sender": "BARCGB22XXX",
+    "receiver": "HSBCHK22XXX",
+    "transactionReference": "TRN20260527-992",
+    "valueDate": "2026-05-27",
+    "amount": 8900.50,
+    "currency": "GBP",
+    "headers": {
+      "applicationId": "F",
+      "serviceId": "01",
+      "logicalTerminal": "BARCGB22AXXX",
+      "sessionNumber": "7788",
+      "sequenceNumber": "112233"
+    },
+    "payload": "{1:F01BARCGB22AXXX7788112233}{2:I103HSBCHK22XXXXN}{3:{108:TRN20260527-992}}{4:\n:20:TRN20260527-992\n:23B:CRED\n:32A:260527GBP8900,50\n:50K:/98765432\nACME CORP LTD\n789 HIGH STREET\nLONDON W1A 1AA\n:59:/23456789\nASIA TRADING GMBH\n12 HAWTHORN ROAD\nHONG KONG\n:71A:OUR\n-}"
+  }
+]

@@ -1,0 +1,7 @@
+{1:F01{{type:bic:sender}}XXXX0000000000}{2:I202{{type:bic:receiver}}XXXXN}{4:
+:20:{{type:uuid}}
+:21:TX-pacs009COV-001
+:32A:{{type:dateTime:yyMMdd}}{{type:random:USD,EUR,GBP}}{{type:amount:100:10000}},
+:52A:BANKGB2L
+:58A:BANKFRPP
+-}

@@ -40,11 +40,10 @@ public class ValidatorStudioWindow {
 
     // Sidebar Components
     private TreeView<String> treeView;
-    private TextArea consoleArea;
+    private com.routebuilder.ui.components.ConsolePane consoleArea;
 
     // Toolbar Components
     private ComboBox<String> cmbValidatorType;
-    private ComboBox<String> studioThemeBox;
     private RadioButton radStandard;
     private RadioButton radEnhanced;
 
@@ -57,7 +56,6 @@ public class ValidatorStudioWindow {
     private Label lblSchemaTitle;
 
     // State Variables
-    private String currentThemeName = RouteBuilderApp.currentThemeName;
     private ValidationMapping activeMapping = null;
     private final Map<TreeItem<String>, ValidationMapping> treeItemMappingMap = new HashMap<>();
     private final List<ValidationMapping> mappingsList = new ArrayList<>();
@@ -79,7 +77,13 @@ public class ValidatorStudioWindow {
     public ValidatorStudioWindow() {
         activeInstances.add(this);
         this.stage = new Stage();
-        this.workspaceRoot = new File(System.getProperty("user.dir"), "validator-workspace");
+        java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(ValidatorStudioWindow.class);
+        String savedRoot = prefs.get("workspaceRoot", null);
+        if (savedRoot != null) {
+            this.workspaceRoot = new File(savedRoot);
+        } else {
+            this.workspaceRoot = new File(System.getProperty("user.dir"), "validator-workspace");
+        }
         initializeWorkspace();
     }
 
@@ -240,11 +244,6 @@ public class ValidatorStudioWindow {
         radEnhanced.getStyleClass().add("radio-theme-enhanced");
         radEnhanced.setOnAction(e -> log("INFO", "SWIFT mode set to Enhanced (incorporating custom JSON rules)."));
 
-        studioThemeBox = new ComboBox<>();
-        studioThemeBox.getItems().addAll("VSCode Dark", "IntelliJ Light", "Dracula", "Monokai", "Hacker");
-        studioThemeBox.setValue(RouteBuilderApp.currentThemeName);
-        studioThemeBox.setOnAction(e -> RouteBuilderApp.setGlobalTheme(studioThemeBox.getValue()));
-
         Button btnHelp = new Button("Help Guide", new FontIcon("fas-question-circle"));
         btnHelp.getStyleClass().addAll("toolbar-btn", "btn-manual");
         btnHelp.setOnAction(e -> new RouteBuilderHelpWindow("Validation Studio", null).show());
@@ -256,7 +255,7 @@ public class ValidatorStudioWindow {
             btnValidate, btnSave, new Separator(),
             new Label("Validation Type:"), cmbValidatorType, new Separator(),
             new Label("SWIFT Mode:"), radStandard, radEnhanced, new Separator(),
-            spacer, btnHelp, new Separator(), studioThemeBox
+            spacer, btnHelp
         );
         root.setTop(toolBar);
 
@@ -278,12 +277,9 @@ public class ValidatorStudioWindow {
         treeView.setShowRoot(false);
         VBox.setVgrow(treeView, Priority.ALWAYS);
 
-        treeView.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2) {
-                TreeItem<String> item = treeView.getSelectionModel().getSelectedItem();
-                if (item != null && treeItemMappingMap.containsKey(item)) {
-                    loadValidationMapping(treeItemMappingMap.get(item));
-                }
+        treeView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && treeItemMappingMap.containsKey(newVal)) {
+                loadValidationMapping(treeItemMappingMap.get(newVal));
             }
         });
 
@@ -292,11 +288,8 @@ public class ValidatorStudioWindow {
         Label lblConsole = new Label("CONSOLE");
         lblConsole.getStyleClass().add("studio-explorer-label");
 
-        consoleArea = new TextArea();
-        consoleArea.setEditable(false);
-        consoleArea.setWrapText(true);
-        consoleArea.setPrefHeight(220);
-        consoleArea.setStyle("-fx-font-family: 'Consolas', 'Courier New', monospace; -fx-font-size: 11px; -fx-control-inner-background: #0f0f11; -fx-text-fill: #e1e1e6;");
+        consoleArea = new com.routebuilder.ui.components.ConsolePane();
+        consoleArea.setPrefHeight(250);
 
         sidebar.getChildren().addAll(lblExplorer, treeView, new Separator(), lblConsole, consoleArea);
 
@@ -311,7 +304,7 @@ public class ValidatorStudioWindow {
         headerSource.setPadding(new Insets(6));
         headerSource.getStyleClass().add("editor-header");
         headerSource.setAlignment(Pos.CENTER_LEFT);
-        headerSource.setStyle("-fx-background-color: #252526;");
+        headerSource.getStyleClass().add("sui-studio-header");
         Label lblSourceIcon = new Label("", new FontIcon("fas-file-code"));
         lblSourceTitle = new Label("Source Message (Data) - None");
         lblSourceTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #cccccc;");
@@ -328,7 +321,7 @@ public class ValidatorStudioWindow {
         headerSchema.setPadding(new Insets(6));
         headerSchema.getStyleClass().add("editor-header");
         headerSchema.setAlignment(Pos.CENTER_LEFT);
-        headerSchema.setStyle("-fx-background-color: #252526;");
+        headerSchema.getStyleClass().add("sui-studio-header");
         Label lblSchemaIcon = new Label("", new FontIcon("fas-project-diagram"));
         lblSchemaTitle = new Label("Schema / Rules / Context - None");
         lblSchemaTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #cccccc;");
@@ -392,7 +385,7 @@ public class ValidatorStudioWindow {
         headerResult.setPadding(new Insets(6));
         headerResult.getStyleClass().add("editor-header");
         headerResult.setAlignment(Pos.CENTER_LEFT);
-        headerResult.setStyle("-fx-background-color: #252526;");
+        headerResult.getStyleClass().add("sui-studio-header");
         Label lblResultIcon = new Label("", new FontIcon("fas-poll-h"));
         Label lblResultTitle = new Label("Validation Results / Report");
         lblResultTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #cccccc;");
@@ -448,20 +441,9 @@ public class ValidatorStudioWindow {
 
     private void log(String level, String msg) {
         String ts = new SimpleDateFormat("HH:mm:ss").format(new Date());
-        String out = String.format("[%s] [%s] %s\n", ts, level, msg);
-        Platform.runLater(() -> {
-            consoleArea.appendText(out);
-            consoleArea.setScrollTop(Double.MAX_VALUE);
-        });
-    }
-
-    public void setTheme(String themeName) {
-        this.currentThemeName = themeName;
-        Platform.runLater(() -> {
-            if (studioThemeBox != null && !themeName.equals(studioThemeBox.getValue())) {
-                studioThemeBox.setValue(themeName);
-            }
-        });
+        String colorCode = "[INFO]".equals(level) ? "\033[32m" : ("[ERROR]".equals(level) ? "\033[31m" : "\033[33m");
+        String out = String.format("[%s] %s[%s]\033[0m %s\n", ts, colorCode, level, msg);
+        consoleArea.log(out);
     }
 
     private void writeToFile(File file, String content) {

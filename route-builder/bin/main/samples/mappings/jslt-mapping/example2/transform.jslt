@@ -1,0 +1,20 @@
+{
+  "txn_ref" : .transaction_id,
+  "imported_at" : "Transformation Studio",
+  "client_summary" : [
+    for (.customers)
+      {
+        "client_id" : .id,
+        "full_name" : .personal.firstName + " " + .personal.lastName,
+        "portfolio" : [
+          for (.accounts)
+            {
+              "acc_type" : .type,
+              "funds" : .balance,
+              "is_operational" : .status == "active"
+            }
+        ],
+        "total_active_balance" : sum([for (.accounts) .balance if (.status == "active")])
+      }
+  ]
+}

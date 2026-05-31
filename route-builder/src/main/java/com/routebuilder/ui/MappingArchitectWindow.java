@@ -1,5 +1,7 @@
 package com.routebuilder.ui;
 
+import com.routebuilder.ui.components.SuiKit;
+import com.routebuilder.ui.components.ThemeManager;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -39,13 +41,11 @@ public class MappingArchitectWindow {
 
                 BorderPane root = new BorderPane();
                 root.getStyleClass().addAll("app-root", RouteBuilderApp.currentThemeClass != null ? RouteBuilderApp.currentThemeClass : "theme-vscode-dark");
-                root.setStyle("-fx-background-color: #010101;");
+                ThemeManager.registerRoot(root);
 
                 // --- Header ---
-                HBox header = new HBox(20);
-                header.setPadding(new Insets(15, 35, 15, 35));
-                header.setAlignment(Pos.CENTER_LEFT);
-                header.setStyle("-fx-background-color: #050505; -fx-border-color: #00FF41; -fx-border-width: 0 0 2 0;");
+                HBox header = SuiKit.createStudioHeader("Mapping Architect : " + titleStr, "fas-brain");
+                header.setPadding(new Insets(10, 20, 10, 20));
                 Label lblTitle = new Label("[ SOVEREIGN ARCHITECT : " + titleStr.toUpperCase() + " ]");
                 lblTitle.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 18px; -fx-text-fill: #00FF41; -fx-font-weight: bold;");
                 Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);

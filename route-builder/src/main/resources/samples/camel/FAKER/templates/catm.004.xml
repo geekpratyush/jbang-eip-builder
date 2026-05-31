@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:catm.004.001.05">
+  <Catm004Document>
+    <MsgId>{{type:msgId}}</MsgId>
+    <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+    <UETR>{{type:uetr}}</UETR>
+    <Desc>Generated Mock Message for catm.004</Desc>
+  </Catm004Document>
+</Document>

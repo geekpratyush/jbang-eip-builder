@@ -1,0 +1,52 @@
+- beans:
+    - name: "universalFaker"
+      type: "beans.UniversalFaker"
+      properties:
+        database: "financial"
+- route:
+    id: "faker-dynamic-source"
+    from:
+      uri: "timer:fake-traffic?period=100"
+      steps:
+        - setHeader:
+            name: "destination"
+            simple: "mt103, mt202, mt940, pacs002, pacs004, pacs008, pacs009, camt053, pain001" # Random selection from list
+        - bean:
+            ref: "universalFaker"
+            method: "generate(${header.destination})"
+        - log: "Faker: Generated for [${header.destination}] and sending to direct:app-incoming"
+        - to: "direct:app-incoming"
+
+- route:
+    id: "actual-logic-consumer"
+    from:
+      uri: "direct:app-incoming"
+      steps:
+        - log: "CONSUMER: Received Live Fake Message from [${header.destination}]"
+        - choice:
+            when:
+              - simple: "${body} startsWith '<'"
+                steps:
+                  - log: "ISO 20022 MX Route - Processing XML Message:\n${body}"
+                  - choice:
+                      when:
+                        - simple: "${body} contains 'Apex'"
+                          steps:
+                            - log: "MX Special Rule: Detected Apex Company in ISO 20022 message."
+                      otherwise:
+                        steps:
+                          - log: "MX Standard Rule: ISO 20022 XML processing completed."
+              - simple: "${body} startsWith '{'"
+                steps:
+                  - log: "Legacy SWIFT MT Route - Processing Text Message:\n${body}"
+                  - choice:
+                      when:
+                        - simple: "${body} contains 'Apex'"
+                          steps:
+                            - log: "MT Special Rule: Detected Apex Company in Legacy message."
+                      otherwise:
+                        steps:
+                          - log: "MT Standard Rule: Legacy processing completed."
+            otherwise:
+              steps:
+                - log: "UNKNOWN FORMAT - Doing fallback processing on raw payload:\n${body}"

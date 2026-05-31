@@ -1,0 +1,8 @@
+<edimap xmlns="http://www.milyn.org/schema/edi-message-mapping-1.0.xsd">
+    <description name="Simplified EDI" version="1.0" />
+    <segments xmltag="segments">
+        <segment segcode="UNA" xmltag="interchange-control" ignore="true" />
+        <segment segcode="UNB" xmltag="header" />
+        <segment segcode="MSG" xmltag="message" />
+    </segments>
+</edimap>

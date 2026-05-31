@@ -1,0 +1,11 @@
+@startuml
+left to right direction
+actor Customer
+actor Admin
+rectangle "Online Store" {
+  Customer -- (Browse Products)
+  Customer -- (Place Order)
+  Admin -- (Manage Inventory)
+  Admin -- (View Reports)
+}
+@enduml

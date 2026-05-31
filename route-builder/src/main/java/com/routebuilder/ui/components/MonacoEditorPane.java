@@ -17,8 +17,7 @@ import com.sun.net.httpserver.HttpServer;
 
 /**
  * Universal Monaco Editor Component for the Studio.
- * Optimized with a Shared Static Server to ensure reliable loading across multiple instances.
- * Includes Live Content Change tracking.
+ * Synchronized with the Sovereign UI Design System.
  */
 public class MonacoEditorPane extends VBox {
 
@@ -48,6 +47,8 @@ public class MonacoEditorPane extends VBox {
         engine = webView.getEngine();
         com.routebuilder.ui.RouteBuilderApp.installClipboardShortcuts(webView);
 
+        // Register for design tokens and theme updates
+        ThemeManager.registerRoot(this);
         ThemeManager.addListener(this::onThemeChanged);
 
         ensureSharedServer();
@@ -61,8 +62,7 @@ public class MonacoEditorPane extends VBox {
             }
         });
 
-        String url = "http://127.0.0.1:" + sharedPort + "/";
-        engine.load(url);
+        engine.load("http://127.0.0.1:" + sharedPort + "/");
     }
 
     public void setOnContentChanged(Consumer<String> onContentChanged) {
@@ -85,7 +85,6 @@ public class MonacoEditorPane extends VBox {
                             } else {
                                 java.io.InputStream is = MonacoEditorPane.class.getResourceAsStream("/monaco" + path);
                                 if (is == null) {
-                                    System.err.println("[MonacoServer] Resource not found: /monaco" + path);
                                     exchange.sendResponseHeaders(404, -1);
                                 } else {
                                     byte[] data = is.readAllBytes();
@@ -93,7 +92,6 @@ public class MonacoEditorPane extends VBox {
                                     if (path.endsWith(".js")) mime = "application/javascript";
                                     else if (path.endsWith(".css")) mime = "text/css";
                                     else if (path.endsWith(".ttf")) mime = "font/ttf";
-                                    
                                     exchange.getResponseHeaders().add("Content-Type", mime);
                                     exchange.sendResponseHeaders(200, data.length);
                                     exchange.getResponseBody().write(data);
@@ -108,116 +106,26 @@ public class MonacoEditorPane extends VBox {
                     sharedServer.setExecutor(Executors.newCachedThreadPool());
                     sharedServer.start();
                     sharedPort = sharedServer.getAddress().getPort();
-                    System.out.println("[MonacoServer] Shared server started on port " + sharedPort);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                } catch (Exception e) { e.printStackTrace(); }
             }
         }
     }
 
     private String getBaseHtml() {
-        return "<!DOCTYPE html>\n" +
-            "<html>\n" +
-            "<head>\n" +
-            "    <meta charset=\"UTF-8\">\n" +
-            "    <style>\n" +
-            "        body { margin: 0; padding: 0; overflow: hidden; background-color: #1e1e1e; }\n" +
-            "        #editor { width: 100vw; height: 100vh; }\n" +
-            "    </style>\n" +
-            "</head>\n" +
-            "<body>\n" +
-            "    <div id=\"editor\"></div>\n" +
-            "    <script src=\"/vs/loader.js\"></script>\n" +
-            "    <script>\n" +
-            "        require.config({ paths: { 'vs': '/vs' } });\n" +
-            "        require(['vs/editor/editor.main'], function() {\n" +
-            "            monaco.languages.register({ id: 'swift-mt' });\n" +
-            "            monaco.languages.setMonarchTokensProvider('swift-mt', {\n" +
-            "                tokenizer: { root: [\n" +
-            "                    [/{[1-5]:/, 'metatag'],\n" +
-            "                    [/^:[0-9A-Z]{2,3}:/, 'keyword'], [/\\n:[0-9A-Z]{2,3}:/, 'keyword'],\n" +
-            "                    [/-}/, 'metatag']\n" +
-            "                ] }\n" +
-            "            });\n" +
-            "\n" +
-            "            monaco.editor.defineTheme('studio-dark', {\n" +
-            "                base: 'vs-dark', inherit: true,\n" +
-            "                rules: [ \n" +
-            "                    { token: 'metatag', foreground: 'ce9178', fontStyle: 'bold' }, \n" +
-            "                    { token: 'keyword', foreground: '569cd6', fontStyle: 'bold' },\n" +
-            "                    { token: 'tag', foreground: '569cd6' },\n" +
-            "                    { token: 'attribute.name', foreground: '9cdcfe' },\n" +
-            "                    { token: 'attribute.value', foreground: 'ce9178' },\n" +
-            "                    { token: 'string', foreground: 'ce9178' },\n" +
-            "                    { token: 'number', foreground: 'b5cea8' }\n" +
-            "                ],\n" +
-            "                colors: { 'editor.background': '#1e1e1e' }\n" +
-            "            });\n" +
-            "            monaco.editor.defineTheme('studio-hacker', {\n" +
-            "                base: 'hc-black', inherit: true,\n" +
-            "                rules: [ \n" +
-            "                    { token: '', foreground: '00ff00' }, \n" +
-            "                    { token: 'keyword', foreground: '00ff00', fontStyle: 'bold' },\n" +
-            "                    { token: 'metatag', foreground: '00ff00', fontStyle: 'bold' },\n" +
-            "                    { token: 'string', foreground: '00ff00' }\n" +
-            "                ],\n" +
-            "                colors: { 'editor.background': '#000000' }\n" +
-            "            });\n" +
-            "            \n" +
-            "            window.editor = monaco.editor.create(document.getElementById('editor'), {\n" +
-            "                value: '',\n" +
-            "                language: 'plaintext',\n" +
-            "                theme: 'vs-dark',\n" +
-            "                automaticLayout: true,\n" +
-            "                minimap: { enabled: false },\n" +
-            "                fontSize: 14,\n" +
-            "                fontFamily: 'JetBrains Mono, Consolas, monospace',\n" +
-            "                renderWhitespace: 'none',\n" +
-            "                scrollBeyondLastLine: false\n" +
-            "            });\n" +
-            "\n" +
-            "            window.editor.onDidChangeModelContent(function() {\n" +
-            "                if (window.javaBridge) window.javaBridge.onContentChanged(window.editor.getValue());\n" +
-            "            });\n" +
-            "            \n" +
-            "            window.setValue = function(v) { window.editor.setValue(v); };\n" +
-            "            window.getValue = function() { return window.editor.getValue(); };\n" +
-            "            window.setTheme = function(t) {\n" +
-            "                var mt = (t === 'vs-dark') ? 'studio-dark' : (t === 'hc-black' ? 'studio-hacker' : t);\n" +
-            "                monaco.editor.setTheme(mt);\n" +
-            "            };\n" +
-            "            window.setLanguage = function(l) {\n" +
-            "                var lang = (l === 'text') ? 'swift-mt' : l;\n" +
-            "                monaco.editor.setModelLanguage(window.editor.getModel(), lang);\n" +
-            "            };\n" +
-            "            window.showDiagnostics = function(json) {\n" +
-            "                try {\n" +
-            "                    var diags = JSON.parse(json);\n" +
-            "                    var markers = diags.map(function(d) {\n" +
-            "                        return {\n" +
-            "                            severity: monaco.MarkerSeverity.Error,\n" +
-            "                            startLineNumber: (d.range ? d.range.start.line + 1 : 1),\n" +
-            "                            startColumn: (d.range ? d.range.start.character + 1 : 1),\n" +
-            "                            endLineNumber: (d.range ? d.range.end.line + 1 : 1),\n" +
-            "                            endColumn: (d.range ? d.range.end.character + 1 : 1),\n" +
-            "                            message: d.message\n" +
-            "                        };\n" +
-            "                    });\n" +
-            "                    monaco.editor.setModelMarkers(window.editor.getModel(), 'studio', markers);\n" +
-            "                } catch(e) {}\n" +
-            "            };\n" +
-            "            \n" +
-            "            var checkBridge = setInterval(function() {\n" +
-            "                if (window.javaBridge) {\n" +
-            "                    clearInterval(checkBridge);\n" +
-            "                    window.javaBridge.onEditorReady();\n" +
-            "                }\n" +
-            "            }, 50);\n" +
-            "        });\n" +
-            "    </script>\n" +
-            "</body>\n" +
-            "</html>";
+        return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{margin:0;padding:0;overflow:hidden;background-color:#1e1e1e;}#editor{width:100vw;height:100vh;}</style></head><body><div id=\"editor\"></div><script src=\"/vs/loader.js\"></script><script>\n" +
+            "require.config({ paths: { 'vs': '/vs' } });\n" +
+            "require(['vs/editor/editor.main'], function() {\n" +
+            "    monaco.languages.register({ id: 'swift-mt' });\n" +
+            "    monaco.languages.setMonarchTokensProvider('swift-mt', { tokenizer: { root: [[/{[1-5]:/, 'metatag'], [/^:[0-9A-Z]{2,3}:/, 'keyword'], [/\\n:[0-9A-Z]{2,3}:/, 'keyword'], [/-}/, 'metatag']] } });\n" +
+            "    window.editor = monaco.editor.create(document.getElementById('editor'), { value: '', language: 'plaintext', theme: 'vs-dark', automaticLayout: true, minimap: { enabled: false }, fontSize: 14, fontFamily: 'monospace', scrollBeyondLastLine: false });\n" +
+            "    window.editor.onDidChangeModelContent(function() { if (window.javaBridge) window.javaBridge.onContentChanged(window.editor.getValue()); });\n" +
+            "    window.setValue = function(v) { window.editor.setValue(v); };\n" +
+            "    window.getValue = function() { return window.editor.getValue(); };\n" +
+            "    window.setTheme = function(t) { monaco.editor.setTheme(t); };\n" +
+            "    window.setLanguage = function(l) { var lang = (l === 'text') ? 'swift-mt' : l; monaco.editor.setModelLanguage(window.editor.getModel(), lang); };\n" +
+            "    window.showDiagnostics = function(json) { try { var markers = JSON.parse(json).map(function(d) { return { severity: monaco.MarkerSeverity.Error, startLineNumber: (d.range?d.range.start.line+1:1), startColumn: (d.range?d.range.start.character+1:1), endLineNumber: (d.range?d.range.end.line+1:1), endColumn: (d.range?d.range.end.character+1:1), message: d.message }; }); monaco.editor.setModelMarkers(window.editor.getModel(), 'studio', markers); } catch(e) {} };\n" +
+            "    var checkBridge = setInterval(function() { if (window.javaBridge) { clearInterval(checkBridge); window.javaBridge.onEditorReady(); } }, 50);\n" +
+            "});</script></body></html>";
     }
 
     public void setText(String text) {
@@ -236,9 +144,7 @@ public class MonacoEditorPane extends VBox {
         if (editorReady) {
             try {
                 Object result = engine.executeScript("window.getValue()");
-                if (result instanceof String) {
-                    this.currentContent = (String) result;
-                }
+                if (result instanceof String) this.currentContent = (String) result;
             } catch (Exception e) {}
         }
         return this.currentContent;
@@ -268,17 +174,10 @@ public class MonacoEditorPane extends VBox {
 
     private void onThemeChanged(String themeName) {
         if (!editorReady) return;
-        
         String themeClass = ThemeManager.getCurrentThemeClass();
-        String theme = "vs-dark";
-        String bgColor = "#1e1e1e";
-        
-        if (themeClass.equals("theme-intellij-light") || themeClass.equals("theme-github-light")) {
-            theme = "vs"; bgColor = "#ffffff";
-        } else if (themeClass.equals("theme-hacker") || themeClass.equals("theme-cyberpunk")) {
-            theme = "hc-black"; bgColor = "#000000";
-        }
-        
+        String theme = "vs-dark"; String bgColor = "#1e1e1e";
+        if (themeClass.contains("light")) { theme = "vs"; bgColor = "#ffffff"; }
+        else if (themeClass.equals("theme-cyberpunk") || themeClass.equals("theme-hacker")) { theme = "hc-black"; bgColor = "#000000"; }
         try {
             engine.executeScript("window.setTheme('" + theme + "');");
             engine.executeScript("document.body.style.backgroundColor = '" + bgColor + "';");
@@ -294,21 +193,13 @@ public class MonacoEditorPane extends VBox {
                 onThemeChanged(ThemeManager.getCurrentThemeName());
             });
         }
-        
         public void onContentChanged(String newText) {
             currentContent = newText;
-            if (onContentChanged != null) {
-                Platform.runLater(() -> onContentChanged.accept(newText));
-            }
+            if (onContentChanged != null) Platform.runLater(() -> onContentChanged.accept(newText));
         }
     }
 
     public static void stopSharedServer() {
-        synchronized (serverLock) {
-            if (sharedServer != null) {
-                sharedServer.stop(0);
-                sharedServer = null;
-            }
-        }
+        synchronized (serverLock) { if (sharedServer != null) { sharedServer.stop(0); sharedServer = null; } }
     }
 }

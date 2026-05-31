@@ -1,0 +1,25 @@
+classDiagram
+    class Customer {
+        +String customerId
+        +String name
+        +String email
+        +placeOrder()
+    }
+    class Order {
+        +String orderId
+        +Date orderDate
+        +String status
+        +calculateTotal()
+    }
+    class Product {
+        +String productId
+        +String name
+        +Double price
+    }
+    class OrderItem {
+        +int quantity
+        +Double unitPrice
+    }
+    Customer "1" --> "*" Order : places
+    Order "1" --> "*" OrderItem : contains
+    OrderItem "*" --> "1" Product : refers to

@@ -33,7 +33,7 @@ public class ConsolePane extends VBox {
 
     private static final String FONT_FAMILY = "'JetBrains Mono', 'Consolas', 'DejaVu Sans Mono', monospace";
     private static final String FONT_SIZE   = "12.5px";
-    private static final String DEFAULT_FG  = "-console-fg";
+    private static final String DEFAULT_FG  = "-sui-text-main";
 
     private final InlineCssTextArea textArea;
     private int currentLineStart = 0;
@@ -80,7 +80,18 @@ public class ConsolePane extends VBox {
         VBox.setVgrow(vsPane, Priority.ALWAYS);
         getChildren().addAll(header, vsPane);
 
+        ThemeManager.addListener(this::onThemeChanged);
+
         appendRaw("\033[2m[Sovereign Builder Studio]\033[0m Initialized — System active…\n");
+    }
+
+    private void onThemeChanged(String themeName) {
+        // Refresh styling for all existing text when theme changes
+        // Since we use lookups like -sui-text-main, we don't necessarily need to re-apply everything,
+        // but RichTextFX might need a nudge if colors were hardcoded or if we want to ensure
+        // tokens are re-resolved.
+        // Actually, DEFAULT_FG is "-sui-text-main", so it's a lookup.
+        // The main thing is that buildStyle() will now use the new token values if called again.
     }
 
     public void copyAllToClipboard() {
@@ -316,8 +327,8 @@ public class ConsolePane extends VBox {
         sb.append("-fx-font-size: ").append(FONT_SIZE).append(";");
         String fg = fgColor;
         if (dim) {
-            if ("-console-fg".equals(fg)) {
-                fg = "-console-dim-fg";
+            if ("-sui-text-main".equals(fg)) {
+                fg = "-sui-text-dim";
             } else {
                 fg = dimColor(fg);
             }

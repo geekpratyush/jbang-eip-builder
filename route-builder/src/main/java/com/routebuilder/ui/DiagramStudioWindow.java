@@ -68,22 +68,29 @@ public class DiagramStudioWindow {
     };
 
     public DiagramStudioWindow() {
+        this(null);
+    }
+
+    public DiagramStudioWindow(File baseWorkspace) {
         activeInstances.add(this);
         this.stage = new Stage();
         
         java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(DiagramStudioWindow.class);
-        String savedRoot = prefs.get("workspaceRoot", null);
-        File defaultRoot = new File(System.getProperty("user.dir"), "diagram-workspace");
         
-        if (savedRoot != null) {
-            File f = new File(savedRoot);
-            if (f.exists() && f.isDirectory()) {
-                this.workspaceRoot = f;
+        if (baseWorkspace != null) {
+            this.workspaceRoot = new File(baseWorkspace, "diagrams");
+        } else {
+            String savedRoot = prefs.get("workspaceRoot", null);
+            File defaultRoot = new File(System.getProperty("user.dir"), "diagram-workspace");
+            if (savedRoot != null) {
+                File f = new File(savedRoot);
+                if (f.exists() && f.isDirectory()) {
+                    this.workspaceRoot = f;
+                }
             }
-        }
-        
-        if (this.workspaceRoot == null) {
-            this.workspaceRoot = defaultRoot;
+            if (this.workspaceRoot == null) {
+                this.workspaceRoot = defaultRoot;
+            }
         }
 
         this.currentDiagramTheme = prefs.get("diagramTheme", "default");
@@ -346,9 +353,9 @@ public class DiagramStudioWindow {
                 if (event.getGestureSource() != cell && event.getDragboard().hasFiles()) {
                     File target = cell.getItem();
                     if (target != null && target.isDirectory()) {
-                        cell.setStyle("-fx-background-color: #2a4e2a; -fx-text-fill: white;");
+                        cell.setStyle("-fx-background-color: -sui-selection; -fx-text-fill: white;");
                     } else if (target != null && target.isFile()) {
-                        cell.setStyle("-fx-border-color: #4CAF50; -fx-border-width: 0 0 2px 0;");
+                        cell.setStyle("-fx-border-color: -sui-accent-primary; -fx-border-width: 0 0 2px 0;");
                     }
                 }
                 event.consume();

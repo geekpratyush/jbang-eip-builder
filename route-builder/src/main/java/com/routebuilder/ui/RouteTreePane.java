@@ -48,6 +48,8 @@ public class RouteTreePane extends VBox {
         this.onFilesSelected = onFilesSelected;
     }
 
+    private boolean programmaticEdit = false;
+
     private boolean isRefreshing = false;
     public RouteTreePane(Consumer<File> onFileSelected) {
         this.onFileSelected = onFileSelected;
@@ -110,7 +112,12 @@ public class RouteTreePane extends VBox {
 
         toolbar.getChildren().addAll(btnExpandAll, btnCollapseAll);
 
-        baseDirectory = new File(System.getProperty("user.dir"), "routes");
+        File camelDir = new File(System.getProperty("user.dir"), "camel");
+        if (camelDir.exists()) {
+            baseDirectory = camelDir;
+        } else {
+            baseDirectory = new File(System.getProperty("user.dir"), "routes");
+        }
         if (!baseDirectory.exists()) {
             baseDirectory.mkdirs();
         }
@@ -118,13 +125,38 @@ public class RouteTreePane extends VBox {
         rootItem = new TreeItem<>(baseDirectory);
         rootItem.setExpanded(true);
         
-        treeView = new TreeView<>(rootItem);
+        treeView = new TreeView<File>(rootItem) {
+            @Override
+            public void edit(TreeItem<File> item) {
+                if (programmaticEdit && item != null && !item.getValue().equals(baseDirectory)) {
+                    super.edit(item);
+                }
+            }
+        };
         treeView.getStyleClass().add("custom-tree-view");
         this.setMinWidth(50);
         this.setPrefWidth(260);
         
         treeView.setEditable(true);
         treeView.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
+
+        // Reset programmaticEdit when edit ends
+        treeView.setOnEditCommit(e -> programmaticEdit = false);
+        treeView.setOnEditCancel(e -> programmaticEdit = false);
+
+        // Ensure clicking a selected item doesn't start edit automatically
+        treeView.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_CLICKED, event -> {
+            if (event.getClickCount() == 2 && event.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
+                // Handle open file on double click
+                TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
+                if (selected != null && selected.getValue().isFile()) {
+                    if (this.onFileSelected != null) {
+                        this.onFileSelected.accept(selected.getValue());
+                    }
+                }
+                event.consume(); // Prevent default edit behavior on double click
+            }
+        });
 
         treeView.setOnDragOver(e -> {
             if (e.getDragboard().hasFiles()) {
@@ -379,6 +411,7 @@ public class RouteTreePane extends VBox {
             if (code == KeyCode.F2) {
                 TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
                 if (selected != null && !selected.getValue().equals(baseDirectory)) {
+                    programmaticEdit = true;
                     treeView.edit(selected);
                 }
                 event.consume();
@@ -427,22 +460,10 @@ public class RouteTreePane extends VBox {
             }
         });
 
-        treeView.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_CLICKED, event -> {
-            if (event.getClickCount() == 2 && event.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
-                event.consume();
-                TreeItem<File> selected = treeView.getSelectionModel().getSelectedItem();
-                if (selected != null && selected.getValue().isFile()) {
-                    if (this.onFileSelected != null) {
-                        this.onFileSelected.accept(selected.getValue());
-                    }
-                }
-            }
-        });
-
         VBox.setVgrow(treeView, Priority.ALWAYS);
 
         getChildren().addAll(title, toolbar, treeView);
-        
+
         refresh();
     }
 
@@ -715,6 +736,7 @@ public class RouteTreePane extends VBox {
         if (item == null || item.equals(baseDirectory)) return;
         TreeItem<File> treeItem = findTreeItem(rootItem, item);
         if (treeItem != null) {
+            programmaticEdit = true;
             treeView.edit(treeItem);
         }
     }
@@ -803,11 +825,25 @@ public class RouteTreePane extends VBox {
     }
 
     public void setBaseDirectory(File newBaseDir) {
-        this.baseDirectory = newBaseDir;
-        this.rootItem.setValue(newBaseDir);
-        if (title != null) {
-            title.setText("EXPLORER: " + newBaseDir.getName().toUpperCase());
+        File camelDir = new File(newBaseDir, "camel");
+        File routesDir = new File(newBaseDir, "routes");
+        if (camelDir.exists() && camelDir.isDirectory()) {
+            this.baseDirectory = camelDir;
+            if (title != null) {
+                title.setText("EXPLORER: CAMEL");
+            }
+        } else if (routesDir.exists() && routesDir.isDirectory()) {
+            this.baseDirectory = routesDir;
+            if (title != null) {
+                title.setText("EXPLORER: ROUTES");
+            }
+        } else {
+            this.baseDirectory = newBaseDir;
+            if (title != null) {
+                title.setText("EXPLORER: " + newBaseDir.getName().toUpperCase());
+            }
         }
+        this.rootItem.setValue(this.baseDirectory);
         checkedFiles.clear();
         updateConflicts();
         if (onCheckedFilesChanged != null) {

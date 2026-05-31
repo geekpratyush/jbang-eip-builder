@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<smooks-resource-list xmlns="https://www.smooks.org/xsd/smooks-2.0.xsd"
+                      xmlns:core="https://www.smooks.org/xsd/smooks/smooks-core-1.6.xsd"
+                      xmlns:jb="https://www.smooks.org/xsd/smooks/javabean-1.6.xsd">
+
+    <core:exports>
+        <core:result type="org.smooks.io.sink.JavaSink" extract="order"/>
+    </core:exports>
+
+    <jb:bean beanId="order" class="java.util.HashMap" createOnElement="order">
+        <jb:value property="orderId" data="order/@id" />
+        <jb:value property="customer" data="order/customer" />
+    </jb:bean>
+
+</smooks-resource-list>

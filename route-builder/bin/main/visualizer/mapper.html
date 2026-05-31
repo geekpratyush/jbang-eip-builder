@@ -34,6 +34,8 @@
             top: 0; left: 0;
             width: 100%; height: 100%;
             z-index: 1;
+            background-color: transparent;
+            pointer-events: all;
         }
 
         /* Glowing Connections */
@@ -92,18 +94,25 @@
     <svg id="diagram"></svg>
 
     <script>
-        const svg = d3.select("#diagram");
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-
+        const svg = d3.select("#diagram")
+            .attr("width", window.innerWidth)
+            .attr("height", window.innerHeight);
+        
         // Container for zoom/pan
         const g = svg.append("g");
 
         const zoom = d3.zoom()
-            .scaleExtent([0.1, 4])
+            .scaleExtent([0.05, 5])
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
             });
+
+        // Add an invisible background rect to capture all pointer events for zooming/panning
+        const bgRect = svg.insert("rect", "g")
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .attr("fill", "transparent")
+            .attr("pointer-events", "all");
 
         svg.call(zoom);
 
@@ -246,16 +255,19 @@
             }, 1000); // Wait for simulation to settle slightly
 
             function dragstarted(event, d) {
+                if (event.sourceEvent) event.sourceEvent.stopPropagation();
                 if (!event.active) simulation.alphaTarget(0.3).restart();
                 d3.select(this).raise().classed("active", true);
             }
 
             function dragged(event, d) {
+                if (event.sourceEvent) event.sourceEvent.stopPropagation();
                 d.fx = event.x;
                 d.fy = event.y;
             }
 
             function dragended(event, d) {
+                if (event.sourceEvent) event.sourceEvent.stopPropagation();
                 if (!event.active) simulation.alphaTarget(0);
                 d3.select(this).classed("active", false);
             }
@@ -263,8 +275,8 @@
             // Auto-fit after render
             setTimeout(() => {
                 const bounds = g.node().getBBox();
-                const fullWidth = width;
-                const fullHeight = height;
+                const fullWidth = window.innerWidth;
+                const fullHeight = window.innerHeight;
                 const widthScale = fullWidth / (bounds.width + 100);
                 const heightScale = fullHeight / (bounds.height + 100);
                 const scale = Math.min(widthScale, heightScale, 1.2);
@@ -288,7 +300,10 @@
         
         // Handle window resize
         window.addEventListener('resize', () => {
-            svg.attr("width", window.innerWidth).attr("height", window.innerHeight);
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            svg.attr("width", w).attr("height", h);
+            bgRect.attr("width", w).attr("height", h);
         });
     </script>
 </body>

@@ -1,0 +1,78 @@
+# ID: simulators-rest-api
+# ENABLED: true
+# DESCRIPTION: A REST API using the platform-http component to query and insert data in MongoDB and Oracle simulators.
+#
+# Test MongoDB Insert:
+#   curl -X POST "http://localhost:9999/api/mongo/insert?collection=pacs008" \
+#        -H "Content-Type: application/json" \
+#        -d '{"id":"MX-702","messageId":"MSG-PACS-702","amount":90000.00,"currency":"USD"}'
+#
+# Test MongoDB Query:
+#   curl "http://localhost:9999/api/mongo/query?collection=pacs008&id=MX-702"
+#
+# Test Oracle Query:
+#   curl "http://localhost:9999/api/oracle/query?table=customers_table&column=id&value=MX-801"
+
+- route:
+    id: "mongo-insert-rest"
+    from:
+      uri: "platform-http:/api/mongo/insert"
+      parameters:
+        httpMethodRestrict: "POST"
+      steps:
+        # Wrap the incoming document body into the simulator request format
+        - setHeader:
+            name: "docBody"
+            simple: "${body}"
+        - setBody:
+            simple: >
+              {
+                "operation": "insert",
+                "collection": "${header.collection}",
+                "document": ${header.docBody}
+              }
+        - to: "direct:mongo-gateway"
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"
+
+- route:
+    id: "mongo-query-rest"
+    from:
+      uri: "platform-http:/api/mongo/query"
+      parameters:
+        httpMethodRestrict: "GET"
+      steps:
+        - setBody:
+            simple: >
+              {
+                "operation": "findOne",
+                "collection": "${header.collection}",
+                "query": {
+                  "id": "${header.id}"
+                }
+              }
+        - to: "direct:mongo-gateway"
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"
+
+- route:
+    id: "oracle-query-rest"
+    from:
+      uri: "platform-http:/api/oracle/query"
+      parameters:
+        httpMethodRestrict: "GET"
+      steps:
+        - setBody:
+            simple: >
+              {
+                "queryType": "select",
+                "table": "${header.table}",
+                "column": "${header.column}",
+                "value": "${header.value}"
+              }
+        - to: "direct:oracle-gateway"
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"

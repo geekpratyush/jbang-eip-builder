@@ -1,5 +1,6 @@
 package com.routebuilder.ui;
 
+import com.routebuilder.ui.components.ThemeManager;
 import javafx.application.Application;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
@@ -118,22 +119,30 @@ public class RouteBuilderApp extends Application {
     private javafx.scene.control.Button btnStop;
     private final Process[] runnerProcess = {null};
 
-    public static String currentThemeClass = com.routebuilder.ui.components.ThemeManager.getCurrentThemeClass();
-    public static String currentThemeName = com.routebuilder.ui.components.ThemeManager.getCurrentThemeName();
-    public static String currentDynamicCssUri = null;
-    public static final java.util.List<javafx.scene.Parent> themedRoots = new java.util.ArrayList<>();
+    public static String currentThemeClass = ThemeManager.getCurrentThemeClass();
+    public static String currentThemeName = ThemeManager.getCurrentThemeName();
+    public static String currentDynamicCssUri = ThemeManager.getCurrentDynamicCssUri();
+    public static final java.util.Set<javafx.scene.Parent> themedRoots = new java.util.HashSet<>();
     public static RouteBuilderApp instance;
     public static javafx.scene.layout.BorderPane rootNode;
     public static javafx.scene.control.ComboBox<String> globalThemeBox;
 
+    public static void setGlobalTheme(String theme) {
+        ThemeManager.applyTheme(theme);
+        currentThemeName = ThemeManager.getCurrentThemeName();
+        currentThemeClass = ThemeManager.getCurrentThemeClass();
+        currentDynamicCssUri = null; 
+        if (instance != null) instance.updateInternalThemes(theme);
+    }
+
+    private void updateInternalThemes(String theme) {
+        if (diagramPane != null) diagramPane.setTheme(theme);
+        if (helpPortalPane != null) helpPortalPane.setTheme(theme);
+        // editorPane and others update via ThemeManager listeners or registered roots
+    }
+
     public static void themeDialog(javafx.scene.control.Dialog<?> dialog) {
         com.routebuilder.ui.components.ThemeManager.registerRoot(dialog.getDialogPane());
-        try {
-            dialog.getDialogPane().getStylesheets().add(RouteBuilderApp.class.getResource("/styles/main.css").toExternalForm());
-            if (currentDynamicCssUri != null) {
-                dialog.getDialogPane().getStylesheets().add(currentDynamicCssUri);
-            }
-        } catch (Exception ignored) {}
     }
 
     public void showConsole(Process process, String title) {
@@ -356,7 +365,7 @@ public class RouteBuilderApp extends Application {
         
         javafx.scene.control.MenuItem variablesItem = new javafx.scene.control.MenuItem("Variables Editor...");
         variablesItem.setOnAction(e -> {
-            java.io.File baseDir = treePane.getBaseDirectory();
+            java.io.File baseDir = getWorkspaceRoot();
             if (baseDir != null) {
                 VariablesEditorWindow.show(baseDir, null);
             } else {
@@ -383,20 +392,21 @@ public class RouteBuilderApp extends Application {
 
         javafx.scene.control.MenuItem diagramItem = new javafx.scene.control.MenuItem("Universal Diagram Studio...");
         diagramItem.setOnAction(e -> {
-            DiagramStudioWindow diagramStudio = new DiagramStudioWindow();
+            java.io.File workspaceRoot = getWorkspaceRoot();
+            DiagramStudioWindow diagramStudio = new DiagramStudioWindow(workspaceRoot);
             diagramStudio.show();
         });
 
         javafx.scene.control.MenuItem fakerItem = new javafx.scene.control.MenuItem("Faker & Template Studio...");
         fakerItem.setOnAction(e -> {
-            java.io.File baseDir = treePane.getBaseDirectory();
+            java.io.File baseDir = getWorkspaceRoot();
             FakerStudioWindow fakerStudio = new FakerStudioWindow(baseDir);
             fakerStudio.show();
         });
 
         javafx.scene.control.MenuItem kameletBuilderItem = new javafx.scene.control.MenuItem("Kamelet Builder...");
         kameletBuilderItem.setOnAction(e -> {
-            java.io.File baseDir = treePane.getBaseDirectory();
+            java.io.File baseDir = getWorkspaceRoot();
             if (baseDir != null) {
                 KameletStudioWindow.show(baseDir);
             } else {
@@ -408,7 +418,7 @@ public class RouteBuilderApp extends Application {
 
         javafx.scene.control.MenuItem dependencyCatalogItem = new javafx.scene.control.MenuItem("Dependency Catalog...");
         dependencyCatalogItem.setOnAction(e -> {
-            java.io.File baseDir = treePane.getBaseDirectory();
+            java.io.File baseDir = getWorkspaceRoot();
             if (baseDir != null) {
                 DependencyCatalogWindow.show(baseDir);
             } else {
@@ -427,7 +437,7 @@ public class RouteBuilderApp extends Application {
                 alert.showAndWait();
                 return;
             }
-            LiquibaseExportWindow.showForRoutes(treePane.getBaseDirectory(), checked);
+            LiquibaseExportWindow.showForRoutes(getWorkspaceRoot(), checked);
         });
 
         javafx.scene.control.MenuItem remoteDeployItem = new javafx.scene.control.MenuItem("Deploy Remotely...");
@@ -439,7 +449,7 @@ public class RouteBuilderApp extends Application {
                 alert.showAndWait();
                 return;
             }
-            RemoteDeployWindow.showForRoutes(treePane.getBaseDirectory(), checked);
+            RemoteDeployWindow.showForRoutes(getWorkspaceRoot(), checked);
         });
 
         toolsMenu.getItems().addAll(
@@ -466,7 +476,7 @@ public class RouteBuilderApp extends Application {
             if (themeName.equals(savedTheme)) {
                 themeItem.setSelected(true);
             }
-            themeItem.setOnAction(e -> applyTheme(themeName, root));
+            themeItem.setOnAction(e -> setGlobalTheme(themeName));
             themeMenu.getItems().add(themeItem);
         }
         
@@ -518,7 +528,7 @@ public class RouteBuilderApp extends Application {
                 alert.showAndWait();
                 return;
             }
-            LiquibaseExportWindow.showForRoutes(treePane.getBaseDirectory(), checked);
+            LiquibaseExportWindow.showForRoutes(getWorkspaceRoot(), checked);
         });
 
         javafx.scene.control.Button btnRemoteDeploy = new javafx.scene.control.Button("Run Remotely", new org.kordamp.ikonli.javafx.FontIcon("fas-server"));
@@ -532,7 +542,7 @@ public class RouteBuilderApp extends Application {
                 alert.showAndWait();
                 return;
             }
-            RemoteDeployWindow.showForRoutes(treePane.getBaseDirectory(), checked);
+            RemoteDeployWindow.showForRoutes(getWorkspaceRoot(), checked);
         });
         
         javafx.scene.control.Button btnManual = new javafx.scene.control.Button("Help Guide", new org.kordamp.ikonli.javafx.FontIcon("fas-question-circle"));
@@ -543,7 +553,7 @@ public class RouteBuilderApp extends Application {
         btnVariables.getStyleClass().addAll("toolbar-btn", "btn-variables");
         btnVariables.setTooltip(new javafx.scene.control.Tooltip("Open Workspace Properties / Variables"));
         btnVariables.setOnAction(e -> {
-            java.io.File baseDir = treePane.getBaseDirectory();
+            java.io.File baseDir = getWorkspaceRoot();
             if (baseDir != null) {
                 VariablesEditorWindow.show(baseDir, null);
             } else {
@@ -580,15 +590,25 @@ public class RouteBuilderApp extends Application {
         btnDiagramStudio.getStyleClass().addAll("toolbar-btn", "btn-diagram-studio");
         btnDiagramStudio.setTooltip(new javafx.scene.control.Tooltip("Open Universal Diagram Studio"));
         btnDiagramStudio.setOnAction(e -> {
-            DiagramStudioWindow diagramStudio = new DiagramStudioWindow();
+            java.io.File workspaceRoot = getWorkspaceRoot();
+            DiagramStudioWindow diagramStudio = new DiagramStudioWindow(workspaceRoot);
             diagramStudio.show();
+        });
+
+        javafx.scene.control.Button btnDocConverter = new javafx.scene.control.Button("Doc Converter", new org.kordamp.ikonli.javafx.FontIcon("fas-file-alt"));
+        btnDocConverter.getStyleClass().addAll("toolbar-btn", "btn-deps");
+        btnDocConverter.setTooltip(new javafx.scene.control.Tooltip("Open Document Converter Studio (PDF/Word/Excel to MD)"));
+        btnDocConverter.setOnAction(e -> {
+            java.io.File workspaceRoot = getWorkspaceRoot();
+            DocumentConverterStudioWindow studio = new DocumentConverterStudioWindow(workspaceRoot);
+            studio.show();
         });
 
         javafx.scene.control.Button btnFakerStudio = new javafx.scene.control.Button("Faker", new org.kordamp.ikonli.javafx.FontIcon("fas-magic"));
         btnFakerStudio.getStyleClass().addAll("toolbar-btn", "btn-faker-studio");
         btnFakerStudio.setTooltip(new javafx.scene.control.Tooltip("Open Universal Faker & Template Studio"));
         btnFakerStudio.setOnAction(e -> {
-            java.io.File baseDir = treePane.getBaseDirectory();
+            java.io.File baseDir = getWorkspaceRoot();
             FakerStudioWindow fakerStudio = new FakerStudioWindow(baseDir);
             fakerStudio.show();
         });
@@ -597,7 +617,7 @@ public class RouteBuilderApp extends Application {
         btnKamelets.getStyleClass().addAll("toolbar-btn", "btn-kamelets");
         btnKamelets.setTooltip(new javafx.scene.control.Tooltip("Open Kamelet Studio Builder"));
         btnKamelets.setOnAction(e -> {
-            java.io.File base = treePane.getBaseDirectory();
+            java.io.File base = getWorkspaceRoot();
             if (base != null) {
                 KameletStudioWindow.show(base);
             } else {
@@ -611,7 +631,7 @@ public class RouteBuilderApp extends Application {
         btnDeps.getStyleClass().addAll("toolbar-btn", "btn-dependencies");
         btnDeps.setTooltip(new javafx.scene.control.Tooltip("Open Dependency Catalog Manager"));
         btnDeps.setOnAction(e -> {
-            java.io.File base = treePane.getBaseDirectory();
+            java.io.File base = getWorkspaceRoot();
             if (base != null) {
                 DependencyCatalogWindow.show(base);
             } else {
@@ -621,7 +641,7 @@ public class RouteBuilderApp extends Application {
             }
         });
 
-        toolBar.getItems().addAll(btnViewExplorer, btnViewCode, btnViewDiagram, new javafx.scene.control.Separator(), btnSwapPanels, new javafx.scene.control.Separator(), btnPlay, btnStop, new javafx.scene.control.Separator(), btnVariables, btnCrypto, btnTransform, btnValidateStudio, btnDiagramStudio, btnFakerStudio, btnKamelets, btnDeps, btnRemoteDeploy, btnExport, btnManual);
+        toolBar.getItems().addAll(btnViewExplorer, btnViewCode, btnViewDiagram, new javafx.scene.control.Separator(), btnSwapPanels, new javafx.scene.control.Separator(), btnPlay, btnStop, new javafx.scene.control.Separator(), btnVariables, btnCrypto, btnTransform, btnValidateStudio, btnDiagramStudio, btnDocConverter, btnFakerStudio, btnKamelets, btnDeps, btnRemoteDeploy, btnExport, btnManual);
 
 
         boolean[] swapCodeDiagram = {false};
@@ -690,12 +710,14 @@ public class RouteBuilderApp extends Application {
             refreshGlobalLayout.run();
         });
 
-        themedRoots.add(treePane);
+        ThemeManager.registerRoot(
+treePane);
 
         helpPortalPane = new HelpPortalPane(() -> {
             viewHelpItem.setSelected(false);
         });
-        themedRoots.add(helpPortalPane);
+        ThemeManager.registerRoot(
+helpPortalPane);
 
         searchBox.setOnAction(e -> {
             String query = searchBox.getText();
@@ -712,6 +734,7 @@ public class RouteBuilderApp extends Application {
             System.out.println("Starting Routes with JBang... (mode=" + mode + ", target=" + (target == null ? "all" : target.getName()) + ")");
             try {
                 java.io.File baseDir = treePane.getBaseDirectory();
+                java.io.File workspaceRoot = getWorkspaceRoot();
                 
                 String executablePath = getJbangExecutable();
                 
@@ -730,7 +753,12 @@ public class RouteBuilderApp extends Application {
                 command.add("--logging-level=info");
                 
                 java.io.File propsFile = new java.io.File(baseDir, "application.properties");
-                if (propsFile.exists()) {
+                if (!propsFile.exists() && workspaceRoot != null) {
+                    java.io.File wsProps = new java.io.File(workspaceRoot, "application.properties");
+                    if (wsProps.exists()) {
+                        command.add("--properties=../application.properties");
+                    }
+                } else if (propsFile.exists()) {
                     command.add("--properties=application.properties");
                 }
                 
@@ -810,7 +838,7 @@ public class RouteBuilderApp extends Application {
                 for (String dep : dependencies) {
                     command.add("--dependency=" + dep);
                 }
-                for (String dep : DependencyCatalogWindow.getEnabledDependencies(baseDir)) {
+                for (String dep : DependencyCatalogWindow.getEnabledDependencies(workspaceRoot)) {
                     command.add("--dependency=" + dep);
                 }
                 
@@ -916,9 +944,29 @@ public class RouteBuilderApp extends Application {
             chooser.setTitle("Select Directory for Sample Project");
             java.io.File selectedDirectory = chooser.showDialog(primaryStage);
             if (selectedDirectory != null) {
-                treePane.setBaseDirectory(selectedDirectory);
+                // The route builder file tree should point to workspace/camel
+                java.io.File camelDir = new java.io.File(selectedDirectory, "camel");
+                if (!camelDir.exists()) camelDir.mkdirs();
+
                 generateChapterSamples(treePane, selectedDirectory);
+                
+                // setBaseDirectory will pick up the 'camel' folder
+                treePane.setBaseDirectory(selectedDirectory);
                 saveRecentProject(selectedDirectory.getAbsolutePath(), prefs, recentProjectsMenu, treePane);
+
+                // Update preferences for other studios to point to the new workspace folders
+                java.util.prefs.Preferences transPrefs = java.util.prefs.Preferences.userNodeForPackage(TransformationStudioWindow.class);
+                transPrefs.put("mappingsPath", new java.io.File(selectedDirectory, "mappings").getAbsolutePath());
+
+                java.util.prefs.Preferences diagPrefs = java.util.prefs.Preferences.userNodeForPackage(DiagramStudioWindow.class);
+                diagPrefs.put("workspaceRoot", new java.io.File(selectedDirectory, "diagrams").getAbsolutePath());
+
+                java.util.prefs.Preferences docPrefs = java.util.prefs.Preferences.userNodeForPackage(DocumentConverterStudioWindow.class);
+                docPrefs.put("workspaceRoot", new java.io.File(selectedDirectory, "docs").getAbsolutePath());
+                docPrefs.put("outputRoot", new java.io.File(selectedDirectory, "docs/output").getAbsolutePath());
+
+                java.util.prefs.Preferences valPrefs = java.util.prefs.Preferences.userNodeForPackage(ValidatorStudioWindow.class);
+                valPrefs.put("workspaceRoot", new java.io.File(selectedDirectory, "validator").getAbsolutePath());
             }
         });
         
@@ -940,7 +988,8 @@ public class RouteBuilderApp extends Application {
             treePane.refresh();
         });
         editorPane.setLspManager(lspManager);
-        themedRoots.add(editorPane);
+        ThemeManager.registerRoot(
+editorPane);
 
         editorPane.setOnPlayFile((file, mode) -> {
             boolean offline = "offline".equals(mode);
@@ -964,17 +1013,25 @@ public class RouteBuilderApp extends Application {
                 command.add("--logging-level=info");
                 
                 java.io.File workspaceDir = treePane != null ? treePane.getBaseDirectory() : null;
+                java.io.File workspaceRoot = getWorkspaceRoot();
+
                 java.io.File propsFile = new java.io.File(baseDir, "application.properties");
                 if (propsFile.exists()) {
                     command.add("--properties=application.properties");
-                } else if (workspaceDir != null) {
-                    java.io.File wsPropsFile = new java.io.File(workspaceDir, "application.properties");
-                    if (wsPropsFile.exists()) {
+                } else {
+                    java.io.File targetProps = null;
+                    if (workspaceDir != null && new java.io.File(workspaceDir, "application.properties").exists()) {
+                        targetProps = new java.io.File(workspaceDir, "application.properties");
+                    } else if (workspaceRoot != null && new java.io.File(workspaceRoot, "application.properties").exists()) {
+                        targetProps = new java.io.File(workspaceRoot, "application.properties");
+                    }
+                    
+                    if (targetProps != null) {
                         try {
-                            String relProps = baseDir.toPath().toAbsolutePath().relativize(wsPropsFile.toPath().toAbsolutePath()).toString().replace("\\", "/");
+                            String relProps = baseDir.toPath().toAbsolutePath().relativize(targetProps.toPath().toAbsolutePath()).toString().replace("\\", "/");
                             command.add("--properties=" + relProps);
                         } catch (Exception ex) {
-                            command.add("--properties=" + wsPropsFile.getAbsolutePath().replace("\\", "/"));
+                            command.add("--properties=" + targetProps.getAbsolutePath().replace("\\", "/"));
                         }
                     }
                 }
@@ -998,7 +1055,7 @@ public class RouteBuilderApp extends Application {
                 for (String dep : findCamelKDependencies(file)) {
                     command.add("--dependency=" + dep);
                 }
-                for (String dep : DependencyCatalogWindow.getEnabledDependencies(baseDir)) {
+                for (String dep : DependencyCatalogWindow.getEnabledDependencies(workspaceRoot)) {
                     command.add("--dependency=" + dep);
                 }
                 boolean dev = "dev".equals(mode);
@@ -1052,10 +1109,11 @@ public class RouteBuilderApp extends Application {
         });
 
         // 3. Right Panel: Visual Diagram
-        diagramPane = new DiagramPane(theme -> applyTheme(theme, root), updatedYaml -> {
+        diagramPane = new DiagramPane(theme -> setGlobalTheme(theme), updatedYaml -> {
             editorPane.setText(updatedYaml);
         });
-        themedRoots.add(diagramPane);
+        ThemeManager.registerRoot(
+diagramPane);
 
         Runnable updateLayout = () -> {
             mainSplitPane.getItems().clear();
@@ -1136,7 +1194,8 @@ public class RouteBuilderApp extends Application {
 
         // 4. Bottom Panel: Console
         consolePane = new com.routebuilder.ui.components.ConsolePane();
-        themedRoots.add(consolePane);
+        ThemeManager.registerRoot(
+consolePane);
 
         // Wrap in a vertical SplitPane
         SplitPane verticalSplitPane = new SplitPane();
@@ -1186,7 +1245,7 @@ public class RouteBuilderApp extends Application {
         primaryStage.show();
         
         // Apply initial theme
-        javafx.application.Platform.runLater(() -> applyTheme(com.routebuilder.ui.components.ThemeManager.getCurrentThemeName(), root));
+        javafx.application.Platform.runLater(() -> setGlobalTheme(com.routebuilder.ui.components.ThemeManager.getCurrentThemeName()));
         
         // Setup default dummy route and write it to disk so the tree sees it
         String defaultYaml = "- route:\n" +
@@ -1233,7 +1292,13 @@ public class RouteBuilderApp extends Application {
 
         if (editorPane.getCurrentFile() == null) {
             try {
-                java.io.File dir = new java.io.File(System.getProperty("user.dir"), "routes");
+                java.io.File dir = new java.io.File(System.getProperty("user.dir"), "camel");
+                if (!dir.exists()) {
+                    java.io.File routesDir = new java.io.File(System.getProperty("user.dir"), "routes");
+                    if (routesDir.exists()) {
+                        dir = routesDir;
+                    }
+                }
                 dir.mkdirs();
                 java.io.File defaultFile = new java.io.File(dir, "complex-financial-transaction.yaml");
                 if (!defaultFile.exists()) {
@@ -1252,34 +1317,6 @@ public class RouteBuilderApp extends Application {
             diagramPane.setCurrentFile(editorPane.getCurrentFile());
         }
         diagramPane.renderDiagram(yamlContent);
-    }
-
-    public static void setGlobalTheme(String theme) {
-        if (instance != null && instance.rootNode != null) {
-            instance.applyTheme(theme, instance.rootNode);
-        }
-    }
-
-    private void applyTheme(String theme, javafx.scene.layout.BorderPane root) {
-        java.util.prefs.Preferences themePrefs = java.util.prefs.Preferences.userNodeForPackage(RouteBuilderApp.class);
-        themePrefs.put("themeName", theme);
-
-        com.routebuilder.ui.components.ThemeManager.applyTheme(theme);
-        currentThemeName = com.routebuilder.ui.components.ThemeManager.getCurrentThemeName();
-        currentThemeClass = com.routebuilder.ui.components.ThemeManager.getCurrentThemeClass();
-
-        String cssClass = currentThemeClass;
-        if (cssClass.equals("theme-intellij-light") || cssClass.equals("theme-github-light")) {
-            editorPane.setTheme("vs");
-        } else if (cssClass.equals("theme-hacker") || cssClass.equals("theme-cyberpunk")) {
-            editorPane.setTheme("hc-black");
-        } else {
-            editorPane.setTheme("vs-dark");
-        }
-
-        if (diagramPane != null) diagramPane.setTheme(theme);
-        if (editorPane != null) editorPane.setTheme(theme);
-        if (helpPortalPane != null) helpPortalPane.setTheme(theme);
     }
 
     private void saveRecentProject(String path, java.util.prefs.Preferences prefs, javafx.scene.control.Menu recentProjectsMenu, RouteTreePane treePane) {
@@ -1313,27 +1350,38 @@ public class RouteBuilderApp extends Application {
 
     private void generateChapterSamples(RouteTreePane treePane, java.io.File base) {
         try {
-            String filesIndex = readResource("/sampleproject/files.txt");
-            if (filesIndex == null || filesIndex.trim().isEmpty()) {
+            java.io.File docsDir = new java.io.File(base, "docs");
+            java.io.File docsInputDir = new java.io.File(docsDir, "input");
+            java.io.File docsOutputDir = new java.io.File(docsDir, "output");
+
+            if (!docsInputDir.exists()) docsInputDir.mkdirs();
+            if (!docsOutputDir.exists()) docsOutputDir.mkdirs();
+
+            String filesIndex = new String(readResourceBytes("/samples/files.txt"), java.nio.charset.StandardCharsets.UTF_8);
+            if (filesIndex.trim().isEmpty()) {
                 return;
             }
             String[] lines = filesIndex.split("\\r?\\n");
             for (String relativePath : lines) {
                 relativePath = relativePath.trim();
-                if (relativePath.isEmpty()) continue;
+                if (relativePath.isEmpty() || relativePath.endsWith("files.txt")) continue;
+
+                java.io.File targetFile = new java.io.File(base, relativePath);
+
+                if (targetFile.exists()) continue; // Don't overwrite existing files
 
                 // Load content of the resource
-                String content = readResource("/sampleproject/" + relativePath);
+                byte[] content = readResourceBytes("/samples/" + relativePath);
+                if (content.length == 0) continue;
 
-                // Recreate directory structure under base directory
-                java.io.File targetFile = new java.io.File(base, relativePath);
+                // Ensure parent directory exists
                 java.io.File parentDir = targetFile.getParentFile();
                 if (parentDir != null && !parentDir.exists()) {
                     parentDir.mkdirs();
                 }
 
                 // Write the file content directly to disk
-                java.nio.file.Files.writeString(targetFile.toPath(), content);
+                java.nio.file.Files.write(targetFile.toPath(), content);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1348,15 +1396,15 @@ public class RouteBuilderApp extends Application {
         generateChapterSamples(null, null);
     }
 
-    private String readResource(String path) {
+    private byte[] readResourceBytes(String path) {
         try (java.io.InputStream is = RouteBuilderApp.class.getResourceAsStream(path)) {
             if (is == null) {
-                return "";
+                return new byte[0];
             }
-            return new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            return is.readAllBytes();
         } catch (Exception e) {
             e.printStackTrace();
-            return "";
+            return new byte[0];
         }
     }
 
@@ -1400,6 +1448,15 @@ public class RouteBuilderApp extends Application {
             } catch (Exception ignored) {}
         }
         return deps;
+    }
+
+    public java.io.File getWorkspaceRoot() {
+        if (treePane == null) return null;
+        java.io.File base = treePane.getBaseDirectory();
+        if (base != null && (base.getName().equals("routes") || base.getName().equals("camel"))) {
+            return base.getParentFile();
+        }
+        return base;
     }
 
     public static void main(String[] args) {

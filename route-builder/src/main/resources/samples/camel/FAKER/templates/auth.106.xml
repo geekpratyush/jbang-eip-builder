@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:auth.106.001.01">
+  <Auth106Document>
+    <MsgId>{{type:msgId}}</MsgId>
+    <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+    <UETR>{{type:uetr}}</UETR>
+    <Desc>Generated Mock Message for auth.106</Desc>
+  </Auth106Document>
+</Document>

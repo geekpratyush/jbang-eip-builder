@@ -77,6 +77,7 @@ public class DiagramPane extends VBox {
 
     public DiagramPane(Consumer<String> themeChanger, Consumer<String> yamlUpdater) {
         this.yamlUpdater = yamlUpdater;
+        com.routebuilder.ui.components.ThemeManager.registerRoot(this);
         this.isHorizontal = prefs.getBoolean("isHorizontal", false);
         this.isStackedSideBySide = prefs.getBoolean("isStackedSideBySide", true);
 
@@ -96,7 +97,7 @@ public class DiagramPane extends VBox {
         propertyPane = new VBox(15);
         propertyPane.setPadding(new Insets(15));
         propertyPane.getStyleClass().add("property-pane");
-        propertyPane.setStyle("-fx-background-color: -fx-base; -fx-border-color: #007acc; -fx-border-width: 1px; -fx-background-radius: 8; -fx-border-radius: 8;");
+        propertyPane.setStyle("-fx-background-color: -sui-bg-primary; -fx-border-color: -sui-accent-primary; -fx-border-width: 1px; -fx-background-radius: 8; -fx-border-radius: 8;");
 
         propScroll = new ScrollPane(propertyPane);
         propScroll.getStyleClass().add("property-scroll");
@@ -521,10 +522,9 @@ public class DiagramPane extends VBox {
     }
 
     private StackPane createEipNode(String title, String details, String icon, String style) {
-        VBox box = new VBox(5); box.setAlignment(Pos.CENTER);
-        box.getChildren().addAll(new FontIcon(icon){{setIconSize(24);}}, new Label(title) {{ getStyleClass().add("node-title"); }}, new Label(limitString(details, 25)) {{ getStyleClass().add("node-details"); }});
-        StackPane rootNodeWrapper = new StackPane(box); rootNodeWrapper.setPadding(new Insets(10)); rootNodeWrapper.getStyleClass().addAll("diagram-node", style);
-        rootNodeWrapper.setEffect(new javafx.scene.effect.DropShadow(10, Color.rgb(0,0,0,0.3)));
+        VBox box = new VBox(1); box.setAlignment(Pos.CENTER);
+        box.getChildren().addAll(new FontIcon(icon){{setIconSize(20); getStyleClass().add("node-icon"); }}, new Label(title) {{ getStyleClass().add("node-title"); }}, new Label(limitString(details, 20)) {{ getStyleClass().add("node-details"); }});
+        StackPane rootNodeWrapper = new StackPane(box); rootNodeWrapper.setPadding(new Insets(2)); rootNodeWrapper.getStyleClass().addAll("diagram-node", style);
         return rootNodeWrapper;
     }
 

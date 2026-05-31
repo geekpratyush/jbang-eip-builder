@@ -1,0 +1,16 @@
+{
+  "name": "Comprehensive MT103 SWIFT to ISO pacs.008",
+  "source": {
+    "file": "source.txt",
+    "type": "mt"
+  },
+  "logic": {
+    "file": "transform.xslt",
+    "type": "xslt"
+  },
+  "type": "xslt",
+  "target": {
+    "xsd": "pacs.008.001.14.xsd",
+    "type": "xml"
+  }
+}

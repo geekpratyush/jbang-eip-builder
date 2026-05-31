@@ -1,0 +1,9 @@
+{
+  "type": "smooks",
+  "name": "Smooks Fixed-Length Example",
+  "source": { "type": "text", "file": "source.txt" },
+  "logic": [
+    { "type": "xml", "file": "smooks-config.xml" }
+  ],
+  "target": { "type": "xml" }
+}

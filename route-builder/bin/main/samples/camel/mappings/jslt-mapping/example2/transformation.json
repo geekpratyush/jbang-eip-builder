@@ -1,0 +1,7 @@
+{
+  "type": "jslt",
+  "name": "JSLT Complex JSON Portfolio Transformation",
+  "source": { "type": "json", "file": "source.json" },
+  "logic": { "type": "jslt", "file": "transform.jslt" },
+  "target": { "type": "json" }
+}
