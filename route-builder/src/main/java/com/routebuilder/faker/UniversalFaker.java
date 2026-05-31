@@ -50,18 +50,18 @@ public class UniversalFaker {
 
     private static Path findTemplatesPath() {
         String userDir = System.getProperty("user.dir");
-        Path p = java.nio.file.Paths.get(userDir, "templates");
+        Path p = java.nio.file.Paths.get(userDir, "FAKER", "templates");
         if (java.nio.file.Files.exists(p)) return p;
-        p = java.nio.file.Paths.get(userDir, "FAKER", "templates");
+        p = java.nio.file.Paths.get(userDir, "templates");
         if (java.nio.file.Files.exists(p)) return p;
         return java.nio.file.Paths.get(userDir, "templates");
     }
 
     private static Path findDefaultDbPath() {
         String userDir = System.getProperty("user.dir");
-        Path p = java.nio.file.Paths.get(userDir, "faker-db");
+        Path p = java.nio.file.Paths.get(userDir, "FAKER", "faker-db");
         if (java.nio.file.Files.exists(p)) return p.resolve("financial");
-        p = java.nio.file.Paths.get(userDir, "FAKER", "faker-db");
+        p = java.nio.file.Paths.get(userDir, "faker-db");
         if (java.nio.file.Files.exists(p)) return p.resolve("financial");
         return null;
     }

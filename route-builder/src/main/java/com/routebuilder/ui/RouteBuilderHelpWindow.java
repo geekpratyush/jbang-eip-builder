@@ -417,21 +417,32 @@ public class RouteBuilderHelpWindow {
         stage.setTitle("RouteBuilder Studio Help System");
 
         BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #1e1e22;");
+        // Carry both app-root and current theme class so CSS kicks in
+        root.getStyleClass().addAll("app-root", RouteBuilderApp.currentThemeClass);
+        com.routebuilder.ui.components.ThemeManager.registerRoot(root);
+        // Keep the theme class in sync when user switches themes
+        com.routebuilder.ui.components.ThemeManager.addListener(newTheme -> {
+            root.getStyleClass().removeIf(c -> c.startsWith("theme-"));
+            root.getStyleClass().add(com.routebuilder.ui.components.ThemeManager.getCurrentThemeClass());
+            // Reload the currently displayed topic so its HTML colours refresh
+            if (treeView != null && treeView.getSelectionModel().getSelectedItem() != null) {
+                HelpItem item = treeView.getSelectionModel().getSelectedItem().getValue();
+                if (item != null && item.topic != null) loadTopic(item.topic);
+            }
+        });
 
         // Top Toolbar
         ToolBar toolBar = new ToolBar();
-        toolBar.setStyle("-fx-background-color: #25252b; -fx-border-color: #3c3c44; -fx-border-width: 0 0 1 0;");
+        toolBar.getStyleClass().add("editor-toolbar");
         Label lblSearchIcon = new Label("", new FontIcon("fas-search"));
-        lblSearchIcon.setStyle("-fx-text-fill: #999;");
         searchField = new TextField();
         searchField.setPromptText("Search index or keywords...");
         searchField.setPrefWidth(280);
-        searchField.setStyle("-fx-background-color: #333; -fx-text-fill: #eee; -fx-prompt-text-fill: #777; -fx-border-radius: 4; -fx-background-radius: 4;");
+        searchField.getStyleClass().add("studio-search-field");
         searchField.textProperty().addListener((obs, oldVal, newVal) -> filterTopics(newVal));
 
         Button btnClear = new Button("", new FontIcon("fas-times"));
-        btnClear.setStyle("-fx-background-color: transparent; -fx-text-fill: #ccc;");
+        btnClear.getStyleClass().add("editor-btn");
         btnClear.setOnAction(e -> {
             searchField.clear();
             filterTopics("");
@@ -443,12 +454,12 @@ public class RouteBuilderHelpWindow {
         // Split Pane
         SplitPane splitPane = new SplitPane();
         splitPane.setDividerPositions(0.28);
-        splitPane.setStyle("-fx-background-color: transparent;");
+        splitPane.getStyleClass().add("main-split-pane");
 
         // Sidebar: TreeView Index
         treeView = new TreeView<>();
         treeView.setShowRoot(false);
-        treeView.setStyle("-fx-background-color: #1e1e22; -fx-control-inner-background: #1e1e22; -fx-text-fill: #ddd; -fx-border-width: 0;");
+        treeView.getStyleClass().add("sidebar-tree-view");
         treeView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && newVal.getValue().topic != null) {
                 loadTopic(newVal.getValue().topic);
@@ -459,17 +470,18 @@ public class RouteBuilderHelpWindow {
 
         VBox sidebar = new VBox(treeView);
         VBox.setVgrow(treeView, Priority.ALWAYS);
-        sidebar.setStyle("-fx-background-color: #1e1e22; -fx-border-color: #3c3c44; -fx-border-width: 0 1 0 0;");
+        sidebar.getStyleClass().add("studio-sidebar");
 
         // Right side: WebView Details
         webView = new WebView();
-        webView.setStyle("-fx-background-color: #1e1e22;");
-        webView.getEngine().loadContent("<html><body style='background-color:#1e1e22;'></body></html>");
+        webView.getStyleClass().add("help-web-view");
+        webView.getEngine().loadContent("<html><body></body></html>");
 
         splitPane.getItems().addAll(sidebar, webView);
         root.setCenter(splitPane);
 
         Scene scene = new Scene(root, 1100, 750);
+        scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
         stage.setScene(scene);
 
         // Selection Initialization
@@ -531,28 +543,69 @@ public class RouteBuilderHelpWindow {
     }
 
     private void loadTopic(HelpTopic topic) {
+        // Pick colours to match the current app theme
+        String themeName = RouteBuilderApp.currentThemeName != null ? RouteBuilderApp.currentThemeName : "VSCode Dark";
+        boolean isLight = themeName.contains("Light") || themeName.contains("GitHub");
+        boolean isDracula = themeName.contains("Dracula");
+        boolean isMonokai = themeName.contains("Monokai");
+        boolean isHacker = themeName.contains("Hacker");
+        boolean isOneDark = themeName.contains("One Dark");
+        boolean isSolarized = themeName.contains("Solarized");
+
+        String bg, fg, h1, h2, h3, strong, pre, code, border, blockBg, blockBorder, trEven, thBg;
+        if (isLight) {
+            bg="#ffffff"; fg="#24292f"; h1="#1f2328"; h2="#0969da"; h3="#0550ae";
+            strong="#953800"; pre="#f6f8fa"; code="#cf222e"; border="#d0d7de";
+            blockBg="#f6f8fa"; blockBorder="#0969da"; trEven="#f6f8fa"; thBg="#eaeef2";
+        } else if (isDracula) {
+            bg="#282a36"; fg="#f8f8f2"; h1="#f8f8f2"; h2="#ffb86c"; h3="#8be9fd";
+            strong="#ffb86c"; pre="#21222c"; code="#ff79c6"; border="#44475a";
+            blockBg="#21222c"; blockBorder="#bd93f9"; trEven="#21222c"; thBg="#282a36";
+        } else if (isMonokai) {
+            bg="#272822"; fg="#f8f8f2"; h1="#f8f8f2"; h2="#e6db74"; h3="#66d9e8";
+            strong="#e6db74"; pre="#1e1f1c"; code="#f92672"; border="#75715e";
+            blockBg="#1e1f1c"; blockBorder="#a6e22e"; trEven="#1e1f1c"; thBg="#272822";
+        } else if (isHacker) {
+            bg="#050505"; fg="#00cc00"; h1="#00ff00"; h2="#00cc00"; h3="#00ff41";
+            strong="#00ff00"; pre="#0d0d0d"; code="#00ff41"; border="#004d00";
+            blockBg="#0d0d0d"; blockBorder="#00ff00"; trEven="#0d0d0d"; thBg="#050505";
+        } else if (isOneDark) {
+            bg="#282c34"; fg="#abb2bf"; h1="#ffffff"; h2="#e5c07b"; h3="#61afef";
+            strong="#e5c07b"; pre="#21252b"; code="#e06c75"; border="#3e4451";
+            blockBg="#21252b"; blockBorder="#c678dd"; trEven="#21252b"; thBg="#282c34";
+        } else if (isSolarized) {
+            bg="#002b36"; fg="#839496"; h1="#93a1a1"; h2="#b58900"; h3="#268bd2";
+            strong="#b58900"; pre="#073642"; code="#dc322f"; border="#073642";
+            blockBg="#073642"; blockBorder="#268bd2"; trEven="#073642"; thBg="#002b36";
+        } else {
+            // VSCode Dark (default)
+            bg="#1e1e22"; fg="#abb2bf"; h1="#ffffff"; h2="#e5c07b"; h3="#61afef";
+            strong="#e5c07b"; pre="#282c34"; code="#e06c75"; border="#3e4451";
+            blockBg="#21252b"; blockBorder="#c678dd"; trEven="#21252b"; thBg="#282c34";
+        }
+
         String html = "<!DOCTYPE html>\n" +
             "<html>\n" +
             "<head>\n" +
             "  <meta charset=\"utf-8\">\n" +
             "  <style>\n" +
-            "    body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; padding: 25px 30px; background-color: #1e1e22; color: #abb2bf; line-height: 1.6; }\n" +
-            "    h1 { color: #ffffff; border-bottom: 2px solid #3e4451; padding-bottom: 8px; font-weight: 500; font-size: 28px; margin-top: 0; }\n" +
-            "    h2 { color: #e5c07b; border-bottom: 1px solid #3e4451; padding-bottom: 6px; font-weight: 400; font-size: 22px; margin-top: 25px; }\n" +
-            "    h3 { color: #61afef; font-weight: 500; font-size: 16px; margin-top: 20px; }\n" +
+            "    body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; padding: 25px 30px; background-color: " + bg + "; color: " + fg + "; line-height: 1.6; }\n" +
+            "    h1 { color: " + h1 + "; border-bottom: 2px solid " + border + "; padding-bottom: 8px; font-weight: 500; font-size: 28px; margin-top: 0; }\n" +
+            "    h2 { color: " + h2 + "; border-bottom: 1px solid " + border + "; padding-bottom: 6px; font-weight: 400; font-size: 22px; margin-top: 25px; }\n" +
+            "    h3 { color: " + h3 + "; font-weight: 500; font-size: 16px; margin-top: 20px; }\n" +
             "    p { margin: 10px 0 15px 0; }\n" +
-            "    a { color: #61afef; text-decoration: none; }\n" +
+            "    a { color: " + h3 + "; text-decoration: none; }\n" +
             "    a:hover { text-decoration: underline; }\n" +
             "    ul { padding-left: 20px; margin: 10px 0; }\n" +
             "    li { margin-bottom: 8px; }\n" +
-            "    strong { color: #e5c07b; font-weight: 600; }\n" +
+            "    strong { color: " + strong + "; font-weight: 600; }\n" +
             "    table { border-collapse: collapse; width: 100%; margin: 20px 0 10px 0; font-size: 14px; }\n" +
-            "    th, td { border: 1px solid #3e4451; padding: 10px 12px; text-align: left; }\n" +
-            "    th { background-color: #282c34; color: #e5c07b; font-weight: 500; }\n" +
-            "    tr:nth-child(even) { background-color: #21252b; }\n" +
-            "    pre { background-color: #282c34; padding: 12px 16px; border-radius: 6px; overflow-x: auto; border: 1px solid #3e4451; color: #abb2bf; font-family: 'Consolas', 'Fira Code', 'Courier New', monospace; font-size: 13px; }\n" +
-            "    code { font-family: 'Consolas', 'Fira Code', 'Courier New', monospace; background-color: #282c34; padding: 2px 5px; border-radius: 4px; color: #e06c75; font-size: 90%; }\n" +
-            "    blockquote { border-left: 4px solid #c678dd; margin: 15px 0; padding: 5px 15px; color: #828997; background-color: #21252b; border-radius: 0 4px 4px 0; }\n" +
+            "    th, td { border: 1px solid " + border + "; padding: 10px 12px; text-align: left; }\n" +
+            "    th { background-color: " + thBg + "; color: " + h2 + "; font-weight: 500; }\n" +
+            "    tr:nth-child(even) { background-color: " + trEven + "; }\n" +
+            "    pre { background-color: " + pre + "; padding: 12px 16px; border-radius: 6px; overflow-x: auto; border: 1px solid " + border + "; color: " + fg + "; font-family: 'Consolas', 'Fira Code', 'Courier New', monospace; font-size: 13px; }\n" +
+            "    code { font-family: 'Consolas', 'Fira Code', 'Courier New', monospace; background-color: " + pre + "; padding: 2px 5px; border-radius: 4px; color: " + code + "; font-size: 90%; }\n" +
+            "    blockquote { border-left: 4px solid " + blockBorder + "; margin: 15px 0; padding: 5px 15px; color: " + fg + "; background-color: " + blockBg + "; border-radius: 0 4px 4px 0; }\n" +
             "  </style>\n" +
             "</head>\n" +
             "<body>\n" +

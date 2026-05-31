@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ext="http://www.liquibase.org/xml/ns/mongodb"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd
+        http://www.liquibase.org/xml/ns/mongodb
+        http://www.liquibase.org/xml/ns/mongodb/liquibase-mongodb-latest.xsd">
+
+    <changeSet id="export-camel_routes-1780062980029" author="studio">
+        <ext:insertMany collectionName="camel_routes">
+            <ext:documents><![CDATA[[
+                {
+                    "route_id": "set-body-header",
+                    "route_format": "yaml",
+                    "_id": {
+                        "route_id": "set-body-header",
+                        "version": 1
+                    },
+                    "version": 1,
+                    "content": "# ID: set-body-header\n# ENABLED: true\n# DESCRIPTION: Demonstrates setBody and setHeader EIPs\n# AUTHOR: Camel Studio\n# STUB: none\n\n- route:\n    id: \"set-body-header\"\n    from:\n      uri: \"timer:trigger?period=5000&repeatCount=3\"\n      steps:\n        - setHeader:\n            name: \"MessageType\"\n            constant: \"ORDER\"\n        - setBody:\n            constant: '{\"orderId\":\"ORD-001\",\"amount\":199.99,\"currency\":\"USD\"}'\n        - log:\n            message: \"[Chapter 1] Header: ${header.MessageType} | Body: ${body}\"\n        - to: \"mock:output\"\n",
+                    "enabled": true
+                }
+            ]]]></ext:documents>
+        </ext:insertMany>
+        <ext:insertMany collectionName="camel_routes">
+            <ext:documents><![CDATA[[
+                {
+                    "route_id": "hello-timer",
+                    "route_format": "yaml",
+                    "_id": {
+                        "route_id": "hello-timer",
+                        "version": 1
+                    },
+                    "version": 1,
+                    "content": "# ID: hello-timer\n# ENABLED: true\n# DESCRIPTION: Simplest possible route \u2014 timer fires every 3s and logs a message\n# AUTHOR: Camel Studio\n# STUB: none\n\n- route:\n    id: \"hello-timer\"\n    from:\n      uri: \"timer:hello?period=3000\"\n      steps:\n        - log:\n            message: \"[Chapter 1] Hello from Apache Camel! Timestamp: ${date:now:HH:mm:ss}\"\n",
+                    "enabled": true
+                }
+            ]]]></ext:documents>
+        </ext:insertMany>
+    </changeSet>
+</databaseChangeLog>

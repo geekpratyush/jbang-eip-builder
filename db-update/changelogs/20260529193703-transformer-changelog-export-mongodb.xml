@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ext="http://www.liquibase.org/xml/ns/mongodb"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd
+        http://www.liquibase.org/xml/ns/mongodb
+        http://www.liquibase.org/xml/ns/mongodb/liquibase-mongodb-latest.xsd">
+
+    <changeSet id="export-camel_transformers-1780063618034" author="studio">
+        <ext:insertMany collectionName="camel_transformers">
+            <ext:documents><![CDATA[[
+                {
+                    "file_name": "template.ftl",
+                    "_id": {
+                        "id": "freemarker-ftl-example2",
+                        "version": 1
+                    },
+                    "id": "freemarker-ftl-example2",
+                    "type": "freemarker",
+                    "version": 1,
+                    "content": "User notification generated.\nUser Status: ${body}\nHeader Date: ${headers.date}\nHeader Name: ${headers.name}\n",
+                    "enabled": true
+                }
+            ]]]></ext:documents>
+        </ext:insertMany>
+        <ext:insertMany collectionName="camel_transformers">
+            <ext:documents><![CDATA[[
+                {
+                    "file_name": "template.ftl",
+                    "_id": {
+                        "id": "freemarker-ftl-example1",
+                        "version": 1
+                    },
+                    "id": "freemarker-ftl-example1",
+                    "type": "freemarker",
+                    "version": 1,
+                    "content": "Order Confirmation: ${body.orderId}\nCustomer: ${body.customer.name} (${body.customer.email})\n\nItems Ordered:\n<#list body.items as item>\n- ${item.name}: $${item.price}\n<\/#list>\n",
+                    "enabled": true
+                }
+            ]]]></ext:documents>
+        </ext:insertMany>
+    </changeSet>
+</databaseChangeLog>

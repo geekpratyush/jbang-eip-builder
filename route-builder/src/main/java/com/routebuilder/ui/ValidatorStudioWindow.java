@@ -49,13 +49,9 @@ public class ValidatorStudioWindow {
     private RadioButton radEnhanced;
 
     // Monaco Editor components
-    private WebView webViewSource;
-    private WebView webViewSchema;
-    private WebView webViewResult;
-
-    private WebEngine engineSource;
-    private WebEngine engineSchema;
-    private WebEngine engineResult;
+    private com.routebuilder.ui.components.MonacoEditorPane editorSource;
+    private com.routebuilder.ui.components.MonacoEditorPane editorSchema;
+    private com.routebuilder.ui.components.MonacoEditorPane editorResult;
 
     private Label lblSourceTitle;
     private Label lblSchemaTitle;
@@ -321,11 +317,9 @@ public class ValidatorStudioWindow {
         lblSourceTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #cccccc;");
         headerSource.getChildren().addAll(lblSourceIcon, lblSourceTitle);
 
-        webViewSource = new WebView();
-        RouteBuilderApp.installClipboardShortcuts(webViewSource);
-        VBox.setVgrow(webViewSource, Priority.ALWAYS);
-        engineSource = webViewSource.getEngine();
-        paneSource.getChildren().addAll(headerSource, webViewSource);
+        editorSource = new com.routebuilder.ui.components.MonacoEditorPane("xml");
+        VBox.setVgrow(editorSource, Priority.ALWAYS);
+        paneSource.getChildren().addAll(headerSource, editorSource);
 
         // Middle Section: Schema / Rules
         VBox paneSchema = new VBox(4);
@@ -356,7 +350,7 @@ public class ValidatorStudioWindow {
             if (selectedFile != null) {
                 try {
                     String content = Files.readString(selectedFile.toPath());
-                    setEditorText(engineSchema, content);
+                    editorSchema.setText(content);
                     
                     if (activeMapping.schemaPath.isEmpty()) {
                         String sub = activeMapping.type.toLowerCase().replace(" + ", "_").replace(" ", "_");
@@ -387,11 +381,9 @@ public class ValidatorStudioWindow {
         
         headerSchema.getChildren().addAll(lblSchemaIcon, lblSchemaTitle, schemaHeaderSpacer, btnUpdateSchema);
 
-        webViewSchema = new WebView();
-        RouteBuilderApp.installClipboardShortcuts(webViewSchema);
-        VBox.setVgrow(webViewSchema, Priority.ALWAYS);
-        engineSchema = webViewSchema.getEngine();
-        paneSchema.getChildren().addAll(headerSchema, webViewSchema);
+        editorSchema = new com.routebuilder.ui.components.MonacoEditorPane("xml");
+        VBox.setVgrow(editorSchema, Priority.ALWAYS);
+        paneSchema.getChildren().addAll(headerSchema, editorSchema);
 
         // Right Section: Results / Errors
         VBox paneResult = new VBox(4);
@@ -406,17 +398,16 @@ public class ValidatorStudioWindow {
         lblResultTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #cccccc;");
         headerResult.getChildren().addAll(lblResultIcon, lblResultTitle);
 
-        webViewResult = new WebView();
-        RouteBuilderApp.installClipboardShortcuts(webViewResult);
-        VBox.setVgrow(webViewResult, Priority.ALWAYS);
-        engineResult = webViewResult.getEngine();
-        paneResult.getChildren().addAll(headerResult, webViewResult);
+        editorResult = new com.routebuilder.ui.components.MonacoEditorPane("xml");
+        VBox.setVgrow(editorResult, Priority.ALWAYS);
+        paneResult.getChildren().addAll(headerResult, editorResult);
 
         editorsSplit.getItems().addAll(paneSource, paneSchema, paneResult);
         horizontalSplit.getItems().addAll(sidebar, editorsSplit);
 
         root.setCenter(horizontalSplit);
 
+        com.routebuilder.ui.components.ThemeManager.registerRoot(root);
         Scene scene = new Scene(root, 1500, 950);
         scene.getStylesheets().add(ValidatorStudioWindow.class.getResource("/styles/main.css").toExternalForm());
         if (RouteBuilderApp.currentDynamicCssUri != null) {
@@ -444,9 +435,10 @@ public class ValidatorStudioWindow {
         stage.show();
 
         // Monaco Initializers
-        setupMonaco(webViewSource, engineSource, "xml", "<!-- Choose a validation scenario from the left tree panel, or right-click to add a new validation pair -->");
-        setupMonaco(webViewSchema, engineSchema, "xml", "<!-- Schema definition / Rules definition will load here -->");
-        setupMonaco(webViewResult, engineResult, "markdown", "# Validation Studio\n" +
+        editorSource.setText("<!-- Choose a validation scenario from the left tree panel, or right-click to add a new validation pair -->");
+        editorSchema.setText("<!-- Schema definition / Rules definition will load here -->");
+        editorResult.setLanguage("markdown");
+        editorResult.setText("# Validation Studio\n" +
             "Double-click a scenario in the left history tree to load it.\n" +
             "Modify contents dynamically, and click **Validate** to view standard/enhanced output.");
 
@@ -465,90 +457,18 @@ public class ValidatorStudioWindow {
 
     public void setTheme(String themeName) {
         this.currentThemeName = themeName;
-        String themeClass = "theme-" + themeName.toLowerCase().replace(" ", "-");
         Platform.runLater(() -> {
             if (studioThemeBox != null && !themeName.equals(studioThemeBox.getValue())) {
                 studioThemeBox.setValue(themeName);
             }
-            applyMonacoTheme(engineSource, themeClass);
-            applyMonacoTheme(engineSchema, themeClass);
-            applyMonacoTheme(engineResult, themeClass);
         });
     }
 
-    private void applyMonacoTheme(WebEngine engine, String themeClass) {
-        if (engine != null) {
-            try {
-                String bg = "#1e1e1e";
-                if ("theme-intellij-light".equals(themeClass)) bg = "#ffffff";
-                else if ("theme-dracula".equals(themeClass)) bg = "#282a36";
-                else if ("theme-monokai".equals(themeClass)) bg = "#272822";
-                else if ("theme-hacker".equals(themeClass)) bg = "#050505";
-
-                engine.executeScript("if(window.editor) { monaco.editor.setTheme('" + themeClass + "'); document.body.style.backgroundColor = '" + bg + "'; }");
-            } catch (Exception ignored) {}
-        }
-    }
-
-    private void setupMonaco(WebView wv, WebEngine engine, String language, String initialValue) {
-        String monacoBase = getClass().getResource("/monaco/vs/loader.js").toExternalForm();
-        monacoBase = monacoBase.substring(0, monacoBase.lastIndexOf("/vs/loader.js"));
-
-        String activeTheme = RouteBuilderApp.currentThemeClass;
-        String editorBg = "#1e1e1e";
-        if ("theme-intellij-light".equals(activeTheme)) editorBg = "#ffffff";
-        else if ("theme-dracula".equals(activeTheme)) editorBg = "#282a36";
-        else if ("theme-monokai".equals(activeTheme)) editorBg = "#272822";
-        else if ("theme-hacker".equals(activeTheme)) editorBg = "#050505";
-
-        String html = "<!DOCTYPE html><html><head><base href='" + monacoBase + "/'/><meta charset='UTF-8'><style>body{margin:0;padding:0;overflow:hidden;background-color:" + editorBg + ";}#editor{width:100vw;height:100vh;}</style></head><body><div id='editor'></div><script src='" + monacoBase + "/vs/loader.js'></script><script>\n" +
-            "window.editorValue = ''; window.setValue = function(val) { window.editorValue = val; if(window.editor) window.editor.setValue(val); };\n" +
-            "window.getValue = function() { return window.editor ? window.editor.getValue() : window.editorValue; };\n" +
-            "window.setLanguage = function(lang) {\n" +
-            "  if (window.editor) {\n" +
-            "    var model = window.editor.getModel();\n" +
-            "    monaco.editor.setModelLanguage(model, lang);\n" +
-            "  }\n" +
-            "};\n" +
-            "window.getSelection = function() { if(!window.editor) return ''; var sel = window.editor.getSelection(); return window.editor.getModel().getValueInRange(sel); };\n" +
-            "require.config({ paths: { vs: '" + monacoBase + "/vs' }});\n" +
-            "require(['vs/editor/editor.main'], function() {\n" +
-            "  monaco.languages.register({ id: 'swift-mt' });\n" +
-            "  monaco.languages.setMonarchTokensProvider('swift-mt', { tokenizer: { root: [ [/{[1-5]:/, 'metatag'], [/}/, 'metatag'], [/^:[0-9A-Z]{2,3}:/, 'keyword'], [/-}/, 'metatag'], [/\\n:[0-9A-Z]{2,3}:/, 'keyword'] ] } });\n" +
-            "  monaco.editor.defineTheme('theme-vscode-dark', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: '569cd6', fontStyle: 'bold' }, { token: 'metatag', foreground: 'ce9178' } ], colors: { 'editor.background': '#1e1e1e' } });\n" +
-            "  monaco.editor.defineTheme('theme-intellij-light', { base: 'vs', inherit: true, rules: [ { token: 'keyword', foreground: '0000ff', fontStyle: 'bold' }, { token: 'metatag', foreground: 'a31515' } ], colors: { 'editor.background': '#ffffff' } });\n" +
-            "  monaco.editor.defineTheme('theme-dracula', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'ff79c6', fontStyle: 'bold' }, { token: 'metatag', foreground: 'bd93f9' } ], colors: { 'editor.background': '#282a36' } });\n" +
-            "  monaco.editor.defineTheme('theme-monokai', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'f92672', fontStyle: 'bold' }, { token: 'metatag', foreground: 'ae81ff' } ], colors: { 'editor.background': '#272822' } });\n" +
-            "  monaco.editor.defineTheme('theme-hacker', { base: 'hc-black', inherit: true, rules: [ { token: 'keyword', foreground: '00ff00', fontStyle: 'bold' }, { token: 'metatag', foreground: '00ff00' } ], colors: { 'editor.background': '#050505' } });\n" +
-            "  window.editor = monaco.editor.create(document.getElementById('editor'), { value: window.editorValue, language: '" + ("text".equals(language) ? "swift-mt" : language) + "', theme: '" + activeTheme + "', automaticLayout: true, minimap: { enabled: false }, fontSize: 13 });\n" +
-            "  if (window.editorValue) window.editor.setValue(window.editorValue);\n" +
-            "});\n</script></body></html>";
-
-        engine.getLoadWorker().stateProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal == javafx.concurrent.Worker.State.SUCCEEDED) {
-                setEditorText(engine, initialValue);
-            }
-        });
-        engine.loadContent(html);
-    }
-
-    private void setEditorText(WebEngine engine, String text) {
-        if (text == null) text = "";
-        final String finalT = text;
-        Platform.runLater(() -> {
-            try {
-                String encoded = java.net.URLEncoder.encode(finalT, "UTF-8").replace("+", "%20");
-                engine.executeScript("if(window.setValue) window.setValue(decodeURIComponent('" + encoded + "')); else window.editorValue = decodeURIComponent('" + encoded + "');");
-            } catch (Exception ignored) {}
-        });
-    }
-
-    private String getEditorText(WebEngine engine) {
+    private void writeToFile(File file, String content) {
         try {
-            Object result = engine.executeScript("window.getValue()");
-            return (result instanceof String) ? (String) result : "";
-        } catch (Exception e) {
-            return "";
+            Files.writeString(file.toPath(), content);
+        } catch (IOException e) {
+            log("ERROR", "Failed to write to file: " + file.getAbsolutePath());
         }
     }
 
@@ -571,11 +491,11 @@ public class ValidatorStudioWindow {
                 schemaLang = "json";
                 break;
             case "SWIFT MT Message":
-                sourceLang = "swift-mt";
+                sourceLang = "text";
                 schemaLang = "json";
                 break;
             case "CSV + CSVW":
-                sourceLang = "csv";
+                sourceLang = "json";
                 schemaLang = "json";
                 break;
             case "Flat File":
@@ -584,15 +504,8 @@ public class ValidatorStudioWindow {
                 break;
         }
 
-        final String srcL = sourceLang;
-        final String schL = schemaLang;
-
-        Platform.runLater(() -> {
-            try {
-                engineSource.executeScript("window.setLanguage('" + srcL + "')");
-                engineSchema.executeScript("window.setLanguage('" + schL + "')");
-            } catch (Exception ignored) {}
-        });
+        if (editorSource != null) editorSource.setLanguage(sourceLang);
+        if (editorSchema != null) editorSchema.setLanguage(schemaLang);
     }
 
     private void refreshTree() {
@@ -681,14 +594,14 @@ public class ValidatorStudioWindow {
             schemaContent = "<!-- Error reading schema file: " + ex.getMessage() + " -->";
         }
 
-        setEditorText(engineSource, msgContent);
-        setEditorText(engineSchema, schemaContent);
+        editorSource.setText(msgContent);
+        editorSchema.setText(schemaContent);
 
         String welcomeMarkdown = "# Ready to Validate\n" +
             "**Scenario:** " + mapping.name + "\n" +
             "**Type:** " + mapping.type + "\n\n" +
             "Click **Validate** in the toolbar to check document constraints.";
-        setEditorText(engineResult, welcomeMarkdown);
+        editorResult.setText(welcomeMarkdown);
 
         updateEditorLanguages(mapping.type);
         log("INFO", "Loaded scenario '" + mapping.name + "' into workspace editors.");
@@ -703,8 +616,8 @@ public class ValidatorStudioWindow {
         File messageFile = new File(workspaceRoot, activeMapping.messagePath);
         File schemaFile = activeMapping.schemaPath.isEmpty() ? null : new File(workspaceRoot, activeMapping.schemaPath);
 
-        String msgText = getEditorText(engineSource);
-        String schemaText = getEditorText(engineSchema);
+        String msgText = editorSource.getText();
+        String schemaText = editorSchema.getText();
 
         try {
             if (messageFile != null) {
@@ -731,13 +644,14 @@ public class ValidatorStudioWindow {
             return;
         }
 
-        String sourceContent = getEditorText(engineSource);
-        String schemaContent = getEditorText(engineSchema);
+        String sourceContent = editorSource.getText();
+        String schemaContent = editorSchema.getText();
 
-        if (sourceContent.trim().isEmpty()) {
-            setEditorText(engineResult, "# ❌ Validation Error\nSource content cannot be empty.");
+        if (sourceContent == null || sourceContent.trim().isEmpty()) {
+            editorResult.setText("# ❌ Validation Error\nSource content cannot be empty.");
             return;
         }
+
 
         log("INFO", "Executing validation suite: " + type + "...");
         long start = System.currentTimeMillis();
@@ -821,7 +735,7 @@ public class ValidatorStudioWindow {
             log("WARN", "Validation completed with " + errors.size() + " anomalies.");
         }
 
-        setEditorText(engineResult, mdReport.toString());
+        editorResult.setText(mdReport.toString());
     }
 
     private void setupTreeContextMenu() {
@@ -1205,9 +1119,9 @@ public class ValidatorStudioWindow {
                 log("INFO", "Removed validation scenario '" + mapping.name + "'.");
                 refreshTree();
 
-                setEditorText(engineSource, "");
-                setEditorText(engineSchema, "");
-                setEditorText(engineResult, "# Scenario Deleted");
+                editorSource.setText("");
+                editorSchema.setText("");
+                editorResult.setText("# Scenario Deleted");
                 lblSourceTitle.setText("Source Message (Data) - None");
                 lblSchemaTitle.setText("Schema / Rules / Context - None");
                 activeMapping = null;

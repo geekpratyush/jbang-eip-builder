@@ -1,0 +1,13 @@
+    private void openFile(File file) {
+        this.currentFile = file;
+        try {
+            String content = Files.readString(file.toPath());
+            String lang = getLanguageForFile(file);
+            
+            editorMonaco.setLanguage(lang);
+            editorMonaco.setText(content);
+
+            previewMonaco.setLanguage(lang);
+            previewMonaco.setText("");
+        } catch (IOException ignored) {}
+    }

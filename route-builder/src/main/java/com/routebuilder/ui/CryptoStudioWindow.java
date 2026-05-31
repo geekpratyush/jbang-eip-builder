@@ -54,6 +54,7 @@ public class CryptoStudioWindow {
         RouteBuilderApp.themedRoots.add(layout);
         stage.setOnHidden(e -> RouteBuilderApp.themedRoots.remove(layout));
 
+        com.routebuilder.ui.components.ThemeManager.registerRoot(layout);
         Scene scene = new Scene(layout, 600, 550);
         try {
             scene.getStylesheets().add(CryptoStudioWindow.class.getResource("/styles/main.css").toExternalForm());
@@ -82,18 +83,15 @@ public class CryptoStudioWindow {
         if (envKey != null) keyField.setText(envKey);
 
         Label inputLbl = new Label(encrypt ? "Plaintext Input:" : "Base64 Ciphertext Input:");
-        TextArea inputArea = new TextArea();
-        inputArea.setPrefHeight(100);
-        inputArea.setWrapText(true);
+        com.routebuilder.ui.components.MonacoEditorPane inputArea = new com.routebuilder.ui.components.MonacoEditorPane("text");
+        inputArea.setPrefHeight(150);
 
         Button btnAction = new Button(encrypt ? "Encrypt" : "Decrypt", new FontIcon(encrypt ? "fas-shield-alt" : "fas-key"));
         btnAction.getStyleClass().add(encrypt ? "btn-validate" : "btn-decrypt");
 
         Label outputLbl = new Label(encrypt ? "Base64 Ciphertext Output:" : "Plaintext Output:");
-        TextArea outputArea = new TextArea();
-        outputArea.setEditable(false);
+        com.routebuilder.ui.components.MonacoEditorPane outputArea = new com.routebuilder.ui.components.MonacoEditorPane("text");
         outputArea.setPrefHeight(150);
-        outputArea.setWrapText(true);
 
         btnAction.setOnAction(e -> {
             String secret = keyField.getText();
@@ -128,18 +126,14 @@ public class CryptoStudioWindow {
         Label title = new Label(encode ? "Base64 Encoding" : "Base64 Decoding");
         title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
-        TextArea inputArea = new TextArea();
-        inputArea.setPromptText(encode ? "Enter text to encode..." : "Enter Base64 to decode...");
+        com.routebuilder.ui.components.MonacoEditorPane inputArea = new com.routebuilder.ui.components.MonacoEditorPane("text");
         inputArea.setPrefHeight(150);
-        inputArea.setWrapText(true);
 
         Button btnAction = new Button(encode ? "Encode" : "Decode");
         btnAction.getStyleClass().add("toolbar-btn");
 
-        TextArea outputArea = new TextArea();
-        outputArea.setEditable(false);
+        com.routebuilder.ui.components.MonacoEditorPane outputArea = new com.routebuilder.ui.components.MonacoEditorPane("text");
         outputArea.setPrefHeight(150);
-        outputArea.setWrapText(true);
 
         btnAction.setOnAction(e -> {
             String input = inputArea.getText();
@@ -170,18 +164,14 @@ public class CryptoStudioWindow {
         Label title = new Label(encode ? "URL Encoding" : "URL Decoding");
         title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
-        TextArea inputArea = new TextArea();
-        inputArea.setPromptText(encode ? "Enter text to encode..." : "Enter URL encoded text...");
+        com.routebuilder.ui.components.MonacoEditorPane inputArea = new com.routebuilder.ui.components.MonacoEditorPane("text");
         inputArea.setPrefHeight(150);
-        inputArea.setWrapText(true);
 
         Button btnAction = new Button(encode ? "Encode" : "Decode");
         btnAction.getStyleClass().add("toolbar-btn");
 
-        TextArea outputArea = new TextArea();
-        outputArea.setEditable(false);
+        com.routebuilder.ui.components.MonacoEditorPane outputArea = new com.routebuilder.ui.components.MonacoEditorPane("text");
         outputArea.setPrefHeight(150);
-        outputArea.setWrapText(true);
 
         btnAction.setOnAction(e -> {
             String input = inputArea.getText();

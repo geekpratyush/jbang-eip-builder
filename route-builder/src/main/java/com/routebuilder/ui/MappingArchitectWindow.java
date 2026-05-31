@@ -80,6 +80,7 @@ public class MappingArchitectWindow {
 
                 engine.load("http://127.0.0.1:" + localServer.getAddress().getPort() + "/visualizer/mapper.html");
 
+                com.routebuilder.ui.components.ThemeManager.registerRoot(root);
                 Scene scene = new Scene(root, 1400, 900);
                 if (getClass().getResource("/styles/main.css") != null) {
                     scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());

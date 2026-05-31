@@ -419,6 +419,7 @@ public class RemoteDeployWindow {
         btnBox.getChildren().addAll(btnStop, btnDeploy, btnClose);
         layout.getChildren().addAll(topGrid, table, tabPane, btnBox);
 
+        com.routebuilder.ui.components.ThemeManager.registerRoot(layout);
         Scene scene = new Scene(layout, 800, 600);
         try {
             scene.getStylesheets().add(RemoteDeployWindow.class.getResource("/styles/main.css").toExternalForm());

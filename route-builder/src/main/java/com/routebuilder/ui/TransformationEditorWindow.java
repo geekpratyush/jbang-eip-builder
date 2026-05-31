@@ -25,21 +25,11 @@ public class TransformationEditorWindow {
     private JSONObject config;
     private final Stage stage;
     
-    private WebView sourceRawWebView;
-    private WebView sourceXmlWebView;
-    private WebView logicWebView;
-    private WebView targetWebView;
+    private com.routebuilder.ui.components.MonacoEditorPane editorSourceRaw;
+    private com.routebuilder.ui.components.MonacoEditorPane editorSourceXml;
+    private com.routebuilder.ui.components.MonacoEditorPane editorLogic;
+    private com.routebuilder.ui.components.MonacoEditorPane editorTarget;
     private TextArea consoleArea;
-    
-    private WebEngine sourceRawEngine;
-    private WebEngine sourceXmlEngine;
-    private WebEngine logicEngine;
-    private WebEngine targetEngine;
-
-    private boolean sourceRawInitialized = false;
-    private boolean sourceXmlInitialized = false;
-    private boolean logicInitialized = false;
-    private boolean targetInitialized = false;
 
     private String transformationType = "xslt";
     private boolean isNonXmlSource = false;
@@ -53,13 +43,7 @@ public class TransformationEditorWindow {
     }
 
     public void setTheme(String themeName) {
-        String monacoTheme = themeName.equalsIgnoreCase("IntelliJ Light") ? "vs" : "vs-dark";
-        Platform.runLater(() -> {
-            if (sourceRawInitialized) sourceRawEngine.executeScript("if(window.setTheme) window.setTheme('" + monacoTheme + "');");
-            if (sourceXmlInitialized) sourceXmlEngine.executeScript("if(window.setTheme) window.setTheme('" + monacoTheme + "');");
-            if (logicInitialized) logicEngine.executeScript("if(window.setTheme) window.setTheme('" + monacoTheme + "');");
-            if (targetInitialized) targetEngine.executeScript("if(window.setTheme) window.setTheme('" + monacoTheme + "');");
-        });
+        // MonacoEditorPane instances automatically respond to theme changes via ThemeManager
     }
 
     private void loadConfig() {
@@ -164,65 +148,49 @@ public class TransformationEditorWindow {
             SplitPane enrichSplit = new SplitPane();
             enrichSplit.setOrientation(Orientation.VERTICAL);
             
-            VBox originalBox = new VBox(new Label("Original Source"), sourceRawWebView = new WebView());
-            RouteBuilderApp.installClipboardShortcuts(sourceRawWebView);
-            VBox.setVgrow(sourceRawWebView, Priority.ALWAYS);
+            VBox originalBox = new VBox(new Label("Original Source"), editorSourceRaw = new com.routebuilder.ui.components.MonacoEditorPane("xml"));
+            VBox.setVgrow(editorSourceRaw, Priority.ALWAYS);
             
-            VBox truncatedBox = new VBox(new Label("Truncated Source (to be enriched)"), sourceXmlWebView = new WebView());
-            RouteBuilderApp.installClipboardShortcuts(sourceXmlWebView);
-            VBox.setVgrow(sourceXmlWebView, Priority.ALWAYS);
+            VBox truncatedBox = new VBox(new Label("Truncated Source (to be enriched)"), editorSourceXml = new com.routebuilder.ui.components.MonacoEditorPane("xml"));
+            VBox.setVgrow(editorSourceXml, Priority.ALWAYS);
             
             enrichSplit.getItems().addAll(originalBox, truncatedBox);
             sourcePanel.getChildren().add(enrichSplit);
             VBox.setVgrow(enrichSplit, Priority.ALWAYS);
-            
-            sourceRawEngine = sourceRawWebView.getEngine();
-            sourceXmlEngine = sourceXmlWebView.getEngine();
         } else if (isNonXmlSource) {
             SplitPane sourceSplit = new SplitPane();
             sourceSplit.setOrientation(Orientation.VERTICAL);
             
-            VBox rawBox = new VBox(new Label("Raw Source"), sourceRawWebView = new WebView());
-            RouteBuilderApp.installClipboardShortcuts(sourceRawWebView);
-            VBox.setVgrow(sourceRawWebView, Priority.ALWAYS);
+            VBox rawBox = new VBox(new Label("Raw Source"), editorSourceRaw = new com.routebuilder.ui.components.MonacoEditorPane("text"));
+            VBox.setVgrow(editorSourceRaw, Priority.ALWAYS);
             
-            VBox xmlBox = new VBox(new Label("Converted XML"), sourceXmlWebView = new WebView());
-            RouteBuilderApp.installClipboardShortcuts(sourceXmlWebView);
-            VBox.setVgrow(sourceXmlWebView, Priority.ALWAYS);
+            VBox xmlBox = new VBox(new Label("Converted XML"), editorSourceXml = new com.routebuilder.ui.components.MonacoEditorPane("xml"));
+            VBox.setVgrow(editorSourceXml, Priority.ALWAYS);
             
             sourceSplit.getItems().addAll(rawBox, xmlBox);
             sourcePanel.getChildren().add(sourceSplit);
             VBox.setVgrow(sourceSplit, Priority.ALWAYS);
-            
-            sourceRawEngine = sourceRawWebView.getEngine();
-            sourceXmlEngine = sourceXmlWebView.getEngine();
         } else {
-            sourceXmlWebView = new WebView();
-            RouteBuilderApp.installClipboardShortcuts(sourceXmlWebView);
-            sourcePanel.getChildren().add(sourceXmlWebView);
-            VBox.setVgrow(sourceXmlWebView, Priority.ALWAYS);
-            sourceXmlEngine = sourceXmlWebView.getEngine();
+            editorSourceXml = new com.routebuilder.ui.components.MonacoEditorPane("xml");
+            sourcePanel.getChildren().add(editorSourceXml);
+            VBox.setVgrow(editorSourceXml, Priority.ALWAYS);
         }
 
         // --- Panel 2: Logic ---
         VBox logicPanel = new VBox();
         Label lblLogic = new Label("LOGIC (" + transformationType.toUpperCase() + ")");
         lblLogic.getStyleClass().add("pane-title");
-        logicWebView = new WebView();
-        RouteBuilderApp.installClipboardShortcuts(logicWebView);
-        logicPanel.getChildren().addAll(lblLogic, logicWebView);
-        VBox.setVgrow(logicWebView, Priority.ALWAYS);
-        logicEngine = logicWebView.getEngine();
+        editorLogic = new com.routebuilder.ui.components.MonacoEditorPane("xml");
+        logicPanel.getChildren().addAll(lblLogic, editorLogic);
+        VBox.setVgrow(editorLogic, Priority.ALWAYS);
 
         // --- Panel 3: Target ---
         VBox targetPanel = new VBox();
         Label lblTarget = new Label("TARGET");
         lblTarget.getStyleClass().add("pane-title");
-        targetWebView = new WebView();
-        RouteBuilderApp.installClipboardShortcuts(targetWebView);
-        targetPanel.getChildren().addAll(lblTarget, targetWebView);
-        VBox.setVgrow(targetWebView, Priority.ALWAYS);
-        targetEngine = targetWebView.getEngine();
+        editorTarget = new com.routebuilder.ui.components.MonacoEditorPane("xml");
+        targetPanel.getChildren().addAll(lblTarget, editorTarget);
+        VBox.setVgrow(editorTarget, Priority.ALWAYS);
 
         horizontalSplit.getItems().addAll(sourcePanel, logicPanel, targetPanel);
         horizontalSplit.setDividerPositions(0.33, 0.66);
@@ -234,6 +202,7 @@ public class TransformationEditorWindow {
         
         root.setCenter(mainSplit);
 
+        com.routebuilder.ui.components.ThemeManager.registerRoot(root);
         Scene scene = new Scene(root, 1200, 800);
         try {
             scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
@@ -245,7 +214,39 @@ public class TransformationEditorWindow {
         stage.setScene(scene);
         stage.show();
 
-        initEditors();
+        // Determine source languages from config
+        String sourceRawLang = "text";
+        String sourceXmlLang = "xml";
+        
+        JSONObject srcCfg = config.optJSONObject("source");
+        if (srcCfg != null) {
+            String type = srcCfg.optString("type", "xml").toLowerCase();
+            if ("json".equals(type)) sourceRawLang = "json";
+            else if ("xml".equals(type)) sourceRawLang = "xml";
+            else if ("mt".equals(type) || "swift".equals(type)) sourceRawLang = "text";
+        }
+
+        if (editorSourceRaw != null) editorSourceRaw.setLanguage(sourceRawLang);
+        if (editorSourceXml != null) editorSourceXml.setLanguage(sourceXmlLang);
+
+        loadSourceData();
+        loadLogicData();
+
+        String logicLang = "xml";
+        if ("jslt".equals(transformationType)) logicLang = "json";
+        else if ("groovy".equals(transformationType)) logicLang = "java";
+        editorLogic.setLanguage(logicLang);
+
+        String targetLang = "xml";
+        if (targetCfg != null) {
+            String type = targetCfg.optString("type", "xml");
+            if ("mt".equalsIgnoreCase(type) || "swift".equalsIgnoreCase(type)) {
+                targetLang = "text"; 
+            } else if ("json".equalsIgnoreCase(type)) {
+                targetLang = "json";
+            }
+        }
+        editorTarget.setLanguage(targetLang);
     }
 
     private void log(String msg) {
@@ -253,137 +254,6 @@ public class TransformationEditorWindow {
             String time = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
             consoleArea.appendText("[" + time + "] " + msg + "\n");
         });
-    }
-
-    private void initEditors() {
-        if (isNonXmlSource || isEnrichment) {
-            setupMonaco(sourceRawEngine, "text", (obs, oldVal, newVal) -> { sourceRawInitialized = true; loadSourceData(); });
-        }
-        setupMonaco(sourceXmlEngine, "xml", (obs, oldVal, newVal) -> { sourceXmlInitialized = true; if (!isNonXmlSource && !isEnrichment) loadSourceData(); });
-        
-        String logicLang = "xml";
-        if ("jslt".equals(transformationType)) logicLang = "json";
-        else if ("groovy".equals(transformationType)) logicLang = "java";
-        
-        setupMonaco(logicEngine, logicLang, (obs, oldVal, newVal) -> { logicInitialized = true; loadLogicData(); });
-
-        String targetLang = "xml";
-        JSONObject targetCfg = config.optJSONObject("target");
-        if (targetCfg != null) {
-            String type = targetCfg.optString("type", "xml");
-            if ("mt".equalsIgnoreCase(type) || "swift".equalsIgnoreCase(type)) {
-                targetLang = "text"; // Will trigger swift-mt highlighting
-            } else if ("json".equalsIgnoreCase(type)) {
-                targetLang = "json";
-            }
-        }
-        setupMonaco(targetEngine, targetLang, (obs, oldVal, newVal) -> { targetInitialized = true; });
-    }
-
-    private void setupMonaco(WebEngine engine, String language, javafx.beans.value.ChangeListener<javafx.concurrent.Worker.State> onSucceeded) {
-        try {
-            String html = getMonacoHtml(language);
-            engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
-                if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
-                    onSucceeded.changed(null, oldState, newState);
-                }
-            });
-            engine.loadContent(html);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private String getMonacoHtml(String language) {
-        String monacoBase = getClass().getResource("/monaco/vs/loader.js").toExternalForm();
-        monacoBase = monacoBase.substring(0, monacoBase.lastIndexOf("/vs/loader.js"));
-        
-        return "<!DOCTYPE html>\n" +
-            "<html>\n" +
-            "<head>\n" +
-            "    <base href=\"" + monacoBase + "/\"/>\n" +
-            "    <meta charset=\"UTF-8\">\n" +
-            "    <style>\n" +
-            "        body { margin: 0; padding: 0; overflow: hidden; background-color: #1e1e1e; }\n" +
-            "        #editor { width: 100vw; height: 100vh; }\n" +
-            "    </style>\n" +
-            "</head>\n" +
-            "<body>\n" +
-            "    <div id=\"editor\"></div>\n" +
-            "    <script src=\"" + monacoBase + "/vs/loader.js\"></script>\n" +
-            "    <script>\n" +
-            "        window.editorValue = window.editorValue || '';\n" +
-            "        window.setValue = function(val) {\n" +
-            "            window.editorValue = val;\n" +
-            "            if(window.editor) {\n" +
-            "                window.editor.setValue(val);\n" +
-            "            }\n" +
-            "        };\n" +
-            "        window.getValue = function() {\n" +
-            "            return window.editor ? window.editor.getValue() : window.editorValue;\n" +
-            "        };\n" +
-            "        require.config({ paths: { vs: '" + monacoBase + "/vs' }});\n" +
-            "        require(['vs/editor/editor.main'], function() {\n" +
-            "            // Define SWIFT MT language\n" +
-            "            monaco.languages.register({ id: 'swift-mt' });\n" +
-            "            monaco.languages.setMonarchTokensProvider('swift-mt', {\n" +
-            "                tokenizer: {\n" +
-            "                    root: [\n" +
-            "                        [/{[1-5]:/, 'metatag'],\n" +
-            "                        [/}/, 'metatag'],\n" +
-            "                        [/^:[0-9A-Z]{2,3}:/, 'keyword'],\n" +
-            "                        [/-}/, 'metatag'],\n" +
-            "                        [/\\n:[0-9A-Z]{2,3}:/, 'keyword'],\n" +
-            "                    ]\n" +
-            "                }\n" +
-            "            });\n" +
-            "            monaco.editor.defineTheme('swift-dark', {\n" +
-            "                base: 'vs-dark',\n" +
-            "                inherit: true,\n" +
-            "                rules: [\n" +
-            "                    { token: 'keyword', foreground: '569cd6', fontStyle: 'bold' },\n" +
-            "                    { token: 'metatag', foreground: 'ce9178' }\n" +
-            "                ],\n" +
-            "                colors: { 'editor.background': '#1e1e1e' }\n" +
-            "            });\n" +
-            "            window.editor = monaco.editor.create(document.getElementById('editor'), {\n" +
-            "                value: window.editorValue,\n" +
-            "                language: '" + ("text".equals(language) ? "swift-mt" : language) + "',\n" +
-            "                theme: 'swift-dark',\n" +
-            "                automaticLayout: true,\n" +
-            "                minimap: { enabled: false },\n" +
-            "                scrollBeyondLastLine: false,\n" +
-            "                fontSize: 14\n" +
-            "            });\n" +
-            "        });\n" +
-            "    </script>\n" +
-            "</body>\n" +
-            "</html>";
-    }
-
-    private void setEditorText(WebEngine engine, String text) {
-        if (text == null) text = "";
-        final String finalT = text;
-        Platform.runLater(() -> {
-            try {
-                String encoded = java.net.URLEncoder.encode(finalT, "UTF-8").replace("+", "%20");
-                String script = 
-                    "if (typeof window.setValue === 'function') {" +
-                    "  window.setValue(decodeURIComponent('" + encoded + "'));" +
-                    "} else {" +
-                    "  window.editorValue = decodeURIComponent('" + encoded + "');" +
-                    "}";
-                engine.executeScript(script);
-            } catch (Exception e) { }
-        });
-    }
-
-    private String getEditorText(WebEngine engine) {
-        try {
-            return (String) engine.executeScript("window.getValue();");
-        } catch (Exception e) {
-            return "";
-        }
     }
 
     private void loadSourceData() {
@@ -397,8 +267,8 @@ public class TransformationEditorWindow {
                     File f1 = new File(folder, s1.optString("file"));
                     File f2 = new File(folder, s2.optString("file"));
                     
-                    if (f1.exists()) setEditorText(sourceRawEngine, Files.readString(f1.toPath()));
-                    if (f2.exists()) setEditorText(sourceXmlEngine, Files.readString(f2.toPath()));
+                    if (f1.exists()) editorSourceRaw.setText(Files.readString(f1.toPath()));
+                    if (f2.exists()) editorSourceXml.setText(Files.readString(f2.toPath()));
                 }
                 return;
             }
@@ -413,10 +283,10 @@ public class TransformationEditorWindow {
             if (sourceFile.exists()) {
                 String content = Files.readString(sourceFile.toPath());
                 if (isNonXmlSource) {
-                    setEditorText(sourceRawEngine, content);
+                    editorSourceRaw.setText(content);
                     unmarshalToXml(content);
                 } else {
-                    setEditorText(sourceXmlEngine, content);
+                    editorSourceXml.setText(content);
                 }
             }
         } catch (Exception e) {
@@ -435,7 +305,7 @@ public class TransformationEditorWindow {
             File logicFile = new File(folder, fileName);
             if (logicFile.exists()) {
                 String content = Files.readString(logicFile.toPath());
-                setEditorText(logicEngine, content);
+                editorLogic.setText(content);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -446,15 +316,15 @@ public class TransformationEditorWindow {
         CompletableFuture.runAsync(() -> {
             try {
                 String xml = TransformationBackend.unmarshal(rawContent, config.optJSONObject("source"));
-                setEditorText(sourceXmlEngine, xml);
+                editorSourceXml.setText(xml);
             } catch (Exception e) {
-                setEditorText(sourceXmlEngine, "Error unmarshalling: " + e.getMessage());
+                editorSourceXml.setText("Error unmarshalling: " + e.getMessage());
             }
         });
     }
 
     private void runValidation() {
-        String targetXml = getEditorText(targetEngine);
+        String targetXml = editorTarget.getText();
         if (targetXml == null || targetXml.isEmpty()) {
             log("Error: Target XML is empty. Run transformation first.");
             return;
@@ -489,23 +359,23 @@ public class TransformationEditorWindow {
     }
 
     private void runTransformation() {
-        String sourceXml = getEditorText(sourceXmlEngine);
-        String logic = getEditorText(logicEngine);
+        String sourceXml = editorSourceXml.getText();
+        String logic = editorLogic.getText();
         log("Running " + transformationType.toUpperCase() + " transformation...");
         
         CompletableFuture.runAsync(() -> {
             try {
                 String result;
                 if (isEnrichment) {
-                    String originalXml = getEditorText(sourceRawEngine);
+                    String originalXml = editorSourceRaw.getText();
                     result = TransformationBackend.transformEnrichment(originalXml, sourceXml, logic);
                 } else {
                     result = TransformationBackend.transform(sourceXml, logic, transformationType, null);
                 }
-                setEditorText(targetEngine, result);
+                editorTarget.setText(result);
                 log("Transformation completed successfully.");
             } catch (Exception e) {
-                setEditorText(targetEngine, "Transformation Error:\n" + e.getMessage());
+                editorTarget.setText("Transformation Error:\n" + e.getMessage());
                 log("Error: Transformation failed. Check output panel.");
             }
         });
@@ -520,7 +390,7 @@ public class TransformationEditorWindow {
             if (fileName == null || fileName.isEmpty()) return;
             
             File logicFile = new File(folder, fileName);
-            String content = getEditorText(logicEngine);
+            String content = editorLogic.getText();
             Files.writeString(logicFile.toPath(), content);
             log("Saved logic to " + logicFile.getName());
         } catch (Exception e) {

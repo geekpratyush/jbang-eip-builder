@@ -1,0 +1,37 @@
+# STEP 4: Integration Patterns (Wiretap, Logging, DB)
+# Goal: Use the shaper as a transparent "sidecar" for auditing.
+# camel-k: dependency=mvn:com.sre.engine:sre-audit-crypto:1.0.0-SNAPSHOT
+
+- beans:
+    - name: "auditShaper"
+      type: "com.sre.engine.audit.AuditShaperProcessor"
+
+- route:
+    id: "04-integration-patterns"
+    from:
+      uri: "timer:step4?repeatCount=1"
+      steps:
+        - setBody:
+            constant: '{"orderId": "ORD-555", "amount": 250.0}'
+        
+        # Use Wiretap to audit asynchronously without slowing down main route
+        - wireTap:
+            uri: "direct:audit-storage"
+            
+        - log: "Main route continues processing order ${body}"
+
+- route:
+    id: "audit-storage-sink"
+    from:
+      uri: "direct:audit-storage"
+      steps:
+        # Standardize for storage
+        - setHeader:
+            name: "CamelAuditModifyFields"
+            constant: "$.storage_type=COLD_ARCHIVE"
+        - process:
+            ref: "auditShaper"
+        
+        # Now ingest to any DB (Simulated)
+        - log: "INGESTING TO MONGODB: ${body}"
+        - log: "INGESTING TO KIBANA: ${body}"

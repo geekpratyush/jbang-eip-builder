@@ -30,21 +30,12 @@ public class FakerStudioWindow {
     private File workspaceRoot;
     private TreeView<File> treeView;
     
-    private WebView editorWv;
-    private WebView previewWv;
-    private WebEngine editorEngine;
-    private WebEngine previewEngine;
+    private com.routebuilder.ui.components.MonacoEditorPane editorMonaco;
+    private com.routebuilder.ui.components.MonacoEditorPane previewMonaco;
     
     private File currentFile;
-    private boolean editorInitialized = false;
-    private boolean previewInitialized = false;
-    private String pendingEditorText = null;
-    private String pendingEditorLanguage = null;
-    private String pendingPreviewText = null;
-    private String pendingPreviewLanguage = null;
 
     private UniversalFaker faker;
-    private ComboBox<String> studioThemeBox;
     private ComboBox<String> dbComboBox;
     private Timeline fakingTimeline;
 
@@ -60,35 +51,47 @@ public class FakerStudioWindow {
         activeInstances.add(this);
         this.stage = new Stage();
         
-        // Search for templates folder: first templates/, then FAKER/templates/
-        File templatesDir = new File(projectBase, "templates");
+        File base = (projectBase != null) ? projectBase : new File(System.getProperty("user.dir"));
+        System.out.println("FakerStudio: Searching for workspace in " + base.getAbsolutePath());
+
+        // Search for templates folder: prioritize FAKER/templates/ then templates/
+        File templatesDir = new File(base, "FAKER/templates");
         if (!templatesDir.exists()) {
-            templatesDir = new File(projectBase, "FAKER/templates");
+            templatesDir = new File(base, "templates");
         }
         
+        // Secondary fallback if still not found (handles cases where app is run from subfolders)
         if (!templatesDir.exists()) {
-            // Fallback to system user dir templates
-            templatesDir = new File(System.getProperty("user.dir"), "templates");
+            File root = new File(System.getProperty("user.dir"));
+            templatesDir = new File(root, "FAKER/templates");
+            if (!templatesDir.exists()) {
+                templatesDir = new File(root, "templates");
+            }
         }
         
         if (!templatesDir.exists()) {
             templatesDir.mkdirs();
         }
         
-        this.workspaceRoot = templatesDir;
+        this.workspaceRoot = templatesDir.getAbsoluteFile();
+        System.out.println("FakerStudio: Workspace Root set to " + workspaceRoot.getAbsolutePath());
 
-        // Discover database folders inside faker-db/
-        File dbBaseDir = new File(projectBase, "faker-db");
+        // Discover database folders inside faker-db/ prioritize FAKER/faker-db
+        File dbBaseDir = new File(base, "FAKER/faker-db");
         if (!dbBaseDir.exists()) {
-            dbBaseDir = new File(projectBase, "FAKER/faker-db");
+            dbBaseDir = new File(base, "faker-db");
         }
         if (!dbBaseDir.exists()) {
-            dbBaseDir = new File(System.getProperty("user.dir"), "faker-db");
-        }
-        if (!dbBaseDir.exists()) {
-            dbBaseDir = new File(System.getProperty("user.dir"), "FAKER/faker-db");
+            File root = new File(System.getProperty("user.dir"));
+            dbBaseDir = new File(root, "FAKER/faker-db");
+            if (!dbBaseDir.exists()) {
+                dbBaseDir = new File(root, "faker-db");
+            }
         }
 
+        System.out.println("FakerStudio: DB Base Dir set to " + dbBaseDir.getAbsolutePath());
+        
+        // Scan for DB subdirectories
         java.util.List<String> dbNames = new java.util.ArrayList<>();
         if (dbBaseDir.exists() && dbBaseDir.isDirectory()) {
             File[] dbDirs = dbBaseDir.listFiles(File::isDirectory);
@@ -101,6 +104,7 @@ public class FakerStudioWindow {
             }
         }
         java.util.Collections.sort(dbNames);
+        System.out.println("FakerStudio: Found " + dbNames.size() + " databases: " + dbNames);
 
         dbComboBox = new ComboBox<>();
         dbComboBox.setPromptText("Select DB");
@@ -201,11 +205,6 @@ public class FakerStudioWindow {
             }
         });
 
-        studioThemeBox = new ComboBox<>();
-        studioThemeBox.getItems().addAll("VSCode Dark", "IntelliJ Light", "Dracula", "Monokai", "Hacker");
-        studioThemeBox.setValue(RouteBuilderApp.currentThemeName);
-        studioThemeBox.setOnAction(e -> RouteBuilderApp.setGlobalTheme(studioThemeBox.getValue()));
-
         Label lblDb = new Label("Database:");
         lblDb.setStyle("-fx-text-fill: -fx-text-background-color;");
 
@@ -220,7 +219,7 @@ public class FakerStudioWindow {
             btnNew, btnSave, btnRefresh, new Separator(),
             btnGenerate, btnStartFaking, btnStopFaking, lblDelay, delaySpinner,
             new Separator(), lblDb, dbComboBox,
-            spacer, btnHelp, new Separator(), studioThemeBox
+            spacer, btnHelp
         );
         root.setTop(toolBar);
 
@@ -327,8 +326,8 @@ public class FakerStudioWindow {
                         deleteFileRecursively(file);
                         if (file.equals(currentFile)) {
                             currentFile = null;
-                            setEditorText(editorEngine, "");
-                            setEditorText(previewEngine, "");
+                            editorMonaco.setText("");
+                            previewMonaco.setText("");
                         }
                         refreshTree();
                     }
@@ -411,34 +410,22 @@ public class FakerStudioWindow {
         SplitPane editorSplit = new SplitPane();
         editorSplit.setOrientation(Orientation.HORIZONTAL);
 
-        editorWv = new WebView();
-        previewWv = new WebView();
-        
-        RouteBuilderApp.installClipboardShortcuts(editorWv);
-        RouteBuilderApp.installClipboardShortcuts(previewWv);
-
-        editorWv.setContextMenuEnabled(true);
-        previewWv.setContextMenuEnabled(true);
-
-        editorEngine = editorWv.getEngine();
-        previewEngine = previewWv.getEngine();
+        editorMonaco = new com.routebuilder.ui.components.MonacoEditorPane("xml");
+        editorMonaco.setOnContentChanged(text -> generatePreview());
+        previewMonaco = new com.routebuilder.ui.components.MonacoEditorPane("xml");
 
         VBox editorPanel = new VBox();
-        javafx.scene.Node editorHeader = createHeader("TEMPLATE (EDITABLE)", editorEngine);
-        editorPanel.getChildren().addAll(editorHeader, editorWv);
-        VBox.setVgrow(editorWv, Priority.ALWAYS);
+        javafx.scene.Node editorHeader = createHeader("TEMPLATE (EDITABLE)", editorMonaco);
+        editorPanel.getChildren().addAll(editorHeader, editorMonaco);
+        VBox.setVgrow(editorMonaco, Priority.ALWAYS);
 
         VBox previewPanel = new VBox();
-        javafx.scene.Node previewHeader = createHeader("FAKE PREVIEW", previewEngine);
-        previewPanel.getChildren().addAll(previewHeader, previewWv);
-        VBox.setVgrow(previewWv, Priority.ALWAYS);
+        javafx.scene.Node previewHeader = createHeader("FAKE PREVIEW", previewMonaco);
+        previewPanel.getChildren().addAll(previewHeader, previewMonaco);
+        VBox.setVgrow(previewMonaco, Priority.ALWAYS);
 
         editorSplit.getItems().addAll(editorPanel, previewPanel);
         editorSplit.setDividerPositions(0.5);
-
-        // Initialize Monaco editors
-        setupMonaco(editorEngine, "xml", true);
-        setupMonaco(previewEngine, "xml", false);
 
         SplitPane horizontalSplit = new SplitPane();
         horizontalSplit.getItems().addAll(sidebar, editorSplit);
@@ -446,6 +433,7 @@ public class FakerStudioWindow {
 
         root.setCenter(horizontalSplit);
 
+        com.routebuilder.ui.components.ThemeManager.registerRoot(root);
         Scene scene = new Scene(root, 1400, 900);
         scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
         if (RouteBuilderApp.currentDynamicCssUri != null) {
@@ -470,11 +458,18 @@ public class FakerStudioWindow {
 
     private void refreshTree() {
         File rootDir = workspaceRoot;
+        System.out.println("FakerStudio: Refreshing tree for " + rootDir.getAbsolutePath());
+        if (!rootDir.exists()) {
+            System.err.println("FakerStudio: Root directory does not exist!");
+            return;
+        }
         TreeItem<File> rootItem = new TreeItem<>(rootDir);
         rootItem.setExpanded(true);
         buildTree(rootDir, rootItem);
         treeView.setRoot(rootItem);
         treeView.setShowRoot(false);
+        
+        System.out.println("FakerStudio: Found " + rootItem.getChildren().size() + " templates at root level.");
         faker.reloadTemplates();
     }
 
@@ -499,154 +494,34 @@ public class FakerStudioWindow {
 
     private void openFile(File file) {
         this.currentFile = file;
-        String ext = getFileExtension(file);
-        String lang = "xml".equals(ext) ? "xml" : "swift-mt";
-
         try {
             String content = Files.readString(file.toPath());
-            if (editorInitialized) {
-                setEditorLanguage(editorEngine, lang);
-                setEditorText(editorEngine, content);
-            } else {
-                pendingEditorText = content;
-                pendingEditorLanguage = lang;
-            }
+            String lang = getLanguageForFile(file);
             
-            if (previewInitialized) {
-                setEditorLanguage(previewEngine, lang);
-                setEditorText(previewEngine, "");
-            } else {
-                pendingPreviewText = "";
-                pendingPreviewLanguage = lang;
-            }
+            editorMonaco.setLanguage(lang);
+            editorMonaco.setText(content);
+
+            previewMonaco.setLanguage(lang);
+            previewMonaco.setText("");
         } catch (IOException ignored) {}
     }
 
-    private void setupMonaco(WebEngine engine, String language, boolean editable) {
-        String monacoBase = getClass().getResource("/monaco/vs/loader.js").toExternalForm();
-        monacoBase = monacoBase.substring(0, monacoBase.lastIndexOf("/vs/loader.js"));
-        
-        String activeTheme = RouteBuilderApp.currentThemeClass;
-        String editorBg = "#1e1e1e";
-        if ("theme-intellij-light".equals(activeTheme)) editorBg = "#ffffff";
-        else if ("theme-dracula".equals(activeTheme)) editorBg = "#282a36";
-        else if ("theme-monokai".equals(activeTheme)) editorBg = "#272822";
-        else if ("theme-hacker".equals(activeTheme)) editorBg = "#050505";
 
-        String html = "<!DOCTYPE html><html><head><base href='" + monacoBase + "/'/><meta charset='UTF-8'><style>body{margin:0;padding:0;overflow:hidden;background-color:" + editorBg + ";}#editor{width:100vw;height:100vh;}</style></head><body><div id='editor'></div><script src='" + monacoBase + "/vs/loader.js'></script><script>\n" +
-            "window.editorValue = ''; window.setValue = function(val) { window.editorValue = val; if(window.editor) window.editor.setValue(val); };\n" +
-            "window.getValue = function() { return window.editor ? window.editor.getValue() : window.editorValue; };\n" +
-            "require.config({ paths: { vs: '" + monacoBase + "/vs' }});\n" +
-            "require(['vs/editor/editor.main'], function() {\n" +
-            "  monaco.languages.register({ id: 'swift-mt' });\n" +
-            "  monaco.languages.setMonarchTokensProvider('swift-mt', { tokenizer: { root: [ [/{[1-5]:/, 'metatag'], [/}/, 'metatag'], [/^:[0-9A-Z]{2,3}:/, 'keyword'], [/-}/, 'metatag'], [/\\n:[0-9A-Z]{2,3}:/, 'keyword'] ] } });\n" +
-            "  monaco.editor.defineTheme('theme-vscode-dark', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: '569cd6', fontStyle: 'bold' }, { token: 'metatag', foreground: 'ce9178' } ], colors: { 'editor.background': '#1e1e1e' } });\n" +
-            "  monaco.editor.defineTheme('theme-intellij-light', { base: 'vs', inherit: true, rules: [ { token: 'keyword', foreground: '0000ff', fontStyle: 'bold' }, { token: 'metatag', foreground: 'a31515' } ], colors: { 'editor.background': '#ffffff' } });\n" +
-            "  monaco.editor.defineTheme('theme-dracula', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'ff79c6', fontStyle: 'bold' }, { token: 'metatag', foreground: 'bd93f9' } ], colors: { 'editor.background': '#282a36' } });\n" +
-            "  monaco.editor.defineTheme('theme-monokai', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'f92672', fontStyle: 'bold' }, { token: 'metatag', foreground: 'ae81ff' } ], colors: { 'editor.background': '#272822' } });\n" +
-            "  monaco.editor.defineTheme('theme-hacker', { base: 'hc-black', inherit: true, rules: [ { token: 'keyword', foreground: '00ff00', fontStyle: 'bold' }, { token: 'metatag', foreground: '00ff00' } ], colors: { 'editor.background': '#050505' } });\n" +
-            "  window.editor = monaco.editor.create(document.getElementById('editor'), { value: window.editorValue, language: '" + language + "', theme: '" + activeTheme + "', automaticLayout: true, readOnly: " + (!editable) + ", fontSize: 14, minimap: { enabled: true }, scrollBeyondLastLine: false, tabSize: 2 });\n" +
-            "  if(" + editable + ") { window.editor.onDidChangeModelContent(function() { if(window.javaBridge) window.javaBridge.onContentChanged(); }); }\n" +
-            "  window.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC, function() {\n" +
-            "     var sel = window.editor.getSelection();\n" +
-            "     var text = window.editor.getModel().getValueInRange(sel);\n" +
-            "     if(!text) text = window.editor.getValue();\n" +
-            "     if(window.javaBridge) window.javaBridge.copy(text);\n" +
-            "  });\n" +
-            "  if(window.javaBridge) window.javaBridge.onEditorReady();\n" +
-            "});\n</script></body></html>";
 
-        // Add content changed and clipboard bridge
-        engine.getLoadWorker().stateProperty().addListener((obs, old, newVal) -> {
-            if (newVal == javafx.concurrent.Worker.State.SUCCEEDED) {
-                JSObject window = (JSObject) engine.executeScript("window");
-                Object bridge = new Object() {
-                    public void onEditorReady() {
-                        // Handled directly on Java SUCCEEDED transition to avoid race conditions
-                    }
-                    public void onContentChanged() {
-                        if (editable) {
-                            Platform.runLater(() -> generatePreview());
-                        }
-                    }
-                    public void copy(String text) {
-                        if (text != null && !text.isEmpty()) {
-                            Platform.runLater(() -> {
-                                javafx.scene.input.Clipboard clipboard = javafx.scene.input.Clipboard.getSystemClipboard();
-                                javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
-                                content.putString(text);
-                                clipboard.setContent(content);
-                            });
-                        }
-                    }
-                };
-                if (editable) {
-                    strongEditorBridge = bridge;
-                } else {
-                    strongPreviewBridge = bridge;
-                }
-                window.setMember("javaBridge", bridge);
 
-                Platform.runLater(() -> {
-                    if (editable) {
-                        editorInitialized = true;
-                        if (pendingEditorText != null) {
-                            setEditorText(editorEngine, pendingEditorText);
-                            setEditorLanguage(editorEngine, pendingEditorLanguage);
-                            pendingEditorText = null;
-                            pendingEditorLanguage = null;
-                        }
-                    } else {
-                        previewInitialized = true;
-                        if (pendingPreviewText != null) {
-                            setEditorText(previewEngine, pendingPreviewText);
-                            setEditorLanguage(previewEngine, pendingPreviewLanguage);
-                            pendingPreviewText = null;
-                            pendingPreviewLanguage = null;
-                        }
-                    }
-                });
-            }
-        });
-
-        engine.loadContent(html);
-    }
-
-    private void setEditorText(WebEngine engine, String text) {
-        if (text == null) text = ""; final String finalT = text;
-        Platform.runLater(() -> {
-            try {
-                String encoded = java.net.URLEncoder.encode(finalT, "UTF-8").replace("+", "%20");
-                engine.executeScript("if(window.setValue) window.setValue(decodeURIComponent('" + encoded + "')); else window.editorValue = decodeURIComponent('" + encoded + "');");
-            } catch (Exception ignored) {}
-        });
-    }
-
-    private void setEditorLanguage(WebEngine engine, String language) {
-        Platform.runLater(() -> {
-            try {
-                engine.executeScript("if(window.editor) { monaco.editor.setModelLanguage(window.editor.getModel(), '" + language + "'); }");
-            } catch (Exception ignored) {}
-        });
-    }
-
-    private String getEditorText(WebEngine engine) {
-        try {
-            return (String) engine.executeScript("window.getValue()");
-        } catch (Exception e) { return ""; }
-    }
 
     private void generatePreview() {
-        if (editorEngine == null || previewEngine == null) return;
-        String template = getEditorText(editorEngine);
+        if (editorMonaco == null || previewMonaco == null) return;
+        String template = editorMonaco.getText();
         String result = faker.generateDirect(template);
-        setEditorText(previewEngine, result);
+        previewMonaco.setText(result);
     }
 
+
     private void saveCurrentFile() {
-        if (currentFile != null && editorEngine != null) {
+        if (currentFile != null && editorMonaco != null) {
             try {
-                Files.writeString(currentFile.toPath(), getEditorText(editorEngine));
+                Files.writeString(currentFile.toPath(), editorMonaco.getText());
                 faker.reloadTemplates();
             } catch (IOException ignored) {}
         }
@@ -686,36 +561,7 @@ public class FakerStudioWindow {
         return false;
     }
 
-    private String getFileExtension(File file) {
-        String name = file.getName();
-        int lastIdx = name.lastIndexOf('.');
-        if (lastIdx == -1) return "";
-        return name.substring(lastIdx + 1).toLowerCase();
-    }
-
-    public void setTheme(String themeName) {
-        String themeClass = "theme-" + themeName.toLowerCase().replace(" ", "-");
-        Platform.runLater(() -> {
-            if (studioThemeBox != null && !themeName.equals(studioThemeBox.getValue())) {
-                studioThemeBox.setValue(themeName);
-            }
-            
-            String bg = "#1e1e1e";
-            if ("theme-intellij-light".equals(themeClass)) bg = "#ffffff";
-            else if ("theme-dracula".equals(themeClass)) bg = "#282a36";
-            else if ("theme-monokai".equals(themeClass)) bg = "#272822";
-            else if ("theme-hacker".equals(themeClass)) bg = "#050505";
-            
-            if (editorEngine != null) {
-                editorEngine.executeScript("if(window.editor) { monaco.editor.setTheme('" + themeClass + "'); document.body.style.backgroundColor = '" + bg + "'; }");
-            }
-            if (previewEngine != null) {
-                previewEngine.executeScript("if(window.editor) { monaco.editor.setTheme('" + themeClass + "'); document.body.style.backgroundColor = '" + bg + "'; }");
-            }
-        });
-    }
-
-    private javafx.scene.Node createHeader(String title, WebEngine engine) {
+    private javafx.scene.Node createHeader(String title, com.routebuilder.ui.components.MonacoEditorPane editor) {
         HBox header = new HBox(3);
         header.setPadding(new Insets(2, 5, 2, 8));
         header.setAlignment(Pos.CENTER_LEFT);
@@ -730,15 +576,13 @@ public class FakerStudioWindow {
         Button btnCopy = createSmallButton("fas-copy", "Copy All");
         btnCopy.getStyleClass().add("btn-copy-text");
         btnCopy.setOnAction(e -> {
-            try {
-                String text = (String) engine.executeScript("window.getValue()");
-                if (text != null && !text.isEmpty()) {
-                    javafx.scene.input.Clipboard clipboard = javafx.scene.input.Clipboard.getSystemClipboard();
-                    javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
-                    content.putString(text);
-                    clipboard.setContent(content);
-                }
-            } catch (Exception ignored) {}
+            String text = editor.getText();
+            if (text != null && !text.isEmpty()) {
+                javafx.scene.input.Clipboard clipboard = javafx.scene.input.Clipboard.getSystemClipboard();
+                javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
+                content.putString(text);
+                clipboard.setContent(content);
+            }
         });
         
         header.getChildren().addAll(lbl, spacer, btnCopy);
@@ -859,5 +703,18 @@ public class FakerStudioWindow {
     private String getFileBaseName(String filename) {
         int dot = filename.lastIndexOf('.');
         return dot == -1 ? filename : filename.substring(0, dot);
+    }
+
+    private String getLanguageForFile(File f) {
+        String ext = getFileExtension(f);
+        if ("xml".equalsIgnoreCase(ext) || "xsd".equalsIgnoreCase(ext)) return "xml";
+        if ("json".equalsIgnoreCase(ext)) return "json";
+        return "text";
+    }
+
+    private String getFileExtension(File f) {
+        String n = f.getName();
+        int i = n.lastIndexOf('.');
+        return i > 0 ? n.substring(i + 1).toLowerCase() : "";
     }
 }

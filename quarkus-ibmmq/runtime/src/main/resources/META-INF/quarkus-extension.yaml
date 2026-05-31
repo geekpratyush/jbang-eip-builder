@@ -1,0 +1,5 @@
+name: IBM MQ Extension
+metadata:
+  categories:
+    - "integration"
+  status: "preview"

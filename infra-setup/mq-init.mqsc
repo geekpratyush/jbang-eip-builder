@@ -1,0 +1,18 @@
+* Create Inbound, Outbound, and DLQ queues
+DEFINE QLOCAL('IBMMQ.INBOUND.Q') REPLACE
+DEFINE QLOCAL('IBMMQ.OUTBOUND.Q') REPLACE
+DEFINE QLOCAL('IBMMQ.DLQ') REPLACE
+
+* Alter DEV.ADMIN.SVRCONN to support a specific TLS 1.3 cipher
+ALTER CHANNEL(DEV.ADMIN.SVRCONN) CHLTYPE(SVRCONN) SSLCIPH(TLS_AES_256_GCM_SHA384)
+
+* Set the SSL key repository path and password directly
+ALTER QMGR SSLKEYR('/var/mqm/qmgrs/QM1/ssl/key.p12') KEYRPWD('mqpassword')
+
+* Map clients presenting certificate CN=mqclient to user mqm
+SET CHLAUTH(DEV.ADMIN.SVRCONN) TYPE(SSLPEERMAP) SSLPEER('CN=mqclient') USERSRC(MAP) MCAUSER('mqm') ACTION(REPLACE)
+
+* Disable password checks for connections (authentication is handled via mTLS)
+ALTER AUTHINFO(DEV.AUTHINFO) AUTHTYPE(IDPWOS) CHCKCLNT(NONE)
+
+REFRESH SECURITY TYPE(ALL)

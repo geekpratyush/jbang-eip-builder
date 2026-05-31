@@ -472,6 +472,7 @@ public class LiquibaseExportWindow {
         btnBox.getChildren().addAll(btnHelp, btnValidate, btnCopyToRemote, btnSave);
         layout.getChildren().addAll(topGrid, table, webView, btnBox);
 
+        com.routebuilder.ui.components.ThemeManager.registerRoot(layout);
         Scene scene = new Scene(layout, 1050, 750);
         try {
             scene.getStylesheets().add(LiquibaseExportWindow.class.getResource("/styles/main.css").toExternalForm());

@@ -31,32 +31,31 @@ public class TransformationStudioWindow {
     private Stage stage;
     private final Preferences prefs;
     private File currentMappingsPath;
-    
+
     private TreeView<File> mappingTree;
     private BorderPane mainContentArea;
     private Label lblStudioTitle;
-    private ComboBox<String> studioThemeBox;
-    
+
     private Button btnRun, btnValidate, btnSave, btnBrowseXsd, btnConfig, btnSnippet, btnClose;
-    
+
     private File currentFolder;
     private final java.util.Set<File> checkedFiles = new java.util.HashSet<>();
 
     public java.util.Set<File> getCheckedFiles() {
         return checkedFiles;
     }
+
     private JSONObject currentConfig;
     private String transformationType = "xslt";
     private boolean isNonXmlSource = false;
     private boolean isEnrichment = false;
     private boolean isMtToMx = false;
 
-    private WebView sourceRawWebView, sourceXmlWebView, logicWebView, logicSecondaryWebView, targetWebView;
-    private WebEngine sourceRawEngine, sourceXmlEngine, logicEngine, logicSecondaryEngine, targetEngine;
-    
+    private com.routebuilder.ui.components.MonacoEditorPane sourceRawEditor, sourceXmlEditor, logicEditor,
+            logicSecondaryEditor, targetEditor;
     private File sourceRawFile, sourceXmlFile, logicFile, logicSecondaryFile;
 
-    private ConsolePane consolePane;
+    private com.routebuilder.ui.components.ConsolePane consolePane;
     private Process snippetProcess;
     private final List<Object> persistentBridges = new ArrayList<>();
 
@@ -65,9 +64,9 @@ public class TransformationStudioWindow {
     public TransformationStudioWindow() {
         activeInstances.add(this);
         this.prefs = Preferences.userNodeForPackage(TransformationStudioWindow.class);
-        String defaultPath = new File(System.getProperty("user.dir"), "test-mapping").exists() ?
-            new File(System.getProperty("user.dir"), "test-mapping").getAbsolutePath() :
-            new File(System.getProperty("user.dir"), "transformation-samples").getAbsolutePath();
+        String defaultPath = new File(System.getProperty("user.dir"), "test-mapping").exists()
+                ? new File(System.getProperty("user.dir"), "test-mapping").getAbsolutePath()
+                : new File(System.getProperty("user.dir"), "transformation-samples").getAbsolutePath();
         String savedPath = prefs.get("mappingsPath", defaultPath);
         this.currentMappingsPath = new File(savedPath);
         if (!this.currentMappingsPath.exists()) {
@@ -87,7 +86,7 @@ public class TransformationStudioWindow {
         // --- Toolbar ---
         ToolBar toolBar = new ToolBar();
         toolBar.getStyleClass().add("editor-toolbar");
-        btnRun = new Button("Run", new FontIcon("fas-play"));
+        btnRun = new Button("Transform", new FontIcon("fas-play"));
         btnRun.getStyleClass().addAll("editor-btn", "btn-run");
         btnRun.setOnAction(e -> runTransformation());
         btnRun.setDisable(true);
@@ -116,7 +115,8 @@ public class TransformationStudioWindow {
         btnSampleData.setOnAction(e -> {
             DirectoryChooser chooser = new DirectoryChooser();
             chooser.setTitle("Select Directory for Sample Mappings");
-            chooser.setInitialDirectory(currentMappingsPath.exists() ? currentMappingsPath : new File(System.getProperty("user.dir")));
+            chooser.setInitialDirectory(
+                    currentMappingsPath.exists() ? currentMappingsPath : new File(System.getProperty("user.dir")));
             File selected = chooser.showDialog(stage);
             if (selected != null) {
                 currentMappingsPath = selected;
@@ -132,20 +132,13 @@ public class TransformationStudioWindow {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        studioThemeBox = new ComboBox<>();
-        studioThemeBox.getItems().addAll("VSCode Dark", "IntelliJ Light", "Dracula", "Monokai", "Hacker");
-        studioThemeBox.setValue(RouteBuilderApp.currentThemeName);
-        studioThemeBox.setTooltip(new Tooltip("Change Theme"));
-        studioThemeBox.setOnAction(e -> {
-            RouteBuilderApp.setGlobalTheme(studioThemeBox.getValue());
-        });
-
         Button btnExport = new Button("Export", new FontIcon("fas-download"));
         btnExport.getStyleClass().addAll("editor-btn", "btn-export");
         btnExport.setTooltip(new Tooltip("Export Selected Transformations to Liquibase Changelog"));
         btnExport.setOnAction(e -> {
             if (checkedFiles.isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.WARNING, "Please select one or more transformations using the checkboxes in the Explorer.");
+                Alert alert = new Alert(Alert.AlertType.WARNING,
+                        "Please select one or more transformations using the checkboxes in the Explorer.");
                 RouteBuilderApp.themeDialog(alert);
                 alert.showAndWait();
                 return;
@@ -158,7 +151,8 @@ public class TransformationStudioWindow {
         btnDeployRemote.setTooltip(new Tooltip("Copy Selected Transformations to Remote Container Path"));
         btnDeployRemote.setOnAction(e -> {
             if (checkedFiles.isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.WARNING, "Please select one or more transformations using the checkboxes in the Explorer.");
+                Alert alert = new Alert(Alert.AlertType.WARNING,
+                        "Please select one or more transformations using the checkboxes in the Explorer.");
                 RouteBuilderApp.themeDialog(alert);
                 alert.showAndWait();
                 return;
@@ -170,7 +164,8 @@ public class TransformationStudioWindow {
         btnHelp.getStyleClass().addAll("editor-btn", "btn-help");
         btnHelp.setOnAction(e -> new RouteBuilderHelpWindow("Advanced Tools", "Transformation").show());
 
-        toolBar.getItems().addAll(btnRun, btnValidate, btnBrowseXsd, btnSave, new Separator(), btnConfig, btnSampleData, btnDeployRemote, btnExport, new Separator(), lblStudioTitle, spacer, btnHelp, new Separator(), studioThemeBox);
+        toolBar.getItems().addAll(btnValidate, btnBrowseXsd, btnSave, new Separator(), btnConfig, btnSampleData,
+                btnDeployRemote, btnExport, btnRun, new Separator(), lblStudioTitle, spacer, btnHelp);
         root.setTop(toolBar);
 
         // --- Left Sidebar ---
@@ -192,15 +187,29 @@ public class TransformationStudioWindow {
         Button btnExpandAll = new Button(null, new FontIcon("fas-expand-arrows-alt"));
         btnExpandAll.getStyleClass().add("small-action-btn");
         btnExpandAll.setTooltip(new Tooltip("Expand All"));
-        btnExpandAll.setOnAction(e -> toggleAllNodes(mappingTree.getRoot(), true));
+        btnExpandAll.setOnAction(e -> {
+            TreeItem<?> treeRoot = mappingTree.getRoot();
+            if (treeRoot != null) {
+                treeRoot.setExpanded(true); // keep virtual root open
+                for (TreeItem<?> child : treeRoot.getChildren())
+                    toggleAllNodes(child, true);
+            }
+        });
 
         Button btnCollapseAll = new Button(null, new FontIcon("fas-compress-arrows-alt"));
         btnCollapseAll.getStyleClass().add("small-action-btn");
         btnCollapseAll.setTooltip(new Tooltip("Collapse All"));
-        btnCollapseAll.setOnAction(e -> toggleAllNodes(mappingTree.getRoot(), false));
+        btnCollapseAll.setOnAction(e -> {
+            TreeItem<?> treeRoot = mappingTree.getRoot();
+            if (treeRoot != null) {
+                // Never collapse the virtual (hidden) root — only its children
+                for (TreeItem<?> child : treeRoot.getChildren())
+                    toggleAllNodes(child, false);
+            }
+        });
 
         sidebarHeader.getChildren().addAll(lblExplorer, btnExpandAll, btnCollapseAll);
-        
+
         mappingTree = new TreeView<>();
         mappingTree.setShowRoot(false);
         mappingTree.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
@@ -227,12 +236,12 @@ public class TransformationStudioWindow {
         // --- Main Content Area ---
         mainContentArea = new BorderPane();
         mainContentArea.getStyleClass().addAll("studio-content", "app-root");
-        
+
         Label lblPlaceholder = new Label("Select a transformation folder from the explorer");
         lblPlaceholder.getStyleClass().add("studio-placeholder-label");
         mainContentArea.setCenter(lblPlaceholder);
 
-        consolePane = new ConsolePane();
+        consolePane = new com.routebuilder.ui.components.ConsolePane();
         consolePane.setPrefHeight(150);
 
         SplitPane verticalSplit = new SplitPane();
@@ -243,7 +252,7 @@ public class TransformationStudioWindow {
         SplitPane mainSplit = new SplitPane();
         mainSplit.getItems().addAll(sidebar, verticalSplit);
         mainSplit.setDividerPositions(0.2);
-        
+
         root.setCenter(mainSplit);
 
         Scene scene = new Scene(root, 1400, 900);
@@ -252,7 +261,7 @@ public class TransformationStudioWindow {
             scene.getStylesheets().add(RouteBuilderApp.currentDynamicCssUri);
         }
         stage.setScene(scene);
-        
+
         RouteBuilderApp.themedRoots.add(root);
         stage.setOnHidden(e -> {
             activeInstances.remove(this);
@@ -261,10 +270,11 @@ public class TransformationStudioWindow {
                 try {
                     snippetProcess.destroy();
                     snippetProcess.descendants().forEach(ProcessHandle::destroyForcibly);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
         });
-        
+
         stage.setMaximized(true);
         stage.show();
 
@@ -274,7 +284,8 @@ public class TransformationStudioWindow {
     private void chooseMappingsPath() {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select Mappings Base Directory");
-        chooser.setInitialDirectory(currentMappingsPath.exists() ? currentMappingsPath : new File(System.getProperty("user.dir")));
+        chooser.setInitialDirectory(
+                currentMappingsPath.exists() ? currentMappingsPath : new File(System.getProperty("user.dir")));
         File selected = chooser.showDialog(stage);
         if (selected != null) {
             currentMappingsPath = selected;
@@ -293,16 +304,17 @@ public class TransformationStudioWindow {
             protected void updateItem(File item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
-                    setText(null); setGraphic(null);
+                    setText(null);
+                    setGraphic(null);
                     getStyleClass().removeAll("mapping-tree-item", "folder-tree-item");
                 } else {
                     setText(item.getName());
                     setStyle(null);
                     File configFile = new File(item, "transformation.json");
-                    
+
                     CheckBox cb = new CheckBox();
                     cb.setAllowIndeterminate(true);
-                    
+
                     CheckState state = getFolderCheckState(item);
                     if (state == CheckState.CHECKED) {
                         cb.setSelected(true);
@@ -314,7 +326,7 @@ public class TransformationStudioWindow {
                         cb.setSelected(false);
                         cb.setIndeterminate(true);
                     }
-                    
+
                     cb.setOnAction(e -> {
                         CheckState currentState = getFolderCheckState(item);
                         boolean targetChecked = (currentState != CheckState.CHECKED);
@@ -332,7 +344,7 @@ public class TransformationStudioWindow {
                         getStyleClass().add("folder-tree-item");
                         getStyleClass().remove("mapping-tree-item");
                     }
-                    
+
                     HBox box = new HBox(5, cb, icon);
                     box.setAlignment(Pos.CENTER_LEFT);
                     setGraphic(box);
@@ -350,7 +362,8 @@ public class TransformationStudioWindow {
                     TreeItem<File> item = new TreeItem<>(f);
                     parent.getChildren().add(item);
                     File configFile = new File(f, "transformation.json");
-                    if (!configFile.exists()) buildTree(f, item);
+                    if (!configFile.exists())
+                        buildTree(f, item);
                 }
             }
         }
@@ -358,7 +371,8 @@ public class TransformationStudioWindow {
 
     private void loadMapping(File folder) {
         File configFile = new File(folder, "transformation.json");
-        if (!configFile.exists()) return;
+        if (!configFile.exists())
+            return;
         this.currentFolder = folder;
         try {
             String content = Files.readString(configFile.toPath());
@@ -366,19 +380,24 @@ public class TransformationStudioWindow {
             String type = currentConfig.optString("type", "xslt");
             this.transformationType = type;
             this.isEnrichment = "enrichment".equalsIgnoreCase(type);
-            
+
             JSONObject source = currentConfig.optJSONObject("source");
             String sourceType = source != null ? source.optString("type", "xml") : "xml";
-            
-            this.isMtToMx = "mt".equalsIgnoreCase(type) || "mt-to-mx".equalsIgnoreCase(type) || ("mt".equalsIgnoreCase(sourceType) && "xslt".equalsIgnoreCase(type));
+
+            this.isMtToMx = "mt".equalsIgnoreCase(type) || "mt-to-mx".equalsIgnoreCase(type)
+                    || ("mt".equalsIgnoreCase(sourceType) && "xslt".equalsIgnoreCase(type));
             this.isNonXmlSource = !"xml".equalsIgnoreCase(sourceType) && !isEnrichment && !isMtToMx;
 
             lblStudioTitle.setText(currentConfig.optString("name", folder.getName()));
             log("Loading mapping: " + lblStudioTitle.getText());
-            btnRun.setDisable(false); btnSave.setDisable(false); btnBrowseXsd.setDisable(false);
+            btnRun.setDisable(false);
+            btnSave.setDisable(false);
+            btnBrowseXsd.setDisable(false);
             updateValidationState();
             buildTransformationUI();
-        } catch (Exception e) { log("Error loading config: " + e.getMessage()); }
+        } catch (Exception e) {
+            log("Error loading config: " + e.getMessage());
+        }
     }
 
     private void updateValidationState() {
@@ -387,12 +406,15 @@ public class TransformationStudioWindow {
             String xsd = target.optString("xsd");
             if (xsd != null && !xsd.isEmpty() && new File(currentFolder, xsd).exists()) {
                 btnValidate.setDisable(false);
-            } else btnValidate.setDisable(true);
-        } else btnValidate.setDisable(true);
+            } else
+                btnValidate.setDisable(true);
+        } else
+            btnValidate.setDisable(true);
     }
 
     private void browseXsd() {
-        if (currentFolder == null) return;
+        if (currentFolder == null)
+            return;
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Select XSD Schema");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("XSD Files", "*.xsd"));
@@ -402,13 +424,19 @@ public class TransformationStudioWindow {
                 File targetFile = new File(currentFolder, selected.getName());
                 Files.copy(selected.toPath(), targetFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 JSONObject target = currentConfig.optJSONObject("target");
-                if (target == null) { target = new JSONObject(); target.put("type", "xml"); currentConfig.put("target", target); }
+                if (target == null) {
+                    target = new JSONObject();
+                    target.put("type", "xml");
+                    currentConfig.put("target", target);
+                }
                 target.put("xsd", selected.getName());
                 File configFile = new File(currentFolder, "transformation.json");
                 Files.writeString(configFile.toPath(), currentConfig.toString(2));
                 log("XSD imported: " + selected.getName());
                 updateValidationState();
-            } catch (Exception e) { log("Error importing XSD: " + e.getMessage()); }
+            } catch (Exception e) {
+                log("Error importing XSD: " + e.getMessage());
+            }
         }
     }
 
@@ -418,56 +446,58 @@ public class TransformationStudioWindow {
             SplitPane horizontalSplit = new SplitPane();
             horizontalSplit.setOrientation(Orientation.HORIZONTAL);
 
-            sourceRawWebView = createWebView();
-            sourceXmlWebView = createWebView();
-            sourceRawEngine = sourceRawWebView.getEngine();
-            sourceXmlEngine = sourceXmlWebView.getEngine();
+            sourceRawEditor = new com.routebuilder.ui.components.MonacoEditorPane();
+            sourceXmlEditor = new com.routebuilder.ui.components.MonacoEditorPane();
 
             VBox sourcePanel = new VBox();
             if (isEnrichment || isMtToMx) {
                 SplitPane sourceSplit = new SplitPane();
                 sourceSplit.setOrientation(Orientation.VERTICAL);
-                VBox topBox = new VBox(createHeader(isEnrichment ? "Original Source" : "Raw Source", sourceRawEngine, true, f -> sourceRawFile = f), sourceRawWebView);
-                VBox.setVgrow(sourceRawWebView, Priority.ALWAYS);
-                VBox bottomBox = new VBox(createHeader(isEnrichment ? "Truncated Source" : "Converted XML", sourceXmlEngine, isEnrichment, f -> sourceXmlFile = f), sourceXmlWebView);
-                VBox.setVgrow(sourceXmlWebView, Priority.ALWAYS);
+                VBox topBox = new VBox(createHeader(isEnrichment ? "Original Source" : "Raw Source", sourceRawEditor,
+                        true, f -> sourceRawFile = f), sourceRawEditor);
+                VBox.setVgrow(sourceRawEditor, Priority.ALWAYS);
+                VBox bottomBox = new VBox(createHeader(isEnrichment ? "Truncated Source" : "Converted XML",
+                        sourceXmlEditor, isEnrichment, f -> sourceXmlFile = f), sourceXmlEditor);
+                VBox.setVgrow(sourceXmlEditor, Priority.ALWAYS);
                 sourceSplit.getItems().addAll(topBox, bottomBox);
                 sourcePanel.getChildren().add(sourceSplit);
                 VBox.setVgrow(sourceSplit, Priority.ALWAYS);
             } else {
-                sourcePanel.getChildren().addAll(createHeader("SOURCE", sourceXmlEngine, true, f -> sourceXmlFile = f), sourceXmlWebView);
-                VBox.setVgrow(sourceXmlWebView, Priority.ALWAYS);
+                sourcePanel.getChildren().addAll(createHeader("SOURCE", sourceXmlEditor, true, f -> sourceXmlFile = f),
+                        sourceXmlEditor);
+                VBox.setVgrow(sourceXmlEditor, Priority.ALWAYS);
             }
 
             VBox logicPanel = new VBox();
-            logicWebView = createWebView();
-            logicEngine = logicWebView.getEngine();
-            
+            logicEditor = new com.routebuilder.ui.components.MonacoEditorPane();
+
             org.json.JSONArray logicArr = currentConfig.optJSONArray("logic");
             boolean isSmooks = "smooks".equalsIgnoreCase(transformationType);
             if (logicArr != null && logicArr.length() > 1 && !isSmooks) {
-                logicSecondaryWebView = createWebView();
-                logicSecondaryEngine = logicSecondaryWebView.getEngine();
+                logicSecondaryEditor = new com.routebuilder.ui.components.MonacoEditorPane();
                 SplitPane logicSplit = new SplitPane();
                 logicSplit.setOrientation(Orientation.VERTICAL);
-                VBox topBox = new VBox(createHeader("CONFIG (" + transformationType.toUpperCase() + ")", logicEngine, true, f -> logicFile = f), logicWebView);
-                VBox.setVgrow(logicWebView, Priority.ALWAYS);
-                VBox bottomBox = new VBox(createHeader("SCHEMA / MODEL", logicSecondaryEngine, true, f -> logicSecondaryFile = f), logicSecondaryWebView);
-                VBox.setVgrow(logicSecondaryWebView, Priority.ALWAYS);
+                VBox topBox = new VBox(createHeader("CONFIG (" + transformationType.toUpperCase() + ")", logicEditor,
+                        true, f -> logicFile = f), logicEditor);
+                VBox.setVgrow(logicEditor, Priority.ALWAYS);
+                VBox bottomBox = new VBox(
+                        createHeader("SCHEMA / MODEL", logicSecondaryEditor, true, f -> logicSecondaryFile = f),
+                        logicSecondaryEditor);
+                VBox.setVgrow(logicSecondaryEditor, Priority.ALWAYS);
                 logicSplit.getItems().addAll(topBox, bottomBox);
                 logicPanel.getChildren().add(logicSplit);
                 VBox.setVgrow(logicSplit, Priority.ALWAYS);
             } else {
-                logicSecondaryEngine = null;
-                logicPanel.getChildren().addAll(createHeader("LOGIC (" + transformationType.toUpperCase() + ")", logicEngine, true, f -> logicFile = f), logicWebView);
-                VBox.setVgrow(logicWebView, Priority.ALWAYS);
+                logicSecondaryEditor = null;
+                logicPanel.getChildren().addAll(createHeader("LOGIC (" + transformationType.toUpperCase() + ")",
+                        logicEditor, true, f -> logicFile = f), logicEditor);
+                VBox.setVgrow(logicEditor, Priority.ALWAYS);
             }
 
             VBox targetPanel = new VBox();
-            targetWebView = createWebView();
-            targetEngine = targetWebView.getEngine();
-            targetPanel.getChildren().addAll(createHeader("TARGET", targetEngine, false, null), targetWebView);
-            VBox.setVgrow(targetWebView, Priority.ALWAYS);
+            targetEditor = new com.routebuilder.ui.components.MonacoEditorPane();
+            targetPanel.getChildren().addAll(createHeader("TARGET", targetEditor, false, null), targetEditor);
+            VBox.setVgrow(targetEditor, Priority.ALWAYS);
 
             horizontalSplit.getItems().addAll(sourcePanel, logicPanel, targetPanel);
             horizontalSplit.setDividerPositions(0.33, 0.66);
@@ -506,7 +536,8 @@ public class TransformationStudioWindow {
         }
     }
 
-    private javafx.scene.Node createHeader(String title, WebEngine engine, boolean isFileBased, java.util.function.Consumer<File> onFileRefUpdated) {
+    private javafx.scene.Node createHeader(String title, com.routebuilder.ui.components.MonacoEditorPane editor,
+            boolean isFileBased, java.util.function.Consumer<File> onFileRefUpdated) {
         HBox header = new HBox(3);
         header.setPadding(new Insets(2, 5, 2, 8));
         header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
@@ -519,20 +550,25 @@ public class TransformationStudioWindow {
         if (isFileBased) {
             Button btnOpen = createSmallButton("fas-folder-open", "Open File");
             btnOpen.getStyleClass().add("btn-open-file");
-            btnOpen.setOnAction(e -> openFileIntoEditor(engine, onFileRefUpdated));
+            btnOpen.setOnAction(e -> openFileIntoEditor(editor, onFileRefUpdated));
             Button btnSave = createSmallButton("fas-save", "Save File");
             btnSave.getStyleClass().add("btn-save-file");
-            btnSave.setOnAction(e -> saveEditorToFile(engine, false, onFileRefUpdated));
+            btnSave.setOnAction(e -> saveEditorToFile(editor, false, onFileRefUpdated));
             header.getChildren().addAll(btnOpen, btnSave);
             if (title.contains("LOGIC") || title.contains("CONFIG")) {
                 Button btnVisualMap = createSmallButton("fas-map-marked-alt", "Sovereign Mapping Architect");
                 btnVisualMap.getStyleClass().add("btn-map-cyan");
-                boolean isMapApplicable = transformationType != null && (transformationType.equalsIgnoreCase("xslt") || transformationType.equalsIgnoreCase("jslt") || transformationType.toLowerCase().contains("enrichment") || transformationType.toLowerCase().contains("mt"));
+                boolean isMapApplicable = transformationType != null
+                        && (transformationType.equalsIgnoreCase("xslt") || transformationType.equalsIgnoreCase("jslt")
+                                || transformationType.toLowerCase().contains("enrichment")
+                                || transformationType.toLowerCase().contains("mt"));
                 btnVisualMap.setDisable(!isMapApplicable);
                 if (isMapApplicable) {
-                    btnVisualMap.setStyle("-fx-text-fill: #00e5ff; -fx-border-color: #00e5ff; -fx-border-radius: 4; -fx-border-width: 1px; -fx-padding: 1 5;");
+                    btnVisualMap.setStyle(
+                            "-fx-text-fill: #00e5ff; -fx-border-color: #00e5ff; -fx-border-radius: 4; -fx-border-width: 1px; -fx-padding: 1 5;");
                 } else {
-                    btnVisualMap.setStyle("-fx-text-fill: #555; -fx-border-color: #444; -fx-border-radius: 4; -fx-border-width: 1px; -fx-padding: 1 5;");
+                    btnVisualMap.setStyle(
+                            "-fx-text-fill: #555; -fx-border-color: #444; -fx-border-radius: 4; -fx-border-width: 1px; -fx-padding: 1 5;");
                 }
                 btnVisualMap.setOnAction(e -> showMappingArchitect());
                 header.getChildren().add(btnVisualMap);
@@ -545,17 +581,17 @@ public class TransformationStudioWindow {
         }
         Button btnSaveAs = createSmallButton("fas-file-download", "Save As...");
         btnSaveAs.getStyleClass().add("btn-save-as-file");
-        btnSaveAs.setOnAction(e -> saveEditorToFile(engine, true, onFileRefUpdated));
+        btnSaveAs.setOnAction(e -> saveEditorToFile(editor, true, onFileRefUpdated));
         Button btnCopy = createSmallButton("fas-copy", "Copy All");
         btnCopy.getStyleClass().add("btn-copy-text");
         btnCopy.setOnAction(e -> {
-            Object val = engine.executeScript("window.getValue()");
-            if (val instanceof String) {
-                 Clipboard clipboard = Clipboard.getSystemClipboard();
-                 ClipboardContent content = new ClipboardContent();
-                 content.putString((String)val);
-                 clipboard.setContent(content);
-                 log("Copied " + ((String)val).length() + " chars to clipboard.");
+            String val = editor.getText();
+            if (val != null) {
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                ClipboardContent content = new ClipboardContent();
+                content.putString(val);
+                clipboard.setContent(content);
+                log("Copied " + val.length() + " chars to clipboard.");
             }
         });
         header.getChildren().addAll(btnSaveAs, btnCopy);
@@ -563,13 +599,12 @@ public class TransformationStudioWindow {
     }
 
     private void showMappingArchitect() {
-        if (currentFolder == null) return;
+        if (currentFolder == null)
+            return;
         try {
-            Object logicVal = logicEngine.executeScript("window.getValue()");
-            Object sourceVal = sourceXmlEngine.executeScript("window.getValue()");
-            String logicContent = (logicVal instanceof String) ? (String) logicVal : "";
-            String sourceContent = (sourceVal instanceof String) ? (String) sourceVal : "";
-            
+            String logicContent = logicEditor.getText();
+            String sourceContent = sourceXmlEditor != null ? sourceXmlEditor.getText() : "";
+
             MappingArchitectWindow architect = new MappingArchitectWindow();
             architect.show("Visual Mapper - " + transformationType.toUpperCase(), logicContent, sourceContent);
         } catch (Exception e) {
@@ -586,103 +621,107 @@ public class TransformationStudioWindow {
         return b;
     }
 
-    private void openFileIntoEditor(WebEngine engine, java.util.function.Consumer<File> onFileRefUpdated) {
-        FileChooser chooser = new FileChooser(); chooser.setInitialDirectory(currentFolder);
+    private void openFileIntoEditor(com.routebuilder.ui.components.MonacoEditorPane editor,
+            java.util.function.Consumer<File> onFileRefUpdated) {
+        FileChooser chooser = new FileChooser();
+        chooser.setInitialDirectory(currentFolder);
         File selected = chooser.showOpenDialog(stage);
-        if (selected != null) { try { setEditorText(engine, Files.readString(selected.toPath())); if (onFileRefUpdated != null) onFileRefUpdated.accept(selected); log("Opened: " + selected.getName()); } catch (Exception e) { log("Open Error: " + e.getMessage()); } }
+        if (selected != null) {
+            try {
+                editor.setText(Files.readString(selected.toPath()));
+                if (onFileRefUpdated != null)
+                    onFileRefUpdated.accept(selected);
+                log("Opened: " + selected.getName());
+            } catch (Exception e) {
+                log("Open Error: " + e.getMessage());
+            }
+        }
     }
 
-    private void saveEditorToFile(WebEngine engine, boolean isSaveAs, java.util.function.Consumer<File> onFileRefUpdated) {
-        String content = getEditorText(engine); File target = null;
-        if (!isSaveAs) { 
-            if (engine == sourceRawEngine) target = sourceRawFile; 
-            else if (engine == sourceXmlEngine) target = sourceXmlFile; 
-            else if (engine == logicEngine) target = logicFile; 
-            else if (engine == logicSecondaryEngine) target = logicSecondaryFile;
+    private void saveEditorToFile(com.routebuilder.ui.components.MonacoEditorPane editor, boolean isSaveAs,
+            java.util.function.Consumer<File> onFileRefUpdated) {
+        String content = editor.getText();
+        File target = null;
+        if (!isSaveAs) {
+            if (editor == sourceRawEditor)
+                target = sourceRawFile;
+            else if (editor == sourceXmlEditor)
+                target = sourceXmlFile;
+            else if (editor == logicEditor)
+                target = logicFile;
+            else if (editor == logicSecondaryEditor)
+                target = logicSecondaryFile;
         }
-        if (target == null) { FileChooser chooser = new FileChooser(); chooser.setInitialDirectory(currentFolder); target = chooser.showSaveDialog(stage); }
-        if (target != null) { try { Files.writeString(target.toPath(), content); if (onFileRefUpdated != null) onFileRefUpdated.accept(target); log("Saved: " + target.getName()); } catch (Exception e) { log("Save Error: " + e.getMessage()); } }
+        if (target == null) {
+            FileChooser chooser = new FileChooser();
+            chooser.setInitialDirectory(currentFolder);
+            target = chooser.showSaveDialog(stage);
+        }
+        if (target != null) {
+            try {
+                Files.writeString(target.toPath(), content);
+                if (onFileRefUpdated != null)
+                    onFileRefUpdated.accept(target);
+                log("Saved: " + target.getName());
+            } catch (Exception e) {
+                log("Save Error: " + e.getMessage());
+            }
+        }
     }
 
     private void initEditors() {
-        sourceRawInitialized = sourceXmlInitialized = logicInitialized = targetInitialized = false;
-        if (isMtToMx || isEnrichment) setupMonaco(sourceRawEngine, "text", (obs, oldVal, newVal) -> { sourceRawInitialized = true; checkAndLoadData(); });
-        
+        if (isMtToMx || isEnrichment) {
+            sourceRawEditor.setLanguage("text");
+        }
+
         String sourceLang = "xml";
         JSONObject srcCfg = currentConfig.optJSONObject("source");
         if (srcCfg != null) {
             String type = srcCfg.optString("type", "xml");
-            if ("json".equalsIgnoreCase(type)) sourceLang = "json";
-            else if ("text".equalsIgnoreCase(type) || "csv".equalsIgnoreCase(type) || "edi".equalsIgnoreCase(type)) sourceLang = "text";
+            if ("json".equalsIgnoreCase(type))
+                sourceLang = "json";
+            else if ("text".equalsIgnoreCase(type) || "csv".equalsIgnoreCase(type) || "edi".equalsIgnoreCase(type))
+                sourceLang = "text";
         }
-        setupMonaco(sourceXmlEngine, sourceLang, (obs, oldVal, newVal) -> { sourceXmlInitialized = true; if (!isMtToMx && !isEnrichment) checkAndLoadData(); });
-        
-        String logicLang = "jslt".equals(transformationType) ? "json" : ("groovy".equals(transformationType) || "joor".equals(transformationType) ? "java" : "xml");
-        setupMonaco(logicEngine, logicLang, (obs, oldVal, newVal) -> { logicInitialized = true; checkAndLoadData(); });
-        
-        if (logicSecondaryEngine != null) {
-            setupMonaco(logicSecondaryEngine, "xml", (obs, oldVal, newVal) -> {});
+        sourceXmlEditor.setLanguage(sourceLang);
+
+        String logicLang = "jslt".equals(transformationType) ? "json"
+                : ("groovy".equals(transformationType) || "joor".equals(transformationType) ? "java" : "xml");
+        logicEditor.setLanguage(logicLang);
+
+        if (logicSecondaryEditor != null) {
+            logicSecondaryEditor.setLanguage("xml");
         }
-        
-        String targetLang = "xml"; JSONObject targetCfg = currentConfig.optJSONObject("target");
-        if (targetCfg != null) { String type = targetCfg.optString("type", "xml"); if ("mt".equalsIgnoreCase(type) || "swift".equalsIgnoreCase(type)) targetLang = "text"; else if ("json".equalsIgnoreCase(type)) targetLang = "json"; }
-        setupMonaco(targetEngine, targetLang, (obs, oldVal, newVal) -> { targetInitialized = true; });
-    }
 
-    private void checkAndLoadData() { if (logicInitialized && (sourceXmlInitialized || sourceRawInitialized)) { loadSourceData(); loadLogicData(); } }
-
-    private void setupMonaco(WebEngine engine, String language, javafx.beans.value.ChangeListener<javafx.concurrent.Worker.State> onSucceeded) {
-        String monacoBase = getClass().getResource("/monaco/vs/loader.js").toExternalForm();
-        monacoBase = monacoBase.substring(0, monacoBase.lastIndexOf("/vs/loader.js"));
-        
-        String activeTheme = RouteBuilderApp.currentThemeClass;
-        String editorBg = "#1e1e1e";
-        if ("theme-intellij-light".equals(activeTheme)) editorBg = "#ffffff";
-        else if ("theme-dracula".equals(activeTheme)) editorBg = "#282a36";
-        else if ("theme-monokai".equals(activeTheme)) editorBg = "#272822";
-        else if ("theme-hacker".equals(activeTheme)) editorBg = "#050505";
-
-        String html = "<!DOCTYPE html><html><head><base href='" + monacoBase + "/'/><meta charset='UTF-8'><style>body{margin:0;padding:0;overflow:hidden;background-color:" + editorBg + ";}#editor{width:100vw;height:100vh;}</style></head><body><div id='editor'></div><script src='" + monacoBase + "/vs/loader.js'></script><script>\n" +
-            "window.editorValue = ''; window.setValue = function(val) { window.editorValue = val; if(window.editor) window.editor.setValue(val); };\n" +
-            "window.getValue = function() { return window.editor ? window.editor.getValue() : window.editorValue; };\n" +
-            "window.getSelection = function() { if(!window.editor) return ''; var sel = window.editor.getSelection(); return window.editor.getModel().getValueInRange(sel); };\n" +
-            "require.config({ paths: { vs: '" + monacoBase + "/vs' }});\n" +
-            "require(['vs/editor/editor.main'], function() {\n" +
-            "  monaco.languages.register({ id: 'swift-mt' });\n" +
-            "  monaco.languages.setMonarchTokensProvider('swift-mt', { tokenizer: { root: [ [/{[1-5]:/, 'metatag'], [/}/, 'metatag'], [/^:[0-9A-Z]{2,3}:/, 'keyword'], [/-}/, 'metatag'], [/\\n:[0-9A-Z]{2,3}:/, 'keyword'] ] } });\n" +
-            "  monaco.editor.defineTheme('theme-vscode-dark', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: '569cd6', fontStyle: 'bold' }, { token: 'metatag', foreground: 'ce9178' } ], colors: { 'editor.background': '#1e1e1e' } });\n" +
-            "  monaco.editor.defineTheme('theme-intellij-light', { base: 'vs', inherit: true, rules: [ { token: 'keyword', foreground: '0000ff', fontStyle: 'bold' }, { token: 'metatag', foreground: 'a31515' } ], colors: { 'editor.background': '#ffffff' } });\n" +
-            "  monaco.editor.defineTheme('theme-dracula', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'ff79c6', fontStyle: 'bold' }, { token: 'metatag', foreground: 'bd93f9' } ], colors: { 'editor.background': '#282a36' } });\n" +
-            "  monaco.editor.defineTheme('theme-monokai', { base: 'vs-dark', inherit: true, rules: [ { token: 'keyword', foreground: 'f92672', fontStyle: 'bold' }, { token: 'metatag', foreground: 'ae81ff' } ], colors: { 'editor.background': '#272822' } });\n" +
-            "  monaco.editor.defineTheme('theme-hacker', { base: 'hc-black', inherit: true, rules: [ { token: 'keyword', foreground: '00ff00', fontStyle: 'bold' }, { token: 'metatag', foreground: '00ff00' } ], colors: { 'editor.background': '#050505' } });\n" +
-            "  window.editor = monaco.editor.create(document.getElementById('editor'), { value: window.editorValue, language: '" + ("text".equals(language) ? "swift-mt" : language) + "', theme: '" + activeTheme + "', automaticLayout: true, minimap: { enabled: false }, fontSize: 14 });\n" +
-            "  window.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC, function() {\n" +
-            "     var text = window.getSelection(); if(!text) text = window.getValue();\n" +
-            "     if(window.javaBridge) window.javaBridge.copy(text);\n" +
-            "  });\n" +
-            "});\n</script></body></html>";
-        if (onSucceeded != null) {
-            engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> { if (newState == javafx.concurrent.Worker.State.SUCCEEDED) onSucceeded.changed(null, oldState, newState); });
+        String targetLang = "xml";
+        JSONObject targetCfg = currentConfig.optJSONObject("target");
+        if (targetCfg != null) {
+            String type = targetCfg.optString("type", "xml");
+            if ("mt".equalsIgnoreCase(type) || "swift".equalsIgnoreCase(type))
+                targetLang = "text";
+            else if ("json".equalsIgnoreCase(type))
+                targetLang = "json";
         }
-        engine.loadContent(html);
-    }
+        targetEditor.setLanguage(targetLang);
 
-    private void setEditorText(WebEngine engine, String text) {
-        if (text == null) text = ""; final String finalT = text;
-        Platform.runLater(() -> { try { String encoded = java.net.URLEncoder.encode(finalT, "UTF-8").replace("+", "%20"); engine.executeScript("if(window.setValue) window.setValue(decodeURIComponent('" + encoded + "')); else window.editorValue = decodeURIComponent('" + encoded + "');"); } catch (Exception ignored) { } });
+        // MonacoEditorPane handles queuing setText if not initialized yet
+        loadSourceData();
+        loadLogicData();
     }
-
-    private String getEditorText(WebEngine engine) { try { Object result = engine.executeScript("window.getValue()"); return (result instanceof String) ? (String) result : ""; } catch (Exception e) { return ""; } }
 
     private void loadSourceData() {
         try {
             if (isEnrichment) {
                 org.json.JSONArray sources = currentConfig.optJSONArray("sources");
                 if (sources != null && sources.length() >= 2) {
-                    JSONObject s1 = sources.getJSONObject(0); JSONObject s2 = sources.getJSONObject(1);
-                    sourceRawFile = new File(currentFolder, s1.optString("file")); sourceXmlFile = new File(currentFolder, s2.optString("file"));
-                    if (sourceRawFile.exists()) setEditorText(sourceRawEngine, Files.readString(sourceRawFile.toPath()));
-                    if (sourceXmlFile.exists()) setEditorText(sourceXmlEngine, Files.readString(sourceXmlFile.toPath()));
+                    JSONObject s1 = sources.getJSONObject(0);
+                    JSONObject s2 = sources.getJSONObject(1);
+                    sourceRawFile = new File(currentFolder, s1.optString("file"));
+                    sourceXmlFile = new File(currentFolder, s2.optString("file"));
+                    if (sourceRawFile.exists())
+                        sourceRawEditor.setText(Files.readString(sourceRawFile.toPath()));
+                    if (sourceXmlFile.exists())
+                        sourceXmlEditor.setText(Files.readString(sourceXmlFile.toPath()));
                 }
                 return;
             }
@@ -691,77 +730,133 @@ public class TransformationStudioWindow {
                 File f = new File(currentFolder, srcCfg.optString("file"));
                 if (f.exists()) {
                     String content = Files.readString(f.toPath());
-                    if (isMtToMx) { sourceRawFile = f; setEditorText(sourceRawEngine, content); unmarshalToXml(content); } 
-                    else { sourceXmlFile = f; setEditorText(sourceXmlEngine, content); }
+                    if (isMtToMx) {
+                        sourceRawFile = f;
+                        sourceRawEditor.setText(content);
+                        unmarshalToXml(content);
+                    } else {
+                        sourceXmlFile = f;
+                        sourceXmlEditor.setText(content);
+                    }
                 }
             }
-        } catch (Exception e) { log("Error loading source: " + e.getMessage()); }
+        } catch (Exception e) {
+            log("Error loading source: " + e.getMessage());
+        }
     }
 
-    private void loadLogicData() { 
-        try { 
+    private void loadLogicData() {
+        try {
             org.json.JSONArray logicArr = currentConfig.optJSONArray("logic");
             if (logicArr != null && logicArr.length() > 0) {
                 JSONObject primary = logicArr.getJSONObject(0);
-                logicFile = new File(currentFolder, primary.optString("file")); 
-                if (logicFile.exists()) setEditorText(logicEngine, Files.readString(logicFile.toPath()));
-                
-                if (logicArr.length() > 1 && logicSecondaryEngine != null) {
+                logicFile = new File(currentFolder, primary.optString("file"));
+                if (logicFile.exists())
+                    logicEditor.setText(Files.readString(logicFile.toPath()));
+
+                if (logicArr.length() > 1 && logicSecondaryEditor != null) {
                     JSONObject secondary = logicArr.getJSONObject(1);
                     logicSecondaryFile = new File(currentFolder, secondary.optString("file"));
-                    if (logicSecondaryFile.exists()) setEditorText(logicSecondaryEngine, Files.readString(logicSecondaryFile.toPath()));
+                    if (logicSecondaryFile.exists())
+                        logicSecondaryEditor.setText(Files.readString(logicSecondaryFile.toPath()));
                 }
                 return;
             }
-            
-            JSONObject logicCfg = currentConfig.optJSONObject("logic"); 
-            if (logicCfg != null) { 
-                logicFile = new File(currentFolder, logicCfg.optString("file")); 
-                if (logicFile.exists()) setEditorText(logicEngine, Files.readString(logicFile.toPath())); 
-            } 
-        } catch (Exception e) { log("Error loading logic: " + e.getMessage()); } 
+
+            JSONObject logicCfg = currentConfig.optJSONObject("logic");
+            if (logicCfg != null) {
+                logicFile = new File(currentFolder, logicCfg.optString("file"));
+                if (logicFile.exists())
+                    logicEditor.setText(Files.readString(logicFile.toPath()));
+            }
+        } catch (Exception e) {
+            log("Error loading logic: " + e.getMessage());
+        }
     }
 
-    private void unmarshalToXml(String rawContent) { CompletableFuture.runAsync(() -> { try { String xml = TransformationBackend.unmarshal(rawContent, currentConfig.optJSONObject("source")); setEditorText(sourceXmlEngine, xml); } catch (Exception e) { setEditorText(sourceXmlEngine, "Error: " + e.getMessage()); } }); }
+    private void unmarshalToXml(String rawContent) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                String xml = TransformationBackend.unmarshal(rawContent, currentConfig.optJSONObject("source"));
+                Platform.runLater(() -> sourceXmlEditor.setText(xml));
+            } catch (Exception e) {
+                Platform.runLater(() -> sourceXmlEditor.setText("Error: " + e.getMessage()));
+            }
+        });
+    }
 
     private void runTransformation() {
-        if (currentFolder == null) return;
-        String sourceText = getEditorText(sourceXmlEngine);
-        String logic = getEditorText(logicEngine); 
-        
+        if (currentFolder == null)
+            return;
+        String sourceText = sourceXmlEditor != null ? sourceXmlEditor.getText() : "";
+        String logic = logicEditor != null ? logicEditor.getText() : "";
+
         // Save secondary logic file if present (e.g. DFDL schema)
-        if (logicSecondaryEngine != null && logicSecondaryFile != null) {
+        if (logicSecondaryEditor != null && logicSecondaryFile != null) {
             try {
-                Files.writeString(logicSecondaryFile.toPath(), getEditorText(logicSecondaryEngine));
-            } catch (Exception ignored) {}
+                Files.writeString(logicSecondaryFile.toPath(), logicSecondaryEditor.getText());
+            } catch (Exception ignored) {
+            }
         }
-        
-        String rawSource = isEnrichment ? getEditorText(sourceRawEngine) : "";
-        
-        String execType = currentConfig.optString("type", "xslt"); if (execType.contains("-to-")) execType = "xslt"; final String finalExecType = execType;
+
+        String rawSource = isEnrichment ? (sourceRawEditor != null ? sourceRawEditor.getText() : "") : "";
+
+        String execType = currentConfig.optString("type", "xslt");
+        if (execType.contains("-to-"))
+            execType = "xslt";
+        final String finalExecType = execType;
         log("Running " + finalExecType.toUpperCase() + "...");
-        
-        CompletableFuture.runAsync(() -> { 
-            try { 
-                String result = isEnrichment ? TransformationBackend.transformEnrichment(rawSource, sourceText, logic) : TransformationBackend.transform(sourceText, logic, finalExecType, currentFolder); 
-                setEditorText(targetEngine, result); 
-                log("Transformation Success."); 
-            } catch (Exception e) { 
-                log("Transformation Failed: " + e.getMessage()); 
-                setEditorText(targetEngine, "Error: " + e.getMessage()); 
-            } 
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                String result = isEnrichment ? TransformationBackend.transformEnrichment(rawSource, sourceText, logic)
+                        : TransformationBackend.transform(sourceText, logic, finalExecType, currentFolder);
+                Platform.runLater(() -> {
+                    targetEditor.setText(result);
+                    log("Transformation Success.");
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    log("Transformation Failed: " + e.getMessage());
+                    targetEditor.setText("Error: " + e.getMessage());
+                });
+            }
         });
     }
 
     private void runValidation() {
-        if (currentFolder == null) return;
-        String xml = getEditorText(targetEngine); JSONObject targetCfg = currentConfig.optJSONObject("target"); String xsdName = targetCfg != null ? targetCfg.optString("xsd") : null;
-        if (xsdName == null) { log("No XSD defined."); return; }
-        File xsd = new File(currentFolder, xsdName); if (!xsd.exists()) { log("XSD not found: " + xsdName); return; }
-        log("Validating against " + xsdName + "..."); CompletableFuture.runAsync(() -> { String err = TransformationBackend.validateXml(xml, xsd); log(err == null ? "VALIDATION SUCCESS." : "VALIDATION FAILED:\n" + err); });
+        if (currentFolder == null)
+            return;
+        String xml = targetEditor != null ? targetEditor.getText() : "";
+        JSONObject targetCfg = currentConfig.optJSONObject("target");
+        String xsdName = targetCfg != null ? targetCfg.optString("xsd") : null;
+        if (xsdName == null) {
+            log("No XSD defined.");
+            return;
+        }
+        File xsd = new File(currentFolder, xsdName);
+        if (!xsd.exists()) {
+            log("XSD not found: " + xsdName);
+            return;
+        }
+        log("Validating against " + xsdName + "...");
+        CompletableFuture.runAsync(() -> {
+            String err = TransformationBackend.validateXml(xml, xsd);
+            Platform.runLater(() -> log(err == null ? "VALIDATION SUCCESS." : "VALIDATION FAILED:\n" + err));
+        });
     }
 
-    private void saveGlobalConfig() { if (currentFolder == null) return; try { File configFile = new File(currentFolder, "transformation.json"); Files.writeString(configFile.toPath(), currentConfig.toString(2)); log("Saved global config."); } catch (Exception e) { log("Save Config Error: " + e.getMessage()); } }
+    private void saveGlobalConfig() {
+        if (currentFolder == null)
+            return;
+        try {
+            File configFile = new File(currentFolder, "transformation.json");
+            Files.writeString(configFile.toPath(), currentConfig.toString(2));
+            log("Saved global config.");
+        } catch (Exception e) {
+            log("Save Config Error: " + e.getMessage());
+        }
+    }
 
     private File getSelectedParentFolder() {
         TreeItem<File> selectedItem = mappingTree.getSelectionModel().getSelectedItem();
@@ -808,13 +903,14 @@ public class TransformationStudioWindow {
         if (file.equals(currentMappingsPath)) {
             return;
         }
-        
+
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         RouteBuilderApp.themeDialog(alert);
         alert.setTitle("Confirm Delete");
         alert.setHeaderText("Delete " + (file.isDirectory() ? "Folder" : "File"));
-        alert.setContentText("Are you sure you want to delete this entity and all its contents?\n\n" + file.getAbsolutePath());
-        
+        alert.setContentText(
+                "Are you sure you want to delete this entity and all its contents?\n\n" + file.getAbsolutePath());
+
         alert.showAndWait().ifPresent(type -> {
             if (type == ButtonType.OK) {
                 try {
@@ -846,7 +942,8 @@ public class TransformationStudioWindow {
     private boolean isChildOf(File child, File parent) {
         File p = child.getParentFile();
         while (p != null) {
-            if (p.equals(parent)) return true;
+            if (p.equals(parent))
+                return true;
             p = p.getParentFile();
         }
         return false;
@@ -870,65 +967,64 @@ public class TransformationStudioWindow {
         RouteBuilderApp.themeDialog(dialog);
         dialog.setTitle("New Transformation Wizard");
         dialog.setHeaderText("Create a new mapping project under: " + parentDir.getName());
-        
+
         ButtonType btnCreateType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(btnCreateType, ButtonType.CANCEL);
-        
+
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
-        
+
         TextField txtTitle = new TextField();
         txtTitle.setText("Transformation Type Name");
         txtTitle.setPrefWidth(250);
-        
+
         TextField txtName = new TextField();
         txtName.setText("transformation-type-name");
         txtName.setPrefWidth(250);
-        
-        boolean[] userModifiedFolder = {false};
+
+        boolean[] userModifiedFolder = { false };
         txtName.textProperty().addListener((obs, oldVal, newVal) -> {
             if (txtName.isFocused()) {
                 userModifiedFolder[0] = true;
             }
         });
-        
+
         txtTitle.textProperty().addListener((obs, oldVal, newVal) -> {
             if (!userModifiedFolder[0]) {
                 if (newVal == null || newVal.isEmpty()) {
                     txtName.setText("");
                 } else {
                     String folderSafe = newVal.trim().toLowerCase()
-                                             .replaceAll("[^a-z0-9\\s-]", "")
-                                             .replaceAll("\\s+", "-");
+                            .replaceAll("[^a-z0-9\\s-]", "")
+                            .replaceAll("\\s+", "-");
                     txtName.setText(folderSafe);
                 }
             }
         });
-        
+
         ComboBox<String> comboScenario = new ComboBox<>();
         comboScenario.getItems().addAll(
-            "MT to MX (SWIFT to ISO)",
-            "MX to MT (ISO to SWIFT)",
-            "JSON to JSON (JSLT)",
-            "CSV to XML (Smooks)",
-            "EDI to XML (Smooks)",
-            "Fixed Format (Flatpack)",
-            "Custom Groovy Script",
-            "Java Joor Mapper"
-        );
+                "MT to MX (SWIFT to ISO)",
+                "MX to MT (ISO to SWIFT)",
+                "JSON to JSON (JSLT)",
+                "CSV to XML (Smooks)",
+                "EDI to XML (Smooks)",
+                "Fixed Format (Flatpack)",
+                "Custom Groovy Script",
+                "Java Joor Mapper");
         comboScenario.setValue("MT to MX (SWIFT to ISO)");
-        
+
         grid.add(new Label("Title/Description:"), 0, 0);
         grid.add(txtTitle, 1, 0);
         grid.add(new Label("Folder Name:"), 0, 1);
         grid.add(txtName, 1, 1);
         grid.add(new Label("Mapping Scenario:"), 0, 2);
         grid.add(comboScenario, 1, 2);
-        
+
         dialog.getDialogPane().setContent(grid);
-        
+
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == btnCreateType) {
                 JSONObject res = new JSONObject();
@@ -939,7 +1035,7 @@ public class TransformationStudioWindow {
             }
             return null;
         });
-        
+
         dialog.showAndWait().ifPresent(res -> {
             String title = res.optString("title");
             String folderName = res.optString("name");
@@ -963,7 +1059,8 @@ public class TransformationStudioWindow {
         try {
             JSONObject config = new JSONObject();
             config.put("name", title);
-            String sourceFile = "source.xml", logicFile = "transform.xslt", sourceType = "xml", logicType = "xslt", targetType = "xml";
+            String sourceFile = "source.xml", logicFile = "transform.xslt", sourceType = "xml", logicType = "xslt",
+                    targetType = "xml";
             String sourceContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root>\n  <data>Sample</data>\n</root>";
             String logicContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">\n  <xsl:template match=\"/\">\n    <output>\n       <val><xsl:value-of select=\"//data\"/></val>\n    </output>\n  </xsl:template>\n</xsl:stylesheet>";
             if (scenario.startsWith("MT to MX")) {
@@ -1019,12 +1116,12 @@ public class TransformationStudioWindow {
                 logicType = "java";
                 logicContent = "// Java Snippet (jOOR): 'body' is the input\nreturn ((String)body).replace(\"<order>\", \"<processed_order>\");";
             }
-            
+
             JSONObject source = new JSONObject();
             source.put("type", sourceType);
             source.put("file", sourceFile);
             config.put("source", source);
-            
+
             if (scenario.contains("EDI")) {
                 org.json.JSONArray logicArr = new org.json.JSONArray();
                 JSONObject l1 = new JSONObject();
@@ -1037,25 +1134,26 @@ public class TransformationStudioWindow {
                 logicArr.put(l2);
                 config.put("logic", logicArr);
                 String dfdl = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                    "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"\n" +
-                    "           xmlns:dfdl=\"http://www.ogf.org/dfdl/dfdl-1.0/\"\n" +
-                    "           targetNamespace=\"http://example.com\"\n" +
-                    "           elementFormDefault=\"unqualified\">\n" +
-                    "  <xs:annotation>\n" +
-                    "    <xs:appinfo source=\"http://www.ogf.org/dfdl/\">\n" +
-                    "      <dfdl:format alignment=\"1\" alignmentUnits=\"bytes\" encoding=\"UTF-8\" byteOrder=\"bigEndian\" ignoreCase=\"yes\" utf16Width=\"fixed\" textNumberRep=\"standard\" lengthKind=\"delimited\" initiator=\"\" terminator=\"\" separator=\"\" separatorPosition=\"infix\" occursCountKind=\"implicit\" representation=\"text\" truncateSpecifiedLengthString=\"no\" textBidi=\"no\" floating=\"no\" sequenceKind=\"ordered\" escapeSchemeRef=\"\" leadingSkip=\"0\" trailingSkip=\"0\" encodingErrorPolicy=\"replace\" nilValueDelimiterPolicy=\"none\" emptyValueDelimiterPolicy=\"none\" documentFinalTerminatorCanBeMissing=\"yes\" textOutputMinLength=\"0\" textPadKind=\"none\" textTrimKind=\"none\" initiatedContent=\"no\" outputNewLine=\"%LF;\" fillByte=\"%#r20;\" separatorSuppressionPolicy=\"anyEmpty\" />\n" +
-                    "    </xs:appinfo>\n" +
-                    "  </xs:annotation>\n" +
-                    "  <xs:element name=\"Interchange\">\n" +
-                    "    <xs:complexType>\n" +
-                    "      <xs:sequence dfdl:separator=\"*\" dfdl:terminator=\"'\">\n" +
-                    "        <xs:element name=\"Segment\" type=\"xs:string\" />\n" +
-                    "        <xs:element name=\"ID\" type=\"xs:string\" />\n" +
-                    "        <xs:element name=\"Status\" type=\"xs:string\" />\n" +
-                    "      </xs:sequence>\n" +
-                    "    </xs:complexType>\n" +
-                    "  </xs:element>\n" +
-                    "</xs:schema>";
+                        "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"\n" +
+                        "           xmlns:dfdl=\"http://www.ogf.org/dfdl/dfdl-1.0/\"\n" +
+                        "           targetNamespace=\"http://example.com\"\n" +
+                        "           elementFormDefault=\"unqualified\">\n" +
+                        "  <xs:annotation>\n" +
+                        "    <xs:appinfo source=\"http://www.ogf.org/dfdl/\">\n" +
+                        "      <dfdl:format alignment=\"1\" alignmentUnits=\"bytes\" encoding=\"UTF-8\" byteOrder=\"bigEndian\" ignoreCase=\"yes\" utf16Width=\"fixed\" textNumberRep=\"standard\" lengthKind=\"delimited\" initiator=\"\" terminator=\"\" separator=\"\" separatorPosition=\"infix\" occursCountKind=\"implicit\" representation=\"text\" truncateSpecifiedLengthString=\"no\" textBidi=\"no\" floating=\"no\" sequenceKind=\"ordered\" escapeSchemeRef=\"\" leadingSkip=\"0\" trailingSkip=\"0\" encodingErrorPolicy=\"replace\" nilValueDelimiterPolicy=\"none\" emptyValueDelimiterPolicy=\"none\" documentFinalTerminatorCanBeMissing=\"yes\" textOutputMinLength=\"0\" textPadKind=\"none\" textTrimKind=\"none\" initiatedContent=\"no\" outputNewLine=\"%LF;\" fillByte=\"%#r20;\" separatorSuppressionPolicy=\"anyEmpty\" />\n"
+                        +
+                        "    </xs:appinfo>\n" +
+                        "  </xs:annotation>\n" +
+                        "  <xs:element name=\"Interchange\">\n" +
+                        "    <xs:complexType>\n" +
+                        "      <xs:sequence dfdl:separator=\"*\" dfdl:terminator=\"'\">\n" +
+                        "        <xs:element name=\"Segment\" type=\"xs:string\" />\n" +
+                        "        <xs:element name=\"ID\" type=\"xs:string\" />\n" +
+                        "        <xs:element name=\"Status\" type=\"xs:string\" />\n" +
+                        "      </xs:sequence>\n" +
+                        "    </xs:complexType>\n" +
+                        "  </xs:element>\n" +
+                        "</xs:schema>";
                 Files.writeString(new File(newFolder, "mapping.dfdl.xsd").toPath(), dfdl);
             } else {
                 JSONObject logic = new JSONObject();
@@ -1063,11 +1161,11 @@ public class TransformationStudioWindow {
                 logic.put("file", logicFile);
                 config.put("logic", logic);
             }
-            
+
             JSONObject target = new JSONObject();
             target.put("type", targetType);
             config.put("target", target);
-            
+
             Files.writeString(new File(newFolder, "transformation.json").toPath(), config.toString(2));
             Files.writeString(new File(newFolder, sourceFile).toPath(), sourceContent);
             Files.writeString(new File(newFolder, logicFile).toPath(), logicContent);
@@ -1079,7 +1177,8 @@ public class TransformationStudioWindow {
     }
 
     private static String indentString(String input, int spaces) {
-        if (input == null || input.isEmpty()) return "";
+        if (input == null || input.isEmpty())
+            return "";
         String normalized = input.replace("\r\n", "\n").replace("\r", "\n");
         String indent = " ".repeat(spaces);
         return indent + normalized.replace("\n", "\n" + indent);
@@ -1103,7 +1202,7 @@ public class TransformationStudioWindow {
         if ("ftl".equals(type)) {
             type = "freemarker";
         }
-        
+
         JSONObject sourceCfg = currentConfig.optJSONObject("source");
         String sourceType = sourceCfg != null ? sourceCfg.optString("type", "xml") : "xml";
         boolean isMtSource = "mt".equalsIgnoreCase(sourceType) || "mt".equalsIgnoreCase(type);
@@ -1124,18 +1223,21 @@ public class TransformationStudioWindow {
                     isFullClassVal = true;
                     classSourceVal = content;
                     String pkg = "com.routebuilder.dynamic";
-                    java.util.regex.Matcher pkgMatcher = java.util.regex.Pattern.compile("package\\s+([a-zA-Z0-9_\\.]+)\\s*;").matcher(content);
+                    java.util.regex.Matcher pkgMatcher = java.util.regex.Pattern
+                            .compile("package\\s+([a-zA-Z0-9_\\.]+)\\s*;").matcher(content);
                     if (pkgMatcher.find()) {
                         pkg = pkgMatcher.group(1);
                     }
                     String className = "Mapper";
-                    java.util.regex.Matcher classMatcher = java.util.regex.Pattern.compile("(?:class|interface|enum)\\s+(\\w+)").matcher(content);
+                    java.util.regex.Matcher classMatcher = java.util.regex.Pattern
+                            .compile("(?:class|interface|enum)\\s+(\\w+)").matcher(content);
                     if (classMatcher.find()) {
                         className = classMatcher.group(1);
                     }
                     fullClassNameVal = pkg + "." + className;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         final boolean isFullClass = isFullClassVal;
         final String fullClassName = fullClassNameVal;
@@ -1146,36 +1248,52 @@ public class TransformationStudioWindow {
         String originalMsg = "";
         String truncatedMsg = "";
         if (isEnrichment) {
-            originalMsg = getEditorText(sourceRawEngine);
-            truncatedMsg = getEditorText(sourceXmlEngine);
+            originalMsg = sourceRawEditor != null ? sourceRawEditor.getText() : "";
+            truncatedMsg = sourceXmlEditor != null ? sourceXmlEditor.getText() : "";
             if (originalMsg == null || originalMsg.trim().isEmpty()) {
                 if (sourceRawFile != null && sourceRawFile.exists()) {
-                    try { originalMsg = Files.readString(sourceRawFile.toPath()); } catch (Exception ignored) {}
+                    try {
+                        originalMsg = Files.readString(sourceRawFile.toPath());
+                    } catch (Exception ignored) {
+                    }
                 }
             }
             if (truncatedMsg == null || truncatedMsg.trim().isEmpty()) {
                 if (sourceXmlFile != null && sourceXmlFile.exists()) {
-                    try { truncatedMsg = Files.readString(sourceXmlFile.toPath()); } catch (Exception ignored) {}
+                    try {
+                        truncatedMsg = Files.readString(sourceXmlFile.toPath());
+                    } catch (Exception ignored) {
+                    }
                 }
             }
-            if (originalMsg == null) originalMsg = "";
-            if (truncatedMsg == null) truncatedMsg = "";
+            if (originalMsg == null)
+                originalMsg = "";
+            if (truncatedMsg == null)
+                truncatedMsg = "";
             sourceMsg = TransformationBackend.combineEnrichmentXml(originalMsg, truncatedMsg);
         } else {
             if (isMtToMx) {
-                sourceMsg = getEditorText(sourceRawEngine);
+                sourceMsg = sourceRawEditor != null ? sourceRawEditor.getText() : "";
             } else {
-                sourceMsg = getEditorText(sourceXmlEngine);
+                sourceMsg = sourceXmlEditor != null ? sourceXmlEditor.getText() : "";
             }
             if (sourceMsg == null || sourceMsg.trim().isEmpty()) {
                 if (sourceRawFile != null && sourceRawFile.exists()) {
-                    try { sourceMsg = Files.readString(sourceRawFile.toPath()); } catch (Exception ignored) {}
+                    try {
+                        sourceMsg = Files.readString(sourceRawFile.toPath());
+                    } catch (Exception ignored) {
+                    }
                 }
-                if ((sourceMsg == null || sourceMsg.trim().isEmpty()) && sourceXmlFile != null && sourceXmlFile.exists()) {
-                    try { sourceMsg = Files.readString(sourceXmlFile.toPath()); } catch (Exception ignored) {}
+                if ((sourceMsg == null || sourceMsg.trim().isEmpty()) && sourceXmlFile != null
+                        && sourceXmlFile.exists()) {
+                    try {
+                        sourceMsg = Files.readString(sourceXmlFile.toPath());
+                    } catch (Exception ignored) {
+                    }
                 }
             }
-            if (sourceMsg == null) sourceMsg = "";
+            if (sourceMsg == null)
+                sourceMsg = "";
         }
 
         // Determine all necessary dependencies (cartridges + Camel components)
@@ -1189,22 +1307,29 @@ public class TransformationStudioWindow {
                 String xmlContent = Files.readString(logicFile.toPath());
                 if (xmlContent.contains("csv") || xmlContent.contains("<csv:") || xmlContent.contains("xmlns:csv")) {
                     deps.add("org.smooks.cartridges:smooks-csv-cartridge:2.0.3");
-                } else if (xmlContent.contains("fixed-length") || xmlContent.contains("<fl:") || xmlContent.contains("fixed-length-1.4.xsd")) {
+                } else if (xmlContent.contains("fixed-length") || xmlContent.contains("<fl:")
+                        || xmlContent.contains("fixed-length-1.4.xsd")) {
                     deps.add("org.smooks.cartridges:smooks-fixed-length-cartridge:2.0.3");
-                } else if (xmlContent.contains("json") || xmlContent.contains("<json:") || xmlContent.contains("xmlns:json")) {
+                } else if (xmlContent.contains("json") || xmlContent.contains("<json:")
+                        || xmlContent.contains("xmlns:json")) {
                     deps.add("org.smooks.cartridges:smooks-json-cartridge:2.0.3");
-                } else if (xmlContent.contains("yaml") || xmlContent.contains("<yaml:") || xmlContent.contains("xmlns:yaml")) {
+                } else if (xmlContent.contains("yaml") || xmlContent.contains("<yaml:")
+                        || xmlContent.contains("xmlns:yaml")) {
                     deps.add("org.smooks.cartridges:smooks-yaml-cartridge:2.0.3");
-                } else if (xmlContent.contains("edi") || xmlContent.contains("<edi:") || xmlContent.contains("xmlns:edi")) {
+                } else if (xmlContent.contains("edi") || xmlContent.contains("<edi:")
+                        || xmlContent.contains("xmlns:edi")) {
                     deps.add("org.smooks.cartridges:smooks-edifact-cartridge:2.0.3");
                 }
-                if (xmlContent.contains("javabean") || xmlContent.contains("xmlns:jb") || xmlContent.contains("/javabean-")) {
+                if (xmlContent.contains("javabean") || xmlContent.contains("xmlns:jb")
+                        || xmlContent.contains("/javabean-")) {
                     deps.add("org.smooks.cartridges:smooks-javabean-cartridge:2.0.3");
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         } else if ("groovy".equals(type)) {
             deps.add("org.apache.camel:camel-groovy:" + version);
-            if (version.startsWith("4.20") || version.startsWith("4.21") || version.startsWith("4.22") || version.compareTo("4.20.0") >= 0) {
+            if (version.startsWith("4.20") || version.startsWith("4.21") || version.startsWith("4.22")
+                    || version.compareTo("4.20.0") >= 0) {
                 deps.add("org.apache.groovy:groovy-xml:5.0.5");
                 deps.add("org.apache.groovy:groovy-json:5.0.5");
             } else {
@@ -1217,7 +1342,8 @@ public class TransformationStudioWindow {
         } else if ("mt".equalsIgnoreCase(type)) {
             deps.add("org.apache.camel:camel-swift:4.18.2");
             deps.add("org.apache.camel:camel-xslt:" + version);
-        } else if ("xslt".equalsIgnoreCase(type) || "mt-to-mx".equalsIgnoreCase(type) || "mx-to-mt".equalsIgnoreCase(type)) {
+        } else if ("xslt".equalsIgnoreCase(type) || "mt-to-mx".equalsIgnoreCase(type)
+                || "mx-to-mt".equalsIgnoreCase(type)) {
             deps.add("org.apache.camel:camel-xslt:" + version);
         } else {
             deps.add(groupId + ":" + artifactId + ":" + version);
@@ -1236,10 +1362,10 @@ public class TransformationStudioWindow {
             gradleDepsBuilder.append("implementation(\"").append(dep).append("\")\n");
             String[] parts = dep.split(":");
             mavenDepsBuilder.append("<dependency>\n")
-                            .append("    <groupId>").append(parts[0]).append("</groupId>\n")
-                            .append("    <artifactId>").append(parts[1]).append("</artifactId>\n")
-                            .append("    <version>").append(parts[2]).append("</version>\n")
-                            .append("</dependency>\n");
+                    .append("    <groupId>").append(parts[0]).append("</groupId>\n")
+                    .append("    <artifactId>").append(parts[1]).append("</artifactId>\n")
+                    .append("    <version>").append(parts[2]).append("</version>\n")
+                    .append("</dependency>\n");
         }
         String jbangDepsStr = jbangDepsBuilder.toString().trim();
         String gradleDepsStr = gradleDepsBuilder.toString().trim();
@@ -1257,18 +1383,25 @@ public class TransformationStudioWindow {
                 if (defContent.contains("length=")) {
                     isFlatpackFixed = true;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
-        if ("xslt".equalsIgnoreCase(type) || isMtSource || "mt-to-mx".equalsIgnoreCase(type) || "mx-to-mt".equalsIgnoreCase(type)) {
+        if ("xslt".equalsIgnoreCase(type) || isMtSource || "mt-to-mx".equalsIgnoreCase(type)
+                || "mx-to-mt".equalsIgnoreCase(type)) {
             if (isMtSource || "mt-to-mx".equalsIgnoreCase(type)) {
-                yamlStep = "unmarshal:\n            swiftMt: {}\n        - setBody:\n            simple: \"${body.xml}\"\n        - to:\n            uri: \"xslt-saxon:" + fileUri + "\"";
-                javaStep = ".unmarshal().swiftMt()\n            .setBody().simple(\"${body.xml}\")\n            .to(\"xslt-saxon:" + fileUri + "\")";
-                xmlStep = "<unmarshal>\n            <swiftMt/>\n        </unmarshal>\n        <setBody>\n            <simple>${body.xml}</simple>\n        </setBody>\n        <to uri=\"xslt-saxon:" + fileUri + "\"/>";
+                yamlStep = "unmarshal:\n            swiftMt: {}\n        - setBody:\n            simple: \"${body.xml}\"\n        - to:\n            uri: \"xslt-saxon:"
+                        + fileUri + "\"";
+                javaStep = ".unmarshal().swiftMt()\n            .setBody().simple(\"${body.xml}\")\n            .to(\"xslt-saxon:"
+                        + fileUri + "\")";
+                xmlStep = "<unmarshal>\n            <swiftMt/>\n        </unmarshal>\n        <setBody>\n            <simple>${body.xml}</simple>\n        </setBody>\n        <to uri=\"xslt-saxon:"
+                        + fileUri + "\"/>";
             } else if ("mx-to-mt".equalsIgnoreCase(type)) {
-                yamlStep = "to:\n            uri: \"xslt-saxon:" + fileUri + "\"\n        - marshal:\n            swiftMt: {}";
+                yamlStep = "to:\n            uri: \"xslt-saxon:" + fileUri
+                        + "\"\n        - marshal:\n            swiftMt: {}";
                 javaStep = ".to(\"xslt-saxon:" + fileUri + "\")\n            .marshal().swiftMt()";
-                xmlStep = "<to uri=\"xslt-saxon:" + fileUri + "\"/>\n        <marshal>\n            <swiftMt/>\n        </marshal>";
+                xmlStep = "<to uri=\"xslt-saxon:" + fileUri
+                        + "\"/>\n        <marshal>\n            <swiftMt/>\n        </marshal>";
             } else {
                 yamlStep = "to:\n            uri: \"xslt-saxon:" + fileUri + "\"";
                 javaStep = ".to(\"xslt-saxon:" + fileUri + "\")";
@@ -1284,24 +1417,25 @@ public class TransformationStudioWindow {
             xmlStep = "<unmarshal>\n            <smooks smooksConfig=\"" + fileUri + "\"/>\n        </unmarshal>";
         } else if ("flatpack".equals(type)) {
             yamlStep = "unmarshal:\n" +
-                       "            flatpack:\n" +
-                       "              fixed: " + isFlatpackFixed + "\n" +
-                       "              definition: \"" + fileUri + "\"\n" +
-                       "        - split:\n" +
-                       "            simple: \"${body}\"\n" +
-                       "            steps:\n" +
-                       "              - log: \"Row: ${body}\"";
+                    "            flatpack:\n" +
+                    "              fixed: " + isFlatpackFixed + "\n" +
+                    "              definition: \"" + fileUri + "\"\n" +
+                    "        - split:\n" +
+                    "            simple: \"${body}\"\n" +
+                    "            steps:\n" +
+                    "              - log: \"Row: ${body}\"";
             javaStep = ".unmarshal().flatpack(\"" + fileUri + "\", " + isFlatpackFixed + ")\n" +
-                       "            .split().simple(\"${body}\")\n" +
-                       "                .log(\"Row: ${body}\")\n" +
-                       "            .end()";
+                    "            .split().simple(\"${body}\")\n" +
+                    "                .log(\"Row: ${body}\")\n" +
+                    "            .end()";
             xmlStep = "<unmarshal>\n" +
-                      "            <flatpack id=\"flatpack\" definition=\"" + fileUri + "\" fixed=\"" + isFlatpackFixed + "\"/>\n" +
-                      "        </unmarshal>\n" +
-                      "        <split>\n" +
-                      "            <simple>${body}</simple>\n" +
-                      "            <log message=\"Row: ${body}\"/>\n" +
-                      "        </split>";
+                    "            <flatpack id=\"flatpack\" definition=\"" + fileUri + "\" fixed=\"" + isFlatpackFixed
+                    + "\"/>\n" +
+                    "        </unmarshal>\n" +
+                    "        <split>\n" +
+                    "            <simple>${body}</simple>\n" +
+                    "            <log message=\"Row: ${body}\"/>\n" +
+                    "        </split>";
         } else if ("groovy".equals(type)) {
             yamlStep = "transform:\n            groovy: \"resource:" + fileUri + "\"";
             javaStep = ".transform().groovy(\"resource:" + fileUri + "\")";
@@ -1309,30 +1443,35 @@ public class TransformationStudioWindow {
         } else if ("joor".equals(type)) {
             if (isFullClass) {
                 String escapedSource = escapeJavaString(classSource);
-                String joorCode = 
-                    "Class<?> clazz;\n" +
-                    "try {\n" +
-                    "    clazz = Class.forName(\"" + fullClassName + "\");\n" +
-                    "} catch (Exception e) {\n" +
-                    "    clazz = org.joor.Reflect.compile(\n" +
-                    "        \"" + fullClassName + "\",\n" +
-                    "        \"" + escapedSource + "\"\n" +
-                    "    ).type();\n" +
-                    "}\n" +
-                    "return org.joor.Reflect.onClass(clazz).call(\"map\", body).get();";
-                
+                String joorCode = "Class<?> clazz;\n" +
+                        "try {\n" +
+                        "    clazz = Class.forName(\"" + fullClassName + "\");\n" +
+                        "} catch (Exception e) {\n" +
+                        "    clazz = org.joor.Reflect.compile(\n" +
+                        "        \"" + fullClassName + "\",\n" +
+                        "        \"" + escapedSource + "\"\n" +
+                        "    ).type();\n" +
+                        "}\n" +
+                        "return org.joor.Reflect.onClass(clazz).call(\"map\", body).get();";
+
                 yamlStep = "transform:\n            joor: |\n" + indentString(joorCode, 14);
                 javaStep = ".transform().joor(\"" + joorCode.replace("\n", "\\n").replace("\"", "\\\"") + "\")";
-                xmlStep = "<transform>\n            <joor>\n" + indentString(joorCode.replace("<", "&lt;").replace(">", "&gt;"), 16) + "\n            </joor>\n        </transform>";
+                xmlStep = "<transform>\n            <joor>\n"
+                        + indentString(joorCode.replace("<", "&lt;").replace(">", "&gt;"), 16)
+                        + "\n            </joor>\n        </transform>";
             } else {
                 yamlStep = "transform:\n            joor: \"resource:" + fileUri + "\"";
                 javaStep = ".transform().joor(\"" + fileUri + "\")";
                 xmlStep = "<transform>\n            <joor>resource:" + fileUri + "</joor>\n        </transform>";
             }
-        } else if ("freemarker".equals(type) && (sourceMsg.trim().startsWith("{") || sourceMsg.trim().startsWith("["))) {
-            yamlStep = "unmarshal:\n            json:\n              library: Jackson\n        - to:\n            uri: \"freemarker:" + fileUri + "\"";
-            javaStep = ".unmarshal().json(org.apache.camel.model.dataformat.JsonLibrary.Jackson)\n            .to(\"freemarker:" + fileUri + "\")";
-            xmlStep = "<unmarshal>\n            <json library=\"Jackson\"/>\n        </unmarshal>\n        <to uri=\"freemarker:" + fileUri + "\"/>";
+        } else if ("freemarker".equals(type)
+                && (sourceMsg.trim().startsWith("{") || sourceMsg.trim().startsWith("["))) {
+            yamlStep = "unmarshal:\n            json:\n              library: Jackson\n        - to:\n            uri: \"freemarker:"
+                    + fileUri + "\"";
+            javaStep = ".unmarshal().json(org.apache.camel.model.dataformat.JsonLibrary.Jackson)\n            .to(\"freemarker:"
+                    + fileUri + "\")";
+            xmlStep = "<unmarshal>\n            <json library=\"Jackson\"/>\n        </unmarshal>\n        <to uri=\"freemarker:"
+                    + fileUri + "\"/>";
         } else {
             yamlStep = "to:\n            uri: \"" + type + ":" + fileUri + "\"";
             javaStep = ".to(\"" + type + ":" + fileUri + "\")";
@@ -1349,69 +1488,70 @@ public class TransformationStudioWindow {
         String xmlHeaderSteps = "";
         if ("freemarker".equals(type)) {
             yamlHeaderSteps = "        - setHeader:\n" +
-                              "            name: \"name\"\n" +
-                              "            constant: \"Camel Developer\"\n" +
-                              "        - setHeader:\n" +
-                              "            name: \"date\"\n" +
-                              "            simple: \"${date:now:yyyy-MM-dd}\"\n";
+                    "            name: \"name\"\n" +
+                    "            constant: \"Camel Developer\"\n" +
+                    "        - setHeader:\n" +
+                    "            name: \"date\"\n" +
+                    "            simple: \"${date:now:yyyy-MM-dd}\"\n";
             javaHeaderSteps = "            .setHeader(\"name\").constant(\"Camel Developer\")\n" +
-                              "            .setHeader(\"date\").simple(\"${date:now:yyyy-MM-dd}\")\n";
+                    "            .setHeader(\"date\").simple(\"${date:now:yyyy-MM-dd}\")\n";
             xmlHeaderSteps = "        <setHeader name=\"name\">\n" +
-                             "            <constant>Camel Developer</constant>\n" +
-                             "        </setHeader>\n" +
-                             "        <setHeader name=\"date\">\n" +
-                             "            <simple>${date:now:yyyy-MM-dd}</simple>\n" +
-                             "        </setHeader>\n";
+                    "            <constant>Camel Developer</constant>\n" +
+                    "        </setHeader>\n" +
+                    "        <setHeader name=\"date\">\n" +
+                    "            <simple>${date:now:yyyy-MM-dd}</simple>\n" +
+                    "        </setHeader>\n";
         }
 
         yamlDsl = "- route:\n" +
-                         "    id: transform-test-route\n" +
-                         "    from:\n" +
-                         "      uri: \"timer:trigger?repeatCount=1&delay=0\"\n" +
-                         "      steps:\n" +
-                         "        - setBody:\n" +
-                         "            constant: |\n" +
-                         (sourceMsg.isEmpty() ? "              [source message]\n" : indentString(sourceMsg, 14) + "\n") +
-                         yamlHeaderSteps +
-                         "        - " + yamlStep + "\n" +
-                         "        - log: \"Parsed Output: ${body}\"";
+                "    id: transform-test-route\n" +
+                "    from:\n" +
+                "      uri: \"timer:trigger?repeatCount=1&delay=0\"\n" +
+                "      steps:\n" +
+                "        - setBody:\n" +
+                "            constant: |\n" +
+                (sourceMsg.isEmpty() ? "              [source message]\n" : indentString(sourceMsg, 14) + "\n") +
+                yamlHeaderSteps +
+                "        - " + yamlStep + "\n" +
+                "        - log: \"Parsed Output: ${body}\"";
 
-            javaDsl = "import org.apache.camel.builder.RouteBuilder;\n\n" +
-                             "public class TransformRoute extends RouteBuilder {\n" +
-                             "    @Override\n" +
-                             "    public void configure() throws Exception {\n" +
-                             "        from(\"timer:trigger?repeatCount=1&delay=0\")\n" +
-                             "            .setBody().constant(\"\"\"\n" +
-                             (sourceMsg.isEmpty() ? "                [source message]\n" : indentString(sourceMsg, 16) + "\n") +
-                             "                \"\"\")\n" +
-                             javaHeaderSteps +
-                             "            " + javaStep + "\n" +
-                             "            .log(\"Parsed Output: ${body}\");\n" +
-                             "    }\n" +
-                             "}";
+        javaDsl = "import org.apache.camel.builder.RouteBuilder;\n\n" +
+                "public class TransformRoute extends RouteBuilder {\n" +
+                "    @Override\n" +
+                "    public void configure() throws Exception {\n" +
+                "        from(\"timer:trigger?repeatCount=1&delay=0\")\n" +
+                "            .setBody().constant(\"\"\"\n" +
+                (sourceMsg.isEmpty() ? "                [source message]\n" : indentString(sourceMsg, 16) + "\n") +
+                "                \"\"\")\n" +
+                javaHeaderSteps +
+                "            " + javaStep + "\n" +
+                "            .log(\"Parsed Output: ${body}\");\n" +
+                "    }\n" +
+                "}";
 
-            String xmlSourceContent = sourceMsg;
-            if (xmlSourceContent.contains("<") || xmlSourceContent.contains("&") || xmlSourceContent.contains(">")) {
-                xmlSourceContent = "<![CDATA[\n" + xmlSourceContent + "\n]]>";
-            }
-            xmlDsl = "<routes xmlns=\"http://camel.apache.org/schema/spring\">\n" +
-                            "    <route id=\"transform-test-route\">\n" +
-                            "        <from uri=\"timer:trigger?repeatCount=1&delay=0\"/>\n" +
-                            "        <setBody>\n" +
-                            "            <constant>\n" +
-                            (sourceMsg.isEmpty() ? "                [source message]\n" : indentString(xmlSourceContent, 16) + "\n") +
-                            "            </constant>\n" +
-                            "        </setBody>\n" +
-                            xmlHeaderSteps +
-                            "        " + xmlStep + "\n" +
-                            "        <log message=\"Parsed Output: ${body}\"/>\n" +
-                            "    </route>\n" +
-                            "</routes>";
+        String xmlSourceContent = sourceMsg;
+        if (xmlSourceContent.contains("<") || xmlSourceContent.contains("&") || xmlSourceContent.contains(">")) {
+            xmlSourceContent = "<![CDATA[\n" + xmlSourceContent + "\n]]>";
+        }
+        xmlDsl = "<routes xmlns=\"http://camel.apache.org/schema/spring\">\n" +
+                "    <route id=\"transform-test-route\">\n" +
+                "        <from uri=\"timer:trigger?repeatCount=1&delay=0\"/>\n" +
+                "        <setBody>\n" +
+                "            <constant>\n" +
+                (sourceMsg.isEmpty() ? "                [source message]\n" : indentString(xmlSourceContent, 16) + "\n")
+                +
+                "            </constant>\n" +
+                "        </setBody>\n" +
+                xmlHeaderSteps +
+                "        " + xmlStep + "\n" +
+                "        <log message=\"Parsed Output: ${body}\"/>\n" +
+                "    </route>\n" +
+                "</routes>";
 
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Camel Route Snippet & Dependency");
         dialog.setHeaderText("Configuration for: " + logicFile.getName());
-        
+
         ButtonType closeButton = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
         dialog.getDialogPane().getButtonTypes().add(closeButton);
 
@@ -1424,7 +1564,7 @@ public class TransformationStudioWindow {
 
         TabPane depTabPane = new TabPane();
         depTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        
+
         java.util.function.Consumer<String> copier = txt -> {
             Clipboard clipboard = Clipboard.getSystemClipboard();
             ClipboardContent content = new ClipboardContent();
@@ -1438,7 +1578,7 @@ public class TransformationStudioWindow {
         TextArea txtJbang = new TextArea(jbangDepsStr);
         txtJbang.setEditable(false);
         txtJbang.setPrefHeight(60);
-        txtJbang.setStyle("-fx-font-family: monospace; -fx-control-inner-background: #252526; -fx-text-fill: #9cdcfe;");
+        txtJbang.getStyleClass().add("snippet-code-area");
         HBox.setHgrow(txtJbang, Priority.ALWAYS);
         Button btnCopyJbang = new Button("", new FontIcon("fas-copy"));
         btnCopyJbang.getStyleClass().addAll("small-action-btn", "btn-copy-text");
@@ -1451,7 +1591,7 @@ public class TransformationStudioWindow {
         TextArea txtGradle = new TextArea(gradleDepsStr);
         txtGradle.setEditable(false);
         txtGradle.setPrefHeight(60);
-        txtGradle.setStyle("-fx-font-family: monospace; -fx-control-inner-background: #252526; -fx-text-fill: #9cdcfe;");
+        txtGradle.getStyleClass().add("snippet-code-area");
         HBox.setHgrow(txtGradle, Priority.ALWAYS);
         Button btnCopyGradle = new Button("", new FontIcon("fas-copy"));
         btnCopyGradle.getStyleClass().addAll("small-action-btn", "btn-copy-text");
@@ -1464,7 +1604,7 @@ public class TransformationStudioWindow {
         TextArea txtMaven = new TextArea(mavenDepsStr);
         txtMaven.setEditable(false);
         txtMaven.setPrefHeight(90);
-        txtMaven.setStyle("-fx-font-family: monospace; -fx-control-inner-background: #252526; -fx-text-fill: #9cdcfe;");
+        txtMaven.getStyleClass().add("snippet-code-area");
         HBox.setHgrow(txtMaven, Priority.ALWAYS);
         Button btnCopyMaven = new Button("", new FontIcon("fas-copy"));
         btnCopyMaven.getStyleClass().addAll("small-action-btn", "btn-copy-text");
@@ -1498,7 +1638,7 @@ public class TransformationStudioWindow {
         TextArea txtYaml = new TextArea(yamlWithDep);
         txtYaml.setEditable(false);
         txtYaml.setPrefHeight(150);
-        txtYaml.setStyle("-fx-font-family: monospace; -fx-control-inner-background: #252526; -fx-text-fill: #ce9178;");
+        txtYaml.getStyleClass().addAll("snippet-code-area", "snippet-dsl");
         HBox.setHgrow(txtYaml, Priority.ALWAYS);
         Button btnCopyYaml = new Button("", new FontIcon("fas-copy"));
         btnCopyYaml.getStyleClass().addAll("small-action-btn", "btn-copy-text");
@@ -1511,7 +1651,7 @@ public class TransformationStudioWindow {
         TextArea txtJava = new TextArea(javaWithDep);
         txtJava.setEditable(false);
         txtJava.setPrefHeight(150);
-        txtJava.setStyle("-fx-font-family: monospace; -fx-control-inner-background: #252526; -fx-text-fill: #ce9178;");
+        txtJava.getStyleClass().addAll("snippet-code-area", "snippet-dsl");
         HBox.setHgrow(txtJava, Priority.ALWAYS);
         Button btnCopyJava = new Button("", new FontIcon("fas-copy"));
         btnCopyJava.getStyleClass().addAll("small-action-btn", "btn-copy-text");
@@ -1524,7 +1664,7 @@ public class TransformationStudioWindow {
         TextArea txtXml = new TextArea(xmlWithDep);
         txtXml.setEditable(false);
         txtXml.setPrefHeight(150);
-        txtXml.setStyle("-fx-font-family: monospace; -fx-control-inner-background: #252526; -fx-text-fill: #ce9178;");
+        txtXml.getStyleClass().addAll("snippet-code-area", "snippet-dsl");
         HBox.setHgrow(txtXml, Priority.ALWAYS);
         Button btnCopyXml = new Button("", new FontIcon("fas-copy"));
         btnCopyXml.getStyleClass().addAll("small-action-btn", "btn-copy-text");
@@ -1538,11 +1678,11 @@ public class TransformationStudioWindow {
         btnCopy.getStyleClass().addAll("btn-copy-all");
         btnCopy.setOnAction(e -> {
             copier.accept("JBang Dependencies:\n" + txtJbang.getText() + "\n\n" +
-                          "Gradle Dependencies:\n" + txtGradle.getText() + "\n\n" +
-                          "Maven Dependencies:\n" + txtMaven.getText() + "\n\n" +
-                          "Java DSL:\n" + txtJava.getText() + "\n\n" +
-                          "YAML DSL:\n" + txtYaml.getText() + "\n\n" +
-                          "XML DSL:\n" + txtXml.getText());
+                    "Gradle Dependencies:\n" + txtGradle.getText() + "\n\n" +
+                    "Maven Dependencies:\n" + txtMaven.getText() + "\n\n" +
+                    "Java DSL:\n" + txtJava.getText() + "\n\n" +
+                    "YAML DSL:\n" + txtYaml.getText() + "\n\n" +
+                    "XML DSL:\n" + txtXml.getText());
         });
 
         Button btnRunSnippet = new Button("Run Route", new FontIcon("fas-play"));
@@ -1562,7 +1702,8 @@ public class TransformationStudioWindow {
                 try {
                     snippetProcess.destroy();
                     snippetProcess.descendants().forEach(ProcessHandle::destroyForcibly);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
                 snippetProcess = null;
             }
             if (consolePane != null) {
@@ -1638,8 +1779,10 @@ public class TransformationStudioWindow {
                 log("╔══ Running Camel Route from Snippet ══╗");
                 log("Command: " + String.join(" ", command));
 
-                pipeSnippetStream(snippetProcess, snippetProcess.getInputStream(), btnRunSnippet, btnStopSnippet, tempFile);
-                pipeSnippetStream(snippetProcess, snippetProcess.getErrorStream(), btnRunSnippet, btnStopSnippet, tempFile);
+                pipeSnippetStream(snippetProcess, snippetProcess.getInputStream(), btnRunSnippet, btnStopSnippet,
+                        tempFile);
+                pipeSnippetStream(snippetProcess, snippetProcess.getErrorStream(), btnRunSnippet, btnStopSnippet,
+                        tempFile);
 
             } catch (Exception ex) {
                 log("Failed to start route process: " + ex.getMessage());
@@ -1655,7 +1798,8 @@ public class TransformationStudioWindow {
                 try {
                     snippetProcess.destroy();
                     snippetProcess.descendants().forEach(ProcessHandle::destroyForcibly);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
                 snippetProcess = null;
             }
             try {
@@ -1687,9 +1831,10 @@ public class TransformationStudioWindow {
 
     private boolean hasStdbuf() {
         String os = System.getProperty("os.name").toLowerCase();
-        if (!os.contains("linux")) return false;
+        if (!os.contains("linux"))
+            return false;
         try {
-            Process p = Runtime.getRuntime().exec(new String[]{"which", "stdbuf"});
+            Process p = Runtime.getRuntime().exec(new String[] { "which", "stdbuf" });
             return p.waitFor() == 0;
         } catch (Exception e) {
             return false;
@@ -1704,14 +1849,16 @@ public class TransformationStudioWindow {
         return uri;
     }
 
-    private void pipeSnippetStream(Process process, java.io.InputStream stream, Button btnRun, Button btnStop, File tempFile) {
+    private void pipeSnippetStream(Process process, java.io.InputStream stream, Button btnRun, Button btnStop,
+            File tempFile) {
         new Thread(() -> {
             byte[] buf = new byte[2048];
             int n;
             try {
                 while ((n = stream.read(buf)) != -1) {
                     final String chunk = new String(buf, 0, n, java.nio.charset.StandardCharsets.UTF_8);
-                    if (consolePane != null) consolePane.log(chunk);
+                    if (consolePane != null)
+                        consolePane.log(chunk);
                 }
             } catch (Exception ignored) {
             } finally {
@@ -1721,8 +1868,13 @@ public class TransformationStudioWindow {
                         btnStop.setDisable(true);
                         try {
                             int code = process.exitValue();
-                            log("Process exited with code: " + code);
-                        } catch (Exception ignored2) {}
+                            if (code == 143 || code == 130) {
+                                log("Process stopped by user.");
+                            } else {
+                                log("Process exited with code: " + code);
+                            }
+                        } catch (Exception ignored2) {
+                        }
                         if (tempFile.exists()) {
                             tempFile.delete();
                         }
@@ -1739,34 +1891,6 @@ public class TransformationStudioWindow {
         }
     }
 
-    public void setTheme(String themeName) {
-        String themeClass = "theme-" + themeName.toLowerCase().replace(" ", "-");
-        Platform.runLater(() -> {
-            if (studioThemeBox != null && !themeName.equals(studioThemeBox.getValue())) {
-                studioThemeBox.setValue(themeName);
-            }
-            applyMonacoTheme(sourceRawEngine, themeClass);
-            applyMonacoTheme(sourceXmlEngine, themeClass);
-            applyMonacoTheme(logicEngine, themeClass);
-            applyMonacoTheme(logicSecondaryEngine, themeClass);
-            applyMonacoTheme(targetEngine, themeClass);
-        });
-    }
-
-    private void applyMonacoTheme(WebEngine engine, String themeClass) {
-        if (engine != null) {
-            try {
-                String bg = "#1e1e1e";
-                if ("theme-intellij-light".equals(themeClass)) bg = "#ffffff";
-                else if ("theme-dracula".equals(themeClass)) bg = "#282a36";
-                else if ("theme-monokai".equals(themeClass)) bg = "#272822";
-                else if ("theme-hacker".equals(themeClass)) bg = "#050505";
-                
-                engine.executeScript("if(window.editor) { monaco.editor.setTheme('" + themeClass + "'); document.body.style.backgroundColor = '" + bg + "'; }");
-            } catch (Exception ignored) {}
-        }
-    }
-
     private void generateSampleMappings(File base) {
         try {
             String filesIndex = readResource("/samplemapping/files.txt");
@@ -1777,7 +1901,8 @@ public class TransformationStudioWindow {
             String[] lines = filesIndex.split("\\r?\\n");
             for (String relativePath : lines) {
                 relativePath = relativePath.trim();
-                if (relativePath.isEmpty()) continue;
+                if (relativePath.isEmpty())
+                    continue;
 
                 // Load content of the resource
                 String content = readResource("/samplemapping/" + relativePath);
@@ -1825,22 +1950,27 @@ public class TransformationStudioWindow {
     }
 
     private boolean isMappingFolder(File file) {
-        if (!file.isDirectory()) return false;
+        if (!file.isDirectory())
+            return false;
         return new File(file, "transformation.json").exists();
     }
 
     private CheckState getFolderCheckState(File folder) {
         java.util.List<File> mappings = new java.util.ArrayList<>();
         collectMappingsRecursive(folder, mappings);
-        if (mappings.isEmpty()) return CheckState.UNCHECKED;
-        
+        if (mappings.isEmpty())
+            return CheckState.UNCHECKED;
+
         int checkedCount = 0;
         for (File f : mappings) {
-            if (checkedFiles.contains(f)) checkedCount++;
+            if (checkedFiles.contains(f))
+                checkedCount++;
         }
-        
-        if (checkedCount == 0) return CheckState.UNCHECKED;
-        if (checkedCount == mappings.size()) return CheckState.CHECKED;
+
+        if (checkedCount == 0)
+            return CheckState.UNCHECKED;
+        if (checkedCount == mappings.size())
+            return CheckState.CHECKED;
         return CheckState.INDETERMINATE;
     }
 
@@ -1860,8 +1990,10 @@ public class TransformationStudioWindow {
 
     private void setCheckedRecursive(File file, boolean checked) {
         if (isMappingFolder(file)) {
-            if (checked) checkedFiles.add(file);
-            else checkedFiles.remove(file);
+            if (checked)
+                checkedFiles.add(file);
+            else
+                checkedFiles.remove(file);
         }
         File[] children = file.listFiles();
         if (children != null) {
@@ -1874,7 +2006,8 @@ public class TransformationStudioWindow {
     }
 
     private static String escapeJavaString(String source) {
-        if (source == null) return "";
+        if (source == null)
+            return "";
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < source.length(); i++) {
             char c = source.charAt(i);

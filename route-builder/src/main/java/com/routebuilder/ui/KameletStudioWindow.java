@@ -298,6 +298,7 @@ public class KameletStudioWindow {
         mainSplit.setDividerPositions(0.20);
         root.setCenter(mainSplit);
 
+        com.routebuilder.ui.components.ThemeManager.registerRoot(root);
         Scene scene = new Scene(root, 1400, 850);
         scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
         if (RouteBuilderApp.currentDynamicCssUri != null) {

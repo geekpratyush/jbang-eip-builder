@@ -1,0 +1,114 @@
+apiVersion: camel.apache.org/v1
+kind: Kamelet
+metadata:
+  name: ibmmq-xa-source
+  labels:
+    camel.apache.org/kamelet.type: "source"
+  annotations:
+    camel.apache.org/kamelet.title: "Kamelet Studio IBM MQ XA Source"
+    camel.apache.org/kamelet.version: "1.0.0"
+spec:
+  definition:
+    title: "Kamelet Studio IBM MQ XA Source"
+    description: "Consumes messages from IBM MQ using an XA connection pool enlisted in a JTA transaction."
+    required:
+      - queuename
+    type: object
+    properties:
+      queuename:
+        type: string
+      hostname:
+        type: string
+        default: "localhost"
+      port:
+        type: integer
+        default: 1414
+      queuemanager:
+        type: string
+        default: "QM1"
+      channel:
+        type: string
+        default: "DEV.APP.SVRCONN"
+      username:
+        type: string
+        default: ""
+      password:
+        type: string
+        format: password
+        default: ""
+      sslciphersuite:
+        type: string
+        default: ""
+      sslpeername:
+        type: string
+        default: ""
+      sslfipsrequired:
+        type: boolean
+        default: false
+      truststorepath:
+        type: string
+        default: ""
+      truststorepassword:
+        type: string
+        format: password
+        default: ""
+      keystorepath:
+        type: string
+        default: ""
+      keystorepassword:
+        type: string
+        format: password
+        default: ""
+      maxconnections:
+        type: integer
+        default: 5
+      idletimeout:
+        type: integer
+        default: 30000
+      transacted:
+        type: boolean
+        default: false
+      cachelevelname:
+        type: string
+        default: "CACHE_NONE"
+      transactionmanager:
+        type: string
+        default: "jtaTxManager"
+  template:
+    beans:
+      - name: sslFactory
+        type: "#class:com.routebuilder.kameletstudio.core.lib.crypto.KameletStudioSslSocketFactory"
+        properties:
+          trustStorePath: '{{truststorepath}}'
+          trustStorePassword: '{{truststorepassword}}'
+          keyStorePath: '{{keystorepath}}'
+          keyStorePassword: '{{keystorepassword}}'
+      - name: mqXAConnectionFactory
+        type: "#class:com.ibm.mq.jakarta.jms.MQXAConnectionFactory"
+        properties:
+          hostName: '{{hostname}}'
+          port: '{{port}}'
+          queueManager: '{{queuemanager}}'
+          channel: '{{channel}}'
+          sslCipherSuite: '{{sslciphersuite}}'
+          sslSocketFactory: '#bean:{{sslFactory}}'
+          sslPeerName: '{{sslpeername}}'
+          sslFipsRequired: '{{sslfipsrequired}}'
+          userName: '{{username}}'
+          password: '{{password}}'
+      - name: mqXAPoolFactory
+        type: "#class:org.messaginghub.pooled.jms.JmsPoolXAConnectionFactory"
+        properties:
+          connectionFactory: '#bean:mqXAConnectionFactory'
+          transactionManager: '#bean:{{transactionmanager}}'
+          maxConnections: '{{maxconnections}}'
+          idleTimeout: '{{idletimeout}}'
+    from:
+      uri: "jms:queue:{{queuename}}"
+      parameters:
+        connectionFactory: "#bean:{{mqXAPoolFactory}}"
+        transactionManager: "#bean:{{transactionmanager}}"
+        transacted: "{{transacted}}"
+        cacheLevelName: "{{cachelevelname}}"
+      steps:
+        - to: "kamelet:sink"

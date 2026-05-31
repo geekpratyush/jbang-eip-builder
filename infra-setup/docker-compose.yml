@@ -1,0 +1,105 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kerberos-kdc:
+    image: gcavalcante8808/krb5-server:latest
+    container_name: kerberos-kdc
+    environment:
+      KRB5_REALM: EXAMPLE.COM
+      KRB5_KDC: kerberos-kdc
+      KRB5_PASS: kdcpassword
+    ports:
+      - "88:88/udp"
+      - "88:88/tcp"
+      - "749:749/tcp"
+    volumes:
+      - ./certs/apache-kafka:/var/keytabs
+
+  ibmmq:
+    image: icr.io/ibm-messaging/mq:9.3.2.0-r1
+    container_name: ibmmq
+    environment:
+      LICENSE: accept
+      MQ_QMGR_NAME: QM1
+      MQ_KEY_REPOSITORY: /etc/mqm/pki/key
+      MQ_KEY_STORE_PASSWORD: mqpassword
+    ports:
+      - "1414:1414"
+      - "9443:9443"
+    volumes:
+      - ./certs/ibmmq/key.p12:/etc/mqm/pki/key.p12:ro
+      - ./mq-init.mqsc:/etc/mqm/mq-init.mqsc:ro
+    # Note: For some versions of MQ, you might need to use MQSC command specifically
+    # but many dev images automatically run scripts in /etc/mqm/ if pointed to.
+    # Alternatively, use MQ_SC_COMMANDS: /etc/mqm/mq-init.mqsc if supported.
+
+
+  apache-kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: apache-kafka
+    depends_on:
+      - zookeeper
+      - kerberos-kdc
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181/apache
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://apache-kafka:9092,SASL_PLAINTEXT://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SASL_PLAINTEXT:SASL_PLAINTEXT
+      KAFKA_SASL_ENABLED_MECHANISMS: GSSAPI
+      KAFKA_SASL_KERBEROS_SERVICE_NAME: kafka
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/secrets/kafka_server_jaas.conf -Djava.security.krb5.conf=/etc/krb5.conf -Dzookeeper.sasl.client=false"
+    volumes:
+      - ./certs/apache-kafka:/etc/kafka/secrets
+      - ./krb5.conf:/etc/krb5.conf:ro
+
+  confluent-kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: confluent-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "19093:19093"
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181/confluent
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://confluent-kafka:19092,SSL://localhost:19093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SSL:SSL
+      KAFKA_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.broker.keystore.p12
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.broker.keystore.p12
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: password.txt
+      KAFKA_SSL_KEY_CREDENTIALS: password.txt
+      KAFKA_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.broker.truststore.p12
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.broker.truststore.p12
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: password.txt
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+    volumes:
+      - ./certs/confluent-kafka:/etc/kafka/secrets
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: dbuser
+      MONGO_INITDB_ROOT_PASSWORD: dbpassword
+      MONGO_INITDB_DATABASE: testdb
+    volumes:
+      - ./certs/mongodb:/etc/ssl
+    command: >
+      mongod --tlsMode preferTLS
+      --tlsCertificateKeyFile /etc/ssl/mongodb.pem
+      --tlsCAFile /etc/ssl/ca.crt
+      --tlsAllowConnectionsWithoutCertificates
+

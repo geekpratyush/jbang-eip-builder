@@ -36,3 +36,12 @@ lsp_log*.txt
 /test-project-workspace/infra-simulator/
 /infra-simulator/
 
+# Maven
+target/
+dependency-reduced-pom.xml
+
+# Standalone Execution binaries
+db-update/*.jar
+db-update/.env
+.env
+**/.env

@@ -21,15 +21,17 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
-import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.LineNumberFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.prefs.Preferences;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DiagramPane extends VBox {
 
@@ -52,6 +54,10 @@ public class DiagramPane extends VBox {
     private StackPane contentStack;
     private ScrollPane propScroll;
     private Runnable onClose, onMaximize;
+
+    // Shared toolbar action state (reused by both inline and detached toolbars)
+    private Button inlineLBtn, inlineStackBtn;
+    private javafx.stage.FileChooser svgFileChooser;
     private ContextMenu activeContextMenu;
     private ClassDiagramPane classDiagramPane;
     
@@ -81,7 +87,7 @@ public class DiagramPane extends VBox {
         Label title = new Label("VISUAL: EIP DIAGRAM");
         title.getStyleClass().add("pane-title");
 
-        HBox toolbar = createToolbar();
+        HBox toolbar = buildToolbar(false);
         rebuildContainer();
 
         zoomGroup = new Group(diagramContainer);
@@ -111,38 +117,61 @@ public class DiagramPane extends VBox {
         getChildren().addAll(title, toolbar, contentStack);
     }
 
-    private HBox createToolbar() {
-        HBox tb = new HBox(12); tb.setAlignment(Pos.CENTER_LEFT); tb.setPadding(new Insets(10)); tb.getStyleClass().add("diagram-toolbar");
-        
-        Button lBtn = new Button(); lBtn.setGraphic(new FontIcon(isHorizontal ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down"));
-        lBtn.getStyleClass().addAll("editor-btn");
-        lBtn.setTooltip(new Tooltip("Toggle Flow (Top-Down / Left-Right)"));
-        lBtn.setOnAction(e -> { 
-            isHorizontal = !isHorizontal; prefs.putBoolean("isHorizontal", isHorizontal);
-            lBtn.setGraphic(new FontIcon(isHorizontal ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down")); 
-            rebuildContainer(); renderFromRoot(); 
-        });
+    /** Builds the diagram toolbar. When {@code detached=true} the close button re-docks instead of
+     *  closing the panel, and the detach button is replaced by a "Return to Panel" button. */
+    private HBox buildToolbar(boolean detached) {
+        HBox tb = new HBox(12);
+        tb.setAlignment(Pos.CENTER_LEFT);
+        tb.setPadding(new Insets(10));
+        tb.getStyleClass().add("diagram-toolbar");
 
-        Button stackBtn = new Button(); stackBtn.setGraphic(new FontIcon("fas-layer-group"));
+        // --- Flow direction toggle ---
+        Button lBtn = new Button();
+        lBtn.setGraphic(new FontIcon(isHorizontal ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down"));
+        lBtn.getStyleClass().add("editor-btn");
+        lBtn.setTooltip(new Tooltip("Toggle Flow (Top-Down / Left-Right)"));
+        lBtn.setOnAction(e -> {
+            isHorizontal = !isHorizontal;
+            prefs.putBoolean("isHorizontal", isHorizontal);
+            // keep both toolbar copies in sync
+            lBtn.setGraphic(new FontIcon(isHorizontal ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down"));
+            if (inlineLBtn != null && inlineLBtn != lBtn)
+                inlineLBtn.setGraphic(new FontIcon(isHorizontal ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down"));
+            rebuildContainer(); renderFromRoot();
+        });
+        if (!detached) inlineLBtn = lBtn;
+
+        // --- Multi-route stacking toggle ---
+        Button stackBtn = new Button();
+        stackBtn.setGraphic(new FontIcon("fas-layer-group"));
         stackBtn.getStyleClass().add("editor-btn");
         stackBtn.setTooltip(new Tooltip("Toggle Multi-Route Stacking (Side-by-Side / Vertical)"));
-        stackBtn.setOnAction(e -> { 
-            isStackedSideBySide = !isStackedSideBySide; 
+        stackBtn.setOnAction(e -> {
+            isStackedSideBySide = !isStackedSideBySide;
             prefs.putBoolean("isStackedSideBySide", isStackedSideBySide);
-            rebuildContainer(); renderFromRoot(); 
+            rebuildContainer(); renderFromRoot();
         });
 
-        zoomScale = new Scale(1, 1);
+        // --- Zoom controls (initialise zoomScale once) ---
+        if (!detached && zoomScale == null) zoomScale = new Scale(1, 1);
         Button zIn = new Button("", new FontIcon("fas-search-plus")); zIn.getStyleClass().add("editor-btn");
-        zIn.setOnAction(e -> { zoomScale.setX(zoomScale.getX()*1.1); zoomScale.setY(zoomScale.getY()*1.1); });
+        zIn.setTooltip(new Tooltip("Zoom In"));
+        zIn.setOnAction(e -> { zoomScale.setX(zoomScale.getX() * 1.1); zoomScale.setY(zoomScale.getY() * 1.1); });
         Button zOut = new Button("", new FontIcon("fas-search-minus")); zOut.getStyleClass().add("editor-btn");
-        zOut.setOnAction(e -> { zoomScale.setX(zoomScale.getX()*0.9); zoomScale.setY(zoomScale.getY()*0.9); });
-        
+        zOut.setTooltip(new Tooltip("Zoom Out"));
+        zOut.setOnAction(e -> { zoomScale.setX(zoomScale.getX() * 0.9); zoomScale.setY(zoomScale.getY() * 0.9); });
+
         Button fitBtn = new Button("", new FontIcon("fas-compress")); fitBtn.getStyleClass().add("editor-btn");
         fitBtn.setTooltip(new Tooltip("Fit to Screen / Reset View"));
-        fitBtn.setOnAction(e -> { zoomScale.setX(1.0); zoomScale.setY(1.0); zoomGroup.setTranslateX(0); zoomGroup.setTranslateY(0); rebuildContainer(); renderFromRoot(); });
+        fitBtn.setOnAction(e -> {
+            zoomScale.setX(1.0); zoomScale.setY(1.0);
+            zoomGroup.setTranslateX(0); zoomGroup.setTranslateY(0);
+            rebuildContainer(); renderFromRoot();
+        });
 
+        // --- Copy image ---
         Button copyImg = new Button("", new FontIcon("fas-copy")); copyImg.getStyleClass().add("editor-btn");
+        copyImg.setTooltip(new Tooltip("Copy Diagram to Clipboard"));
         copyImg.setOnAction(e -> {
             javafx.scene.image.WritableImage img = snapshotDiagram();
             if (img == null) return;
@@ -150,26 +179,86 @@ public class DiagramPane extends VBox {
             Clipboard.getSystemClipboard().setContent(c);
         });
 
-        Button detachBtn = new Button(); detachBtn.setGraphic(new FontIcon("fas-external-link-alt"));
+        // --- Save as SVG ---
+        Button svgBtn = new Button("", new FontIcon("fas-file-export")); svgBtn.getStyleClass().add("editor-btn");
+        svgBtn.setTooltip(new Tooltip("Save Diagram as SVG"));
+        svgBtn.setOnAction(e -> saveSvg());
+
+        // --- Pop-out / Re-dock ---
+        Button detachBtn = new Button();
+        detachBtn.setGraphic(new FontIcon(detached ? "fas-compress-arrows-alt" : "fas-external-link-alt"));
         detachBtn.getStyleClass().add("editor-btn");
-        detachBtn.setTooltip(new Tooltip("Pop-out Diagram to Separate Window"));
+        detachBtn.setTooltip(new Tooltip(detached ? "Return to Panel" : "Pop-out Diagram to Separate Window"));
         detachBtn.setOnAction(e -> toggleDetach());
 
-        Button clsBtn = new Button("", new FontIcon("fas-times")); clsBtn.getStyleClass().add("editor-btn");
-        clsBtn.setOnAction(e -> { if(onClose != null) onClose.run(); });
+        Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        tb.getChildren().addAll(lBtn, stackBtn, zIn, zOut, fitBtn, new Separator(), copyImg, detachBtn, new Region(){{HBox.setHgrow(this, Priority.ALWAYS);}}, clsBtn);
+        // --- Close (only on the inline panel) ---
+        if (!detached) {
+            Button clsBtn = new Button("", new FontIcon("fas-times")); clsBtn.getStyleClass().add("editor-btn");
+            clsBtn.setTooltip(new Tooltip("Close Diagram Panel"));
+            clsBtn.setOnAction(e -> { if (onClose != null) onClose.run(); });
+            tb.getChildren().addAll(lBtn, stackBtn, zIn, zOut, fitBtn, new Separator(), copyImg, svgBtn, detachBtn, spacer, clsBtn);
+        } else {
+            tb.getChildren().addAll(lBtn, stackBtn, zIn, zOut, fitBtn, new Separator(), copyImg, svgBtn, detachBtn, spacer);
+        }
         return tb;
+    }
+
+    /** Exports the current diagram as a basic SVG using a JavaFX snapshot converted to a PNG data-URI embedded in SVG. */
+    private void saveSvg() {
+        if (diagramContainer == null) return;
+        if (svgFileChooser == null) {
+            svgFileChooser = new javafx.stage.FileChooser();
+            svgFileChooser.setTitle("Save Diagram as SVG");
+            svgFileChooser.getExtensionFilters().add(
+                new javafx.stage.FileChooser.ExtensionFilter("SVG Image", "*.svg"));
+            if (currentFile != null) svgFileChooser.setInitialFileName(
+                currentFile.getName().replaceAll("\\.[^.]+$", "") + "-diagram.svg");
+        }
+        javafx.stage.Window owner = getScene() != null ? getScene().getWindow() :
+                (detachedStage != null ? detachedStage : null);
+        File out = svgFileChooser.showSaveDialog(owner);
+        if (out == null) return;
+
+        try {
+            // Snapshot to PNG then embed as a data-URI inside an SVG envelope
+            javafx.scene.image.WritableImage wi = snapshotDiagram();
+            if (wi == null) return;
+            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+            javax.imageio.ImageIO.write(
+                javafx.embed.swing.SwingFXUtils.fromFXImage(wi, null), "PNG", bos);
+            String b64 = java.util.Base64.getEncoder().encodeToString(bos.toByteArray());
+            int w = (int) wi.getWidth(), h = (int) wi.getHeight();
+            String svg = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+                + "<svg xmlns=\"http://www.w3.org/2000/svg\" "
+                + "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
+                + "width=\"" + w + "\" height=\"" + h + "\">\n"
+                + "  <image xlink:href=\"data:image/png;base64," + b64 + "\" "
+                + "x=\"0\" y=\"0\" width=\"" + w + "\" height=\"" + h + "\"/>\n"
+                + "</svg>\n";
+            java.nio.file.Files.writeString(out.toPath(), svg);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void toggleDetach() {
         if (detachedStage == null) {
             detachedStage = new Stage();
-            detachedStage.setTitle("Diagram Studio - " + (currentFile != null ? currentFile.getName() : "Untitled"));
+            detachedStage.setTitle("EIP Diagram — " + (currentFile != null ? currentFile.getName() : "Untitled"));
             getChildren().remove(contentStack); getChildren().add(detachedPlaceholder);
-            BorderPane detachedRoot = new BorderPane(contentStack);
+
+            // Build a full toolbar for the detached window
+            HBox detachedToolbar = buildToolbar(true);
+
+            BorderPane detachedRoot = new BorderPane();
+            detachedRoot.setTop(detachedToolbar);
+            detachedRoot.setCenter(contentStack);
             detachedRoot.getStyleClass().addAll("app-root", RouteBuilderApp.currentThemeClass);
-            Scene scene = new Scene(detachedRoot, 1200, 800);
+            com.routebuilder.ui.components.ThemeManager.registerRoot(detachedRoot);
+
+            Scene scene = new Scene(detachedRoot, 1280, 860);
             scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
             detachedStage.setScene(scene);
             detachedStage.setOnCloseRequest(e -> toggleDetach());
@@ -196,6 +285,13 @@ public class DiagramPane extends VBox {
             new MenuItem("New Route", new FontIcon("fas-route")) {{ setOnAction(e -> {
                 try {
                     JsonNode n = yamlMapper.readTree("- route:\n    from:\n      uri: direct:start\n      steps:\n        - log: New Route started");
+                    if (rootNode == null || !rootNode.isArray()) rootNode = yamlMapper.createArrayNode();
+                    ((ArrayNode)rootNode).add(n.get(0)); updateYamlFromRoot();
+                } catch (Exception ignored) {}
+            }); }},
+            new MenuItem("New Beans Configuration", new FontIcon("fas-cubes")) {{ setOnAction(e -> {
+                try {
+                    JsonNode n = yamlMapper.readTree("- beans:\n    - name: \"auditProcessor\"\n      type: \"com.sre.engine.audit.AuditShaperProcessor\"");
                     if (rootNode == null || !rootNode.isArray()) rootNode = yamlMapper.createArrayNode();
                     ((ArrayNode)rootNode).add(n.get(0)); updateYamlFromRoot();
                 } catch (Exception ignored) {}
@@ -267,8 +363,26 @@ public class DiagramPane extends VBox {
                 if (item.has("route")) renderRouteNode(item.get("route"), i, arr);
                 else if (item.has("onException")) renderOnExceptionNode(item.get("onException"), i, arr);
                 else if (item.has("rest")) renderRestNode(item.get("rest"), i, arr);
+                else if (item.has("beans")) renderBeansNode(item.get("beans"), i, arr);
             }
         }
+    }
+
+    private void renderBeansNode(JsonNode beans, int idx, ArrayNode arr) {
+        Pane w = createBaseContainer(0);
+        StackPane node = createEipNode("BEANS", "Configuration", "fas-cubes", "node-nested");
+        node.setOnMouseClicked(e -> selectNode(node, "beans", beans, arr, idx));
+        
+        ContextMenu m = new ContextMenu();
+        m.getItems().addAll(
+            new MenuItem("Edit Beans", new FontIcon("fas-edit")) {{ setOnAction(e -> selectNode(node, "beans", beans, arr, idx)); }},
+            new SeparatorMenuItem(),
+            new MenuItem("Delete Beans Config", new FontIcon("fas-trash")) {{ setOnAction(e -> { arr.remove(idx); renderFromRoot(); updateYamlFromRoot(); closePropertyPane(); }); }}
+        );
+        node.setOnContextMenuRequested(e -> { if(activeContextMenu!=null) activeContextMenu.hide(); m.show(node, e.getScreenX(), e.getScreenY()); activeContextMenu=m; e.consume(); });
+        
+        w.getChildren().add(node);
+        diagramContainer.getChildren().add(w);
     }
 
     private Pane createBaseContainer(double spacing) {
@@ -514,12 +628,16 @@ public class DiagramPane extends VBox {
     private void renderPropertyForm(String name, JsonNode conf, ArrayNode arr, int idx) {
         propertyPane.getChildren().clear();
         HBox head = new HBox(new Label("EDIT " + name.toUpperCase()) {{ setStyle("-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #007acc;"); }}, new Region() {{ HBox.setHgrow(this, Priority.ALWAYS); }}, new Button("X") {{ setOnAction(e -> closePropertyPane()); }});
-        CodeArea ca = new CodeArea(extractDetails(conf)) {{ setPrefHeight(250); getStyleClass().add("syntax-editor"); setParagraphGraphicFactory(LineNumberFactory.get(this)); setStyle("-fx-font-family: 'JetBrains Mono';"); }};
+        
+        com.routebuilder.ui.components.MonacoEditorPane editor = new com.routebuilder.ui.components.MonacoEditorPane("yaml");
+        editor.setPrefHeight(300);
+        editor.setText(extractDetails(conf));
+
         Button save = new Button("Save & Close") {{ setOnAction(e -> { 
             try { 
-                JsonNode p = yamlMapper.readTree(ca.getText()); ObjectNode n = yamlMapper.createObjectNode(); n.set(name, p); arr.set(idx, n); renderFromRoot(); updateYamlFromRoot(); closePropertyPane(); 
+                JsonNode p = yamlMapper.readTree(editor.getText()); ObjectNode n = yamlMapper.createObjectNode(); n.set(name, p); arr.set(idx, n); renderFromRoot(); updateYamlFromRoot(); closePropertyPane(); 
             } catch (Exception ex) { 
-                ObjectNode n = yamlMapper.createObjectNode(); n.put(name, ca.getText()); arr.set(idx, n); renderFromRoot(); updateYamlFromRoot(); closePropertyPane(); 
+                ObjectNode n = yamlMapper.createObjectNode(); n.put(name, editor.getText()); arr.set(idx, n); renderFromRoot(); updateYamlFromRoot(); closePropertyPane(); 
             } 
         }); }};
         
@@ -532,10 +650,10 @@ public class DiagramPane extends VBox {
         if (name.equalsIgnoreCase("setBody")) {
             Label tl = new Label("Quick Templates:"); FlowPane fp = new FlowPane(5, 5);
             String[][] bt = { {"body.xml", "${body.xml}"}, {"body.json", "${body.json}"}, {"headers", "${headers}"} };
-            for(String[] b : bt) { Button btn = new Button(b[0]); btn.setOnAction(e -> ca.replaceText(b[1])); fp.getChildren().add(btn); }
-            propertyPane.getChildren().addAll(head, new Label("Configuration:"), ca, tl, fp, save, actions);
+            for(String[] b : bt) { Button btn = new Button(b[0]); btn.setOnAction(e -> editor.setText(b[1])); fp.getChildren().add(btn); }
+            propertyPane.getChildren().addAll(head, new Label("Configuration:"), editor, tl, fp, save, actions);
         } else {
-            propertyPane.getChildren().addAll(head, new Label("Configuration:"), ca, save, actions);
+            propertyPane.getChildren().addAll(head, new Label("Configuration:"), editor, save, actions);
         }
     }
 
@@ -566,6 +684,15 @@ public class DiagramPane extends VBox {
         Pane w = createBaseContainer(0);
         StackPane node = createEipNode("EXCEPTION", "Global", "fas-exclamation-triangle", "node-nested");
         node.setOnMouseClicked(e -> selectNode(node, "onException", exc, arr, idx));
+        
+        ContextMenu m = new ContextMenu();
+        m.getItems().addAll(
+            new MenuItem("Edit Exception", new FontIcon("fas-edit")) {{ setOnAction(e -> selectNode(node, "onException", exc, arr, idx)); }},
+            new SeparatorMenuItem(),
+            new MenuItem("Delete Exception Handler", new FontIcon("fas-trash")) {{ setOnAction(e -> { arr.remove(idx); renderFromRoot(); updateYamlFromRoot(); closePropertyPane(); }); }}
+        );
+        node.setOnContextMenuRequested(e -> { if(activeContextMenu!=null) activeContextMenu.hide(); m.show(node, e.getScreenX(), e.getScreenY()); activeContextMenu=m; e.consume(); });
+
         w.getChildren().add(node);
         if (exc.has("steps")) renderSteps(exc.get("steps"), w); diagramContainer.getChildren().add(w);
     }
@@ -574,9 +701,97 @@ public class DiagramPane extends VBox {
         Pane w = createBaseContainer(0);
         StackPane node = createEipNode("REST", rest.has("path")?rest.get("path").asText():"/", "fas-server", "node-from");
         node.setOnMouseClicked(e -> selectNode(node, "rest", rest, arr, idx));
+        
+        ContextMenu m = new ContextMenu();
+        m.getItems().addAll(
+            new MenuItem("Edit REST", new FontIcon("fas-edit")) {{ setOnAction(e -> selectNode(node, "rest", rest, arr, idx)); }},
+            new SeparatorMenuItem(),
+            new MenuItem("Delete REST Config", new FontIcon("fas-trash")) {{ setOnAction(e -> { arr.remove(idx); renderFromRoot(); updateYamlFromRoot(); closePropertyPane(); }); }}
+        );
+        node.setOnContextMenuRequested(e -> { if(activeContextMenu!=null) activeContextMenu.hide(); m.show(node, e.getScreenX(), e.getScreenY()); activeContextMenu=m; e.consume(); });
+
         w.getChildren().add(node);
         diagramContainer.getChildren().add(w);
     }
 
     private javafx.scene.image.WritableImage snapshotDiagram() { if(diagramContainer==null) return null; return diagramContainer.snapshot(null, null); }
+
+    public static class BeanData {
+        public String name;
+        public String type;
+        public boolean isLocal;
+        public java.util.Map<String, String> properties = new java.util.HashMap<>();
+    }
+
+    public List<BeanData> parseYamlBeans(JsonNode beansNode) {
+        List<BeanData> result = new java.util.ArrayList<>();
+        if (beansNode != null && beansNode.isArray()) {
+            for (JsonNode bean : beansNode) {
+                BeanData data = new BeanData();
+                data.name = bean.has("name") ? bean.get("name").asText() : "Unnamed";
+                String type = bean.has("type") ? bean.get("type").asText() : "Object";
+                if (type.startsWith("#class:")) type = type.substring(7);
+                data.type = type;
+                data.isLocal = true;
+                if (bean.has("properties") && bean.get("properties").isObject()) {
+                    bean.get("properties").fields().forEachRemaining(entry -> {
+                        data.properties.put(entry.getKey(), entry.getValue().asText());
+                    });
+                }
+                result.add(data);
+            }
+            
+            List<BeanData> externals = new java.util.ArrayList<>();
+            for (BeanData data : result) {
+                data.properties.values().forEach(val -> {
+                    if (val != null && val.startsWith("#")) {
+                        String rawRef = val.substring(1);
+                        if (rawRef.startsWith("bean:")) rawRef = rawRef.substring(5);
+                        final String finalRef = rawRef;
+                        if (result.stream().noneMatch(b -> b.name.equals(finalRef)) && 
+                            externals.stream().noneMatch(b -> b.name.equals(finalRef))) {
+                            BeanData ext = new BeanData();
+                            ext.name = finalRef;
+                            ext.type = "External Ref";
+                            ext.isLocal = false;
+                            externals.add(ext);
+                        }
+                    }
+                });
+            }
+            result.addAll(externals);
+        }
+        return result;
+    }
+
+    public List<BeanData> parseJavaBeans(String javaContent, File file) {
+        List<BeanData> result = new java.util.ArrayList<>();
+        Pattern clsPattern = Pattern.compile("public\\s+class\\s+([A-Za-z0-9_]+)");
+        Matcher clsMatcher = clsPattern.matcher(javaContent);
+        if (clsMatcher.find()) {
+            BeanData data = new BeanData();
+            data.name = clsMatcher.group(1);
+            data.type = data.name;
+            data.isLocal = true;
+            
+            Pattern fieldPattern = Pattern.compile("private\\s+([A-Za-z0-9_]+)\\s+([A-Za-z0-9_]+)\\s*;");
+            Matcher fieldMatcher = fieldPattern.matcher(javaContent);
+            while (fieldMatcher.find()) {
+                data.properties.put(fieldMatcher.group(2), fieldMatcher.group(1));
+            }
+            result.add(data);
+            
+            if (file != null && file.getParentFile() != null) {
+                for (String type : new java.util.HashSet<>(data.properties.values())) {
+                    File other = new File(file.getParentFile(), type + ".java");
+                    if (other.exists() && result.stream().noneMatch(b -> b.name.equals(type))) {
+                        try {
+                            result.addAll(parseJavaBeans(Files.readString(other.toPath()), other));
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+        }
+        return result;
+    }
 }

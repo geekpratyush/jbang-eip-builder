@@ -210,6 +210,7 @@ public class DependencyCatalogWindow {
 
         root.getChildren().addAll(lblTitle, lblSubtitle, tableView, btnBox);
 
+        com.routebuilder.ui.components.ThemeManager.registerRoot(root);
         Scene scene = new Scene(root, 900, 500);
         scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
         if (RouteBuilderApp.currentDynamicCssUri != null) {

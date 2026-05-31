@@ -1982,3 +1982,78 @@
 .syntax-editor .caret {
     -fx-stroke: -fx-text-base-color;
 }
+
+/* ==========================================================================
+   Camel Route Snippet & Dependency Dialog — theme-aware TextArea
+   ========================================================================== */
+.snippet-code-area {
+    -fx-control-inner-background: #252526;
+    -fx-text-fill: #9cdcfe;
+    -fx-font-family: monospace;
+}
+.snippet-code-area.snippet-dsl {
+    -fx-text-fill: #ce9178;
+}
+
+/* IntelliJ Light */
+.theme-intellij-light .snippet-code-area {
+    -fx-control-inner-background: #ffffff;
+    -fx-text-fill: #003d73;
+}
+.theme-intellij-light .snippet-code-area.snippet-dsl {
+    -fx-text-fill: #7a3e9d;
+}
+
+/* Dracula */
+.theme-dracula .snippet-code-area {
+    -fx-control-inner-background: #282a36;
+    -fx-text-fill: #8be9fd;
+}
+.theme-dracula .snippet-code-area.snippet-dsl {
+    -fx-text-fill: #ffb86c;
+}
+
+/* Monokai */
+.theme-monokai .snippet-code-area {
+    -fx-control-inner-background: #272822;
+    -fx-text-fill: #66d9e8;
+}
+.theme-monokai .snippet-code-area.snippet-dsl {
+    -fx-text-fill: #e6db74;
+}
+
+/* Hacker */
+.theme-hacker .snippet-code-area {
+    -fx-control-inner-background: #050505;
+    -fx-text-fill: #00cc00;
+}
+.theme-hacker .snippet-code-area.snippet-dsl {
+    -fx-text-fill: #00ff41;
+}
+
+/* One Dark */
+.theme-one-dark .snippet-code-area {
+    -fx-control-inner-background: #21252b;
+    -fx-text-fill: #61afef;
+}
+.theme-one-dark .snippet-code-area.snippet-dsl {
+    -fx-text-fill: #e5c07b;
+}
+
+/* GitHub Light */
+.theme-github-light .snippet-code-area {
+    -fx-control-inner-background: #f6f8fa;
+    -fx-text-fill: #0550ae;
+}
+.theme-github-light .snippet-code-area.snippet-dsl {
+    -fx-text-fill: #953800;
+}
+
+/* Solarized Dark */
+.theme-solarized-dark .snippet-code-area {
+    -fx-control-inner-background: #073642;
+    -fx-text-fill: #268bd2;
+}
+.theme-solarized-dark .snippet-code-area.snippet-dsl {
+    -fx-text-fill: #cb4b16;
+}

@@ -28,13 +28,31 @@ public class YamlEditorPane extends VBox {
     private String pendingText = "";
     private boolean isUpdatingFromBridge = false;
     private JavaBridge bridge = new JavaBridge();
-    private String currentTheme = RouteBuilderApp.currentThemeName.equalsIgnoreCase("IntelliJ Light") ? "vs" : "vs-dark";
+    private String currentTheme = com.routebuilder.ui.components.ThemeManager.getCurrentThemeClass().equals("theme-intellij-light") || com.routebuilder.ui.components.ThemeManager.getCurrentThemeClass().equals("theme-github-light") ? "vs" : "vs-dark";
 
     private Consumer<String> onTextChanged;
     private Runnable onFileSaved;
     private Label title;
     private File currentFile = null;
     private com.routebuilder.lsp.LspManager lspManager;
+
+    public void setTheme(String themeName) {
+        String themeClass = com.routebuilder.ui.components.ThemeManager.getCurrentThemeClass();
+        String theme = "vs-dark";
+        String bgColor = "#1e1e1e";
+        if (themeClass.equals("theme-intellij-light") || themeClass.equals("theme-github-light")) {
+            theme = "vs"; bgColor = "#ffffff";
+        } else if (themeClass.equals("theme-hacker") || themeClass.equals("theme-cyberpunk")) {
+            theme = "hc-black"; bgColor = "#000000";
+        }
+        
+        currentTheme = theme;
+        if (initialized && engine != null) {
+            try {
+                engine.executeScript("window.setTheme('" + theme + "'); document.body.style.backgroundColor = '" + bgColor + "';");
+            } catch (Exception e) {}
+        }
+    }
 
     public void setLspManager(com.routebuilder.lsp.LspManager lspManager) {
         this.lspManager = lspManager;
@@ -53,6 +71,12 @@ public class YamlEditorPane extends VBox {
             });
         }
     }
+
+    private Button btnPlayFile;
+    private Button btnStopFile;
+    
+    public Button getBtnPlayFile() { return btnPlayFile; }
+    public Button getBtnStopFile() { return btnStopFile; }
 
     public YamlEditorPane(Consumer<String> onTextChanged, Runnable onFileSaved) {
         this.onTextChanged = onTextChanged;
@@ -117,7 +141,7 @@ public class YamlEditorPane extends VBox {
             if (onClose != null) onClose.run();
         });
 
-        Button btnPlayFile = new Button();
+        btnPlayFile = new Button();
         btnPlayFile.setGraphic(new FontIcon("fas-play"));
         btnPlayFile.setTooltip(new Tooltip("Play Current File"));
         btnPlayFile.getStyleClass().addAll("editor-btn", "btn-play-file");
@@ -125,10 +149,11 @@ public class YamlEditorPane extends VBox {
             if (onPlayFile != null && currentFile != null) onPlayFile.accept(currentFile, "dev");
         });
 
-        Button btnStopFile = new Button();
+        btnStopFile = new Button();
         btnStopFile.setGraphic(new FontIcon("fas-stop"));
         btnStopFile.setTooltip(new Tooltip("Stop Current File"));
         btnStopFile.getStyleClass().addAll("editor-btn", "btn-stop-file");
+        btnStopFile.setDisable(true);
         btnStopFile.setOnAction(e -> {
             if (onStopFile != null) onStopFile.run();
         });
@@ -343,16 +368,6 @@ public class YamlEditorPane extends VBox {
             "    </script>\n" +
             "</body>\n" +
             "</html>";
-    }
-
-    public void setTheme(String themeName) {
-        String monacoTheme = themeName.equalsIgnoreCase("IntelliJ Light") ? "vs" : "vs-dark";
-        if (!monacoTheme.equals(currentTheme)) {
-            currentTheme = monacoTheme;
-            if (initialized) {
-                engine.executeScript("if(window.setTheme) window.setTheme('" + currentTheme + "');");
-            }
-        }
     }
 
     private Runnable onToggleDiagram;

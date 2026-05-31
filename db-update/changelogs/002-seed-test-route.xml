@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ext="http://www.liquibase.org/xml/ns/mongodb"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd
+        http://www.liquibase.org/xml/ns/mongodb
+        http://www.liquibase.org/xml/ns/mongodb/liquibase-mongodb-latest.xsd">
+
+    <changeSet id="seed-test-route" author="routebuilder">
+        <ext:insertMany collectionName="camel_routes">
+            <ext:documents><![CDATA[[
+                {
+                    "_id": {
+                        "route_id": "test-route",
+                        "version": 1.0
+                    },
+                    "route_id": "test-route",
+                    "version": 1.0,
+                    "route_format": "yaml",
+                    "content": "- from:\n    uri: timer:foo\n    steps:\n      - log: \"Hello from persisted standalone route!\"",
+                    "enabled": true
+                }
+            ]]]></ext:documents>
+        </ext:insertMany>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,31 @@
+# STEP 2: Field Manipulation (Add, Alter, Delete)
+# Goal: Clean and reshape a database-like structure.
+# camel-k: dependency=mvn:com.sre.engine:sre-audit-crypto:1.0.0-SNAPSHOT
+
+- beans:
+    - name: "auditShaper"
+      type: "com.sre.engine.audit.AuditShaperProcessor"
+
+- route:
+    id: "02-field-manipulation"
+    from:
+      uri: "timer:step2?repeatCount=1"
+      steps:
+        # Simulate a database row
+        - setBody:
+            constant: '{"id": 101, "raw_data": "secret_v1", "temp_field": "delete_me"}'
+        
+        # 1. Add new field
+        # 2. Alter existing field (raw_data)
+        - setHeader:
+            name: "CamelAuditModifyFields"
+            constant: "$.version=2.0,$.raw_data=masked_v2"
+            
+        # 3. Delete field
+        - setHeader:
+            name: "CamelAuditExcludeFields"
+            constant: "$.temp_field"
+            
+        - process:
+            ref: "auditShaper"
+        - log: "STEP 2 RESULT: ${body}"

@@ -655,3 +655,13 @@ chapter-11-enrichment/03-rest-enrichment.camel.yaml
 chapter-11-enrichment/original.xml
 chapter-11-enrichment/truncated.xml
 chapter-11-enrichment/enrich.xslt
+chapter-12-sre-audit-shaper/01-basic-enveloping.camel.yaml
+chapter-12-sre-audit-shaper/02-field-manipulation.camel.yaml
+chapter-12-sre-audit-shaper/03-security-masking.camel.yaml
+chapter-12-sre-audit-shaper/04-integration-patterns.camel.yaml
+chapter-12-sre-audit-shaper/README.md
+chapter-12-sre-audit-shaper/05-kafka-mq-interception.camel.yaml
+chapter-12-sre-audit-shaper/06-db-row-crypto.camel.yaml
+chapter-12-sre-audit-shaper/07-storage-and-visibility.camel.yaml
+chapter-12-sre-audit-shaper/08-mongo-query-audit.camel.yaml
+chapter-12-sre-audit-shaper/09-sql-query-audit.camel.yaml

@@ -308,6 +308,7 @@ public class VariablesEditorWindow {
         layout.getChildren().addAll(titleLbl, descLbl, table, inputBox, actionBox);
         VBox.setVgrow(table, Priority.ALWAYS);
 
+        com.routebuilder.ui.components.ThemeManager.registerRoot(layout);
         Scene scene = new Scene(layout, 540, 480);
         try {
             String css = VariablesEditorWindow.class.getResource("/styles/main.css").toExternalForm();

@@ -443,6 +443,7 @@ public class DiagramStudioWindow {
             event.consume();
         });
 
+        com.routebuilder.ui.components.ThemeManager.registerRoot(root);
         Scene scene = new Scene(root, 1400, 900);
         
         // --- Global Accelerators ---

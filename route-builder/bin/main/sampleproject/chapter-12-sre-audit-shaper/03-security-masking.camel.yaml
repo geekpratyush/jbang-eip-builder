@@ -1,0 +1,33 @@
+# STEP 3: Security Masking (Encrypt/Decrypt)
+# Goal: Secure PII data using AES or Stubs.
+# camel-k: dependency=mvn:com.sre.engine:sre-audit-crypto:1.0.0-SNAPSHOT
+
+- beans:
+    - name: "auditShaper"
+      type: "com.sre.engine.audit.AuditShaperProcessor"
+
+- route:
+    id: "03-security-masking"
+    from:
+      uri: "timer:step3?repeatCount=1"
+      steps:
+        - setBody:
+            constant: '{"user": "admin", "pii": "secret-1234"}'
+        
+        # Encrypt the PII field
+        # Note: Set ENV SRE_AUDIT_CRYPTO_KEY for real AES, otherwise it uses STUB
+        - setHeader:
+            name: "CamelAuditEncryptFields"
+            constant: "$.pii"
+        - process:
+            ref: "auditShaper"
+        - log: "ENCRYPTED: ${body}"
+        
+        # Simulate receiving encrypted data and decrypting it
+        # (Using simple logic here for demo)
+        - setHeader:
+            name: "CamelAuditDecryptFields"
+            constant: "$.payload.pii"
+        - process:
+            ref: "auditShaper"
+        - log: "DECRYPTED: ${body}"

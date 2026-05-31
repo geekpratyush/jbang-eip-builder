@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <!-- Include modular migration files from the changelogs folder -->
+    <include file="changelogs/001-create-routes-collection.xml" />
+    <include file="changelogs/002-seed-test-route.xml" />
+    <include file="changelogs/changelog-export-mongodb.xml" />
+    <include file="changelogs/20260529193703-transformer-changelog-export-mongodb.xml"/>
+
+</databaseChangeLog>

@@ -1,0 +1,3307 @@
+Date: Fri May 29 22:13:45 IST 2026
+MQ Build Level=X.X.X(p945-L260120)
+Java version: 21.0.10(21.0.10+7-Ubuntu-124.04)
+Process ID: 1620760
+--------------------------------------------------------------------
+29 May 2026, 10:13:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:13:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:13:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:14 pm IST[executor-thread-1] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:14 pm IST[executor-thread-1] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:14 pm IST[executor-thread-1] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:14:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:15:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:16:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:17:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:18:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:14 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:15 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:19 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:24 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:29 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:34 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:39 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:44 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:45 pm IST[Camel (camel-1) thread #4 - timer://jms-test] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:49 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:54 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:19:59 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:20:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:20:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:20:04 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:20:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:20:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:20:09 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+Date: Fri May 29 22:51:37 IST 2026
+MQ Build Level=X.X.X(p945-L260120)
+Java version: 21.0.10(21.0.10+7-Ubuntu-124.04)
+Process ID: 1637966
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Test worker] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Test worker] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Test worker] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_FIPS_REQUIRED' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Test worker] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_PEER_NAME' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Test worker] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Camel (camel-1) thread #1 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Camel (camel-1) thread #1 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Camel (camel-1) thread #1 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_FIPS_REQUIRED' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Camel (camel-1) thread #1 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_PEER_NAME' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Camel (camel-1) thread #1 - JmsConsumer[IBMMQ.INBOUND.Q]] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Test worker] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_CHANNEL' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Test worker] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_CIPHER_SUITE' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Test worker] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_FIPS_REQUIRED' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Test worker] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_PEER_NAME' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+29 May 2026, 10:51:37 pm IST[Test worker] MQConnectionFactory
+The connection factory property 'XMSC_WMQ_SSL_SOCKET_FACTORY' is not valid for a bindings mode connection to a queue manager.
+
+EXPLANATION:
+The supplied connection factory property is not valid for a bindings mode connection to a queue manager.
+
+ACTION:
+Remove the property from connection factory.
+--------------------------------------------------------------------
+Date: Fri May 29 23:07:38 IST 2026
+MQ Build Level=X.X.X(p945-L260120)
+Java version: 21.0.10(21.0.10+7-Ubuntu-124.04)
+Process ID: 1650365
+--------------------------------------------------------------------
+29 May 2026, 11:07:38 pm IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] com.ibm.msg.client.jakarta.jms.internal.JmsProviderExceptionListener
+An exception has been delivered to the connection's exception listener: '
+                       Message : com.ibm.msg.client.jakarta.jms.DetailedJMSException: JMSWMQ1107: A problem with this connection has occurred.
+An error has occurred with the IBM MQ JMS connection.
+Use the linked exception to determine the cause of this error.
+                         Class : class com.ibm.msg.client.jakarta.jms.DetailedJMSException
+                         Stack : com.ibm.msg.client.jakarta.wmq.common.internal.Reason.reasonToException(Reason.java:709)
+                               : com.ibm.msg.client.jakarta.wmq.common.internal.Reason.createException(Reason.java:229)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.checkJmqiCallSuccess(WMQMessageConsumer.java:217)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.checkJmqiCallSuccess(WMQMessageConsumer.java:156)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQConsumerShadow.getMsg(WMQConsumerShadow.java:1858)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQSyncConsumerShadow.receiveInternal(WMQSyncConsumerShadow.java:240)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQConsumerShadow.receive(WMQConsumerShadow.java:1461)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.receive(WMQMessageConsumer.java:674)
+                               : com.ibm.msg.client.jakarta.jms.internal.JmsMessageConsumerImpl.receiveInboundMessage(JmsMessageConsumerImpl.java:1083)
+                               : com.ibm.msg.client.jakarta.jms.internal.JmsMessageConsumerImpl.receive(JmsMessageConsumerImpl.java:685)
+                               : com.ibm.mq.jakarta.jms.MQMessageConsumer.receive(MQMessageConsumer.java:249)
+                               : org.messaginghub.pooled.jms.JmsPoolMessageConsumer.receive(JmsPoolMessageConsumer.java:79)
+                               : org.springframework.jms.support.destination.JmsDestinationAccessor.receiveFromConsumer(JmsDestinationAccessor.java:131)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveMessage(AbstractPollingMessageListenerContainer.java:438)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.doReceiveAndExecute(AbstractPollingMessageListenerContainer.java:314)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveAndExecute(AbstractPollingMessageListenerContainer.java:268)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.invokeListener(DefaultMessageListenerContainer.java:1452)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.executeOngoingLoop(DefaultMessageListenerContainer.java:1442)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.run(DefaultMessageListenerContainer.java:1325)
+                               : java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+                               : java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+                               : java.lang.Thread.run(Thread.java:1583)
+     Caused by [1] --> Message : com.ibm.mq.MQException: JMSCMQ0001: IBM MQ call failed with compcode '2' ('MQCC_FAILED') reason '2195' ('MQRC_UNEXPECTED_ERROR').
+                         Class : class com.ibm.mq.MQException
+                         Stack : com.ibm.msg.client.jakarta.wmq.common.internal.Reason.createException(Reason.java:217)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.checkJmqiCallSuccess(WMQMessageConsumer.java:217)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.checkJmqiCallSuccess(WMQMessageConsumer.java:156)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQConsumerShadow.getMsg(WMQConsumerShadow.java:1858)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQSyncConsumerShadow.receiveInternal(WMQSyncConsumerShadow.java:240)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQConsumerShadow.receive(WMQConsumerShadow.java:1461)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.receive(WMQMessageConsumer.java:674)
+                               : com.ibm.msg.client.jakarta.jms.internal.JmsMessageConsumerImpl.receiveInboundMessage(JmsMessageConsumerImpl.java:1083)
+                               : com.ibm.msg.client.jakarta.jms.internal.JmsMessageConsumerImpl.receive(JmsMessageConsumerImpl.java:685)
+                               : com.ibm.mq.jakarta.jms.MQMessageConsumer.receive(MQMessageConsumer.java:249)
+                               : org.messaginghub.pooled.jms.JmsPoolMessageConsumer.receive(JmsPoolMessageConsumer.java:79)
+                               : org.springframework.jms.support.destination.JmsDestinationAccessor.receiveFromConsumer(JmsDestinationAccessor.java:131)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveMessage(AbstractPollingMessageListenerContainer.java:438)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.doReceiveAndExecute(AbstractPollingMessageListenerContainer.java:314)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveAndExecute(AbstractPollingMessageListenerContainer.java:268)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.invokeListener(DefaultMessageListenerContainer.java:1452)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.executeOngoingLoop(DefaultMessageListenerContainer.java:1442)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.run(DefaultMessageListenerContainer.java:1325)
+                               : java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+                               : java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+                               : java.lang.Thread.run(Thread.java:1583)
+'.
+
+EXPLANATION:
+null
+
+ACTION:
+Review the exception details for further information.
+--------------------------------------------------------------------
+Date: Sat May 30 07:10:18 IST 2026
+MQ Build Level=X.X.X(p945-L260120)
+Java version: 21.0.10(21.0.10+7-Ubuntu-124.04)
+Process ID: 83887
+--------------------------------------------------------------------
+30 May 2026, 7:10:18 am IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] com.ibm.msg.client.jakarta.jms.internal.JmsProviderExceptionListener
+An exception has been delivered to the connection's exception listener: '
+                       Message : com.ibm.msg.client.jakarta.jms.DetailedJMSException: JMSWMQ1107: A problem with this connection has occurred.
+An error has occurred with the IBM MQ JMS connection.
+Use the linked exception to determine the cause of this error.
+                         Class : class com.ibm.msg.client.jakarta.jms.DetailedJMSException
+                         Stack : com.ibm.msg.client.jakarta.wmq.common.internal.Reason.reasonToException(Reason.java:709)
+                               : com.ibm.msg.client.jakarta.wmq.common.internal.Reason.createException(Reason.java:229)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.checkJmqiCallSuccess(WMQMessageConsumer.java:217)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.checkJmqiCallSuccess(WMQMessageConsumer.java:156)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQConsumerShadow.getMsg(WMQConsumerShadow.java:1858)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQSyncConsumerShadow.receiveInternal(WMQSyncConsumerShadow.java:240)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQConsumerShadow.receive(WMQConsumerShadow.java:1461)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.receive(WMQMessageConsumer.java:674)
+                               : com.ibm.msg.client.jakarta.jms.internal.JmsMessageConsumerImpl.receiveInboundMessage(JmsMessageConsumerImpl.java:1083)
+                               : com.ibm.msg.client.jakarta.jms.internal.JmsMessageConsumerImpl.receive(JmsMessageConsumerImpl.java:685)
+                               : com.ibm.mq.jakarta.jms.MQMessageConsumer.receive(MQMessageConsumer.java:249)
+                               : org.messaginghub.pooled.jms.JmsPoolMessageConsumer.receive(JmsPoolMessageConsumer.java:79)
+                               : org.springframework.jms.support.destination.JmsDestinationAccessor.receiveFromConsumer(JmsDestinationAccessor.java:131)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveMessage(AbstractPollingMessageListenerContainer.java:438)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.doReceiveAndExecute(AbstractPollingMessageListenerContainer.java:314)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveAndExecute(AbstractPollingMessageListenerContainer.java:268)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.invokeListener(DefaultMessageListenerContainer.java:1452)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.executeOngoingLoop(DefaultMessageListenerContainer.java:1442)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.run(DefaultMessageListenerContainer.java:1325)
+                               : java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+                               : java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+                               : java.lang.Thread.run(Thread.java:1583)
+     Caused by [1] --> Message : com.ibm.mq.MQException: JMSCMQ0001: IBM MQ call failed with compcode '2' ('MQCC_FAILED') reason '2195' ('MQRC_UNEXPECTED_ERROR').
+                         Class : class com.ibm.mq.MQException
+                         Stack : com.ibm.msg.client.jakarta.wmq.common.internal.Reason.createException(Reason.java:217)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.checkJmqiCallSuccess(WMQMessageConsumer.java:217)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.checkJmqiCallSuccess(WMQMessageConsumer.java:156)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQConsumerShadow.getMsg(WMQConsumerShadow.java:1858)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQSyncConsumerShadow.receiveInternal(WMQSyncConsumerShadow.java:240)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQConsumerShadow.receive(WMQConsumerShadow.java:1461)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.receive(WMQMessageConsumer.java:674)
+                               : com.ibm.msg.client.jakarta.jms.internal.JmsMessageConsumerImpl.receiveInboundMessage(JmsMessageConsumerImpl.java:1083)
+                               : com.ibm.msg.client.jakarta.jms.internal.JmsMessageConsumerImpl.receive(JmsMessageConsumerImpl.java:685)
+                               : com.ibm.mq.jakarta.jms.MQMessageConsumer.receive(MQMessageConsumer.java:249)
+                               : org.messaginghub.pooled.jms.JmsPoolMessageConsumer.receive(JmsPoolMessageConsumer.java:79)
+                               : org.springframework.jms.support.destination.JmsDestinationAccessor.receiveFromConsumer(JmsDestinationAccessor.java:131)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveMessage(AbstractPollingMessageListenerContainer.java:438)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.doReceiveAndExecute(AbstractPollingMessageListenerContainer.java:314)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveAndExecute(AbstractPollingMessageListenerContainer.java:268)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.invokeListener(DefaultMessageListenerContainer.java:1452)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.executeOngoingLoop(DefaultMessageListenerContainer.java:1442)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.run(DefaultMessageListenerContainer.java:1325)
+                               : java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+                               : java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+                               : java.lang.Thread.run(Thread.java:1583)
+'.
+
+EXPLANATION:
+null
+
+ACTION:
+Review the exception details for further information.
+--------------------------------------------------------------------
+Date: Sat May 30 07:10:37 IST 2026
+MQ Build Level=X.X.X(p945-L260120)
+Java version: 21.0.10(21.0.10+7-Ubuntu-124.04)
+Process ID: 84557
+--------------------------------------------------------------------
+30 May 2026, 7:10:37 am IST[Camel (camel-1) thread #5 - JmsConsumer[IBMMQ.INBOUND.Q]] com.ibm.msg.client.jakarta.jms.internal.JmsProviderExceptionListener
+An exception has been delivered to the connection's exception listener: '
+                       Message : com.ibm.msg.client.jakarta.jms.DetailedJMSException: JMSWMQ1107: A problem with this connection has occurred.
+An error has occurred with the IBM MQ JMS connection.
+Use the linked exception to determine the cause of this error.
+                         Class : class com.ibm.msg.client.jakarta.jms.DetailedJMSException
+                         Stack : com.ibm.msg.client.jakarta.wmq.common.internal.Reason.reasonToException(Reason.java:709)
+                               : com.ibm.msg.client.jakarta.wmq.common.internal.Reason.createException(Reason.java:229)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.checkJmqiCallSuccess(WMQMessageConsumer.java:217)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.checkJmqiCallSuccess(WMQMessageConsumer.java:156)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQConsumerShadow.getMsg(WMQConsumerShadow.java:1858)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQSyncConsumerShadow.receiveInternal(WMQSyncConsumerShadow.java:240)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQConsumerShadow.receive(WMQConsumerShadow.java:1461)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.receive(WMQMessageConsumer.java:674)
+                               : com.ibm.msg.client.jakarta.jms.internal.JmsMessageConsumerImpl.receiveInboundMessage(JmsMessageConsumerImpl.java:1083)
+                               : com.ibm.msg.client.jakarta.jms.internal.JmsMessageConsumerImpl.receive(JmsMessageConsumerImpl.java:685)
+                               : com.ibm.mq.jakarta.jms.MQMessageConsumer.receive(MQMessageConsumer.java:249)
+                               : org.messaginghub.pooled.jms.JmsPoolMessageConsumer.receive(JmsPoolMessageConsumer.java:79)
+                               : org.springframework.jms.support.destination.JmsDestinationAccessor.receiveFromConsumer(JmsDestinationAccessor.java:131)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveMessage(AbstractPollingMessageListenerContainer.java:438)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.doReceiveAndExecute(AbstractPollingMessageListenerContainer.java:314)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveAndExecute(AbstractPollingMessageListenerContainer.java:268)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.invokeListener(DefaultMessageListenerContainer.java:1452)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.executeOngoingLoop(DefaultMessageListenerContainer.java:1442)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.run(DefaultMessageListenerContainer.java:1325)
+                               : java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+                               : java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+                               : java.lang.Thread.run(Thread.java:1583)
+     Caused by [1] --> Message : com.ibm.mq.MQException: JMSCMQ0001: IBM MQ call failed with compcode '2' ('MQCC_FAILED') reason '2195' ('MQRC_UNEXPECTED_ERROR').
+                         Class : class com.ibm.mq.MQException
+                         Stack : com.ibm.msg.client.jakarta.wmq.common.internal.Reason.createException(Reason.java:217)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.checkJmqiCallSuccess(WMQMessageConsumer.java:217)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.checkJmqiCallSuccess(WMQMessageConsumer.java:156)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQConsumerShadow.getMsg(WMQConsumerShadow.java:1858)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQSyncConsumerShadow.receiveInternal(WMQSyncConsumerShadow.java:240)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQConsumerShadow.receive(WMQConsumerShadow.java:1461)
+                               : com.ibm.msg.client.jakarta.wmq.internal.WMQMessageConsumer.receive(WMQMessageConsumer.java:674)
+                               : com.ibm.msg.client.jakarta.jms.internal.JmsMessageConsumerImpl.receiveInboundMessage(JmsMessageConsumerImpl.java:1083)
+                               : com.ibm.msg.client.jakarta.jms.internal.JmsMessageConsumerImpl.receive(JmsMessageConsumerImpl.java:685)
+                               : com.ibm.mq.jakarta.jms.MQMessageConsumer.receive(MQMessageConsumer.java:249)
+                               : org.messaginghub.pooled.jms.JmsPoolMessageConsumer.receive(JmsPoolMessageConsumer.java:79)
+                               : org.springframework.jms.support.destination.JmsDestinationAccessor.receiveFromConsumer(JmsDestinationAccessor.java:131)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveMessage(AbstractPollingMessageListenerContainer.java:438)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.doReceiveAndExecute(AbstractPollingMessageListenerContainer.java:314)
+                               : org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveAndExecute(AbstractPollingMessageListenerContainer.java:268)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.invokeListener(DefaultMessageListenerContainer.java:1452)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.executeOngoingLoop(DefaultMessageListenerContainer.java:1442)
+                               : org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.run(DefaultMessageListenerContainer.java:1325)
+                               : java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+                               : java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+                               : java.lang.Thread.run(Thread.java:1583)
+'.
+
+EXPLANATION:
+null
+
+ACTION:
+Review the exception details for further information.
+--------------------------------------------------------------------

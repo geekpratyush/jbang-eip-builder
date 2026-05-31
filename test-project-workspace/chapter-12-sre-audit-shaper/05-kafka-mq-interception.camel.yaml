@@ -1,0 +1,41 @@
+# KAFKA/MQ INTERCEPTION PATTERN
+# Goal: Intercept streaming messages, extract Correlation IDs, and mask PII before auditing.
+# camel-k: dependency=mvn:com.sre.engine:sre-audit-crypto:1.0.0-SNAPSHOT
+
+- beans:
+    - name: "auditProcessor"
+      type: "com.sre.engine.audit.AuditShaperProcessor"
+
+- route:
+    id: "kafka-consumer-audit"
+    from:
+      uri: "stub:kafka:transactions?groupId=sre-audit-group"
+      steps:
+        # 1. Capture Kafka Headers as Correlation Context
+        - setProperty:
+            name: "CamelCorrelationId"
+            simple: "${header.kafka.OFFSET}"
+        
+        # 2. Reshape and Mask (In-stream)
+        - setHeader:
+            name: "CamelAuditExcludeFields"
+            constant: "$.internalRoutingCode"
+        - setHeader:
+            name: "CamelAuditModifyFields"
+            constant: "$.ingest_source=KAFKA"
+            
+        # 3. Securely Audit via Wiretap (Async)
+        - wireTap:
+            uri: "direct:secure-audit-sink"
+        
+        # 4. Continue main processing
+        - log: "Processed Transaction: ${body}"
+
+- route:
+    id: "secure-audit-sink"
+    from:
+      uri: "direct:secure-audit-sink"
+      steps:
+        - process:
+            ref: "auditProcessor"
+        - log: "AUDIT LOG (KAFKA): ${body}"
