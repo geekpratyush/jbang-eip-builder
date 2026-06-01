@@ -280,7 +280,7 @@ public class RouteBuilderApp extends Application {
             <html>
             <head>
                 <style>
-                    body { font-family: 'Segoe UI', sans-serif; background: #f6f9fa; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; opacity: 0; transition: opacity 0.5s ease-in; }
+                    body { font-family: 'Segoe UI', sans-serif; background: #eff2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; opacity: 0; transition: opacity 0.5s ease-in; }
                     img { width: 100%; height: auto; max-width: 800px; }
                 </style>
                 <script>
@@ -300,7 +300,7 @@ public class RouteBuilderApp extends Application {
 
         instance = this;
         
-        // --- Application Initializaton ---
+        // --- Initialization ---
         loadWorkspaceProperties();
         lspManager = new com.tessera.lsp.LspManager();
         lspManager.start();
@@ -309,13 +309,10 @@ public class RouteBuilderApp extends Application {
         root.getStyleClass().add("app-root");
         rootNode = root;
 
-        // ... (rest of setup follows) ...
         javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(1.5));
         delay.setOnFinished(event -> {
             splashStage.close();
             primaryStage.show();
-            // Apply initial theme
-            javafx.application.Platform.runLater(() -> setGlobalTheme(com.tessera.ui.components.ThemeManager.getCurrentThemeName()));
         });
 
         setupMainWindow(primaryStage, root);
