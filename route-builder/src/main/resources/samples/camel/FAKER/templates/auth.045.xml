@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Document xmlns="urn:iso:std:iso:20022:tech:xsd:auth.045.001.03">
-  <Auth045Document>
-    <MsgId>{{type:msgId}}</MsgId>
-    <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
-    <UETR>{{type:uetr}}</UETR>
-    <Desc>Generated Mock Message for auth.045</Desc>
-  </Auth045Document>
-</Document>

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Document xmlns="urn:iso:std:iso:20022:tech:xsd:colr.023.001.01">
-  <Colr023Document>
-    <MsgId>{{type:msgId}}</MsgId>
-    <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
-    <UETR>{{type:uetr}}</UETR>
-    <Desc>Generated Mock Message for colr.023</Desc>
-  </Colr023Document>
-</Document>

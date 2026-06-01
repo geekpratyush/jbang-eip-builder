@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Document xmlns="urn:iso:std:iso:20022:tech:xsd:casp.013.001.02">
-  <Casp013Document>
-    <MsgId>{{type:msgId}}</MsgId>
-    <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
-    <UETR>{{type:uetr}}</UETR>
-    <Desc>Generated Mock Message for casp.013</Desc>
-  </Casp013Document>
-</Document>

@@ -1,0 +1,33 @@
+# ID: rest-auth-header
+# ENABLED: true
+# DESCRIPTION: REST endpoint that validates an API-Key header before serving.
+#   curl -H 'X-API-Key: secret123' http://localhost:8080/secure/data
+#   curl http://localhost:8080/secure/data   <- returns 401
+# AUTHOR: Camel Studio
+# STUB: none — live HTTP server
+
+- route:
+    id: "secure-endpoint"
+    from:
+      uri: "platform-http:/secure/data"
+      parameters:
+        httpMethodRestrict: "GET"
+      steps:
+        - choice:
+            when:
+              - simple: "${header.X-API-Key} == 'secret123'"
+                steps:
+                  - log: "[Chapter 8][AUTH] Authorized request"
+                  - setBody:
+                      constant: '{"data":"Sensitive payload","clearance":"TOP_SECRET"}'
+                  - setHeader:
+                      name: "Content-Type"
+                      constant: "application/json"
+            otherwise:
+              steps:
+                - log: "[Chapter 8][AUTH] Unauthorized — missing or wrong API key"
+                - setHeader:
+                    name: "CamelHttpResponseCode"
+                    constant: "401"
+                - setBody:
+                    constant: '{"error":"Unauthorized","message":"Valid X-API-Key header required"}'

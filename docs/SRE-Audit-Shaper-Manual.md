@@ -2,7 +2,7 @@
 
 ## Library Information
 - **Artifact ID**: `sre-audit-crypto`
-- **Dependency**: `mvn:com.sre.engine:sre-audit-crypto:1.0.0-SNAPSHOT`
+- **Dependency**: `mvn:com.tessera:sre-audit-crypto:1.0.0-SNAPSHOT`
 
 ## Core Security Features
 

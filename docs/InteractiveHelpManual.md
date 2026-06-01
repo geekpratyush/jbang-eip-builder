@@ -88,7 +88,7 @@ Crypto Studio secures configuration variables and databases using authenticated 
     name: "crypto.algorithm"
     constant: "AES-256-GCM"
 - bean:
-    beanType: "com.routebuilder.kameletstudio.crypto.FieldCryptoProcessor"
+    beanType: "com.tessera.kameletstudio.crypto.FieldCryptoProcessor"
     method: "encryptFields"
 ```
 

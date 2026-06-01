@@ -1,9 +1,0 @@
-{
-  "type": "smooks",
-  "name": "Smooks JSON Example",
-  "source": { "type": "json", "file": "source.json" },
-  "logic": [
-    { "type": "xml", "file": "smooks-config.xml" }
-  ],
-  "target": { "type": "xml" }
-}

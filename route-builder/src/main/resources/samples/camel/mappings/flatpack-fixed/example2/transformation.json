@@ -1,7 +1,0 @@
-{
-  "type": "flatpack",
-  "name": "Flatpack Fixed Payroll Mapping",
-  "source": { "type": "text", "file": "source.txt" },
-  "logic": { "type": "xml", "file": "definition.xml" },
-  "target": { "type": "xml" }
-}

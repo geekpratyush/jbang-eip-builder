@@ -1,7 +1,0 @@
-{
-  "type": "joor",
-  "name": "JOOR XML to JSON Store Catalog",
-  "source": { "type": "xml", "file": "source.xml" },
-  "logic": { "type": "java", "file": "Transform.java" },
-  "target": { "type": "json" }
-}

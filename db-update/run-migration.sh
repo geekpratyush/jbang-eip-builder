@@ -5,7 +5,7 @@ set -e
 LOCAL_JAR="./liquibase-migrator-runner.jar"
 echo "--- Fetching/Copying latest runner JAR from Maven Repository ---"
 mvn dependency:copy \
-    -Dartifact=com.routebuilder:liquibase-migrator:1.0.0:jar:runner \
+    -Dartifact=com.tessera:liquibase-migrator:1.0.0:jar:runner \
     -DoutputDirectory=. \
     -Dmdep.stripVersion=true \
     -q

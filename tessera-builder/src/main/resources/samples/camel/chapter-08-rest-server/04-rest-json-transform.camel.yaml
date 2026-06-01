@@ -1,0 +1,37 @@
+# ID: rest-json-transform
+# ENABLED: true
+# DESCRIPTION: REST endpoint that accepts a raw payment object and transforms it
+#   to a canonical format using setBody + Simple expressions.
+#
+#   curl -X POST http://localhost:8080/api/payments \
+#     -H 'Content-Type: application/json' \
+#     -d '{"sender":"Alice","receiver":"Bob","amount":250.00,"currency":"USD"}'
+# AUTHOR: Camel Studio
+# STUB: none — live HTTP server
+
+- route:
+    id: "payment-transformer"
+    from:
+      uri: "platform-http:/api/payments"
+      parameters:
+        httpMethodRestrict: "POST"
+      steps:
+        - log: "[Chapter 8][PAY] Received payment: ${body}"
+        - unmarshal:
+            json:
+              library: Jackson
+        - setHeader:
+            name: "txRef"
+            simple: "TXN-${random(100000,999999)}"
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"
+        - marshal:
+            json:
+              library: Jackson
+        - log: "[Chapter 8][PAY] Canonical payment dispatched: ref=${header.txRef}"
+        - setBody:
+            simple: '{"txRef":"${header.txRef}","status":"ACCEPTED","timestamp":"${date:now:yyyy-MM-dd HH:mm:ss"}'
+        - setHeader:
+            name: "CamelHttpResponseCode"
+            constant: "202"

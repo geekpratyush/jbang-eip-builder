@@ -1,0 +1,19 @@
+# ID: filter-eip
+# ENABLED: true
+# DESCRIPTION: Message Filter EIP — only passes messages matching the predicate
+# AUTHOR: Camel Studio
+# STUB: none
+
+- route:
+    id: "filter-high-value"
+    from:
+      uri: "timer:orders?period=2500"
+      steps:
+        - setBody:
+            simple: "${random(100,1000)}"
+        - log: "[Chapter 2] Order amount: ${body}"
+        - filter:
+            simple: "${body} > 500"
+            steps:
+              - log: "[Chapter 2][FILTER] High-value order detected: ${body}"
+              - to: "mock:high-value"

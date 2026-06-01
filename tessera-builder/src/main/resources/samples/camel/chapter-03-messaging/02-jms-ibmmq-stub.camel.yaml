@@ -1,0 +1,36 @@
+# ID: jms-ibmmq-stub
+# ENABLED: true
+# DESCRIPTION: IBM MQ / JMS request-reply pattern using stubs for offline testing
+# STUB: stub:jms:queue:REQUEST.Q and stub:jms:queue:REPLY.Q
+# REAL_URI: jms:queue:REQUEST.Q?connectionFactory=#ibmMQFactory
+
+- route:
+    id: "ibmmq-request-sender"
+    from:
+      uri: "timer:mq-test?period=5000&repeatCount=4"
+      steps:
+        - setBody:
+            constant: '<TransactionRequest><TxId>TXN-001</TxId><Amount>1000.00</Amount></TransactionRequest>'
+        - setHeader:
+            name: "JMSCorrelationID"
+            simple: "CID-${random(10000,99999)}"
+        - log: "[Chapter 3][IBM-MQ] Sending to request queue: ${header.JMSCorrelationID}"
+        - to: "{{ibmmq.request.uri}}"
+
+- route:
+    id: "ibmmq-request-handler"
+    from:
+      uri: "{{ibmmq.request.uri}}"
+      steps:
+        - log: "[Chapter 3][IBM-MQ] Processing request: ${body}"
+        - setBody:
+            constant: '<TransactionResponse><Status>APPROVED</Status><Auth>AUTH-789</Auth></TransactionResponse>'
+        - to: "stub:jms:queue:REPLY.Q"
+
+- route:
+    id: "ibmmq-reply-consumer"
+    from:
+      uri: "stub:jms:queue:REPLY.Q"
+      steps:
+        - log: "[Chapter 3][IBM-MQ] Got reply: ${body}"
+        - to: "mock:mq-completed"

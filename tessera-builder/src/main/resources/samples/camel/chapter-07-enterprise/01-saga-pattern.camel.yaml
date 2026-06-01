@@ -1,0 +1,40 @@
+# ID: saga-pattern
+# ENABLED: true
+# DESCRIPTION: Saga EIP for distributed transaction coordination with compensation
+# AUTHOR: Camel Studio
+# STUB: stub:direct:book-hotel, stub:direct:book-flight, stub:direct:charge-payment
+
+- route:
+    id: "saga-travel-booking"
+    from:
+      uri: "timer:saga?period=6000&repeatCount=3"
+      steps:
+        - setBody:
+            constant: '{"tripId":"TRIP-001","customer":"John Doe","destination":"Paris"}'
+        - log: "[Chapter 7][SAGA] Starting travel booking saga: ${body}"
+        - saga:
+            compensation: "direct:cancel-booking"
+            completion: "direct:confirm-booking"
+            steps:
+              - to: "stub:direct:book-hotel"
+              - log: "[Chapter 7][SAGA] Hotel booked"
+              - to: "stub:direct:book-flight"
+              - log: "[Chapter 7][SAGA] Flight booked"
+              - to: "stub:direct:charge-payment"
+              - log: "[Chapter 7][SAGA] Payment charged — saga complete"
+
+- route:
+    id: "cancel-booking"
+    from:
+      uri: "direct:cancel-booking"
+      steps:
+        - log: "[Chapter 7][SAGA][COMPENSATE] Cancelling booking: ${body}"
+        - to: "mock:booking-cancelled"
+
+- route:
+    id: "confirm-booking"
+    from:
+      uri: "direct:confirm-booking"
+      steps:
+        - log: "[Chapter 7][SAGA][COMPLETE] Booking confirmed: ${body}"
+        - to: "mock:booking-confirmed"

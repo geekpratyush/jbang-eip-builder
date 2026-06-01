@@ -1,4 +1,0 @@
-txnId;bookingTime;accountNum;value;currencyCode;statusCode;memo
-TXN-101;2026-05-24T12:00:00Z;ACT-90876;1500.50;EUR;COMPLETED;Consulting Services
-TXN-102;2026-05-24T12:05:00Z;ACT-11223;-300.00;USD;PENDING;Server Hosting Fee
-TXN-103;2026-05-24T12:10:00Z;ACT-55667;45.00;GBP;FAILED;Refund

@@ -1,9 +1,0 @@
-# ID: hello-route
-# ENABLED: true
-# DESCRIPTION: A simple timer-based route that logs a hello message every 5 seconds.
-- route:
-    id: "hello-route"
-    from:
-      uri: "timer:hello?period=5000"
-      steps:
-        - log: "Hello from Camel Quarkus!"

@@ -1,0 +1,49 @@
+allprojects {
+    group = 'com.tessera'
+    version = '1.0.0-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+}
+
+subprojects {
+    // Only apply java to standard subprojects, except BOM
+    if (name != 'tessera-bom') {
+        apply plugin: 'java'
+        apply plugin: 'maven-publish'
+        
+        java {
+            sourceCompatibility = JavaVersion.VERSION_21
+            targetCompatibility = JavaVersion.VERSION_21
+            withSourcesJar()
+        }
+        
+        publishing {
+            publications {
+                mavenJava(MavenPublication) {
+                    from components.java
+                }
+            }
+        }
+
+        tasks.withType(GenerateModuleMetadata).configureEach {
+            suppressedValidationErrors.add('enforced-platform')
+        }
+        
+        tasks.withType(JavaCompile).configureEach {
+            options.encoding = 'UTF-8'
+            options.compilerArgs << '-parameters'
+        }
+
+        dependencies {
+            if (project.hasProperty('quarkusPlatformVersion')) {
+                implementation platform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+                implementation platform("io.quarkus.platform:quarkus-camel-bom:${quarkusPlatformVersion}")
+                annotationProcessor platform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+                annotationProcessor platform("io.quarkus.platform:quarkus-camel-bom:${quarkusPlatformVersion}")
+            }
+        }
+    }
+}

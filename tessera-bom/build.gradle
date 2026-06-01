@@ -1,0 +1,28 @@
+plugins {
+    id 'java-platform'
+    id 'maven-publish'
+}
+
+javaPlatform {
+    allowDependencies()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.javaPlatform
+        }
+    }
+}
+
+dependencies {
+    constraints {
+        // Define versions for internal modules
+        api project(':tessera-faker')
+        api project(':tessera-builder')
+        api project(':tessera-liquibase-migrator')
+        api project(':tessera-app-manager-runtime')
+        api project(':tessera-ibmmq-runtime')
+        api project(':tessera-audit-shaper')
+    }
+}

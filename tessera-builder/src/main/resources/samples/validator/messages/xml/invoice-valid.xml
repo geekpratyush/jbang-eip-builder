@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="http://example.com/invoice">
+    <InvoiceNumber>INV-2024-001</InvoiceNumber>
+    <IssueDate>2024-01-15</IssueDate>
+    <Customer>
+        <Name>Acme Corporation</Name>
+        <Email>billing@acme.com</Email>
+    </Customer>
+    <LineItems>
+        <Item>
+            <Description>Professional Services</Description>
+            <Quantity>40</Quantity>
+            <UnitPrice>150.00</UnitPrice>
+        </Item>
+    </LineItems>
+    <TotalAmount>6000.00</TotalAmount>
+</Invoice>

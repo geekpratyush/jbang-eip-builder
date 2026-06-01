@@ -20,7 +20,7 @@ Developers can instantiate pre-packaged cryptography beans inside their routes t
 ```yaml
 - beans:
     - name: cryptoProcessor
-      type: "#class:com.routebuilder.kameletstudio.core.lib.crypto.KameletStudioCryptoProcessor"
+      type: "#class:com.tessera.kameletstudio.core.lib.crypto.KameletStudioCryptoProcessor"
       properties:
         password: "secretPassword"
         salt: "randomSaltStringValue"

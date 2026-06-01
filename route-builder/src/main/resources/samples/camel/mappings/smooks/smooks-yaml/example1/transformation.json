@@ -1,9 +1,0 @@
-{
-  "type": "smooks",
-  "name": "Smooks YAML Example",
-  "source": { "type": "text", "file": "source.yaml" },
-  "logic": [
-    { "type": "xml", "file": "smooks-config.xml" }
-  ],
-  "target": { "type": "xml" }
-}

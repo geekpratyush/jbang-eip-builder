@@ -1,3 +1,0 @@
-001045Alexander      Hamilton       Treasury  Secretary      1789091100085000001500Y
-001046Thomas         Jefferson      State     Secretary      1789092600085000001200Y
-001047Aaron          Burr           Senate    VicePresident  1801030400075000000000N

@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://json.schemastore.org/any.json
+quarkus:
+  # Disable all automatic Dev Services (Docker containers for Kafka, MongoDB, databases, etc.)
+  devservices:
+    enabled: false
+
+  # Default application HTTP port
+  http:
+    port: 8080
+
+  # Suppress noisy connection warnings from MongoDB driver when local mongo is not running
+  log:
+    category:
+      "org.mongodb.driver":
+        level: WARN
+
+# Dynamic Route and Transformer Loader Configurations
+loader:
+  file:
+    enabled: true
+    directory: src/main/resources/routes/
+
+  mongodb:
+    enabled: true
+    collection: camel_routes
+
+  transformer:
+    enabled: true
+    mongodb:
+      collection: camel_transformers
+    directory: /opt/camel/resources/
+
+ibmmq:
+  queue: "${IBMMQ_QUEUE:IBMMQ.INBOUND.Q}"
+
+ibmmq-source: "kamelet:ibmmq-source"
+ibmmq-sink: "kamelet:ibmmq-sink"
+
+camel:
+  main:
+    name: QuarkusCamelApp
+  component:
+    kamelet:
+      location: "classpath:/kamelets"

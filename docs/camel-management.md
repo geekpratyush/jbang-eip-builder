@@ -281,7 +281,7 @@ CREATE TABLE camel_routes (
 This component coordinates scanning, reads credentials safely, executes the **version resolution deduplication**, and mounts routes to the Camel engine:
 
 ```java
-package com.routebuilder.loader;
+package com.tessera.loader;
 
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.mongodb.MongoClient;
@@ -527,7 +527,7 @@ public class DynamicRouteLoader {
 To trigger updates without rebooting the Quarkus VM container, configure an administrative REST resource to reload mappings instantly:
 
 ```java
-package com.routebuilder.loader;
+package com.tessera.loader;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -1267,7 +1267,7 @@ graph LR
 This JAX-RS resource is exposed by the extension. It uses the same injected `DataSource` and `MongoClient` instances to write changes:
 
 ```java
-package com.routebuilder.loader;
+package com.tessera.loader;
 
 import io.quarkus.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;

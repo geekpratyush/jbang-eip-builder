@@ -110,7 +110,7 @@ Under the hood, `kamelet-studio-ibmmq-sink` and `kamelet-studio-ibmmq-source` bi
 template:
   beans:
     - name: sslFactory
-      type: "#class:com.routebuilder.kameletstudio.core.lib.crypto.KameletStudioSslSocketFactory"
+      type: "#class:com.tessera.kameletstudio.core.lib.crypto.KameletStudioSslSocketFactory"
       properties:
         trustStorePath: '{{truststorepath}}'
         trustStorePassword: '{{truststorepassword}}'

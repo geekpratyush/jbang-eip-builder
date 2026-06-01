@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+    id 'io.quarkus'
+}
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation enforcedPlatform("io.quarkus.platform:quarkus-camel-bom:${quarkusPlatformVersion}")
+    implementation enforcedPlatform(project(':tessera-bom'))
+
+    implementation 'io.quarkus:quarkus-jackson'
+    implementation 'io.quarkus:quarkus-rest'
+    implementation 'io.quarkus:quarkus-arc'
+    implementation project(':tessera-app-manager-runtime')
+    implementation 'io.quarkus:quarkus-config-yaml'
+    
+    // Common Camel Quarkus components
+    implementation 'org.apache.camel.quarkus:camel-quarkus-timer'
+    implementation 'org.apache.camel.quarkus:camel-quarkus-log'
+    implementation 'org.apache.camel.quarkus:camel-quarkus-mock'
+    implementation 'org.apache.camel.quarkus:camel-quarkus-direct'
+    implementation 'org.apache.camel.quarkus:camel-quarkus-kafka'
+    implementation 'org.apache.camel.quarkus:camel-quarkus-mongodb'
+    implementation 'org.apache.camel.quarkus:camel-quarkus-jms'
+    implementation 'org.apache.camel.quarkus:camel-quarkus-platform-http'
+    implementation 'org.apache.camel.quarkus:camel-quarkus-kamelet'
+
+    // IBM MQ Extension (includes pooling and JTA)
+    implementation project(':tessera-ibmmq-runtime')
+
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
+}
+
+test {
+    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+}

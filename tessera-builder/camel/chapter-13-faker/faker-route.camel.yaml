@@ -1,0 +1,17 @@
+# camel-k: dependency=mvn:com.tessera:tessera-faker:1.0.0-SNAPSHOT
+- beans:
+    - name: "myFaker"
+      type: "com.tessera.faker.UniversalFaker"
+      properties:
+        database: "financial"
+- route:
+    id: "faker-demo"
+    from:
+      uri: "timer:faker?period=3000"
+      steps:
+        - setBody:
+            constant: "mt103"
+        - bean:
+            ref: "myFaker"
+            method: "generate(${body})"
+        - log: "Generated Message:\n${body}"

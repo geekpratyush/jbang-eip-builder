@@ -1,0 +1,22 @@
+plugins {
+    id 'com.gradleup.shadow' version '8.3.0'
+}
+
+dependencies {
+    def liquibaseVersion = '4.24.0'
+    implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+    implementation "org.liquibase.ext:liquibase-mongodb:${liquibaseVersion}"
+    implementation 'org.mongodb:mongodb-driver-sync:4.11.1'
+    implementation 'org.postgresql:postgresql:42.7.2'
+    implementation 'com.h2database:h2:2.2.224'
+    implementation 'com.oracle.database.jdbc:ojdbc8:21.9.0.0'
+    implementation 'org.yaml:snakeyaml:2.2'
+}
+
+shadowJar {
+    archiveClassifier.set('runner')
+    mergeServiceFiles()
+    manifest {
+        attributes 'Main-Class': 'com.tessera.liquibase.LiquibaseMigrator'
+    }
+}

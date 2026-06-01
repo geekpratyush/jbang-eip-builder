@@ -1,9 +1,0 @@
-{
-  "id" : .order_id,
-  "client" : .customer.name,
-  "total" : sum([for (.items) .price * .qty]),
-  "summary" : [for (.items) {
-    "product" : .id,
-    "line_total" : .price * .qty
-  }]
-}

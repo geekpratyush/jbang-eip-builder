@@ -1,7 +1,0 @@
-{1:F01{{type:bic:sender}}XXXX0000000000}{2:I104{{type:bic:receiver}}XXXXN}{4:
-:20:{{type:uuid}}
-:21:TX-pacs003-001
-:32A:{{type:dateTime:yyMMdd}}{{type:random:USD,EUR,GBP}}{{type:amount:100:10000}},
-:50K:DEBTOR NAME
-:59:CREDITOR NAME
--}

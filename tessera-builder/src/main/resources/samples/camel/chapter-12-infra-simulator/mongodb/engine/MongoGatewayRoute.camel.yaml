@@ -1,0 +1,17 @@
+# camel-k: dependency=mvn:com.fasterxml.jackson.core:jackson-databind:2.17.0
+# camel-k: source=MongoGateway.java
+
+- beans:
+    - name: "mongoGateway"
+      type: "mongodb.engine.MongoGateway"
+
+- route:
+    id: mongo-gateway-simulator-route
+    from:
+      uri: direct:mongo-gateway
+      steps:
+        # Call the process method of MongoGateway bean under mongodb.engine package
+        - bean:
+            ref: "mongoGateway"
+            method: "process"
+        - log: "Mongo Gateway Output: ${body}"

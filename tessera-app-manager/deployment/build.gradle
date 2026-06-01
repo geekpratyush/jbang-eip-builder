@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+}
+
+dependencies {
+    implementation 'io.quarkus:quarkus-arc-deployment'
+    implementation 'io.quarkus:quarkus-rest-jackson-deployment'
+    implementation project(':tessera-app-manager-runtime')
+    implementation 'org.apache.camel.quarkus:camel-quarkus-core-deployment'
+    implementation 'org.apache.camel.quarkus:camel-quarkus-yaml-dsl-deployment'
+    implementation 'io.quarkus:quarkus-mongodb-client-deployment'
+    
+    testImplementation 'io.quarkus:quarkus-junit5-internal'
+    
+    // For annotation processing
+    annotationProcessor 'io.quarkus:quarkus-extension-processor:3.36.0'
+}

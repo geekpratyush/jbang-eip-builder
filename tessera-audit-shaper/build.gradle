@@ -1,0 +1,7 @@
+dependencies {
+    def camelVersion = '4.4.0'
+    compileOnly "org.apache.camel:camel-api:${camelVersion}"
+    
+    implementation 'com.jayway.jsonpath:json-path:2.9.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
+}

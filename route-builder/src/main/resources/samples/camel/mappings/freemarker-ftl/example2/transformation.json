@@ -1,7 +1,0 @@
-{
-  "type": "freemarker",
-  "name": "XML to Text with FTL",
-  "source": { "type": "xml", "file": "source.xml" },
-  "logic": { "type": "freemarker", "file": "template.ftl" },
-  "target": { "type": "txt" }
-}

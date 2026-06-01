@@ -1,0 +1,26 @@
+# ID: circuit-breaker
+# ENABLED: true
+# DESCRIPTION: Circuit Breaker pattern protecting against downstream failures with fallback
+# AUTHOR: Camel Studio
+# STUB: stub:http:api.example.com/orders (replaces live HTTP call)
+
+- route:
+    id: "circuit-breaker-demo"
+    from:
+      uri: "timer:cb-test?period=3000&repeatCount=6"
+      steps:
+        - log: "[Chapter 4][CB] Calling downstream service..."
+        - circuitBreaker:
+            steps:
+              - setHeader:
+                  name: "CamelHttpMethod"
+                  constant: "GET"
+              - to: "stub:http:api.example.com/orders"
+              - log: "[Chapter 4][CB] Success: ${body}"
+              - to: "mock:cb-success"
+            onFallback:
+              steps:
+                - log: "[Chapter 4][CB] Circuit OPEN — returning cached fallback"
+                - setBody:
+                    constant: '{"orders":[],"source":"cache","status":"degraded"}'
+                - to: "mock:cb-fallback"

@@ -1,0 +1,73 @@
+# STORAGE & VISIBILITY STRATEGY
+# Goal: Show how to separate Audit data (Mongo/Kibana) from Business data (Main DB)
+# also demonstrates Pretty Printing and Correlation ID management.
+# camel-k: dependency=mvn:com.tessera:sre-audit-crypto:1.0.0-SNAPSHOT
+
+- beans:
+    - name: "auditProcessor"
+      type: "com.tessera.audit.AuditShaperProcessor"
+
+- route:
+    id: "storage-strategy-demo"
+    from:
+      uri: "timer:storage-test?repeatCount=1"
+      steps:
+        # 1. SET CORRELATION ID (Ensures it's not null)
+        - setProperty:
+            name: "CamelCorrelationId"
+            constant: "CID-XYZ-789"
+        
+        # 2. BUSINESS PAYLOAD
+        - setBody:
+            constant: '{"orderId": "ORD-123", "customer": "John Doe", "amount": 45.0, "status": "PENDING"}'
+        
+        # 3. PATTERN: AUDIT VIA WIRETAP
+        # Audit data is different: it needs metadata, masking, and potentially encryption.
+        - wireTap:
+            uri: "direct:audit-sink"
+            
+        # 4. PATTERN: BUSINESS PERSISTENCE
+        # Business data is stored "as is" or with minimal mapping.
+        - to: "direct:business-storage"
+
+# -------------------------------------------------------------------------
+# AUDIT SINK: Specialized for high-volume traceability
+# -------------------------------------------------------------------------
+- route:
+    id: "audit-sink"
+    from:
+      uri: "direct:audit-sink"
+      steps:
+        # PRETTY PRINT for Log Visibility
+        - setHeader:
+            name: "CamelAuditPrettyPrint"
+            constant: "true"
+        - process:
+            ref: "auditProcessor"
+        
+        # LOG for console/Kibana
+        - log: "CANONICAL AUDIT RECORD:\n${body}"
+        
+        # PERSIST TO MONGODB (Audit Collection)
+        # For Mongo, we often need to set headers for collection and operation
+        - setHeader:
+            name: "CamelMongoDbCollection"
+            constant: "audit_logs"
+        - setHeader:
+            name: "CamelMongoDbOperation"
+            constant: "insert"
+        # Since the body is already a JSON string from the processor, 
+        # the mongodb component can ingest it directly.
+        - log: "Simulating Mongo Ingestion to 'audit_logs'..."
+
+# -------------------------------------------------------------------------
+# BUSINESS STORAGE: Optimized for queries and state
+# -------------------------------------------------------------------------
+- route:
+    id: "business-storage"
+    from:
+      uri: "direct:business-storage"
+      steps:
+        - log: "Persisting original Business Body to SQL/Main DB: ${body}"
+        # Here you would use something like:
+        # - to: "jdbc:dataSource?useHeadersAsParameters=true"

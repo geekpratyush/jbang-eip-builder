@@ -1,7 +1,0 @@
-{
-  "type": "freemarker",
-  "name": "JSON to Text with FTL",
-  "source": { "type": "json", "file": "source.json" },
-  "logic": { "type": "freemarker", "file": "template.ftl" },
-  "target": { "type": "txt" }
-}

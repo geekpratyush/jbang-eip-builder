@@ -1,7 +1,0 @@
-# camel-k: dependency=mvn:org.apache.camel.kamelet:camel-kamelet:3.20.1
-- route:
-    id: mongodb-to-mq-example
-    from:
-      uri: "kamelet:kamelet-studio-mongodb-source?database=finance&collection=transactions&consumerType=changeStreams"
-      steps:
-        - to: "kamelet:kamelet-studio-ibmmq-sink?queuename=DEV.QUEUE.1"

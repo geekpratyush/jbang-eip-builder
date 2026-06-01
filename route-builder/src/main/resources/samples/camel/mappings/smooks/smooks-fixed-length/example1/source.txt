@@ -1,2 +1,0 @@
-John      Doe       030USA
-Jane      Smith     025UK 

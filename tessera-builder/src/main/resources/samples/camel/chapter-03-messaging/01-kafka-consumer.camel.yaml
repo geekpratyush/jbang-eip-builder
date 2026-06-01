@@ -1,0 +1,26 @@
+# ID: kafka-consumer-stub
+# ENABLED: true
+# DESCRIPTION: Consumes messages from a Kafka topic. Uses stub: in offline mode.
+# STUB: stub:kafka:topic:orders (replaces kafka:orders?brokers=localhost:9092)
+# REAL_URI: kafka:orders?brokers=localhost:9092&groupId=camel-studio
+
+- route:
+    id: "kafka-order-consumer"
+    from:
+      uri: "{{kafka.orders.uri}}"
+      steps:
+        - log: "[Chapter 3][KAFKA] Received order from Kafka: ${body}"
+        - setHeader:
+            name: "ProcessedAt"
+            simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
+        - to: "mock:order-processor"
+
+- route:
+    id: "kafka-order-publisher"
+    from:
+      uri: "timer:kafka-test?period=4000&repeatCount=5"
+      steps:
+        - setBody:
+            simple: '{"orderId":"ORD-${random(100,999)}","product":"Widget","qty":${random(1,10)}}'
+        - log: "[Chapter 3][KAFKA] Sending to Kafka: ${body}"
+        - to: "{{kafka.orders.uri}}"

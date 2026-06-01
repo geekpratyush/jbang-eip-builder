@@ -1,0 +1,20 @@
+plugins {
+    id 'java'
+    id 'io.quarkus.extension' version '3.36.0'
+}
+
+quarkusExtension {
+    deploymentModule = ':tessera-app-manager-deployment'
+}
+
+dependencies {
+    implementation 'io.quarkus:quarkus-arc'
+    implementation 'io.quarkus:quarkus-rest-jackson'
+    implementation 'org.apache.camel.quarkus:camel-quarkus-core'
+    implementation 'org.apache.camel.quarkus:camel-quarkus-yaml-dsl'
+    implementation 'io.quarkus:quarkus-mongodb-client'
+    implementation 'jakarta.transaction:jakarta.transaction-api'
+    
+    // For annotation processing
+    annotationProcessor 'io.quarkus:quarkus-extension-processor:3.36.0'
+}

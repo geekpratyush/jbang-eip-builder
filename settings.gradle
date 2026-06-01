@@ -1,0 +1,26 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    plugins {
+        id "${quarkusPluginId}" version "${quarkusPluginVersion}"
+    }
+}
+rootProject.name = 'tessera'
+
+include 'tessera-bom'
+include 'tessera-faker'
+include 'tessera-builder'
+include 'tessera-liquibase-migrator'
+include 'tessera-audit-shaper'
+include 'tessera-app'
+
+// Quarkus Extensions
+include 'tessera-app-manager-runtime', 'tessera-app-manager-deployment'
+project(':tessera-app-manager-runtime').projectDir = file('tessera-app-manager/runtime')
+project(':tessera-app-manager-deployment').projectDir = file('tessera-app-manager/deployment')
+
+include 'tessera-ibmmq-runtime', 'tessera-ibmmq-deployment'
+project(':tessera-ibmmq-runtime').projectDir = file('tessera-ibmmq/runtime')
+project(':tessera-ibmmq-deployment').projectDir = file('tessera-ibmmq/deployment')
