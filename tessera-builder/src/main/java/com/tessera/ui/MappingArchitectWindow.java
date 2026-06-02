@@ -46,8 +46,6 @@ public class MappingArchitectWindow {
                 // --- Header ---
                 HBox header = SuiKit.createStudioHeader("Mapping Architect : " + titleStr, "fas-brain");
                 header.setPadding(new Insets(10, 20, 10, 20));
-                Label lblTitle = new Label("[ SOVEREIGN ARCHITECT : " + titleStr.toUpperCase() + " ]");
-                lblTitle.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 18px; -fx-text-fill: #00FF41; -fx-font-weight: bold;");
                 Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
 
                 Button btnClose = new Button("TERMINATE", new FontIcon("fas-power-off"));
@@ -57,7 +55,7 @@ public class MappingArchitectWindow {
 
                 FontIcon brainIcon = new FontIcon("fas-brain");
                 brainIcon.setIconColor(javafx.scene.paint.Color.web("#00FF41"));
-                header.getChildren().addAll(brainIcon, lblTitle, spacer, btnClose);
+                header.getChildren().addAll(brainIcon, spacer, btnClose);
                 root.setTop(header);
 
                 // --- WebView Content ---
@@ -68,13 +66,12 @@ public class MappingArchitectWindow {
                 // Start Local Server for D3.js and HTML
                 startLocalServer();
 
-                // Prepare Graph Data
-                String graphJson = MappingParser.parseXsltToGraph(logicContent, sourceContent);
-                String encodedJson = java.net.URLEncoder.encode(graphJson, StandardCharsets.UTF_8).replace("+", "%20");
+                // Prepare XSLT Data
+                String encodedXslt = java.net.URLEncoder.encode(logicContent, StandardCharsets.UTF_8).replace("+", "%20");
 
                 engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
                     if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
-                        engine.executeScript("renderGraph(decodeURIComponent('" + encodedJson + "'));");
+                        engine.executeScript("loadXsltFromJava(decodeURIComponent('" + encodedXslt + "'));");
                     }
                 });
 

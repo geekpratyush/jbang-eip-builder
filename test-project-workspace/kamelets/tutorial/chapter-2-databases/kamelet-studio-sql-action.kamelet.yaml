@@ -1,0 +1,86 @@
+apiVersion: camel.apache.org/v1
+kind: Kamelet
+metadata:
+  name: kamelet-studio-sql-action
+  labels:
+    camel.apache.org/kamelet.type: "action"
+  annotations:
+    camel.apache.org/kamelet.title: "Kamelet Studio SQL Action"
+    camel.apache.org/kamelet.version: "1.0.0"
+spec:
+  definition:
+    title: "Kamelet Studio SQL Action"
+    description: "Performs dynamic SQL database select, update, insert, and delete operations."
+    required:
+      - table
+    type: object
+    properties:
+      connectionBean:
+        type: string
+        default: "dataSource"
+      table:
+        type: string
+      operation:
+        type: string
+        default: "findAll"
+        enum: [ "findAll", "update", "delete", "query" ]
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        - setHeader:
+            name: "eip.sql.table"
+            constant: "{{table}}"
+        - setHeader:
+            name: "eip.sql.operation"
+            constant: "{{operation}}"
+        - setHeader:
+            name: "dynamicQuery"
+            groovy: |
+              import com.fasterxml.jackson.databind.ObjectMapper
+              def table = request.headers.get('eip.sql.table')
+              def op = request.headers.get('eip.sql.operation')
+              def body = request.body
+              
+              if (op == "findAll") {
+                  if (!(body instanceof Map) || body.isEmpty()) {
+                      return "SELECT * FROM ${table}"
+                  }
+                  def parts = []
+                  body.each { k, v ->
+                      request.headers.put("f_" + k, v)
+                      parts.add("${k} = :?f_${k}")
+                  }
+                  return "SELECT * FROM ${table} WHERE " + parts.join(" AND ")
+              }
+              if (op == "update") {
+                  // body is expected to be a List of [filterMap, updateMap]
+                  def filter = body[0]
+                  def update = body[1]
+                  def setParts = []
+                  update.each { k, v ->
+                      request.headers.put("u_" + k, v)
+                      setParts.add("${k} = :?u_${k}")
+                  }
+                  def whereParts = []
+                  filter.each { k, v ->
+                      request.headers.put("f_" + k, v)
+                      whereParts.add("${k} = :?f_${k}")
+                  }
+                  return "UPDATE ${table} SET ${setParts.join(', ')} WHERE " + whereParts.join(" AND ")
+              }
+              if (op == "delete") {
+                  def parts = []
+                  body.each { k, v ->
+                      request.headers.put("f_" + k, v)
+                      parts.add("${k} = :?f_${k}")
+                  }
+                  return "DELETE FROM ${table} WHERE " + parts.join(" AND ")
+              }
+              if (op == "query") {
+                  return body instanceof Map ? body.get("_sql") : body.toString()
+              }
+              return ""
+        - setBody:
+            simple: "${header.dynamicQuery}"
+        - to: "sql:dynamic?dataSource=#{{connectionBean}}&useMessageBodyForSql=true"

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <!-- Split-tone lighting gradients representing the absolute vertical center -->
+    <linearGradient id="topBlueGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+      <stop offset="49.8%" stop-color="#428EB8" />
+      <stop offset="50.2%" stop-color="#7CC0E3" />
+    </linearGradient>
+    <linearGradient id="bottomDarkGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+      <stop offset="49.8%" stop-color="#0F4A56" />
+      <stop offset="50.2%" stop-color="#186975" />
+    </linearGradient>
+    <!-- Clip paths ... (rest of file unchanged) -->
+  </defs>
+  <!-- Master Group -->
+  <g transform="translate(400, 270) scale(1.4)">
+    <!-- Base Triangles -->
+    <g stroke-width="8" stroke-linejoin="round">
+      <path d="M -115 40 L -55 100 L -175 100 Z" fill="#155F6E" stroke="#155F6E" />
+      <path d="M 115 40 L 175 100 L 55 100 Z" fill="#26828E" stroke="#26828E" />
+    </g>
+    <!-- Diamond Pieces ... -->
+  </g>
+</svg>

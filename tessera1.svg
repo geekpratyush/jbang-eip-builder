@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <!-- Split-tone lighting gradients representing the absolute vertical center -->
+    <linearGradient id="topBlueGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+      <stop offset="49.8%" stop-color="#428EB8" />
+      <stop offset="50.2%" stop-color="#7CC0E3" />
+    </linearGradient>
+    
+    <linearGradient id="bottomDarkGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+      <stop offset="49.8%" stop-color="#0F4A56" />
+      <stop offset="50.2%" stop-color="#186975" />
+    </linearGradient>
+
+    <!-- Clip paths to constrain the schematic circuit lines inside the pieces -->
+    <clipPath id="clipTL">
+      <path d="M -100 -100 L -4 -100 L -4 -62 L -10 -62 C -14 -72, -28 -68, -28 -50 C -28 -32, -14 -28, -10 -38 L -4 -38 L -4 -4 L -38 -4 L -38 -10 C -28 -14, -32 -28, -50 -28 C -68 -28, -72 -14, -62 -10 L -62 -4 L -100 -4 Z" />
+    </clipPath>
+    <clipPath id="clipTR">
+      <path d="M 100 -100 L 100 -4 L 62 -4 L 62 -10 C 72 -14, 68 -28, 50 -28 C 32 -28, 28 -14, 38 -10 L 38 -4 L 4 -4 L 4 -38 L -2 -38 C -6 -28, -20 -32, -20 -50 C -20 -68, -6 -72, -2 -62 L 4 -62 L 4 -100 Z" />
+    </clipPath>
+    <clipPath id="clipBL">
+      <path d="M -100 100 L -100 4 L -62 4 L -62 -2 C -72 -6, -68 -20, -50 -20 C -32 -20, -28 -6, -38 -2 L -38 4 L -4 4 L -4 38 L -10 38 C -14 28, -28 32, -28 50 C -28 68, -14 72, -10 62 L -4 62 L -4 100 Z" />
+    </clipPath>
+    <clipPath id="clipBR">
+      <path d="M 100 100 L 4 100 L 4 62 L -2 62 C -6 72, -20 68, -20 50 C -20 32, -6 28, -2 38 L 4 38 L 4 4 L 38 4 L 38 -2 C 28 -6, 32 -20, 50 -20 C 68 -20, 72 -6, 62 -2 L 62 4 L 100 4 Z" />
+    </clipPath>
+  </defs>
+
+  <!-- Clean, subtle background matching the image -->
+  <rect width="100%" height="100%" fill="#F6F9FA" />
+
+  <!-- Master Group: Scaled and Centered -->
+  <g transform="translate(400, 270) scale(1.4)">
+    
+    <!-- Base Triangles (Unrotated) -->
+    <g stroke-width="8" stroke-linejoin="round">
+      <path d="M -115 40 L -55 100 L -175 100 Z" fill="#155F6E" stroke="#155F6E" />
+      <path d="M 115 40 L 175 100 L 55 100 Z" fill="#26828E" stroke="#26828E" />
+    </g>
+
+    <!-- Diamond Puzzle Pieces (Rotated 45 degrees) -->
+    <g transform="rotate(45)" stroke-linejoin="round">
+      
+      <!-- Top Left Piece (Visual Top Blue) -->
+      <g clip-path="url(#clipTL)">
+        <path d="M -100 -100 L -4 -100 L -4 -62 L -10 -62 C -14 -72, -28 -68, -28 -50 C -28 -32, -14 -28, -10 -38 L -4 -38 L -4 -4 L -38 -4 L -38 -10 C -28 -14, -32 -28, -50 -28 C -68 -28, -72 -14, -62 -10 L -62 -4 L -100 -4 Z" fill="url(#topBlueGrad)" />
+        <!-- Schematic Lines -->
+        <path d="M -80 -20 L -50 -20 L -30 -40 L -30 -60 M -60 -80 L -60 -50 L -40 -30 M -20 -80 L -20 -60" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+        <circle cx="-30" cy="-60" r="2.5" fill="rgba(255,255,255,0.3)" />
+        <circle cx="-40" cy="-30" r="2.5" fill="rgba(255,255,255,0.3)" />
+      </g>
+
+      <!-- Top Right Piece (Visual Right Peach) -->
+      <g clip-path="url(#clipTR)">
+        <path d="M 100 -100 L 100 -4 L 62 -4 L 62 -10 C 72 -14, 68 -28, 50 -28 C 32 -28, 28 -14, 38 -10 L 38 -4 L 4 -4 L 4 -38 L -2 -38 C -6 -28, -20 -32, -20 -50 C -20 -68, -6 -72, -2 -62 L 4 -62 L 4 -100 Z" fill="#F3A869" />
+        <!-- Schematic Lines -->
+        <path d="M 80 -20 L 50 -20 L 30 -40 L 30 -60 M 60 -80 L 60 -50 L 40 -30" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" />
+        <circle cx="30" cy="-60" r="2.5" fill="rgba(255,255,255,0.4)" />
+        <circle cx="40" cy="-30" r="2.5" fill="rgba(255,255,255,0.4)" />
+      </g>
+
+      <!-- Bottom Left Piece (Visual Left Teal) -->
+      <g clip-path="url(#clipBL)">
+        <path d="M -100 100 L -100 4 L -62 4 L -62 -2 C -72 -6, -68 -20, -50 -20 C -32 -20, -28 -6, -38 -2 L -38 4 L -4 4 L -4 38 L -10 38 C -14 28, -28 32, -28 50 C -28 68, -14 72, -10 62 L -4 62 L -4 100 Z" fill="#156574" />
+        <!-- Schematic Lines -->
+        <path d="M -80 20 L -50 20 L -30 40 L -30 60 M -60 80 L -60 50 L -40 30" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" />
+        <circle cx="-30" cy="60" r="2.5" fill="rgba(255,255,255,0.2)" />
+        <circle cx="-40" cy="30" r="2.5" fill="rgba(255,255,255,0.2)" />
+      </g>
+
+      <!-- Bottom Right Piece (Visual Bottom Dark Teal) -->
+      <g clip-path="url(#clipBR)">
+        <path d="M 100 100 L 4 100 L 4 62 L -2 62 C -6 72, -20 68, -20 50 C -20 32, -6 28, -2 38 L 4 38 L 4 4 L 38 4 L 38 -2 C 28 -6, 32 -20, 50 -20 C 68 -20, 72 -6, 62 -2 L 62 4 L 100 4 Z" fill="url(#bottomDarkGrad)" />
+        <!-- Schematic Lines -->
+        <path d="M 80 20 L 50 20 L 30 40 L 30 60 M 60 80 L 60 50 L 40 30" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" />
+        <circle cx="30" cy="60" r="2.5" fill="rgba(255,255,255,0.2)" />
+        <circle cx="40" cy="30" r="2.5" fill="rgba(255,255,255,0.2)" />
+      </g>
+      
+    </g>
+  </g>
+</svg>

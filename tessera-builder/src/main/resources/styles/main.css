@@ -339,6 +339,10 @@
     -fx-text-fill: -sui-selection-text;
 }
 
+.diagram-pane {
+    -fx-background-color: -sui-bg-primary;
+}
+
 /* Diagram Nodes */
 .diagram-node {
     -fx-background-color: -sui-bg-secondary;
@@ -356,6 +360,19 @@
 .diagram-node:hover {
     -fx-background-color: -sui-selection;
     -fx-border-color: -sui-accent-primary;
+    -fx-border-width: 2.5px;
+    -fx-effect: dropshadow(three-pass-box, -sui-accent-primary, 15, 0, 0, 0);
+}
+.diagram-node:hover .node-title,
+.diagram-node:hover .node-details {
+    -fx-text-fill: -sui-selection-text !important;
+}
+.diagram-node:hover .node-icon {
+    -fx-icon-color: -sui-accent-primary !important;
+}
+.diagram-node-selected {
+    -fx-border-color: -sui-accent-primary;
+    -fx-border-width: 3px;
     -fx-effect: dropshadow(three-pass-box, -sui-accent-primary, 15, 0, 0, 0);
 }
 .node-title { 
@@ -384,6 +401,23 @@
     -fx-background-color: -sui-bg-primary;
     -fx-text-fill: -sui-text-main;
     -fx-font-family: monospace;
+}
+
+/* Custom Hover Overrides for Light Themes */
+.theme-intellij-light .diagram-node:hover,
+.theme-material-light .diagram-node:hover {
+    -fx-background-color: -sui-accent-primary;
+    -fx-border-color: #f4f7f9;
+}
+.theme-intellij-light .diagram-node:hover .node-title,
+.theme-intellij-light .diagram-node:hover .node-details,
+.theme-material-light .diagram-node:hover .node-title,
+.theme-material-light .diagram-node:hover .node-details {
+    -fx-text-fill: #f4f7f9 !important;
+}
+.theme-intellij-light .diagram-node:hover .node-icon,
+.theme-material-light .diagram-node:hover .node-icon {
+    -fx-icon-color: #f4f7f9 !important;
 }
 
 

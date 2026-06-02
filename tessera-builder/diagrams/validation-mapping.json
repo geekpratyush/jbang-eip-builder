@@ -1,0 +1,19 @@
+{
+  "mappings": [
+    { "name": "Invoice XML (Valid)", "messagePath": "messages/xml/invoice-valid.xml", "schemaPath": "schemas/xsd/invoice-schema.xsd", "type": "XML + XSD" },
+    { "name": "Invoice XML (Invalid)", "messagePath": "messages/xml/invoice-invalid.xml", "schemaPath": "schemas/xsd/invoice-schema.xsd", "type": "XML + XSD" },
+    { "name": "Customer JSON (Valid)", "messagePath": "messages/json/customer-valid.json", "schemaPath": "schemas/json-schema/customer-schema.json", "type": "JSON + Schema" },
+    { "name": "Customer JSON (Invalid)", "messagePath": "messages/json/customer-invalid.json", "schemaPath": "schemas/json-schema/customer-schema.json", "type": "JSON + Schema" },
+    { "name": "App Config YAML (Valid)", "messagePath": "messages/yaml/config-valid.yaml", "schemaPath": "schemas/json-schema/config-schema.json", "type": "YAML + Schema" },
+    { "name": "App Config YAML (Invalid)", "messagePath": "messages/yaml/config-invalid.yaml", "schemaPath": "schemas/json-schema/config-schema.json", "type": "YAML + Schema" },
+    { "name": "Swift MT103 (Valid)", "messagePath": "messages/mt/standard/mt103-valid.txt", "schemaPath": "", "type": "SWIFT MT Message" },
+    { "name": "Swift MT103 (Invalid)", "messagePath": "messages/mt/standard/mt103-invalid.txt", "schemaPath": "", "type": "SWIFT MT Message" },
+    { "name": "Swift MT103 Enhanced (Valid)", "messagePath": "messages/mt/enhanced/mt103-valid-enhanced.txt", "schemaPath": "validators/custom-mt-rules.json", "type": "SWIFT MT Message" },
+    { "name": "Swift MT103 Enhanced (Invalid)", "messagePath": "messages/mt/enhanced/mt103-invalid-enhanced.txt", "schemaPath": "validators/custom-mt-rules.json", "type": "SWIFT MT Message" },
+    { "name": "Transactions CSV (Valid)", "messagePath": "messages/csv/transactions-valid.csv", "schemaPath": "schemas/csv/transactions-metadata.json", "type": "CSV + CSVW" },
+    { "name": "Transactions CSV (Invalid)", "messagePath": "messages/csv/transactions-invalid.csv", "schemaPath": "schemas/csv/transactions-metadata.json", "type": "CSV + CSVW" },
+    { "name": "FixedWidth Flat File (Valid)", "messagePath": "messages/flatfile/fixedwidth-valid.txt", "schemaPath": "schemas/flatfile/fixedwidth-schema.json", "type": "Flat File" },
+    { "name": "ISO20022 Pacs008 (Valid)", "messagePath": "messages/iso20022/pacs008-valid.xml", "schemaPath": "schemas/iso20022/pacs008-schema.xsd", "type": "ISO 20022 MX" },
+    { "name": "ISO20022 Pacs008 (Invalid)", "messagePath": "messages/iso20022/pacs008-invalid.xml", "schemaPath": "schemas/iso20022/pacs008-schema.xsd", "type": "ISO 20022 MX" }
+  ]
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.Button?>
+<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.datamapper.MappingDialogController" spacing="10" alignment="CENTER" prefWidth="400" prefHeight="200">
+    <Label text="Define Mapping Expression" />
+    <TextArea fx:id="expressionArea" prefRowCount="5" wrapText="true" />
+    <HBox spacing="20" alignment="CENTER">
+        <Button text="OK" onAction="#handleOk" />
+        <Button text="Cancel" onAction="#handleCancel" />
+    </HBox>
+</VBox>

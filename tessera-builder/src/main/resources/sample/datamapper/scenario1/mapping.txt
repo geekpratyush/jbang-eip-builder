@@ -1,0 +1,3 @@
+firstName -> fullName
+lastName -> department
+age -> years

@@ -69,7 +69,7 @@ public class RouteTreePane extends VBox {
         btnNewFile.setOnAction(e -> createNewItem(false));
 
         Button btnNewFolder = new Button();
-        btnNewFolder.setGraphic(new FontIcon("fas-folder-plus"));
+        btnNewFolder.setGraphic(new FontIcon("fas-folder"));
         btnNewFolder.setTooltip(new Tooltip("New Folder"));
         btnNewFolder.getStyleClass().addAll("editor-btn", "btn-new-folder");
         btnNewFolder.setOnAction(e -> createNewItem(true));
@@ -112,14 +112,50 @@ public class RouteTreePane extends VBox {
 
         toolbar.getChildren().addAll(btnExpandAll, btnCollapseAll);
 
-        File camelDir = new File(System.getProperty("user.dir"), "camel");
-        if (camelDir.exists()) {
-            baseDirectory = camelDir;
-        } else {
-            baseDirectory = new File(System.getProperty("user.dir"), "routes");
+        File userDir = new File(System.getProperty("user.dir"));
+        // Prioritize WORKSPACE_ROOT_DIR system property if set, otherwise find it
+        String wsProp = System.getProperty("WORKSPACE_ROOT_DIR");
+        File wsRoot = (wsProp != null) ? new File(wsProp) : null;
+        
+        if (wsRoot == null) {
+            File cacheFile = new File(System.getProperty("user.home"), ".tessera_workspace_cache");
+            if (cacheFile.exists()) {
+                try {
+                    String cachedPath = java.nio.file.Files.readString(cacheFile.toPath()).trim();
+                    if (!cachedPath.isEmpty()) {
+                        File f = new File(cachedPath);
+                        if (f.exists() && f.isDirectory()) wsRoot = f;
+                    }
+                } catch (Exception ignored) {}
+            }
         }
-        if (!baseDirectory.exists()) {
-            baseDirectory.mkdirs();
+        
+        if (wsRoot == null) wsRoot = userDir;
+        
+        if (wsProp == null) {
+            while (wsRoot != null && !new File(wsRoot, "application.properties").exists()) {
+                wsRoot = wsRoot.getParentFile();
+            }
+        }
+        
+        if (wsRoot == null || !wsRoot.exists()) wsRoot = userDir;
+        System.out.println("[RouteTreePane] Identified Workspace Root for scoping: " + wsRoot.getAbsolutePath());
+        
+        File camelDir = new File(wsRoot, "camel");
+        File routesDir = new File(wsRoot, "routes");
+        
+        if (camelDir.exists() && camelDir.isDirectory()) {
+            baseDirectory = camelDir;
+            if (title != null) title.setText("EXPLORER: CAMEL");
+            System.out.println("[RouteTreePane] Scoped to 'camel' folder: " + baseDirectory.getAbsolutePath());
+        } else if (routesDir.exists() && routesDir.isDirectory()) {
+            baseDirectory = routesDir;
+            if (title != null) title.setText("EXPLORER: ROUTES");
+            System.out.println("[RouteTreePane] Scoped to 'routes' folder: " + baseDirectory.getAbsolutePath());
+        } else {
+            baseDirectory = wsRoot;
+            if (title != null) title.setText("EXPLORER: " + wsRoot.getName().toUpperCase());
+            System.out.println("[RouteTreePane] No subfolder found, using root: " + baseDirectory.getAbsolutePath());
         }
 
         rootItem = new TreeItem<>(baseDirectory);
@@ -133,6 +169,7 @@ public class RouteTreePane extends VBox {
                 }
             }
         };
+        treeView.setShowRoot(false);
         treeView.getStyleClass().add("custom-tree-view");
         this.setMinWidth(50);
         this.setPrefWidth(260);
@@ -483,7 +520,7 @@ public class RouteTreePane extends VBox {
         MenuItem newFileMenu = new MenuItem("Empty File", new FontIcon("fas-file"));
         newFileMenu.setOnAction(e -> createNewItem(item, false));
         
-        MenuItem newFolderMenu = new MenuItem("Folder", new FontIcon("fas-folder-plus"));
+        MenuItem newFolderMenu = new MenuItem("Folder", new FontIcon("fas-folder"));
         newFolderMenu.setOnAction(e -> createNewItem(item, true));
 
         MenuItem newYamlDslItem = new MenuItem("YAML DSL Route", new FontIcon("fas-route"));
@@ -825,23 +862,36 @@ public class RouteTreePane extends VBox {
     }
 
     public void setBaseDirectory(File newBaseDir) {
+        if (newBaseDir == null) return;
+        System.out.println("[RouteTreePane] setBaseDirectory called with: " + newBaseDir.getAbsolutePath());
+        
         File camelDir = new File(newBaseDir, "camel");
         File routesDir = new File(newBaseDir, "routes");
+        
         if (camelDir.exists() && camelDir.isDirectory()) {
             this.baseDirectory = camelDir;
             if (title != null) {
                 title.setText("EXPLORER: CAMEL");
             }
+            System.out.println("[RouteTreePane] Redirected base to: " + this.baseDirectory.getAbsolutePath());
         } else if (routesDir.exists() && routesDir.isDirectory()) {
             this.baseDirectory = routesDir;
             if (title != null) {
                 title.setText("EXPLORER: ROUTES");
             }
+            System.out.println("[RouteTreePane] Redirected base to: " + this.baseDirectory.getAbsolutePath());
+        } else if (newBaseDir.getName().equals("camel") || newBaseDir.getName().equals("routes")) {
+            this.baseDirectory = newBaseDir;
+            if (title != null) {
+                title.setText("EXPLORER: " + newBaseDir.getName().toUpperCase());
+            }
+            System.out.println("[RouteTreePane] Already in subfolder, using as is: " + this.baseDirectory.getAbsolutePath());
         } else {
             this.baseDirectory = newBaseDir;
             if (title != null) {
                 title.setText("EXPLORER: " + newBaseDir.getName().toUpperCase());
             }
+            System.out.println("[RouteTreePane] Using generic folder: " + this.baseDirectory.getAbsolutePath());
         }
         this.rootItem.setValue(this.baseDirectory);
         checkedFiles.clear();
@@ -1063,7 +1113,10 @@ public class RouteTreePane extends VBox {
         String name = file.getName().toLowerCase();
         if (name.startsWith(".")) return false;
         return name.endsWith(".java") || name.endsWith(".yaml") || name.endsWith(".yml") || 
-               name.endsWith(".xml") || name.endsWith(".txt") || name.endsWith(".template");
+               name.endsWith(".xml") || name.endsWith(".txt") || name.endsWith(".template") ||
+               name.endsWith(".json") || name.endsWith(".xslt") || name.endsWith(".jslt") ||
+               name.endsWith(".ftl") || name.endsWith(".groovy") || name.endsWith(".kts") ||
+               name.endsWith(".md") || name.endsWith(".properties");
     }
 
     private CheckState getFolderCheckState(File folder) {

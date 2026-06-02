@@ -18,7 +18,10 @@ public class TemplateDiscovery {
 
     public void scanTemplates() {
         templateCache.clear();
-        if (!Files.exists(templatesDir)) return;
+        if (!Files.exists(templatesDir)) {
+            System.err.println("[TemplateDiscovery] Templates directory not found at: " + templatesDir.toAbsolutePath());
+            return;
+        }
         
         try {
             Files.walk(templatesDir)

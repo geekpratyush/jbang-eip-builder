@@ -1,310 +1,635 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sovereign Resilience Engine - Mapping Architect</title>
-    <!-- Use a CDN for D3.js -->
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #010101; /* Deep dark background */
-            overflow: hidden;
-            font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tessera - XSLT Architecture Visualizer Pro</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@9.4.3/dist/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
 
-        /* Cyberpunk Grid Background */
-        #grid-pattern {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: 
-                linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
-            z-index: 0;
-            pointer-events: none;
-        }
+  <style>
+    /* Dynamic Theme Variables */
+    :root {
+      --bg-color: #0A0F1C;
+      --panel-bg: #111827;
+      --text-main: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --border-color: #374151;
+      --accent-blue: #3A8DB5;
+      --accent-hover: #64ACD0;
+    }
 
-        svg {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 1;
-            background-color: transparent;
-            pointer-events: all;
-        }
+    body {
+      margin: 0;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s, color 0.3s;
+    }
 
-        /* Glowing Connections */
-        .link {
-            fill: none;
-            stroke-linecap: round;
-            opacity: 0.85; /* Increased opacity */
-            stroke-width: 3.5px; /* Thicker baseline */
-            transition: stroke-width 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
-            filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 10px currentColor); /* Double glow */
-        }
-        .link:hover {
-            opacity: 1;
-            stroke-width: 6px;
-            filter: drop-shadow(0 0 12px currentColor) drop-shadow(0 0 20px currentColor);
-        }
+    header {
+      padding: 1rem 2rem;
+      background-color: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
 
-        /* Particles for data flow */
-        .particle {
-            fill: #ffffff;
-            filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 12px #fff); /* Bright glowing core */
-        }
+    .brand {
+      font-weight: 900;
+      font-size: 1.5rem;
+      letter-spacing: 2px;
+    }
 
-        /* Node Styling */
-        .node-rect {
-            rx: 8px; ry: 8px;
-            fill: #111;
-            stroke-width: 2px;
-            cursor: pointer;
-            transition: filter 0.3s ease;
-        }
-        .node-rect:hover {
-            filter: drop-shadow(0 0 10px currentColor);
-        }
+    .controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
 
-        .node-label {
-            fill: #fff;
-            font-size: 12px;
-            font-weight: bold;
-            pointer-events: none;
-            text-anchor: middle;
-            dominant-baseline: middle;
-        }
-        .node-type {
-            font-size: 9px;
-            font-weight: bold;
-            pointer-events: none;
-            text-anchor: middle;
-        }
+    select {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+      cursor: pointer;
+    }
 
-    </style>
+    .btn {
+      background-color: var(--accent-blue);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover { background-color: var(--accent-hover); }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .editor-pane {
+      width: 50%;
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+    }
+    
+    .resizer {
+      width: 4px;
+      cursor: col-resize;
+      background-color: var(--border-color);
+      transition: background-color 0.2s;
+      z-index: 20;
+    }
+    
+    .resizer:hover, .resizer.dragging {
+      background-color: var(--accent-blue);
+    }
+    
+    .visualizer-pane {
+      flex: 1 1 0%;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+    }
+
+    h2 {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-top: 0;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    textarea {
+      flex: 1;
+      background-color: rgba(0,0,0,0.2);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    textarea:focus { border-color: var(--accent-blue); }
+
+    .visualizer-pane {
+      background-color: var(--bg-color); 
+      position: relative;
+      overflow: hidden;
+    }
+
+    #mermaid-output {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #mermaid-output svg {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: none !important;
+    }
+    
+    .interaction-hint {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: var(--panel-bg);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    /* SVG Glowing effects for specific themes */
+    body.theme-dark .edgePath path, body.theme-blueprint .edgePath path {
+      filter: drop-shadow(0 0 2px rgba(100, 172, 208, 0.4));
+    }
+    
+    body.theme-hacker .edgePath path {
+      filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.6)) drop-shadow(0 0 8px rgba(16, 185, 129, 0.3));
+      stroke-width: 2px !important;
+    }
+    body.theme-hacker .node rect, body.theme-hacker .node polygon, body.theme-hacker .node circle {
+      filter: drop-shadow(0 0 3px rgba(16, 185, 129, 0.4));
+    }
+    
+    body.theme-gamer .edgePath path {
+      filter: drop-shadow(0 0 4px rgba(236, 72, 153, 0.6)) drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
+      stroke-width: 2px !important;
+    }
+    body.theme-gamer .node rect, body.theme-gamer .node polygon, body.theme-gamer .node circle {
+      filter: drop-shadow(0 0 4px rgba(236, 72, 153, 0.4));
+    }
+  </style>
 </head>
 <body>
 
-    <div id="grid-pattern"></div>
-    <svg id="diagram"></svg>
+  <header>
+    <div class="brand" style="display: flex; align-items: center;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="-252 -200 504 400" width="28" height="28" style="margin-right: 12px; filter: drop-shadow(0 0 4px rgba(124,192,227,0.5));">
+        <defs>
+          <linearGradient id="topBlueGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+            <stop offset="49.8%" stop-color="#428EB8" />
+            <stop offset="50.2%" stop-color="#7CC0E3" />
+          </linearGradient>
+          <linearGradient id="bottomDarkGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+            <stop offset="49.8%" stop-color="#0F4A56" />
+            <stop offset="50.2%" stop-color="#186975" />
+          </linearGradient>
+          <clipPath id="clipTL">
+            <path d="M -100 -100 L -4 -100 L -4 -62 L -10 -62 C -14 -72, -28 -68, -28 -50 C -28 -32, -14 -28, -10 -38 L -4 -38 L -4 -4 L -38 -4 L -38 -10 C -28 -14, -32 -28, -50 -28 C -68 -28, -72 -14, -62 -10 L -62 -4 L -100 -4 Z" />
+          </clipPath>
+          <clipPath id="clipTR">
+            <path d="M 100 -100 L 100 -4 L 62 -4 L 62 -10 C 72 -14, 68 -28, 50 -28 C 32 -28, 28 -14, 38 -10 L 38 -4 L 4 -4 L 4 -38 L -2 -38 C -6 -28, -20 -32, -20 -50 C -20 -68, -6 -72, -2 -62 L 4 -62 L 4 -100 Z" />
+          </clipPath>
+          <clipPath id="clipBL">
+            <path d="M -100 100 L -100 4 L -62 4 L -62 -2 C -72 -6, -68 -20, -50 -20 C -32 -20, -28 -6, -38 -2 L -38 4 L -4 4 L -4 38 L -10 38 C -14 28, -28 32, -28 50 C -28 68, -14 72, -10 62 L -4 62 L -4 100 Z" />
+          </clipPath>
+          <clipPath id="clipBR">
+            <path d="M 100 100 L 4 100 L 4 62 L -2 62 C -6 72, -20 68, -20 50 C -20 32, -6 28, -2 38 L 4 38 L 4 4 L 38 4 L 38 -2 C 28 -6, 32 -20, 50 -20 C 68 -20, 72 -6, 62 -2 L 62 4 L 100 4 Z" />
+          </clipPath>
+        </defs>
+        <g transform="scale(1.4)">
+          <g stroke-width="8" stroke-linejoin="round">
+            <path d="M -115 40 L -55 100 L -175 100 Z" fill="#155F6E" stroke="#155F6E" />
+            <path d="M 115 40 L 175 100 L 55 100 Z" fill="#26828E" stroke="#26828E" />
+          </g>
+          <g transform="rotate(45)" stroke-linejoin="round">
+            <g clip-path="url(#clipTL)">
+              <path d="M -100 -100 L -4 -100 L -4 -62 L -10 -62 C -14 -72, -28 -68, -28 -50 C -28 -32, -14 -28, -10 -38 L -4 -38 L -4 -4 L -38 -4 L -38 -10 C -28 -14, -32 -28, -50 -28 C -68 -28, -72 -14, -62 -10 L -62 -4 L -100 -4 Z" fill="url(#topBlueGrad)" />
+              <path d="M -80 -20 L -50 -20 L -30 -40 L -30 -60 M -60 -80 L -60 -50 L -40 -30 M -20 -80 L -20 -60" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+              <circle cx="-30" cy="-60" r="2.5" fill="rgba(255,255,255,0.3)" />
+              <circle cx="-40" cy="-30" r="2.5" fill="rgba(255,255,255,0.3)" />
+            </g>
+            <g clip-path="url(#clipTR)">
+              <path d="M 100 -100 L 100 -4 L 62 -4 L 62 -10 C 72 -14, 68 -28, 50 -28 C 32 -28, 28 -14, 38 -10 L 38 -4 L 4 -4 L 4 -38 L -2 -38 C -6 -28, -20 -32, -20 -50 C -20 -68, -6 -72, -2 -62 L 4 -62 L 4 -100 Z" fill="#F3A869" />
+              <path d="M 80 -20 L 50 -20 L 30 -40 L 30 -60 M 60 -80 L 60 -50 L 40 -30" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" />
+              <circle cx="30" cy="-60" r="2.5" fill="rgba(255,255,255,0.4)" />
+              <circle cx="40" cy="-30" r="2.5" fill="rgba(255,255,255,0.4)" />
+            </g>
+            <g clip-path="url(#clipBL)">
+              <path d="M -100 100 L -100 4 L -62 4 L -62 -2 C -72 -6, -68 -20, -50 -20 C -32 -20, -28 -6, -38 -2 L -38 4 L -4 4 L -4 38 L -10 38 C -14 28, -28 32, -28 50 C -28 68, -14 72, -10 62 L -4 62 L -4 100 Z" fill="#156574" />
+              <path d="M -80 20 L -50 20 L -30 40 L -30 60 M -60 80 L -60 50 L -40 30" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" />
+              <circle cx="-30" cy="60" r="2.5" fill="rgba(255,255,255,0.2)" />
+              <circle cx="-40" cy="30" r="2.5" fill="rgba(255,255,255,0.2)" />
+            </g>
+            <g clip-path="url(#clipBR)">
+              <path d="M 100 100 L 4 100 L 4 62 L -2 62 C -6 72, -20 68, -20 50 C -20 32, -6 28, -2 38 L 4 38 L 4 4 L 38 4 L 38 -2 C 28 -6, 32 -20, 50 -20 C 68 -20, 72 -6, 62 -2 L 62 4 L 100 4 Z" fill="url(#bottomDarkGrad)" />
+              <path d="M 80 20 L 50 20 L 30 40 L 30 60 M 60 80 L 60 50 L 40 30" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" />
+              <circle cx="30" cy="60" r="2.5" fill="rgba(255,255,255,0.2)" />
+              <circle cx="40" cy="30" r="2.5" fill="rgba(255,255,255,0.2)" />
+            </g>
+          </g>
+        </g>
+      </svg>
+      Tessera Sovereign Architect
+    </div>
+    <div class="controls">
+      <button id="layout-toggle" class="btn" onclick="toggleLayout()" title="Toggle Layout (Currently TD)" style="display: flex; align-items: center; gap: 6px; padding: 0.5rem 1rem;">
+        <span id="layout-icon">⬇️</span> <span id="layout-text" style="font-weight: bold;">TD</span>
+      </button>
+      
+      <select id="theme-select" onchange="applyTheme(); generateDiagram();">
+        <option value="light">Enterprise Light</option>
+        <option value="dark">Enterprise Dark</option>
+        <option value="sober">Simple & Sober</option>
+        <option value="blueprint">Engineering Blueprint</option>
+        <option value="hacker">Hacker (Balanced Neon)</option>
+        <option value="gamer">Cyberpunk Gamer</option>
+      </select>
 
-    <script>
-        const svg = d3.select("#diagram")
-            .attr("width", window.innerWidth)
-            .attr("height", window.innerHeight);
-        
-        // Container for zoom/pan
-        const g = svg.append("g");
+      <button class="btn" onclick="generateDiagram()">Render Map</button>
+      <button class="btn" style="background-color: var(--accent-blue); color: #fff;" onclick="saveAsSVG()">💾 Save SVG</button>
+      <button class="btn" style="background-color: var(--accent-blue); color: #fff;" onclick="saveAsXSLT()">💾 Save XSLT</button>
+    </div>
+  </header>
 
-        const zoom = d3.zoom()
-            .scaleExtent([0.05, 5])
-            .on("zoom", (event) => {
-                g.attr("transform", event.transform);
-            });
+  <div class="main-container">
+    <div class="editor-pane">
+      <h2>Raw XSLT Source</h2>
+      <textarea id="xslt-input">
+<!-- XSLT goes here -->
+      </textarea>
+    </div>
 
-        // Add an invisible background rect to capture all pointer events for zooming/panning
-        const bgRect = svg.insert("rect", "g")
-            .attr("width", "100%")
-            .attr("height", "100%")
-            .attr("fill", "transparent")
-            .attr("pointer-events", "all");
+    <div class="resizer" id="dragMe"></div>
 
-        svg.call(zoom);
+    <div class="visualizer-pane">
+      <h2 style="position: absolute; top: 1rem; left: 1rem; z-index: 10;">Architecture Topology</h2>
+      <div id="mermaid-output"></div>
+      <div class="interaction-hint" id="hint" style="display: none;">🖱️ Scroll to Zoom | Drag to Pan</div>
+    </div>
+  </div>
 
-        // Color palette based on node type
-        const colors = {
-            "SOURCE": "#00FF41",  // Hacker Green
-            "TEMPLATE": "#00E5FF", // Neon Cyan
-            "LOGIC": "#adff2f",    // YellowGreen
-            "TARGET": "#FF00FF",   // Neon Pink
-            "VARIABLE": "#FFFF00", // Yellow
-            "CONDITION": "#FF9800",// Orange
-            "BRANCH": "#FF5722",   // Deep Orange
-            "ERROR": "#F44336"     // Red
-        };
+  <script>
+    let panZoomInstance = null;
+    mermaid.initialize({ startOnLoad: false, theme: 'base' });
 
-        function renderGraph(jsonString) {
-            console.log("Raw JSON received:", jsonString);
-            g.selectAll("*").remove(); // Clear existing
+    // Theme Engine Dictionary
+    const themes = {
+      dark: {
+        css: { bg: '#0F172A', panel: '#1E293B', text: '#F1F5F9', muted: '#94A3B8', border: '#334155' },
+        mermaid: `
+          linkStyle default stroke:#38BDF8,stroke-width:2px;
+          classDef default fill:#0F172A,stroke:#475569,stroke-width:2px,color:#F8FAFC;
+          classDef template fill:#1E293B,stroke:#0F172A,stroke-width:2px,color:#F8FAFC;
+          classDef loop fill:#92400E,stroke:#B45309,stroke-width:2px,color:#F8FAFC;
+          classDef condition fill:#0284C7,stroke:#0369A1,stroke-width:2px,color:#F8FAFC;
+          classDef extract fill:#059669,stroke:#047857,stroke-width:2px,color:#F8FAFC;
+        `
+      },
+      light: {
+        css: { bg: '#F8FAFC', panel: '#FFFFFF', text: '#0F172A', muted: '#64748B', border: '#E2E8F0' },
+        mermaid: `
+          linkStyle default stroke:#94A3B8,stroke-width:2px;
+          classDef default fill:#F8FAFC,stroke:#CBD5E1,stroke-width:2px,color:#0F172A;
+          classDef template fill:#FFFFFF,stroke:#94A3B8,stroke-width:2px,color:#0F172A;
+          classDef loop fill:#FED7AA,stroke:#EA580C,stroke-width:2px,color:#0F172A;
+          classDef condition fill:#BAE6FD,stroke:#0284C7,stroke-width:2px,color:#0F172A;
+          classDef extract fill:#A7F3D0,stroke:#059669,stroke-width:2px,color:#0F172A;
+        `
+      },
+      sober: {
+        css: { bg: '#F5F5F5', panel: '#FFFFFF', text: '#333333', muted: '#666666', border: '#DDDDDD' },
+        mermaid: `
+          linkStyle default stroke:#888888,stroke-width:1.5px;
+          classDef default fill:#FFFFFF,stroke:#AAAAAA,stroke-width:1px,color:#333333;
+          classDef template fill:#FAFAFA,stroke:#888888,stroke-width:1.5px,color:#333333;
+          classDef loop fill:#FFFFFF,stroke:#888888,stroke-width:1px,color:#333333,stroke-dasharray: 4 4;
+          classDef condition fill:#F5F5F5,stroke:#888888,stroke-width:1px,color:#333333;
+          classDef extract fill:#FFFFFF,stroke:#999999,stroke-width:1px,color:#333333;
+        `
+      },
+      blueprint: {
+        css: { bg: '#082F49', panel: '#0C4A6E', text: '#E0F2FE', muted: '#7DD3FC', border: '#0284C7' },
+        mermaid: `
+          linkStyle default stroke:#7DD3FC,stroke-width:2px;
+          classDef default fill:#0369A1,stroke:#BAE6FD,stroke-width:2px,color:#FFFFFF;
+          classDef template fill:#075985,stroke:#E0F2FE,stroke-width:2px,color:#FFFFFF;
+          classDef loop fill:#0369A1,stroke:#BAE6FD,stroke-width:2px,color:#FFFFFF,stroke-dasharray: 5 5;
+          classDef condition fill:#0284C7,stroke:#38BDF8,stroke-width:2px,color:#FFFFFF;
+          classDef extract fill:#0EA5E9,stroke:#F0F9FF,stroke-width:2px,color:#FFFFFF;
+        `
+      },
+      hacker: {
+        css: { bg: '#020617', panel: '#0F172A', text: '#10B981', muted: '#059669', border: '#047857' },
+        mermaid: `
+          linkStyle default stroke:#10B981,stroke-width:2px;
+          classDef default fill:#020617,stroke:#059669,stroke-width:2px,color:#10B981;
+          classDef template fill:#064E3B,stroke:#10B981,stroke-width:2px,color:#34D399;
+          classDef loop fill:#020617,stroke:#10B981,stroke-width:2px,color:#34D399,stroke-dasharray: 5 5;
+          classDef condition fill:#020617,stroke:#047857,stroke-width:2px,color:#10B981;
+          classDef extract fill:#020617,stroke:#065F46,stroke-width:2px,color:#34D399;
+        `
+      },
+      gamer: {
+        css: { bg: '#1E1B4B', panel: '#2E1065', text: '#22D3EE', muted: '#C084FC', border: '#7E22CE' },
+        mermaid: `
+          linkStyle default stroke:#22D3EE,stroke-width:2px;
+          classDef default fill:#2E1065,stroke:#D946EF,stroke-width:2px,color:#22D3EE;
+          classDef template fill:#3B0764,stroke:#22D3EE,stroke-width:2px,color:#F0ABFC;
+          classDef loop fill:#1E1B4B,stroke:#FDE047,stroke-width:2px,color:#FDE047,stroke-dasharray: 5 5;
+          classDef condition fill:#4C1D95,stroke:#22D3EE,stroke-width:2px,color:#F0ABFC;
+          classDef extract fill:#2E1065,stroke:#2DD4BF,stroke-width:2px,color:#2DD4BF;
+        `
+      }
+    };
 
-            let data;
-            try {
-                data = JSON.parse(jsonString);
-            } catch (e) {
-                console.error("Failed to parse JSON", e);
-                return;
-            }
+    let currentLayout = 'TD';
 
-            if (!data.nodes || data.nodes.length === 0) return;
+    function toggleLayout() {
+      currentLayout = (currentLayout === 'TD') ? 'LR' : 'TD';
+      
+      const icon = document.getElementById('layout-icon');
+      const text = document.getElementById('layout-text');
+      const btn = document.getElementById('layout-toggle');
+      
+      if (currentLayout === 'TD') {
+        icon.innerHTML = '⬇️';
+        text.innerHTML = 'TD';
+        btn.title = 'Toggle Layout (Currently TD)';
+      } else {
+        icon.innerHTML = '➡️';
+        text.innerHTML = 'LR';
+        btn.title = 'Toggle Layout (Currently LR)';
+      }
+      
+      generateDiagram();
+    }
 
-            // Compute hierarchy using strict left-to-right grid layout
-            const nodeWidth = 160;
-            const nodeHeight = 50;
-            
-            // Fixed columns
-            const typeX = { "SOURCE": 100, "TEMPLATE": 400, "VARIABLE": 400, "CONDITION": 650, "BRANCH": 900, "LOGIC": 1150, "TARGET": 1450 };
-            
-            let colCounts = {};
-            data.nodes.forEach(d => {
-                let colX = typeX[d.type] || 600;
-                colCounts[colX] = (colCounts[colX] || 0) + 1;
-                d.fx = colX;
-                d.y = colCounts[colX] * 80;
-                d.color = colors[d.type] || "#FFFFFF";
-            });
+    function applyTheme() {
+      const selected = document.getElementById('theme-select').value;
+      document.body.className = 'theme-' + selected;
+      const t = themes[selected].css;
+      const root = document.documentElement;
+      root.style.setProperty('--bg-color', t.bg);
+      root.style.setProperty('--panel-bg', t.panel);
+      root.style.setProperty('--text-main', t.text);
+      root.style.setProperty('--text-muted', t.muted);
+      root.style.setProperty('--border-color', t.border);
+    }
 
-            const nodeById = d3.index(data.nodes, d => d.id);
-            const graphLinks = data.links.map(l => ({
-                source: nodeById.get(l.source),
-                target: nodeById.get(l.target)
-            })).filter(l => l.source && l.target);
+    window.onload = () => {
+      applyTheme();
+      generateDiagram();
+    };
 
-            const simulation = d3.forceSimulation(data.nodes)
-                .force("link", d3.forceLink(graphLinks).distance(0).strength(0.01))
-                .force("collide", d3.forceCollide().radius(nodeHeight/2 + 20).strength(1))
-                .force("y", d3.forceY(d => d.y).strength(0.05));
+    function loadXsltFromJava(xsltContent) {
+      document.getElementById('xslt-input').value = xsltContent;
+      generateDiagram();
+    }
 
-            // Draw Links (Bezier curves)
-            const linkPath = d3.linkHorizontal().x(d => d[0]).y(d => d[1]);
+    function saveAsSVG() {
+      const svgElement = document.querySelector('#mermaid-output svg');
+      if (!svgElement) {
+        alert("No diagram rendered yet!");
+        return;
+      }
+      
+      const clone = svgElement.cloneNode(true);
+      // Remove panning transforms so the SVG saves neatly at its natural bounds
+      const viewport = clone.querySelector('.svg-pan-zoom_viewport');
+      if (viewport) {
+        viewport.removeAttribute('transform');
+      }
 
-            const link = g.selectAll(".link")
-                .data(graphLinks)
-                .enter().append("path")
-                .attr("class", "link")
-                .attr("stroke", d => d.source.color)
-                .attr("stroke-width", 2.5);
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(clone);
+      
+      // Add XML declaration if not present
+      if(!source.match(/^<\?xml[^>]+>/)) {
+          source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+      }
 
-            // Draw Nodes
-            const nodeGroup = g.selectAll(".node")
-                .data(data.nodes)
-                .enter().append("g")
-                .attr("class", "node")
-                .call(d3.drag()
-                    .on("start", dragstarted)
-                    .on("drag", dragged)
-                    .on("end", dragended));
+      const blob = new Blob([source], {type: "image/svg+xml;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "architecture_topology.svg";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
 
-            nodeGroup.append("rect")
-                .attr("class", "node-rect")
-                .attr("width", nodeWidth)
-                .attr("height", nodeHeight)
-                .attr("x", -nodeWidth/2)
-                .attr("y", -nodeHeight/2)
-                .attr("stroke", d => d.color)
-                .style("color", d => d.color);
+    function saveAsXSLT() {
+      const xmlString = document.getElementById('xslt-input').value;
+      if (!xmlString.trim()) {
+        alert("No XSLT code to save!");
+        return;
+      }
+      
+      const blob = new Blob([xmlString], {type: "application/xslt+xml;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "mapping_logic.xslt";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
 
-            nodeGroup.append("rect")
-                .attr("x", -nodeWidth/2 + 4).attr("y", -15)
-                .attr("width", 4).attr("height", 30)
-                .attr("rx", 2).attr("ry", 2)
-                .attr("fill", d => d.color);
+    async function generateDiagram() {
+      const xmlString = document.getElementById('xslt-input').value;
+      const layout = currentLayout;
+      const theme = document.getElementById('theme-select').value;
+      
+      const container = document.getElementById('mermaid-output');
+      const hint = document.getElementById('hint');
+      
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlString, "text/xml");
 
-            nodeGroup.append("text")
-                .attr("class", "node-type")
-                .attr("y", -10)
-                .attr("fill", d => d.color)
-                .text(d => `:: ${d.type} ::`);
+      if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+        container.innerHTML = "<div style='color:#EF4444; font-weight:bold;'>Error: Invalid XML/XSLT syntax.</div>";
+        hint.style.display = 'none';
+        return;
+      }
 
-            nodeGroup.append("text")
-                .attr("class", "node-label")
-                .attr("y", 10)
-                .text(d => d.name.length > 20 ? d.name.substring(0, 18) + '...' : d.name);
-
-            simulation.on("tick", () => {
-                link.attr("d", d => {
-                    const sourceX = d.source.x + nodeWidth/2;
-                    const sourceY = d.source.y;
-                    const targetX = d.target.x - nodeWidth/2;
-                    const targetY = d.target.y;
-                    return linkPath({source: [sourceX, sourceY], target: [targetX, targetY]});
-                });
-
-                nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
-            });
-
-            // Particles
-            setTimeout(() => {
-                g.selectAll(".link").each(function(d) {
-                    const path = this;
-                    const length = path.getTotalLength();
-                    if(length > 0) {
-                        const particle = g.append("circle")
-                            .attr("class", "particle")
-                            .attr("r", 3);
-                        
-                        function transition() {
-                            particle.transition()
-                                .duration(3000)
-                                .ease(d3.easeLinear)
-                                .attrTween("transform", function() {
-                                    return function(t) {
-                                        const p = path.getPointAtLength(t * length);
-                                        return `translate(${p.x},${p.y})`;
-                                    }
-                                })
-                                .on("end", transition);
-                        }
-                        transition();
-                    }
-                });
-            }, 1000); // Wait for simulation to settle slightly
-
-            function dragstarted(event, d) {
-                if (event.sourceEvent) event.sourceEvent.stopPropagation();
-                if (!event.active) simulation.alphaTarget(0.3).restart();
-                d3.select(this).raise().classed("active", true);
-            }
-
-            function dragged(event, d) {
-                if (event.sourceEvent) event.sourceEvent.stopPropagation();
-                d.fx = event.x;
-                d.fy = event.y;
-            }
-
-            function dragended(event, d) {
-                if (event.sourceEvent) event.sourceEvent.stopPropagation();
-                if (!event.active) simulation.alphaTarget(0);
-                d3.select(this).classed("active", false);
-            }
-            
-            // Auto-fit after render
-            setTimeout(() => {
-                const bounds = g.node().getBBox();
-                const fullWidth = window.innerWidth;
-                const fullHeight = window.innerHeight;
-                const widthScale = fullWidth / (bounds.width + 100);
-                const heightScale = fullHeight / (bounds.height + 100);
-                const scale = Math.min(widthScale, heightScale, 1.2);
-                
-                const midX = bounds.x + bounds.width / 2;
-                const midY = bounds.y + bounds.height / 2;
-                
-                svg.transition().duration(1000).call(
-                    zoom.transform,
-                    d3.zoomIdentity
-                        .translate(fullWidth / 2, fullHeight / 2)
-                        .scale(scale)
-                        .translate(-midX, -midY)
-                );
-            }, 1500); // Give force layout time to settle
+      let mermaidSyntax = convertToMermaid(xmlDoc.documentElement, layout, theme);
+      
+      try {
+        if (panZoomInstance) {
+          panZoomInstance.destroy();
+          panZoomInstance = null;
         }
 
-
-        // Expose renderGraph globally for JavaFX WebEngine
-        window.renderGraph = renderGraph;
+        container.innerHTML = 'Rendering...';
+        hint.style.display = 'none';
         
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            svg.attr("width", w).attr("height", h);
-            bgRect.attr("width", w).attr("height", h);
+        const uniqueId = 'mermaid-svg-' + Date.now();
+        mermaid.render(uniqueId, mermaidSyntax, function(svgCode) {
+          container.innerHTML = svgCode;
+
+          const svgElement = container.querySelector('svg');
+          if (svgElement) {
+            // Wait for next frame so the browser can calculate SVG dimensions
+            setTimeout(() => {
+              panZoomInstance = svgPanZoom(svgElement, {
+                zoomEnabled: true,
+                controlIconsEnabled: true,
+                fit: true,
+                center: true,
+                minZoom: 0.1,
+                maxZoom: 100,
+                zoomScaleSensitivity: 0.3
+              });
+              hint.style.display = 'block';
+            }, 100);
+          }
         });
-    </script>
+
+      } catch (err) {
+        console.error("Diagram error:", err);
+        container.innerHTML = "<div style='color:#EF4444; font-weight:bold;'>Diagram generation failed: " + err.message + "</div>";
+        hint.style.display = 'none';
+      }
+    }
+
+    function convertToMermaid(rootNode, layout, themeKey) {
+      let graphCode = `graph ${layout}\n`;
+      let nodeIdCounter = 0;
+      
+      let classGroups = { template: [], loop: [], condition: [], extract: [], default: [] };
+
+      function traverse(node, parentId) {
+        if (node.nodeType !== 1) return;
+
+        let tagName = node.localName || node.nodeName;
+        tagName = tagName.replace('xsl:', ''); 
+
+        let currentId = "N" + (nodeIdCounter++);
+        let label = tagName;
+        let shapeOpen = "["; let shapeClose = "]";
+        let group = "default";
+
+        if (tagName === "stylesheet" || tagName === "transform") {
+          return Array.from(node.children).forEach(child => traverse(child, parentId));
+        }
+        else if (tagName === "template") {
+          label = `Template: ${node.getAttribute('match') || node.getAttribute('name') || ''}`;
+          shapeOpen = "(["; shapeClose = "])"; group = "template";
+        } 
+        else if (tagName === "for-each") {
+          label = `Loop: ${node.getAttribute('select') || ''}`;
+          shapeOpen = "[["; shapeClose = "]]"; group = "loop";
+        } 
+        else if (tagName === "choose" || tagName === "when" || tagName === "if") {
+          let testAttr = node.getAttribute('test') ? `: ${node.getAttribute('test')}` : '';
+          label = tagName === "choose" ? "Decision Block" : `If${testAttr}`;
+          shapeOpen = "{"; shapeClose = "}"; group = "condition";
+        } 
+        else if (tagName === "otherwise") {
+          label = "Default (Otherwise)"; group = "condition";
+        } 
+        else if (tagName === "value-of") {
+          label = `Extract: ${node.getAttribute('select') || ''}`;
+          shapeOpen = ">"; shapeClose = "]"; group = "extract";
+        }
+        else {
+          label = `<${tagName}>`; shapeOpen = "(["; shapeClose = "])";
+        }
+
+        classGroups[group].push(currentId);
+        label = label.replace(/["']/g, "").replace(/</g, "&lt;").replace(/>/g, "&gt;"); 
+
+        graphCode += `    ${currentId}${shapeOpen}"${label}"${shapeClose}\n`;
+        if (parentId) graphCode += `    ${parentId} --> ${currentId}\n`;
+
+        Array.from(node.children).forEach(child => traverse(child, currentId));
+      }
+
+      traverse(rootNode, null);
+      
+      // Inject the selected theme's CSS definitions for Mermaid
+      graphCode += `\n${themes[themeKey].mermaid}\n`;
+
+      for (const [className, nodeIds] of Object.entries(classGroups)) {
+        if (nodeIds.length > 0 && className !== 'default') {
+          graphCode += `    class ${nodeIds.join(',')} ${className};\n`;
+        }
+      }
+
+      return graphCode;
+    }
+
+    // --- Resizer Logic ---
+    const resizer = document.getElementById('dragMe');
+    const leftSide = resizer.previousElementSibling;
+
+    let x = 0;
+    let leftWidth = 0;
+
+    const mouseDownHandler = function(e) {
+      x = e.clientX;
+      leftWidth = leftSide.getBoundingClientRect().width;
+      
+      document.addEventListener('mousemove', mouseMoveHandler);
+      document.addEventListener('mouseup', mouseUpHandler);
+      
+      resizer.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    };
+
+    const mouseMoveHandler = function(e) {
+      const dx = e.clientX - x;
+      const containerWidth = resizer.parentNode.getBoundingClientRect().width;
+      const newLeftWidth = ((leftWidth + dx) * 100) / containerWidth;
+      
+      // Keep within bounds (10% to 90%)
+      if (newLeftWidth > 10 && newLeftWidth < 90) {
+        leftSide.style.width = `${newLeftWidth}%`;
+      }
+    };
+
+    const mouseUpHandler = function() {
+      resizer.classList.remove('dragging');
+      document.body.style.removeProperty('cursor');
+      document.body.style.removeProperty('user-select');
+      
+      document.removeEventListener('mousemove', mouseMoveHandler);
+      document.removeEventListener('mouseup', mouseUpHandler);
+      
+      // Force SVG resize update after panel adjustment
+      if (panZoomInstance) {
+        setTimeout(() => {
+          panZoomInstance.resize();
+          panZoomInstance.fit();
+          panZoomInstance.center();
+        }, 50);
+      }
+    };
+
+    resizer.addEventListener('mousedown', mouseDownHandler);
+
+  </script>
 </body>
 </html>

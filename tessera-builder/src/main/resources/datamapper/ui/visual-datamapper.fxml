@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TreeView?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuItem?>
+<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.datamapper.VisualDataMapperController" spacing="10" alignment="TOP_CENTER" prefWidth="900" prefHeight="700">
+    <MenuBar>
+        <menus>
+            <Menu text="File">
+                <items>
+                    <MenuItem text="Open Scenario" onAction="#handleOpenScenario"/>
+                </items>
+            </Menu>
+        </menus>
+    </MenuBar>
+    <!-- Scenario selector -->
+    <TreeView fx:id="scenarioTree" prefHeight="150" />
+    <SplitPane dividerPositions="0.5">
+        <items>
+            <VBox spacing="5" prefWidth="400">
+                <Label text="Source Schema" />
+                <TreeView fx:id="sourceTree" prefHeight="500" />
+            </VBox>
+            <VBox spacing="5" prefWidth="400">
+                <Label text="Target Schema" />
+                <TreeView fx:id="targetTree" prefHeight="500" />
+            </VBox>
+        </items>
+    </SplitPane>
+    <HBox spacing="20" alignment="CENTER">
+        <Button text="Add Mapping" onAction="#handleAddMapping" />
+        <Button text="Generate Mapping" onAction="#handleGenerateMapping" />
+    </HBox>
+    <Label text="Mappings" />
+    <TableView fx:id="mappingTable" prefHeight="200">
+        <columns>
+            <TableColumn fx:id="srcColumn" text="Source" prefWidth="200"/>
+            <TableColumn fx:id="tgtColumn" text="Target" prefWidth="200"/>
+        </columns>
+    </TableView>
+</VBox>

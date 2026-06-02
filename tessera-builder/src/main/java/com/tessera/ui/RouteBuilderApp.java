@@ -1,5 +1,6 @@
 package com.tessera.ui;
 
+// import com.tessera.ui.VisualDataMapperWindow; // removed
 import com.tessera.ui.components.ThemeManager;
 import javafx.application.Application;
 import javafx.geometry.Orientation;
@@ -216,85 +217,113 @@ public class RouteBuilderApp extends Application {
         }
     }
 
-    private void showManual() {
-        javafx.scene.web.WebView webView = new javafx.scene.web.WebView();
-        
-        try {
-            java.io.File manualFile = new java.io.File(System.getProperty("user.dir"), "User Manual.md");
-            String mdContent = "";
-            if (manualFile.exists()) {
-                mdContent = java.nio.file.Files.readString(manualFile.toPath());
-            } else {
-                mdContent = "# Error\nManual not found at: " + manualFile.getAbsolutePath();
-            }
-            
-            org.commonmark.parser.Parser parser = org.commonmark.parser.Parser.builder().build();
-            org.commonmark.node.Node document = parser.parse(mdContent);
-            org.commonmark.renderer.html.HtmlRenderer renderer = org.commonmark.renderer.html.HtmlRenderer.builder().build();
-            String htmlContent = renderer.render(document);
-
-            String fullHtml = "<!DOCTYPE html>\n" +
-                "<html>\n" +
-                "<head>\n" +
-                "  <meta charset=\"utf-8\">\n" +
-                "  <style>\n" +
-                "    body { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; padding: 20px; background-color: #1e1e1e; color: #cccccc; }\n" +
-                "    a { color: #569cd6; text-decoration: none; }\n" +
-                "    a:hover { text-decoration: underline; }\n" +
-                "    pre { background-color: #2d2d2d; padding: 10px; border-radius: 5px; overflow-x: auto; border: 1px solid #444; }\n" +
-                "    code { font-family: Consolas, 'Courier New', monospace; background-color: #2d2d2d; padding: 2px 4px; border-radius: 3px; }\n" +
-                "    blockquote { border-left: 4px solid #007acc; margin: 0; padding-left: 10px; color: #aaa; }\n" +
-                "    h1, h2, h3 { border-bottom: 1px solid #444; padding-bottom: 5px; color: #fff; }\n" +
-                "    table { border-collapse: collapse; width: 100%; }\n" +
-                "    th, td { border: 1px solid #444; padding: 8px; text-align: left; }\n" +
-                "    th { background-color: #2d2d2d; }\n" +
-                "  </style>\n" +
-                "</head>\n" +
-                "<body>\n" +
-                htmlContent +
-                "</body>\n" +
-                "</html>";
-                
-            webView.getEngine().loadContent(fullHtml);
-        } catch (Exception e) {
-            webView.getEngine().loadContent("<html><body style='color:red'>Error reading manual: " + e.getMessage() + "</body></html>");
-        }
-
-        javafx.scene.Scene scene = new javafx.scene.Scene(webView, 800, 600);
-        javafx.stage.Stage stage = new javafx.stage.Stage();
-        stage.setTitle("User Manual");
-        stage.setScene(scene);
-        stage.show();
-    }
-
     @Override
     public void start(Stage primaryStage) {
         // --- Splash Screen Phase ---
         Stage splashStage = new Stage(javafx.stage.StageStyle.UNDECORATED);
         javafx.scene.web.WebView splashWebView = new javafx.scene.web.WebView();
-        splashWebView.setPrefSize(800, 500);
+        splashWebView.setPrefSize(800, 600);
         
-        String logoUrl = getClass().getResource("/tessera-logo-tagline.svg").toExternalForm();
         String splashContent = """
             <!DOCTYPE html>
-            <html>
+            <html lang="en">
             <head>
-                <style>
-                    body { font-family: 'Segoe UI', sans-serif; background: #eff2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; opacity: 0; transition: opacity 0.5s ease-in; }
-                    img { width: 100%; height: auto; max-width: 800px; }
-                </style>
-                <script>
-                    window.onload = function() { document.body.style.opacity = 1; }
-                </script>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Tessera Animated Logo</title>
+              <style>
+                body {
+                  margin: 0;
+                  min-height: 100vh;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  background-color: #f4f7f9;
+                  overflow: hidden;
+                }
+                .logo-container {
+                  width: 100%;
+                  max-width: 500px;
+                  padding: 2rem;
+                }
+                /* Core Setup & Performance Optimization */
+                .animated-element {
+                  backface-visibility: hidden;
+                  will-change: transform, opacity;
+                }
+                /* Base states (Hidden and positioned outward) */
+                .piece-tl { transform: translate(-350px, -350px) rotate(-60deg); opacity: 0; }
+                .piece-tr { transform: translate(350px, -350px) rotate(60deg); opacity: 0; }
+                .piece-bl { transform: translate(-350px, 350px) rotate(-60deg); opacity: 0; }
+                .piece-br { transform: translate(350px, 350px) rotate(60deg); opacity: 0; }
+                .tri-left { transform: translate(-180px, 20px); opacity: 0; }
+                .tri-right { transform: translate(180px, 20px); opacity: 0; }
+                .text-title { transform: translateY(35px); opacity: 0; }
+                .text-sub { transform: translateY(35px); opacity: 0; }
+                /* Trigger classes */
+                .play-animation .piece-tl { animation: assembleTL 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                .play-animation .piece-tr { animation: assembleTR 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                .play-animation .piece-bl { animation: assembleBL 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                .play-animation .piece-br { animation: assembleBR 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                .play-animation .tri-left { animation: slideTriLeft 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; }
+                .play-animation .tri-right { animation: slideTriRight 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; }
+                .play-animation .text-title { animation: textFadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards; }
+                .play-animation .text-sub { animation: textFadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.75s forwards; }
+                /* Keyframes */
+                @keyframes assembleTL { 100% { transform: translate(0, 0) rotate(0deg); opacity: 1; } }
+                @keyframes assembleTR { 100% { transform: translate(0, 0) rotate(0deg); opacity: 1; } }
+                @keyframes assembleBL { 100% { transform: translate(0, 0) rotate(0deg); opacity: 1; } }
+                @keyframes assembleBR { 100% { transform: translate(0, 0) rotate(0deg); opacity: 1; } }
+                @keyframes slideTriLeft { 100% { transform: translate(0, 0); opacity: 1; } }
+                @keyframes slideTriRight { 100% { transform: translate(0, 0); opacity: 1; } }
+                @keyframes textFadeUp { 100% { transform: translateY(0); opacity: 1; } }
+              </style>
             </head>
             <body>
-                <img src="LOGO_URL" />
+              <div class="logo-container">
+                <svg id="tessera-logo" xmlns="http://www.w3.org/2000/svg" viewBox="190 30 620 560" width="100%" height="100%">
+                  <defs>
+                    <linearGradient id="topBlueGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+                      <stop offset="49.8%" stop-color="#3A8DB5" />
+                      <stop offset="50.2%" stop-color="#64ACD0" />
+                    </linearGradient>
+                    <linearGradient id="bottomDarkGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+                      <stop offset="49.8%" stop-color="#0E505E" />
+                      <stop offset="50.2%" stop-color="#176E7D" />
+                    </linearGradient>
+                    <filter id="pieceShadow" x="-30%" y="-30%" width="160%" height="160%">
+                      <feDropShadow dx="3" dy="6" stdDeviation="5" flood-color="#002233" flood-opacity="0.18" />
+                    </filter>
+                  </defs>
+                  <g transform="translate(500, 215) scale(1.1)">
+                    <g stroke-width="12" stroke-linejoin="round">
+                      <path class="animated-element tri-left" d="M -120 45 L -55 110 L -185 110 Z" fill="#136070" stroke="#136070" />
+                      <path class="animated-element tri-right" d="M 120 45 L 185 110 L 55 110 Z" fill="#207886" stroke="#207886" />
+                    </g>
+                    <g transform="rotate(45)" stroke-linejoin="round">
+                      <path class="animated-element piece-br" d="M 100 100 L 4 100 L 4 62 L -2 62 C -6 72, -20 68, -20 50 C -20 32, -6 28, -2 38 L 4 38 L 4 4 L 38 4 L 38 -2 C 28 -6, 32 -20, 50 -20 C 68 -20, 72 -6, 62 -2 L 62 4 L 100 4 Z" fill="url(#bottomDarkGrad)" filter="url(#pieceShadow)" />
+                      <path class="animated-element piece-bl" d="M -100 100 L -100 4 L -62 4 L -62 -2 C -72 -6, -68 -20, -50 -20 C -32 -20, -28 -6, -38 -2 L -38 4 L -4 4 L -4 38 L -10 38 C -14 28, -28 32, -28 50 C -28 68, -14 72, -10 62 L -4 62 L -4 100 Z" fill="#136070" filter="url(#pieceShadow)" />
+                      <path class="animated-element piece-tr" d="M 100 -100 L 100 -4 L 62 -4 L 62 -10 C 72 -14, 68 -28, 50 -28 C 32 -28, 28 -14, 38 -10 L 38 -4 L 4 -4 L 4 -38 L -2 -38 C -6 -28, -20 -32, -20 -50 C -20 -68, -6 -72, -2 -62 L 4 -62 L 4 -100 Z" fill="#F1A463" filter="url(#pieceShadow)" />
+                      <path class="animated-element piece-tl" d="M -100 -100 L -4 -100 L -4 -62 L -10 -62 C -14 -72, -28 -68, -28 -50 C -28 -32, -14 -28, -10 -38 L -4 -38 L -4 -4 L -38 -4 L -38 -10 C -28 -14, -32 -28, -50 -28 C -68 -28, -72 -14, -62 -10 L -62 -4 L -100 -4 Z" fill="url(#topBlueGrad)" filter="url(#pieceShadow)" />
+                    </g>
+                  </g>
+                  <text class="animated-element text-title" x="500" y="470" font-family="'Segoe UI', 'Montserrat', sans-serif" font-weight="900" font-size="82" fill="#333333" text-anchor="middle" letter-spacing="6">TESSERA</text>
+                  <text class="animated-element text-sub" x="500" y="525" font-family="'Segoe UI', 'Montserrat', sans-serif" font-weight="400" font-size="26" fill="#4B555A" text-anchor="middle" letter-spacing="0.5">The foundational tiles of enterprise architecture</text>
+                </svg>
+              </div>
+              <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                  setTimeout(function() {
+                    document.getElementById('tessera-logo').classList.add('play-animation');
+                  }, 100);
+                });
+              </script>
             </body>
             </html>
-            """.replace("LOGO_URL", logoUrl);
+            """;
             
         splashWebView.getEngine().loadContent(splashContent);
-        splashStage.setScene(new javafx.scene.Scene(splashWebView, 800, 500));
+        splashStage.setScene(new javafx.scene.Scene(splashWebView, 800, 600));
         splashStage.centerOnScreen();
         splashStage.show();
 
@@ -393,23 +422,13 @@ public class RouteBuilderApp extends Application {
         javafx.scene.control.MenuItem restoreItem = new javafx.scene.control.MenuItem("Restore Window");
         restoreItem.setOnAction(e -> primaryStage.setMaximized(false));
         
-        javafx.scene.control.TextField searchBox = new javafx.scene.control.TextField();
-        searchBox.setPromptText("Search Manual...");
-        javafx.scene.control.CustomMenuItem searchItem = new javafx.scene.control.CustomMenuItem(searchBox, false);
-        
         javafx.scene.control.MenuItem helpGuideItem = new javafx.scene.control.MenuItem("Open Help Guide...", new org.kordamp.ikonli.javafx.FontIcon("fas-question-circle"));
         helpGuideItem.setOnAction(e -> new RouteBuilderHelpWindow().show());
-
-        javafx.scene.control.MenuItem manualItem = new javafx.scene.control.MenuItem("Open User Manual");
-        manualItem.setOnAction(e -> showManual());
-
-        javafx.scene.control.MenuItem interactiveHelpItem = new javafx.scene.control.MenuItem("Open Help Portal");
-        interactiveHelpItem.setOnAction(e -> viewHelpItem.setSelected(true));
 
         javafx.scene.control.MenuItem aboutItem = new javafx.scene.control.MenuItem("About Tessera...", new org.kordamp.ikonli.javafx.FontIcon("fas-info-circle"));
         aboutItem.setOnAction(e -> showAboutDialog());
 
-        helpMenu.getItems().addAll(maxItem, restoreItem, new javafx.scene.control.SeparatorMenuItem(), searchItem, helpGuideItem, manualItem, interactiveHelpItem, new javafx.scene.control.SeparatorMenuItem(), aboutItem);
+        helpMenu.getItems().addAll(maxItem, restoreItem, new javafx.scene.control.SeparatorMenuItem(), helpGuideItem, new javafx.scene.control.SeparatorMenuItem(), aboutItem);
         
         javafx.scene.control.Menu toolsMenu = new javafx.scene.control.Menu("_Tools");
         
@@ -453,6 +472,10 @@ public class RouteBuilderApp extends Application {
             FakerStudioWindow fakerStudio = new FakerStudioWindow(baseDir);
             fakerStudio.show();
         });
+
+// Visual Data Mapper menu item removed
+// javafx.scene.control.MenuItem visualDataMapperItem = new javafx.scene.control.MenuItem("Visual Data Mapper...");
+// visualDataMapperItem.setOnAction(e -> VisualDataMapperWindow.show());
 
         javafx.scene.control.MenuItem kameletBuilderItem = new javafx.scene.control.MenuItem("Kamelet Builder...");
         kameletBuilderItem.setOnAction(e -> {
@@ -553,13 +576,47 @@ public class RouteBuilderApp extends Application {
         logoIcon.setMinSize(28, 28);
         logoIcon.setMaxSize(28, 28);
         String iconSvg = """
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
-              <g transform="translate(400, 300) scale(2.2)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="-252 -200 504 400">
+              <defs>
+                <linearGradient id="topBlueGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+                  <stop offset="49.8%" stop-color="#428EB8" />
+                  <stop offset="50.2%" stop-color="#7CC0E3" />
+                </linearGradient>
+                <linearGradient id="bottomDarkGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+                  <stop offset="49.8%" stop-color="#0F4A56" />
+                  <stop offset="50.2%" stop-color="#186975" />
+                </linearGradient>
+                <clipPath id="clipTL">
+                  <path d="M -100 -100 L -4 -100 L -4 -62 L -10 -62 C -14 -72, -28 -68, -28 -50 C -28 -32, -14 -28, -10 -38 L -4 -38 L -4 -4 L -38 -4 L -38 -10 C -28 -14, -32 -28, -50 -28 C -68 -28, -72 -14, -62 -10 L -62 -4 L -100 -4 Z" />
+                </clipPath>
+                <clipPath id="clipTR">
+                  <path d="M 100 -100 L 100 -4 L 62 -4 L 62 -10 C 72 -14, 68 -28, 50 -28 C 32 -28, 28 -14, 38 -10 L 38 -4 L 4 -4 L 4 -38 L -2 -38 C -6 -28, -20 -32, -20 -50 C -20 -68, -6 -72, -2 -62 L 4 -62 L 4 -100 Z" />
+                </clipPath>
+                <clipPath id="clipBL">
+                  <path d="M -100 100 L -100 4 L -62 4 L -62 -2 C -72 -6, -68 -20, -50 -20 C -32 -20, -28 -6, -38 -2 L -38 4 L -4 4 L -4 38 L -10 38 C -14 28, -28 32, -28 50 C -28 68, -14 72, -10 62 L -4 62 L -4 100 Z" />
+                </clipPath>
+                <clipPath id="clipBR">
+                  <path d="M 100 100 L 4 100 L 4 62 L -2 62 C -6 72, -20 68, -20 50 C -20 32, -6 28, -2 38 L 4 38 L 4 4 L 38 4 L 38 -2 C 28 -6, 32 -20, 50 -20 C 68 -20, 72 -6, 62 -2 L 62 4 L 100 4 Z" />
+                </clipPath>
+              </defs>
+              <g transform="scale(1.4)">
+                <g stroke-width="8" stroke-linejoin="round">
+                  <path d="M -115 40 L -55 100 L -175 100 Z" fill="#155F6E" stroke="#155F6E" />
+                  <path d="M 115 40 L 175 100 L 55 100 Z" fill="#26828E" stroke="#26828E" />
+                </g>
                 <g transform="rotate(45)" stroke-linejoin="round">
-                  <path d="M 100 100 L 4 100 L 4 62 L -2 62 C -6 72, -20 68, -20 50 C -20 32, -6 28, -2 38 L 4 38 L 4 4 L 38 4 L 38 -2 C 28 -6, 32 -20, 50 -20 C 68 -20, 72 -6, 62 -2 L 62 4 L 100 4 Z" fill="#0F4A56" />
-                  <path d="M -100 100 L -100 4 L -62 4 L -62 -2 C -72 -6, -68 -20, -50 -20 C -32 -20, -28 -6, -38 -2 L -38 4 L -4 4 L -4 38 L -10 38 C -14 28, -28 32, -28 50 C -28 68, -14 72, -10 62 L -4 62 L -4 100 Z" fill="#156574" />
-                  <path d="M 100 -100 L 100 -4 L 62 -4 L 62 -10 C 72 -14, 68 -28, 50 -28 C 32 -28, 28 -14, 38 -10 L 38 -4 L 4 -4 L 4 -38 L -2 -38 C -6 -28, -20 -32, -20 -50 C -20 -68, -6 -72, -2 -62 L 4 -62 L 4 -100 Z" fill="#F3A869" />
-                  <path d="M -100 -100 L -4 -100 L -4 -62 L -10 -62 C -14 -72, -28 -68, -28 -50 C -28 -32, -14 -28, -10 -38 L -4 -38 L -4 -4 L -38 -4 L -38 -10 C -28 -14, -32 -28, -50 -28 C -68 -28, -72 -14, -62 -10 L -62 -4 L -100 -4 Z" fill="#428EB8" />
+                  <g clip-path="url(#clipTL)">
+                    <path d="M -100 -100 L -4 -100 L -4 -62 L -10 -62 C -14 -72, -28 -68, -28 -50 C -28 -32, -14 -28, -10 -38 L -4 -38 L -4 -4 L -38 -4 L -38 -10 C -28 -14, -32 -28, -50 -28 C -68 -28, -72 -14, -62 -10 L -62 -4 L -100 -4 Z" fill="url(#topBlueGrad)" />
+                  </g>
+                  <g clip-path="url(#clipTR)">
+                    <path d="M 100 -100 L 100 -4 L 62 -4 L 62 -10 C 72 -14, 68 -28, 50 -28 C 32 -28, 28 -14, 38 -10 L 38 -4 L 4 -4 L 4 -38 L -2 -38 C -6 -28, -20 -32, -20 -50 C -20 -68, -6 -72, -2 -62 L 4 -62 L 4 -100 Z" fill="#F3A869" />
+                  </g>
+                  <g clip-path="url(#clipBL)">
+                    <path d="M -100 100 L -100 4 L -62 4 L -62 -2 C -72 -6, -68 -20, -50 -20 C -32 -20, -28 -6, -38 -2 L -38 4 L -4 4 L -4 38 L -10 38 C -14 28, -28 32, -28 50 C -28 68, -14 72, -10 62 L -4 62 L -4 100 Z" fill="#156574" />
+                  </g>
+                  <g clip-path="url(#clipBR)">
+                    <path d="M 100 100 L 4 100 L 4 62 L -2 62 C -6 72, -20 68, -20 50 C -20 32, -6 28, -2 38 L 4 38 L 4 4 L 38 4 L 38 -2 C 28 -6, 32 -20, 50 -20 C 68 -20, 72 -6, 62 -2 L 62 4 L 100 4 Z" fill="url(#bottomDarkGrad)" />
+                  </g>
                 </g>
               </g>
             </svg>
@@ -795,12 +852,6 @@ treePane);
         });
         ThemeManager.registerRoot(
 helpPortalPane);
-
-        searchBox.setOnAction(e -> {
-            String query = searchBox.getText();
-            viewHelpItem.setSelected(true);
-            helpPortalPane.search(query);
-        });
 
 
 
@@ -1397,7 +1448,10 @@ consolePane);
     }
 
     private void saveRecentProject(String path, java.util.prefs.Preferences prefs, javafx.scene.control.Menu recentProjectsMenu, RouteTreePane treePane) {
+        if (path == null || path.isEmpty()) return;
         prefs.put("lastOpenedDir", path);
+        loadWorkspaceProperties();
+        
         String history = prefs.get("recentProjects", "");
         java.util.List<String> list = new java.util.ArrayList<>(java.util.Arrays.asList(history.split(";")));
         list.remove(path);
@@ -1831,16 +1885,47 @@ consolePane);
 
     public void loadWorkspaceProperties() {
         java.io.File wsRoot = getWorkspaceRoot();
+        java.io.File cacheFile = new java.io.File(System.getProperty("user.home"), ".tessera_workspace_cache");
+        
         if (wsRoot == null) {
-            // Fallback to user.dir if treePane is not yet initialized
+            // Check cache file first (most reliable)
+            if (cacheFile.exists()) {
+                try {
+                    String cachedPath = java.nio.file.Files.readString(cacheFile.toPath()).trim();
+                    if (!cachedPath.isEmpty()) {
+                        java.io.File f = new java.io.File(cachedPath);
+                        if (f.exists() && f.isDirectory()) wsRoot = f;
+                    }
+                } catch (Exception ignored) {}
+            }
+            
+            if (wsRoot == null) {
+                // Check preference
+                java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(RouteBuilderApp.class);
+                String lastDir = prefs.get("lastOpenedDir", null);
+                if (lastDir != null) {
+                    wsRoot = new java.io.File(lastDir);
+                }
+            }
+            
+            // Climb up to find application.properties if needed
+            while (wsRoot != null && wsRoot.exists() && !new java.io.File(wsRoot, "application.properties").exists()) {
+                wsRoot = wsRoot.getParentFile();
+            }
+        }
+        
+        if (wsRoot == null || !new java.io.File(wsRoot, "application.properties").exists()) {
+            // Fallback to user.dir
             wsRoot = new java.io.File(System.getProperty("user.dir"));
-            // Climb up to find application.properties if we are deep in a project
             while (wsRoot != null && !new java.io.File(wsRoot, "application.properties").exists()) {
                 wsRoot = wsRoot.getParentFile();
             }
         }
 
         if (wsRoot != null && new java.io.File(wsRoot, "application.properties").exists()) {
+            // Update cache
+            try { java.nio.file.Files.writeString(cacheFile.toPath(), wsRoot.getAbsolutePath()); } catch (Exception ignored) {}
+            
             java.io.File propsFile = new java.io.File(wsRoot, "application.properties");
             try (java.io.InputStream input = new java.io.FileInputStream(propsFile)) {
                 java.util.Properties props = new java.util.Properties();
@@ -1850,20 +1935,55 @@ consolePane);
                 System.setProperty("WORKSPACE_ROOT_DIR", absoluteWsPath);
                 System.out.println("[Tessera] Workspace Root: " + absoluteWsPath);
 
+                final java.io.File finalWsRoot = wsRoot;
+                // Proactively scope the tree pane to camel/routes if they exist
+                if (treePane != null) {
+                    javafx.application.Platform.runLater(() -> {
+                        java.io.File currentBase = treePane.getBaseDirectory();
+                        System.out.println("[Tessera] Checking Explorer scoping. Current base: " + (currentBase != null ? currentBase.getAbsolutePath() : "null"));
+                        // If we aren't already in camel or routes, try to find them from the root
+                        if (currentBase == null || (!currentBase.getName().equals("camel") && !currentBase.getName().equals("routes"))) {
+                            System.out.println("[Tessera] Attempting to redirect Explorer to subfolder of: " + finalWsRoot.getAbsolutePath());
+                            treePane.setBaseDirectory(finalWsRoot);
+                        } else {
+                            System.out.println("[Tessera] Explorer already correctly scoped to: " + currentBase.getName());
+                        }
+                    });
+                }
+
                 boolean needsUpdate = false;
                 String[] vars = {"FAKER_TEMPLATES_DIR", "FAKER_DB_DIR", "MAPPING_DIR", "DRAWINGS_DIR", "VALIDATOR_DIR"};
                 for (String var : vars) {
                     String value = props.getProperty(var);
                     if (value != null && !value.trim().isEmpty()) {
+                        // Normalize and cleanup already corrupted paths (recursive prefixes)
+                        if (value.contains("/home/") || value.contains(":/")) {
+                            String[] parts = value.split("(?=/home/)|(?=[A-Z]:/)");
+                            if (parts.length > 1) {
+                                // Take the last part which is likely the most "nested" and hopefully correct one
+                                value = parts[parts.length - 1];
+                            }
+                        }
+
                         java.io.File resolvedFile = new java.io.File(value);
-                        if (!resolvedFile.isAbsolute()) {
+                        // More robust absolute check: isAbsolute() + starts with / or drive letter
+                        boolean isAbs = resolvedFile.isAbsolute() || value.startsWith("/") || value.matches("^[A-Z]:/.*");
+                        
+                        if (!isAbs) {
                             resolvedFile = new java.io.File(wsRoot, value);
                         }
                         
                         String absPath = resolvedFile.getAbsolutePath().replace("\\", "/");
                         System.setProperty(var, absPath);
                         
-                        // Check if we should update the file to absolute path
+                        // Sync preferences for other studios to ensure they load from these paths
+                        if (var.equals("MAPPING_DIR")) {
+                            java.util.prefs.Preferences.userNodeForPackage(TransformationStudioWindow.class).put("mappingsPath", absPath);
+                        } else if (var.equals("DRAWINGS_DIR")) {
+                            java.util.prefs.Preferences.userNodeForPackage(DiagramStudioWindow.class).put("workspaceRoot", absPath);
+                        }
+                        
+                        // Only update if it actually changed and wasn't already absolute
                         if (!value.equals(absPath)) {
                             props.setProperty(var, absPath);
                             needsUpdate = true;
@@ -1895,24 +2015,120 @@ consolePane);
         aboutDialog.getDialogPane().getButtonTypes().add(javafx.scene.control.ButtonType.CLOSE);
         
         javafx.scene.web.WebView webView = new javafx.scene.web.WebView();
-        webView.setPrefSize(800, 500); // Increased size to fit the full logo + tagline SVG
+        webView.setPrefSize(800, 600); 
         
-        String logoUrl = getClass().getResource("/tessera-logo-tagline.svg").toExternalForm();
+        // Get theme colors from current state
+        String bgHex = "#f4f7f9";
+        String titleHex = "#333333";
+        String subHex = "#4B555A";
         
+        if (currentThemeClass.contains("dark") || currentThemeClass.contains("cyberpunk") || currentThemeClass.contains("midnight") || currentThemeClass.contains("hacker") || currentThemeClass.contains("nordic") || currentThemeClass.contains("dracula") || currentThemeClass.contains("monokai")) {
+            bgHex = "#0a0a1a"; titleHex = "#00ffff"; subHex = "#ff00aa";
+            if (currentThemeClass.equals("theme-cyberpunk")) { bgHex = "#000000"; titleHex = "#f3f315"; subHex = "#00ff41"; }
+            else if (currentThemeClass.equals("theme-midnight")) { bgHex = "#05070a"; titleHex = "#ffffff"; subHex = "#aab1ff"; }
+        }
+        
+        final String finalBg = bgHex;
+        final String finalTitle = titleHex;
+        final String finalSub = subHex;
+
         String content = """
             <!DOCTYPE html>
-            <html>
+            <html lang="en">
             <head>
-                <style>
-                    body { font-family: 'Segoe UI', sans-serif; background: #f6f9fa; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
-                    img { width: 100%; height: auto; max-width: 800px; }
-                </style>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Tessera Animated Logo</title>
+              <style>
+                body {
+                  margin: 0;
+                  min-height: 100vh;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  background-color: BG_COLOR;
+                  overflow: hidden;
+                }
+                .logo-container {
+                  width: 100%;
+                  max-width: 500px;
+                  padding: 2rem;
+                }
+                /* Core Setup & Performance Optimization */
+                .animated-element {
+                  backface-visibility: hidden;
+                  will-change: transform, opacity;
+                }
+                /* Base states (Hidden and positioned outward) */
+                .piece-tl { transform: translate(-350px, -350px) rotate(-60deg); opacity: 0; }
+                .piece-tr { transform: translate(350px, -350px) rotate(60deg); opacity: 0; }
+                .piece-bl { transform: translate(-350px, 350px) rotate(-60deg); opacity: 0; }
+                .piece-br { transform: translate(350px, 350px) rotate(60deg); opacity: 0; }
+                .tri-left { transform: translate(-180px, 20px); opacity: 0; }
+                .tri-right { transform: translate(180px, 20px); opacity: 0; }
+                .text-title { transform: translateY(35px); opacity: 0; }
+                .text-sub { transform: translateY(35px); opacity: 0; }
+                /* Trigger classes */
+                .play-animation .piece-tl { animation: assembleTL 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                .play-animation .piece-tr { animation: assembleTR 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                .play-animation .piece-bl { animation: assembleBL 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                .play-animation .piece-br { animation: assembleBR 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                .play-animation .tri-left { animation: slideTriLeft 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; }
+                .play-animation .tri-right { animation: slideTriRight 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; }
+                .play-animation .text-title { animation: textFadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards; }
+                .play-animation .text-sub { animation: textFadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.75s forwards; }
+                /* Keyframes */
+                @keyframes assembleTL { 100% { transform: translate(0, 0) rotate(0deg); opacity: 1; } }
+                @keyframes assembleTR { 100% { transform: translate(0, 0) rotate(0deg); opacity: 1; } }
+                @keyframes assembleBL { 100% { transform: translate(0, 0) rotate(0deg); opacity: 1; } }
+                @keyframes assembleBR { 100% { transform: translate(0, 0) rotate(0deg); opacity: 1; } }
+                @keyframes slideTriLeft { 100% { transform: translate(0, 0); opacity: 1; } }
+                @keyframes slideTriRight { 100% { transform: translate(0, 0); opacity: 1; } }
+                @keyframes textFadeUp { 100% { transform: translateY(0); opacity: 1; } }
+              </style>
             </head>
             <body>
-                <img src="LOGO_URL" />
+              <div class="logo-container">
+                <svg id="tessera-logo" xmlns="http://www.w3.org/2000/svg" viewBox="190 30 620 560" width="100%" height="100%">
+                  <defs>
+                    <linearGradient id="topBlueGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+                      <stop offset="49.8%" stop-color="#3A8DB5" />
+                      <stop offset="50.2%" stop-color="#64ACD0" />
+                    </linearGradient>
+                    <linearGradient id="bottomDarkGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+                      <stop offset="49.8%" stop-color="#0E505E" />
+                      <stop offset="50.2%" stop-color="#176E7D" />
+                    </linearGradient>
+                    <filter id="pieceShadow" x="-30%" y="-30%" width="160%" height="160%">
+                      <feDropShadow dx="3" dy="6" stdDeviation="5" flood-color="#002233" flood-opacity="0.18" />
+                    </filter>
+                  </defs>
+                  <g transform="translate(500, 215) scale(1.1)">
+                    <g stroke-width="12" stroke-linejoin="round">
+                      <path class="animated-element tri-left" d="M -120 45 L -55 110 L -185 110 Z" fill="#136070" stroke="#136070" />
+                      <path class="animated-element tri-right" d="M 120 45 L 185 110 L 55 110 Z" fill="#207886" stroke="#207886" />
+                    </g>
+                    <g transform="rotate(45)" stroke-linejoin="round">
+                      <path class="animated-element piece-br" d="M 100 100 L 4 100 L 4 62 L -2 62 C -6 72, -20 68, -20 50 C -20 32, -6 28, -2 38 L 4 38 L 4 4 L 38 4 L 38 -2 C 28 -6, 32 -20, 50 -20 C 68 -20, 72 -6, 62 -2 L 62 4 L 100 4 Z" fill="url(#bottomDarkGrad)" filter="url(#pieceShadow)" />
+                      <path class="animated-element piece-bl" d="M -100 100 L -100 4 L -62 4 L -62 -2 C -72 -6, -68 -20, -50 -20 C -32 -20, -28 -6, -38 -2 L -38 4 L -4 4 L -4 38 L -10 38 C -14 28, -28 32, -28 50 C -28 68, -14 72, -10 62 L -4 62 L -4 100 Z" fill="#136070" filter="url(#pieceShadow)" />
+                      <path class="animated-element piece-tr" d="M 100 -100 L 100 -4 L 62 -4 L 62 -10 C 72 -14, 68 -28, 50 -28 C 32 -28, 28 -14, 38 -10 L 38 -4 L 4 -4 L 4 -38 L -2 -38 C -6 -28, -20 -32, -20 -50 C -20 -68, -6 -72, -2 -62 L 4 -62 L 4 -100 Z" fill="#F1A463" filter="url(#pieceShadow)" />
+                      <path class="animated-element piece-tl" d="M -100 -100 L -4 -100 L -4 -62 L -10 -62 C -14 -72, -28 -68, -28 -50 C -28 -32, -14 -28, -10 -38 L -4 -38 L -4 -4 L -38 -4 L -38 -10 C -28 -14, -32 -28, -50 -28 C -68 -28, -72 -14, -62 -10 L -62 -4 L -100 -4 Z" fill="url(#topBlueGrad)" filter="url(#pieceShadow)" />
+                    </g>
+                  </g>
+                  <text class="animated-element text-title" x="500" y="470" font-family="'Segoe UI', 'Montserrat', sans-serif" font-weight="900" font-size="82" fill="TITLE_COLOR" text-anchor="middle" letter-spacing="6">TESSERA</text>
+                  <text class="animated-element text-sub" x="500" y="525" font-family="'Segoe UI', 'Montserrat', sans-serif" font-weight="400" font-size="26" fill="SUB_COLOR" text-anchor="middle" letter-spacing="0.5">The foundational tiles of enterprise architecture</text>
+                </svg>
+              </div>
+              <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                  setTimeout(function() {
+                    document.getElementById('tessera-logo').classList.add('play-animation');
+                  }, 100);
+                });
+              </script>
             </body>
             </html>
-            """.replace("LOGO_URL", logoUrl);
+            """.replace("BG_COLOR", finalBg).replace("TITLE_COLOR", finalTitle).replace("SUB_COLOR", finalSub);
             
         webView.getEngine().loadContent(content);
         aboutDialog.getDialogPane().setContent(webView);

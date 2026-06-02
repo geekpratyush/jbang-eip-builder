@@ -1,0 +1,7 @@
+camel
+    Route Builder with Tester with yaml and diagrams. Has the ability to stub/mock and test and also can deploy to remote with actual infra. This needs the target quarkus app to add a tessera-app-manage extn.
+mappings
+validator
+diagrams
+faker
+docs

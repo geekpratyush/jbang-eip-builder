@@ -14,6 +14,9 @@ quarkus:
       "org.mongodb.driver":
         level: WARN
 
+  banner:
+    enabled: true
+    path: banner.txt
 # Dynamic Route and Transformer Loader Configurations
 loader:
   file:

@@ -181,8 +181,8 @@ public class DiagramPane extends VBox {
         });
 
         // --- Save as SVG ---
-        Button svgBtn = new Button("", new FontIcon("fas-file-export")); svgBtn.getStyleClass().add("editor-btn");
-        svgBtn.setTooltip(new Tooltip("Save Diagram as SVG"));
+        Button svgBtn = new Button("", new FontIcon("fas-file-download")); svgBtn.getStyleClass().add("editor-btn");
+        svgBtn.setTooltip(new Tooltip("Save as SVG"));
         svgBtn.setOnAction(e -> saveSvg());
 
         // --- Pop-out / Re-dock ---
@@ -290,6 +290,7 @@ public class DiagramPane extends VBox {
 
     private StackPane createScrollableCanvas() {
         StackPane cp = new StackPane(zoomGroup); cp.setAlignment(Pos.TOP_LEFT);
+        cp.getStyleClass().add("diagram-pane");
         Rectangle clip = new Rectangle(); clip.widthProperty().bind(cp.widthProperty()); clip.heightProperty().bind(cp.heightProperty()); cp.setClip(clip);
         cp.setOnScroll(ev -> {
             if (ev.getDeltaY() != 0) {
@@ -464,6 +465,7 @@ public class DiagramPane extends VBox {
             case "setheader": node = createEipNode("SETHEADER", details, "fas-edit", "node-step"); break;
             case "marshal":
             case "unmarshal": node = createEipNode(name.toUpperCase(), details, "fas-file-code", "node-step"); break;
+            case "wiretap": node = createEipNode("WIRETAP", details, "fas-faucet", "node-step"); break;
             default: node = createEipNode(name.toUpperCase(), details, "fas-cog", "node-step"); break;
         }
         node.setOnMouseClicked(e -> { if (e.getButton()==javafx.scene.input.MouseButton.PRIMARY) selectNode(node, name, f.getValue(), array, idx); });
@@ -634,12 +636,14 @@ public class DiagramPane extends VBox {
     }
 
     private void selectNode(Pane ui, String name, JsonNode conf, ArrayNode arr, int idx) {
-        if (selectedNodeUi!=null) selectedNodeUi.setStyle(""); selectedNodeUi=ui; selectedNodeUi.setStyle("-fx-border-color: #007acc; -fx-border-width: 3; -fx-border-radius: 5;");
+        if (selectedNodeUi!=null) selectedNodeUi.getStyleClass().remove("diagram-node-selected"); 
+        selectedNodeUi=ui; selectedNodeUi.getStyleClass().add("diagram-node-selected");
         renderPropertyForm(name, conf, arr, idx); openPropertyPane();
     }
 
     private void selectFromNode(Pane ui, JsonNode route, String uri) {
-        if (selectedNodeUi!=null) selectedNodeUi.setStyle(""); selectedNodeUi=ui; selectedNodeUi.setStyle("-fx-border-color: #007acc; -fx-border-width: 3; -fx-border-radius: 5;");
+        if (selectedNodeUi!=null) selectedNodeUi.getStyleClass().remove("diagram-node-selected"); 
+        selectedNodeUi=ui; selectedNodeUi.getStyleClass().add("diagram-node-selected");
         renderFromPropertyForm(route, uri); openPropertyPane();
     }
 

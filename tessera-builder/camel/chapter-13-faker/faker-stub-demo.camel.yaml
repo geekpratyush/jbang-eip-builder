@@ -3,7 +3,8 @@
     - name: "universalFaker"
       type: "com.tessera.faker.UniversalFaker"
       properties:
-        database: "financial"
+        templatesDir: "{{FAKER_TEMPLATES_DIR}}"
+        dbDir: "{{FAKER_DB_DIR}}"
 - route:
     id: "faker-dynamic-source"
     from:

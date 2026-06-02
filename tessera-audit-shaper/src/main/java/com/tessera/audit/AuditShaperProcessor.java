@@ -142,7 +142,7 @@ public class AuditShaperProcessor implements Processor {
             key = exchange.getContext().resolvePropertyPlaceholders("{{" + PROP_GLOBAL_KEY + ":}}");
         }
         if (key == null || key.isBlank()) {
-            key = System.getenv("SRE_AUDIT_CRYPTO_KEY");
+            key = System.getenv("TESSERA_AUDIT_CRYPTO_KEY");
         }
 
         for (String path : fields.split(",")) {

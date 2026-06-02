@@ -24,12 +24,14 @@ public class RouteBuilderHelpWindow {
         public String title;
         public String category;
         public String keywords;
+        public String iconName;
         public String contentHtml;
 
-        public HelpTopic(String title, String category, String keywords, String contentHtml) {
+        public HelpTopic(String title, String category, String keywords, String iconName, String contentHtml) {
             this.title = title;
             this.category = category;
             this.keywords = keywords;
+            this.iconName = iconName;
             this.contentHtml = contentHtml;
         }
     }
@@ -63,19 +65,75 @@ public class RouteBuilderHelpWindow {
 
     private void initializeTopics() {
         // --- Category: Overview & Architecture ---
-        topics.add(new HelpTopic("Introduction to RouteBuilder Studio", "Overview & Architecture", "introduction overview hello help welcome get started",
-            "<h1>Introduction to RouteBuilder Studio</h1>" +
-            "<p>Welcome to the <strong>JBang EIP Route Builder Studio</strong>! This workspace is designed for integration engineers, architects, and developers who build enterprise integration patterns (EIP) using Apache Camel and JBang.</p>" +
-            "<h3>Key Features</h3>" +
+        String introHtml = "<div class='logo-container' style='text-align: center; margin-bottom: 30px;'>" +
+            "  <svg id='tessera-logo' xmlns='http://www.w3.org/2000/svg' viewBox='190 30 620 560' width='100%' height='220px'>" +
+            "    <defs>" +
+            "      <linearGradient id='topBlueGrad' x1='-50' y1='50' x2='50' y2='-50' gradientUnits='userSpaceOnUse'>" +
+            "        <stop offset='49.8%' stop-color='#3A8DB5' />" +
+            "        <stop offset='50.2%' stop-color='#64ACD0' />" +
+            "      </linearGradient>" +
+            "      <linearGradient id='bottomDarkGrad' x1='-50' y1='50' x2='50' y2='-50' gradientUnits='userSpaceOnUse'>" +
+            "        <stop offset='49.8%' stop-color='#0E505E' />" +
+            "        <stop offset='50.2%' stop-color='#176E7D' />" +
+            "      </linearGradient>" +
+            "      <filter id='pieceShadow' x='-30%' y='-30%' width='160%' height='160%'>" +
+            "        <feDropShadow dx='3' dy='6' stdDeviation='5' flood-color='#002233' flood-opacity='0.18' />" +
+            "      </filter>" +
+            "    </defs>" +
+            "    <g transform='translate(500, 215) scale(1.1)'>" +
+            "      <g stroke-width='12' stroke-linejoin='round'>" +
+            "        <path class='animated-element tri-left' d='M -120 45 L -55 110 L -185 110 Z' fill='#136070' stroke='#136070' />" +
+            "        <path class='animated-element tri-right' d='M 120 45 L 185 110 L 55 110 Z' fill='#207886' stroke='#207886' />" +
+            "      </g>" +
+            "      <g transform='rotate(45)' stroke-linejoin='round'>" +
+            "        <path class='animated-element piece-br' d='M 100 100 L 4 100 L 4 62 L -2 62 C -6 72, -20 68, -20 50 C -20 32, -6 28, -2 38 L 4 38 L 4 4 L 38 4 L 38 -2 C 28 -6, 32 -20, 50 -20 C 68 -20, 72 -6, 62 -2 L 62 4 L 100 4 Z' fill='url(#bottomDarkGrad)' filter='url(#pieceShadow)' />" +
+            "        <path class='animated-element piece-bl' d='M -100 100 L -100 4 L -62 4 L -62 -2 C -72 -6, -68 -20, -50 -20 C -32 -20, -28 -6, -38 -2 L -38 4 L -4 4 L -4 38 L -10 38 C -14 28, -28 32, -28 50 C -28 68, -14 72, -10 62 L -4 62 L -4 100 Z' fill='#136070' filter='url(#pieceShadow)' />" +
+            "        <path class='animated-element piece-tr' d='M 100 -100 L 100 -4 L 62 -4 L 62 -10 C 72 -14, 68 -28, 50 -28 C 32 -28, 28 -14, 38 -10 L 38 -4 L 4 -4 L 4 -38 L -2 -38 C -6 -28, -20 -32, -20 -50 C -20 -68, -6 -72, -2 -62 L 4 -62 L 4 -100 Z' fill='#F1A463' filter='url(#pieceShadow)' />" +
+            "        <path class='animated-element piece-tl' d='M -100 -100 L -4 -100 L -4 -62 L -10 -62 C -14 -72, -28 -68, -28 -50 C -28 -32, -14 -28, -10 -38 L -4 -38 L -4 -4 L -38 -4 L -38 -10 C -28 -14, -32 -28, -50 -28 C -68 -28, -72 -14, -62 -10 L -62 -4 L -100 -4 Z' fill='url(#topBlueGrad)' filter='url(#pieceShadow)' />" +
+            "      </g>" +
+            "    </g>" +
+            "    <text class='animated-element text-title' x='500' y='470' font-family='sans-serif' font-weight='900' font-size='82' fill='currentColor' text-anchor='middle' letter-spacing='6'>TESSERA</text>" +
+            "    <text class='animated-element text-sub' x='500' y='525' font-family='sans-serif' font-weight='400' font-size='26' fill='currentColor' opacity='0.7' text-anchor='middle' letter-spacing='0.5'>The foundational tiles of enterprise architecture</text>" +
+            "  </svg>" +
+            "</div>" +
+            "<script>" +
+            "  setTimeout(function() {" +
+            "    var logo = document.getElementById('tessera-logo');" +
+            "    if(logo && !logo.classList.contains('play-animation')) {" +
+            "      logo.classList.add('play-animation');" +
+            "      try {" +
+            "          var ctx = new (window.AudioContext || window.webkitAudioContext)();" +
+            "          var osc = ctx.createOscillator();" +
+            "          var gain = ctx.createGain();" +
+            "          osc.connect(gain);" +
+            "          gain.connect(ctx.destination);" +
+            "          osc.type = 'sine';" +
+            "          osc.frequency.setValueAtTime(300, ctx.currentTime);" +
+            "          osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.15);" +
+            "          osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.5);" +
+            "          gain.gain.setValueAtTime(0, ctx.currentTime);" +
+            "          gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1);" +
+            "          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);" +
+            "          osc.start(ctx.currentTime);" +
+            "          osc.stop(ctx.currentTime + 0.5);" +
+            "      } catch(e) {}" +
+            "    }" +
+            "  }, 300);" +
+            "</script>" +
+            "<h1>About TESSERA</h1>" +
+            "<p><strong>TESSERA empowers developers and architects to build stunning, production-ready enterprise applications and integrations without writing a single line of code.</strong></p>" +
+            "<p>By providing a unified, visual, and highly interactive workspace, Tessera abstracts away the complexities of Apache Camel, enterprise messaging, and data transformation. You can visually design routes, map complex data schemas, simulate infrastructure, and enforce rigorous security policies—all through an intuitive point-and-click interface.</p>" +
+            "<h3>Next-Generation Capabilities</h3>" +
             "<ul>" +
-            "  <li><strong>Visual Route Designer:</strong> Drag-and-drop nodes to compose Camel routes.</li>" +
-            "  <li><strong>Bidirectional Synchronization:</strong> Modify Monaco code or edit the diagram and see modifications immediately synced in real-time.</li>" +
-            "  <li><strong>Kamelet Builder:</strong> Create, manage, and test Custom Kamelets with dynamic parameters.</li>" +
-            "  <li><strong>Dependency Catalog:</strong> Search, catalog, and auto-inject Maven dependencies.</li>" +
-            "  <li><strong>Validation Studio:</strong> Test files against XSD, JSON Schema, CSVW, Flat file structures, and Swift MT formats.</li>" +
-            "</ul>"));
+            "  <li><strong>Zero-Code Visual Routing:</strong> Drag, drop, and connect enterprise integration patterns (EIPs). Your visual design is instantly translated into deployable Camel DSL.</li>" +
+            "  <li><strong>Universal Faker Studio:</strong> Generate realistic, randomized datasets for databases and messages instantly using our dual-tab visual JSON editor.</li>" +
+            "  <li><strong>Tessera Audit Shaper:</strong> Automatically secure, mask, and standardize your data payloads and audit trails with built-in cryptographic tools.</li>" +
+            "  <li><strong>Transformation & Validation:</strong> Map JSON, XML, SWIFT MT/MX, and CSV files visually, and validate them against industry standards in real-time.</li>" +
+            "</ul>";
 
-        topics.add(new HelpTopic("Camel JBang Runner", "Overview & Architecture", "jbang camel run compile debug execution engine runner process",
+        topics.add(new HelpTopic("Introduction to TESSERA Studio", "Overview & Architecture", "introduction overview hello help welcome get started", "fas-home", introHtml));
+
+        topics.add(new HelpTopic("Camel JBang Runner", "Overview & Architecture", "jbang camel run compile debug execution engine runner process", "fas-terminal",
             "<h1>Camel JBang Runner</h1>" +
             "<p>RouteBuilder Studio leverages <strong>JBang</strong> under the hood to bootstrap and execute integration projects without requiring pre-configured Maven or Gradle runtime projects.</p>" +
             "<h3>How It Works</h3>" +
@@ -83,7 +141,7 @@ public class RouteBuilderHelpWindow {
             "<pre>jbang camel@apache/camel run &lt;route-files&gt; --dependency=mvn:... --properties=...</pre>" +
             "<p>This fetches dependency artifacts dynamically from Maven Central and hosts a local execution daemon, feeding console logs back to the IDE's unified output drawer.</p>"));
 
-        topics.add(new HelpTopic("Getting Started & JBang Run profiles", "Overview & Architecture", "jbang profile stub run live play offline execution",
+        topics.add(new HelpTopic("Getting Started & JBang Run profiles", "Overview & Architecture", "jbang profile stub run live play offline execution", "fas-play-circle",
             "<h1>Developer Environments & Execution Profiles</h1>" +
             "<p>The studio lets you run integrations locally under three runtime profiles using JBang and Camel Main:</p>" +
             "<pre>[Kamelet Studio UI] ---&gt; [Local Workspace Dir] ---&gt; [JBang Executable]\n" +
@@ -97,7 +155,7 @@ public class RouteBuilderHelpWindow {
             "<h3>2. Play (Local Live)</h3>" +
             "<p>Runs the integration live on Camel Main, reflecting changes in real-time. Great for verification against local instances.</p>"));
 
-        topics.add(new HelpTopic("Path to Production & Containers", "Overview & Architecture", "production containers docker dockerfile native compile cloud graalvm secrets",
+        topics.add(new HelpTopic("Path to Production & Containers", "Overview & Architecture", "production containers docker dockerfile native compile cloud graalvm secrets", "fas-box-open",
             "<h1>Path to Production & Containerization</h1>" +
             "<p>Transition your routes from local JBang testing into enterprise microservices.</p>" +
             "<h3>1. Native Build Compilation</h3>" +
@@ -108,7 +166,7 @@ public class RouteBuilderHelpWindow {
             "<blockquote><strong>Important:</strong> Never bundle credentials (keystores, passwords, krb5 keytabs) in container filesystems. Resolve them dynamically at runtime via Kubernetes ConfigMaps/Secrets mounts or HashiCorp Vault.</blockquote>"));
 
         // --- Category: Route Designer & Sync ---
-        topics.add(new HelpTopic("Visual Route Designer", "Route Designer & Sync", "diagram visual flow designer canvas eip nodes palette",
+        topics.add(new HelpTopic("Visual Route Designer", "Route Designer & Sync", "diagram visual flow designer canvas eip nodes palette", "fas-project-diagram",
             "<h1>Visual Route Designer</h1>" +
             "<p>The right pane houses the <strong>Visual Diagram Canvas</strong> which translates Camel DSL code into diagram structures.</p>" +
             "<h3>Working with the Canvas</h3>" +
@@ -118,7 +176,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>Node Configuration:</strong> Selecting a node reveals its properties in the property panel for inline edits.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("Bidirectional Sync (Monaco & Canvas)", "Route Designer & Sync", "monaco webview synchronization code diagram yaml sync parser xml dsl",
+        topics.add(new HelpTopic("Bidirectional Sync (Monaco & Canvas)", "Route Designer & Sync", "monaco webview synchronization code diagram yaml sync parser xml dsl", "fas-exchange-alt",
             "<h1>Bidirectional Code & Diagram Sync</h1>" +
             "<p>RouteBuilder features a <strong>Zero-Compile Synchronization Engine</strong> between the Monaco Editor (Code) and the Diagram Canvas.</p>" +
             "<h3>Sync Behavior</h3>" +
@@ -127,8 +185,8 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>Diagram to Code:</strong> Repositioning components, adding connections, or editing node properties modifies the underlying DSL code instantly without corrupting comments or structure.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("Diagram Studio Reference", "Route Designer & Sync", "diagram studio mermaid flowcharts icons endpoints svg png export",
-            "<h1>Diagram Studio</h1>" +
+        topics.add(new HelpTopic("Universal Diagram Studio Reference", "Route Designer & Sync", "diagram studio mermaid flowcharts icons endpoints svg png export", "fas-paint-brush",
+            "<h1>Universal Diagram Studio</h1>" +
             "<p>Diagram Studio automatically renders a visual representation of Apache Camel routes from XML or YAML files.</p>" +
             "<h3>Key Features</h3>" +
             "<ul>" +
@@ -139,7 +197,7 @@ public class RouteBuilderHelpWindow {
             "</ul>"));
 
         // --- Category: Kamelet Studio ---
-        topics.add(new HelpTopic("Understanding Kamelets", "Kamelet Studio", "kamelets custom spec connector binding templates source sink action definition",
+        topics.add(new HelpTopic("Understanding Kamelets", "Kamelet Studio", "kamelets custom spec connector binding templates source sink action definition", "fas-puzzle-piece",
             "<h1>Understanding Kamelets</h1>" +
             "<p><strong>Kamelets</strong> (Camel Route Snippets) are simplified templates that represent connectors (Sources, Sinks, or Actions) with defined properties.</p>" +
             "<h3>Kamelet Types</h3>" +
@@ -149,7 +207,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>Action:</strong> Performs intermediate transformation, enrichment, or validation (e.g. SQL query mapping).</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("Designing Custom Kamelets", "Kamelet Studio", "kamelet builder design editor properties metadata metadata title",
+        topics.add(new HelpTopic("Designing Custom Kamelets", "Kamelet Studio", "kamelet builder design editor properties metadata metadata title", "fas-drafting-compass",
             "<h1>Designing Custom Kamelets</h1>" +
             "<p>Open the **Kamelet Builder** under <code>Tools -> Kamelet Builder...</code> to visual design templates.</p>" +
             "<h3>Design Sections</h3>" +
@@ -159,7 +217,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>Template Flow:</strong> Implement the underlying Apache Camel routes that execute when the Kamelet is invoked.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("Kamelet Testing Harness", "Kamelet Studio", "test kamelet run test route jbang execution form dynamic parameters",
+        topics.add(new HelpTopic("Kamelet Testing Harness", "Kamelet Studio", "test kamelet run test route jbang execution form dynamic parameters", "fas-vial",
             "<h1>Kamelet Testing Harness</h1>" +
             "<p>You can execute testing scenarios for custom Kamelets directly from the editor pane without writing integration code manually.</p>" +
             "<h3>Testing Workflow</h3>" +
@@ -170,7 +228,7 @@ public class RouteBuilderHelpWindow {
             "</ul>"));
 
         // --- Category: Dependency Catalog ---
-        topics.add(new HelpTopic("Managing Dependencies", "Dependency Catalog", "dependencies catalog registry coordinate version maven catalog file",
+        topics.add(new HelpTopic("Managing Dependencies", "Dependency Catalog", "dependencies catalog registry coordinate version maven catalog file", "fas-book",
             "<h1>Managing Dependencies</h1>" +
             "<p>Open the **Dependency Catalog** (<code>Tools -> Dependency Catalog...</code>) to manage dependencies.</p>" +
             "<h3>Catalog Options</h3>" +
@@ -179,7 +237,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>Update Versions:</strong> Overwrite specific dependencies to use the latest security releases.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("Wildcard Auto-injection", "Dependency Catalog", "auto-inject dependency injection catalog flag enabled run jbang headers",
+        topics.add(new HelpTopic("Wildcard Auto-injection", "Dependency Catalog", "auto-inject dependency injection catalog flag enabled run jbang headers", "fas-syringe",
             "<h1>Wildcard Auto-injection</h1>" +
             "<p>You do not need to hardcode Maven coordinates inside comments at the top of your YAML files.</p>" +
             "<h3>Auto-injection Behavior</h3>" +
@@ -187,7 +245,7 @@ public class RouteBuilderHelpWindow {
             "<p>You can also click <strong>Inject Headers</strong> to paste coordinate comments into the Monaco editor header automatically.</p>"));
 
         // --- Category: Validation Studio ---
-        topics.add(new HelpTopic("Supported Validation Formats", "Validation Studio", "validation xsd schema json-schema yaml csvw metadata swift mt xml iso20022 flatfile",
+        topics.add(new HelpTopic("Supported Validation Formats", "Validation Studio", "validation xsd schema json-schema yaml csvw metadata swift mt xml iso20022 flatfile", "fas-check-double",
             "<h1>Supported Validation Formats</h1>" +
             "<p>Open the **Validator Studio** to perform real-time diagnostic checks on enterprise documents.</p>" +
             "<h3>Supported Syntax Schemes</h3>" +
@@ -199,7 +257,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>Flat File:</strong> Maps and validates fixed-width records using JSON layouts.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("SWIFT MT Validation Modes", "Validation Studio", "swift mt validation standard enhanced rules restricted currencies sanctions high risk jurisdictions AML",
+        topics.add(new HelpTopic("SWIFT MT Validation Modes", "Validation Studio", "swift mt validation standard enhanced rules restricted currencies sanctions high risk jurisdictions AML", "fas-university",
             "<h1>SWIFT MT Validation Modes</h1>" +
             "<p>The validator supports checking SWIFT MT messages (e.g. MT103, MT202) under two modes:</p>" +
             "<ul>" +
@@ -207,7 +265,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>Enhanced Mode:</strong> Integrates dynamic rule logic from JSON files (such as <code>validators/custom-mt-rules.json</code>) to validate corporate reference prefixes, transaction limit thresholds, blacklisted currencies (e.g. RUB), and high-risk jurisdictions.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("Scenario & Pair Updates", "Validation Studio", "save scenario scenario pair update context menu rename files mapping overwrite schema",
+        topics.add(new HelpTopic("Scenario & Pair Updates", "Validation Studio", "save scenario scenario pair update context menu rename files mapping overwrite schema", "fas-sync-alt",
             "<h1>Scenario & Pair Updates</h1>" +
             "<p>Validation layouts are structured as message + schema pairs.</p>" +
             "<ul>" +
@@ -216,7 +274,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>Context Menu Controls:</strong> Right-click scenarios in the history explorer to add, delete, or select <strong>Update Validation Pair...</strong> to change names, formats, or file paths instantly.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("Validation Studio Reference", "Validation Studio", "validator studio layout report execution rules xml xsd csv csvw json schema flatfile",
+        topics.add(new HelpTopic("Validation Studio Reference", "Validation Studio", "validator studio layout report execution rules xml xsd csv csvw json schema flatfile", "fas-clipboard-check",
             "<h1>Validation Studio Reference</h1>" +
             "<p>Validation Studio provides in-memory validation for several industry standards. It uses a three-editor Monaco layout (Data Payload, Schema Definition, Validation Report) with sidebar history mapping.</p>" +
             "<pre>+-------------------------------------------------------------+\n" +
@@ -236,16 +294,28 @@ public class RouteBuilderHelpWindow {
             "</ol>"));
 
         // --- Category: Advanced Tools ---
-        topics.add(new HelpTopic("Faker Data Generator", "Advanced Tools", "faker mock simulator databases dataset profiles mx mt templates generation generator",
-            "<h1>Faker Data Generator</h1>" +
-            "<p>Open the **Faker & Template Studio** to create realistic dummy datasets for testing workflows.</p>" +
+        topics.add(new HelpTopic("Universal Faker Studio", "Advanced Tools", "faker mock simulator databases dataset profiles mx mt templates generation generator", "fas-mask",
+            "<h1>Universal Faker Studio</h1>" +
+            "<p>Open the **Faker Studio** to create realistic dummy datasets for testing workflows.</p>" +
             "<h3>Faker Capabilities</h3>" +
             "<ul>" +
-            "  <li><strong>Financial Profiles:</strong> Houses pre-configured datasets for banks, company names, cities, account details, and IBANs.</li>" +
-            "  <li><strong>Universal Faker Bean:</strong> Integrates <code>UniversalFaker.java</code> which dynamically replaces tokens in template files (such as MX xml or MT text templates) with randomized data.</li>" +
+            "  <li><strong>Dual-Tab Explorer:</strong> Seamlessly switch between managing Templates and your Faker DB datasets.</li>" +
+            "  <li><strong>Synchronized Editors:</strong> Edit JSON datasets visually or in raw text mode. Changes are instantly synchronized between views.</li>" +
+            "  <li><strong>Multi-Selection & Batch Actions:</strong> Easily copy, paste, delete, or rename multiple database files at once.</li>" +
+            "  <li><strong>Universal Faker Bean:</strong> Integrates <code>UniversalFaker.java</code> which dynamically replaces tokens in template files (such as MX xml or MT text templates) with randomized data from the active database.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("Schema Mapping Studio (MAP)", "Advanced Tools", "schema mapping map studio visual mapping target tree live flow registry",
+        topics.add(new HelpTopic("Tessera Audit Shaper", "Advanced Tools", "audit shaper sre crypto cryptography pii mask security database sql mongo", "fas-shield-alt",
+            "<h1>Tessera Audit Shaper & Crypto</h1>" +
+            "<p>The Tessera Audit Shaper is a centralized security backbone designed to standardize metadata, mask PII, and handle row-level encryption.</p>" +
+            "<h3>Core Features</h3>" +
+            "<ul>" +
+            "  <li><strong>Smart Cryptography:</strong> Automatically encrypts and decrypts sensitive fields using AES-256-GCM via global property keys or environment variables (<code>TESSERA_AUDIT_CRYPTO_KEY</code>).</li>" +
+            "  <li><strong>Auto-Masking:</strong> PII fields (like passwords, CVVs) are automatically obfuscated from standard logs.</li>" +
+            "  <li><strong>Enveloping:</strong> Wraps diverse message formats into standard JSON audit payloads suitable for data lakes or message queues.</li>" +
+            "</ul>"));
+
+        topics.add(new HelpTopic("Schema Mapping Studio (MAP)", "Advanced Tools", "schema mapping map studio visual mapping target tree live flow registry", "fas-sitemap",
             "<h1>Schema Mapping Studio (MAP)</h1>" +
             "<p>The MAP Studio defines mappings between message structures and schemas.</p>" +
             "<h3>Core Features</h3>" +
@@ -255,7 +325,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>Registry Sync:</strong> Updates are written to the global registry <code>validation-mapping.json</code>.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("Transformation Studio (Transform)", "Advanced Tools", "transformation transform studio smooks freemarker jslt groovy scripting joor",
+        topics.add(new HelpTopic("Transformation Studio (Transform)", "Advanced Tools", "transformation transform studio smooks freemarker jslt groovy scripting joor", "fas-random",
             "<h1>Transformation Studio (Transform)</h1>" +
             "<p>Transformation Studio converts messages between different messaging formats.</p>" +
             "<h3>Supported Engines</h3>" +
@@ -267,7 +337,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>jOOR Java Mapper:</strong> Compiles custom Java mappings at runtime.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("Variables Editor Reference", "Advanced Tools", "variables properties configurations keys workspace placeholders environment",
+        topics.add(new HelpTopic("Variables Editor Reference", "Advanced Tools", "variables properties configurations keys workspace placeholders environment", "fas-sliders-h",
             "<h1>Variables Editor Reference</h1>" +
             "<p>The Variables Editor manages project-wide configurations, system properties, and properties placeholders inside <code>application.properties</code>.</p>" +
             "<h3>Key Features</h3>" +
@@ -277,7 +347,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>System Resolution:</strong> Properties are resolved via Camel's placeholder resolver engine.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("XSLT Mapper Reference", "Advanced Tools", "xslt xml transformation styles layout mapping xslt-mapper",
+        topics.add(new HelpTopic("XSLT Mapper Reference", "Advanced Tools", "xslt xml transformation styles layout mapping xslt-mapper", "fas-code-branch",
             "<h1>XSLT Mapper Reference</h1>" +
             "<p>The XSLT Mapper creates stylesheet mapping flows to transform XML documents.</p>" +
             "<h3>Core Capabilities</h3>" +
@@ -286,7 +356,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>Style Generation:</strong> Automatically builds XSL templates (`.xsl`) when connecting nodes.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("Crypto Studio Reference", "Advanced Tools", "crypto studio encryption decryption algorithms aes base64 url pbkdf2 keys",
+        topics.add(new HelpTopic("Crypto Studio Reference", "Advanced Tools", "crypto studio encryption decryption algorithms aes base64 url pbkdf2 keys", "fas-key",
             "<h1>Crypto Studio Reference</h1>" +
             "<p>Crypto Studio manages encryption and decryption of configuration secrets.</p>" +
             "<h3>Cryptographic Specifications</h3>" +
@@ -296,7 +366,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>Salt / IV:</strong> <code>16 bytes</code> salt &amp; <code>12 bytes</code> IV prefixed to ciphertext.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("IBM MQ Connector (JMS 3.0 & XA)", "Advanced Tools", "ibm mq connections queues jms transaction manager narayana cache level leaks transacted",
+        topics.add(new HelpTopic("IBM MQ Connector (JMS 3.0 & XA)", "Advanced Tools", "ibm mq connections queues jms transaction manager narayana cache level leaks transacted", "fas-server",
             "<h1>IBM MQ Integration (Jakarta JMS 3.0)</h1>" +
             "<p>The studio supports connecting to IBM MQ using the modern Jakarta JMS client.</p>" +
             "<h3>Distributed XA JTA Configuration</h3>" +
@@ -307,7 +377,7 @@ public class RouteBuilderHelpWindow {
             "</ul>" +
             "<blockquote><strong>Note:</strong> Distributed transaction scopes are managed by the JTA Manager rather than local session caching layers. Session caching under XA leads to connection leaks and lockouts.</blockquote>"));
 
-        topics.add(new HelpTopic("Solace PubSub+ Integration", "Advanced Tools", "solace connection smf smfs ssl keystore truststore mtls queues connection parameters",
+        topics.add(new HelpTopic("Solace PubSub+ Integration", "Advanced Tools", "solace connection smf smfs ssl keystore truststore mtls queues connection parameters", "fas-broadcast-tower",
             "<h1>Solace PubSub+ (SMF/SMFS)</h1>" +
             "<p>The studio enables reliable connection parameters to Solace brokers using SMF (<code>smf://</code>) or secure SMFS (<code>smfs://</code>) protocols.</p>" +
             "<h3>Connection Schema Parameters</h3>" +
@@ -323,7 +393,7 @@ public class RouteBuilderHelpWindow {
             "  </tbody>" +
             "</table>"));
 
-        topics.add(new HelpTopic("Apache Kafka (SSL & Kerberos)", "Advanced Tools", "kafka ssl truststore keystore mtls kerberos gssapi sasl-jaas jaas login keytab",
+        topics.add(new HelpTopic("Apache Kafka (SSL & Kerberos)", "Advanced Tools", "kafka ssl truststore keystore mtls kerberos gssapi sasl-jaas jaas login keytab", "fas-stream",
             "<h1>Apache Kafka SSL &amp; Kerberos Security</h1>" +
             "<p>Configure Kafka endpoints with standard TLS security or enterprise Kerberos (SASL/GSSAPI) settings.</p>" +
             "<h3>1. mTLS Configuration</h3>" +
@@ -339,7 +409,7 @@ public class RouteBuilderHelpWindow {
             "camel.component.kafka.security-protocol=SASL_SSL\n" +
             "camel.component.kafka.sasl-jaas-config=com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true storeKey=true keyTab=\"/secrets/client.keytab\" principal=\"camel-service@REALM.COM\";</pre>"));
 
-        topics.add(new HelpTopic("MongoDB Change Streams & Auditing", "Advanced Tools", "mongodb changestreams database collection audit auditing metadata hostname privacy logs exclusion",
+        topics.add(new HelpTopic("MongoDB Change Streams & Auditing", "Advanced Tools", "mongodb changestreams database collection audit auditing metadata hostname privacy logs exclusion", "fas-database",
             "<h1>MongoDB Change Streams and Dynamic Auditing</h1>" +
             "<p>Capture database mutations dynamically and write structural audits.</p>" +
             "<h3>1. Change Stream Filter Criteria</h3>" +
@@ -351,7 +421,7 @@ public class RouteBuilderHelpWindow {
             "<h3>2. Host Audit Processing Metadata</h3>" +
             "<p>The audit component resolves the hostname and IP of the executor machine automatically to log origin data.</p>"));
 
-        topics.add(new HelpTopic("SQL Dynamic CRUD Engine", "Advanced Tools", "sql dynamic CRUD database rest json mapper query insert update",
+        topics.add(new HelpTopic("SQL Dynamic CRUD Engine", "Advanced Tools", "sql dynamic CRUD database rest json mapper query insert update", "fas-table",
             "<h1>SQL Dynamic CRUD Engine</h1>" +
             "<p>Use Camel's <code>sql:dynamic</code> component to map REST JSON payloads directly to database operations.</p>" +
             "<h3>Dynamic Insert &amp; Update Flow</h3>" +
@@ -368,7 +438,7 @@ public class RouteBuilderHelpWindow {
             "            simple: \"INSERT INTO users (name, email) VALUES (:?name, :?email)\"\n" +
             "        - to: \"sql:dynamic\"</pre>"));
 
-        topics.add(new HelpTopic("Export Studio & DB Mappings", "Advanced Tools", "export liquibase schema oracle postgres ddl dml changelog deploy run scripts",
+        topics.add(new HelpTopic("Export Studio & DB Mappings", "Advanced Tools", "export liquibase schema oracle postgres ddl dml changelog deploy run scripts", "fas-file-export",
             "<h1>Export Studio (Liquibase, SQL, File System)</h1>" +
             "<p>Export Studio packages Camel integrations and databases for target environments.</p>" +
             "<h3>1. Liquibase Migration Export</h3>" +
@@ -378,7 +448,7 @@ public class RouteBuilderHelpWindow {
             "<h3>3. File System Export</h3>" +
             "<p>Generates complete directory structures containing runnable shell scripts (<code>run.sh</code> / <code>run.bat</code>), properties files, and routing configurations.</p>"));
 
-        topics.add(new HelpTopic("Remote Deploy, Copy & Run (Studio)", "Advanced Tools", "remote deploy push upload container test hotload run remotely API_URL copy files absolute path transformations liquibase",
+        topics.add(new HelpTopic("Remote Deploy, Copy & Run (Studio)", "Advanced Tools", "remote deploy push upload container test hotload run remotely API_URL copy files absolute path transformations liquibase", "fas-cloud-upload-alt",
             "<h1>Remote Deploy, Copy & Run Studio</h1>" +
             "<p>The <strong>Remote Deploy Center</strong> allows developers to deploy routes, copy transformation files, and transfer Liquibase schemas to a remote Camel Quarkus container and instantly test execution flows.</p>" +
             "<h3>1. Deployment (Routes)</h3>" +
@@ -391,7 +461,7 @@ public class RouteBuilderHelpWindow {
             "  <li><strong>Response Path Verification:</strong> The activity log will display the exact path where the file was written on the remote server (e.g. <code>[SUCCESS] File changelog copied to: /opt/camel/resources/changelog.xml</code>). This is the path to use in your route URIs.</li>" +
             "</ul>"));
 
-        topics.add(new HelpTopic("Remote Connectivity & Heartbeat", "Advanced Tools", "heartbeat ping connectivity green red alert remote status online offline",
+        topics.add(new HelpTopic("Remote Connectivity & Heartbeat", "Advanced Tools", "heartbeat ping connectivity green red alert remote status online offline", "fas-heartbeat",
             "<h1>Remote Connectivity & Heartbeat Monitoring</h1>" +
             "<p>RouteBuilder Studio features a built-in background heartbeat monitor that continuously polls the remote container's status.</p>" +
             "<h3>How Connectivity Works</h3>" +
@@ -530,7 +600,8 @@ public class RouteBuilderHelpWindow {
             }
 
             TreeItem<HelpItem> topicNode = new TreeItem<>(new HelpItem(topic.title, topic));
-            topicNode.setGraphic(new FontIcon("fas-file-alt"));
+            String iconName = (topic.iconName != null && !topic.iconName.isEmpty()) ? topic.iconName : "fas-file-alt";
+            topicNode.setGraphic(new FontIcon(iconName));
             topicNode.getGraphic().setStyle("-fx-text-fill: #61afef;");
             catNode.getChildren().add(topicNode);
         }
@@ -606,6 +677,30 @@ public class RouteBuilderHelpWindow {
             "    pre { background-color: " + pre + "; padding: 12px 16px; border-radius: 6px; overflow-x: auto; border: 1px solid " + border + "; color: " + fg + "; font-family: 'Consolas', 'Fira Code', 'Courier New', monospace; font-size: 13px; }\n" +
             "    code { font-family: 'Consolas', 'Fira Code', 'Courier New', monospace; background-color: " + pre + "; padding: 2px 5px; border-radius: 4px; color: " + code + "; font-size: 90%; }\n" +
             "    blockquote { border-left: 4px solid " + blockBorder + "; margin: 15px 0; padding: 5px 15px; color: " + fg + "; background-color: " + blockBg + "; border-radius: 0 4px 4px 0; }\n" +
+            "    .animated-element { backface-visibility: hidden; will-change: transform, opacity; }\n" +
+            "    .piece-tl { transform: translate(-350px, -350px) rotate(-60deg); opacity: 0; }\n" +
+            "    .piece-tr { transform: translate(350px, -350px) rotate(60deg); opacity: 0; }\n" +
+            "    .piece-bl { transform: translate(-350px, 350px) rotate(-60deg); opacity: 0; }\n" +
+            "    .piece-br { transform: translate(350px, 350px) rotate(60deg); opacity: 0; }\n" +
+            "    .tri-left { transform: translate(-180px, 20px); opacity: 0; }\n" +
+            "    .tri-right { transform: translate(180px, 20px); opacity: 0; }\n" +
+            "    .text-title { transform: translateY(35px); opacity: 0; }\n" +
+            "    .text-sub { transform: translateY(35px); opacity: 0; }\n" +
+            "    .play-animation .piece-tl { animation: assembleTL 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }\n" +
+            "    .play-animation .piece-tr { animation: assembleTR 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }\n" +
+            "    .play-animation .piece-bl { animation: assembleBL 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }\n" +
+            "    .play-animation .piece-br { animation: assembleBR 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }\n" +
+            "    .play-animation .tri-left { animation: slideTriLeft 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; }\n" +
+            "    .play-animation .tri-right { animation: slideTriRight 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; }\n" +
+            "    .play-animation .text-title { animation: textFadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards; }\n" +
+            "    .play-animation .text-sub { animation: textFadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.75s forwards; }\n" +
+            "    @keyframes assembleTL { 100% { transform: translate(0, 0) rotate(0deg); opacity: 1; } }\n" +
+            "    @keyframes assembleTR { 100% { transform: translate(0, 0) rotate(0deg); opacity: 1; } }\n" +
+            "    @keyframes assembleBL { 100% { transform: translate(0, 0) rotate(0deg); opacity: 1; } }\n" +
+            "    @keyframes assembleBR { 100% { transform: translate(0, 0) rotate(0deg); opacity: 1; } }\n" +
+            "    @keyframes slideTriLeft { 100% { transform: translate(0, 0); opacity: 1; } }\n" +
+            "    @keyframes slideTriRight { 100% { transform: translate(0, 0); opacity: 1; } }\n" +
+            "    @keyframes textFadeUp { 100% { transform: translateY(0); opacity: 1; } }\n" +
             "  </style>\n" +
             "</head>\n" +
             "<body>\n" +

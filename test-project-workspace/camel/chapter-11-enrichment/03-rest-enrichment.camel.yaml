@@ -10,7 +10,7 @@
       steps:
         # Step 1: Seed the database with original.xml via direct mongo-gateway (for convenience)
         - setBody:
-            simple: "resource:file:chapter-11-enrichment/original.xml"
+            simple: "resource:file:original.xml"
         - convertBodyTo: "java.lang.String"
         - setHeader:
             name: "originalXml"
@@ -79,6 +79,6 @@
               </envelope>
 
         # Step 5: Perform XSLT enrichment
-        - to: "xslt-saxon:file:chapter-11-enrichment/enrich.xslt"
+        - to: "xslt-saxon:file:enrich.xslt"
         - log: "Enrichment complete!"
         - log: "Enriched Document:\n${body}"

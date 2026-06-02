@@ -81,6 +81,9 @@ public class TransformationStudioWindow {
             defaultPath = new File(userDir, "mappings").getAbsolutePath();
         }
         String savedPath = prefs.get("mappingsPath", defaultPath);
+        if (mappingEnv != null && new File(mappingEnv).exists()) {
+            savedPath = mappingEnv;
+        }
         this.currentMappingsPath = new File(savedPath);
         if (!this.currentMappingsPath.exists()) {
             this.currentMappingsPath.mkdirs();
@@ -235,7 +238,7 @@ public class TransformationStudioWindow {
         ContextMenu contextMenu = new ContextMenu();
         MenuItem newItem = new MenuItem("New Transformation...", new FontIcon("fas-plus-circle"));
         newItem.setOnAction(e -> showNewTransformationDialog());
-        MenuItem newFolderItem = new MenuItem("New Folder...", new FontIcon("fas-folder-plus"));
+        MenuItem newFolderItem = new MenuItem("New Folder...", new FontIcon("fas-folder"));
         newFolderItem.setOnAction(e -> showNewFolderDialog());
         MenuItem deleteItem = new MenuItem("Delete Selected", new FontIcon("fas-trash-alt"));
         deleteItem.setOnAction(e -> deleteSelectedEntity());
@@ -462,7 +465,9 @@ public class TransformationStudioWindow {
             horizontalSplit.setOrientation(Orientation.HORIZONTAL);
 
             sourceRawEditor = new com.tessera.ui.components.MonacoEditorPane();
+            sourceRawEditor.setOnSave(() -> saveEditorToFile(sourceRawEditor, false, f -> sourceRawFile = f));
             sourceXmlEditor = new com.tessera.ui.components.MonacoEditorPane();
+            sourceXmlEditor.setOnSave(() -> saveEditorToFile(sourceXmlEditor, false, f -> sourceXmlFile = f));
 
             VBox sourcePanel = new VBox();
             if (isEnrichment || isMtToMx) {
@@ -485,11 +490,13 @@ public class TransformationStudioWindow {
 
             VBox logicPanel = new VBox();
             logicEditor = new com.tessera.ui.components.MonacoEditorPane();
+            logicEditor.setOnSave(() -> saveEditorToFile(logicEditor, false, f -> logicFile = f));
 
             org.json.JSONArray logicArr = currentConfig.optJSONArray("logic");
             boolean isSmooks = "smooks".equalsIgnoreCase(transformationType);
             if (logicArr != null && logicArr.length() > 1 && !isSmooks) {
                 logicSecondaryEditor = new com.tessera.ui.components.MonacoEditorPane();
+                logicSecondaryEditor.setOnSave(() -> saveEditorToFile(logicSecondaryEditor, false, f -> logicSecondaryFile = f));
                 SplitPane logicSplit = new SplitPane();
                 logicSplit.setOrientation(Orientation.VERTICAL);
                 VBox topBox = new VBox(createHeader("CONFIG (" + transformationType.toUpperCase() + ")", logicEditor,
@@ -511,6 +518,7 @@ public class TransformationStudioWindow {
 
             VBox targetPanel = new VBox();
             targetEditor = new com.tessera.ui.components.MonacoEditorPane();
+            targetEditor.setOnSave(() -> saveEditorToFile(targetEditor, true, null));
             targetPanel.getChildren().addAll(createHeader("TARGET", targetEditor, false, null), targetEditor);
             VBox.setVgrow(targetEditor, Priority.ALWAYS);
 

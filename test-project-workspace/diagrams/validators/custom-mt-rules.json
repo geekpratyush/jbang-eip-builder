@@ -1,0 +1,7 @@
+{
+  "enhanced": true,
+  "refPrefix": "EXB-",
+  "amountLimit": 10000000.0,
+  "restrictedCurrencies": ["RUB"],
+  "highRiskJurisdictions": ["Iran", "Tehran"]
+}

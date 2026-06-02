@@ -77,7 +77,10 @@ public class DiagramStudioWindow {
         
         java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(DiagramStudioWindow.class);
         
-        if (baseWorkspace != null) {
+        String drawingsEnv = System.getProperty("DRAWINGS_DIR");
+        if (drawingsEnv != null && new File(drawingsEnv).exists()) {
+            this.workspaceRoot = new File(drawingsEnv);
+        } else if (baseWorkspace != null) {
             this.workspaceRoot = new File(baseWorkspace, "diagrams");
         } else {
             String savedRoot = prefs.get("workspaceRoot", null);
@@ -137,7 +140,8 @@ public class DiagramStudioWindow {
         btnSwap.setTooltip(new Tooltip("Swap Editor and Canvas"));
         btnSwap.setOnAction(e -> swapPanels());
 
-        Button btnExport = new Button("Export SVG", new FontIcon("fas-download"));
+        Button btnExport = new Button("", new FontIcon("fas-file-download"));
+        btnExport.setTooltip(new Tooltip("Save as SVG"));
         btnExport.getStyleClass().addAll("toolbar-btn", "btn-export");
         btnExport.setOnAction(e -> exportCurrentDiagramToSVG());
 

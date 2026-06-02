@@ -31,7 +31,9 @@ public class MonacoEditorPane extends VBox {
     private String currentLanguage = "yaml";
     private String currentContent = "";
     private Consumer<String> onContentChanged;
+    private Runnable onSave;
     
+    private boolean editable = true;
     private final JavaBridge bridge = new JavaBridge();
 
     public MonacoEditorPane() {
@@ -39,6 +41,11 @@ public class MonacoEditorPane extends VBox {
     }
 
     public MonacoEditorPane(String language) {
+        this(null, language);
+    }
+
+    public MonacoEditorPane(Consumer<String> onContentChanged, String language) {
+        this.onContentChanged = onContentChanged;
         this.currentLanguage = language;
         webView = new WebView();
         VBox.setVgrow(webView, Priority.ALWAYS);
@@ -63,6 +70,19 @@ public class MonacoEditorPane extends VBox {
         });
 
         engine.load("http://127.0.0.1:" + sharedPort + "/");
+    }
+
+    public void setOnSave(Runnable onSave) {
+        this.onSave = onSave;
+    }
+
+    public void setEditable(boolean editable) {
+        this.editable = editable;
+        if (editorReady) {
+            Platform.runLater(() -> {
+                engine.executeScript("window.editor.updateOptions({ readOnly: " + (!editable) + " });");
+            });
+        }
     }
 
     public void setOnContentChanged(Consumer<String> onContentChanged) {
@@ -153,6 +173,11 @@ public class MonacoEditorPane extends VBox {
 
                         window.editor.onDidChangeModelContent(function() {
                             if (window.javaBridge) window.javaBridge.onContentChanged(window.editor.getValue());
+                        });
+
+                        // Global Save Shortcut (Ctrl+S)
+                        window.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
+                            if (window.javaBridge) window.javaBridge.onSave();
                         });
 
                         window.setValue = function(v) { window.editor.setValue(v); };
@@ -292,12 +317,16 @@ public class MonacoEditorPane extends VBox {
                 editorReady = true;
                 setText(currentContent);
                 setLanguage(currentLanguage);
+                setEditable(editable);
                 onThemeChanged(ThemeManager.getCurrentThemeName());
             });
         }
         public void onContentChanged(String newText) {
             currentContent = newText;
             if (onContentChanged != null) Platform.runLater(() -> onContentChanged.accept(newText));
+        }
+        public void onSave() {
+            if (onSave != null) Platform.runLater(onSave);
         }
     }
 

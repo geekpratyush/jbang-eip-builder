@@ -114,6 +114,10 @@ public class ThemeManager {
             bgPrimary = "#000000"; bgSecondary = "#0d0208"; accentPrimary = "#f3f315";
             textMain = "#f3f315"; textDim = "#00ff41"; borderColor = "#003b00"; 
             selectionColor = "#333300"; selectionText = "#f3f315"; iconColor = "#f3f315";
+        } else if (currentThemeClass.equals("theme-neon-dreams")) {
+            bgPrimary = "#0a0a1a"; bgSecondary = "#05050f"; accentPrimary = "#ff0055";
+            textMain = "#00ffff"; textDim = "#ff00aa"; borderColor = "#330033"; 
+            selectionColor = "#660022"; selectionText = "white"; iconColor = "#00ffff";
         } else if (currentThemeClass.equals("theme-midnight")) {
             bgPrimary = "#05070a"; bgSecondary = "#0f131a"; accentPrimary = "#ff007c";
             textMain = "#ffffff"; textDim = "#aab1ff"; borderColor = "#1c212b"; 

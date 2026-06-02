@@ -68,11 +68,6 @@ public class YamlEditorPane extends VBox {
         btnSaveAs.getStyleClass().addAll("editor-btn", "btn-save-as");
         btnSaveAs.setOnAction(e -> saveFileAs());
 
-        Button btnDeploy = new Button("", new FontIcon("fas-cloud-upload-alt"));
-        btnDeploy.setTooltip(new Tooltip("Deploy to REST API"));
-        btnDeploy.getStyleClass().addAll("editor-btn", "btn-deploy");
-        btnDeploy.setOnAction(e -> deployYaml());
-
         Button btnCopy = new Button("", new FontIcon("fas-copy"));
         btnCopy.setTooltip(new Tooltip("Copy Selection"));
         btnCopy.getStyleClass().addAll("editor-btn", "btn-copy-text");
@@ -116,10 +111,11 @@ public class YamlEditorPane extends VBox {
             if (onStopFile != null) onStopFile.run();
         });
 
-        toolbar.getChildren().addAll(btnSave, btnSaveAs, btnCopy, btnCopyAll, btnToggleDiagram, btnDeploy, new javafx.scene.control.Separator(), btnPlayFile, btnStopFile, new javafx.scene.control.Separator(), btnClose);
+        toolbar.getChildren().addAll(btnSave, btnSaveAs, btnCopy, btnCopyAll, btnToggleDiagram, new javafx.scene.control.Separator(), btnPlayFile, btnStopFile, new javafx.scene.control.Separator(), btnClose);
 
         // Core Monaco Editor Component
         monacoPane = new MonacoEditorPane("yaml");
+        monacoPane.setOnSave(this::saveFile);
         VBox.setVgrow(monacoPane, Priority.ALWAYS);
         monacoPane.setOnContentChanged(text -> {
             if (onTextChanged != null) onTextChanged.accept(text);
@@ -217,41 +213,5 @@ public class YamlEditorPane extends VBox {
             Files.writeString(file.toPath(), getText());
             if (onFileSaved != null) onFileSaved.run();
         } catch (IOException ex) { ex.printStackTrace(); }
-    }
-
-    private void deployYaml() {
-        TextInputDialog dialog = new TextInputDialog("https://httpbin.org/post");
-        RouteBuilderApp.themeDialog(dialog);
-        dialog.setTitle("Deploy Route");
-        dialog.setHeaderText("Deploy YAML Route via REST API");
-        dialog.setContentText("Endpoint URL:");
-
-        dialog.showAndWait().ifPresent(url -> {
-            String yamlContent = getText();
-            java.util.concurrent.CompletableFuture.runAsync(() -> {
-                try {
-                    java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
-                    java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                            .uri(java.net.URI.create(url))
-                            .header("Content-Type", "application/yaml")
-                            .POST(java.net.http.HttpRequest.BodyPublishers.ofString(yamlContent))
-                            .build();
-                    java.net.http.HttpResponse<String> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
-                    Platform.runLater(() -> {
-                        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Response Code: " + response.statusCode(), javafx.scene.control.ButtonType.OK);
-                        RouteBuilderApp.themeDialog(alert);
-                        alert.setTitle("Deployment Status");
-                        alert.showAndWait();
-                    });
-                } catch (Exception ex) {
-                    Platform.runLater(() -> {
-                        Alert alert = new Alert(Alert.AlertType.ERROR, ex.getMessage(), javafx.scene.control.ButtonType.OK);
-                        RouteBuilderApp.themeDialog(alert);
-                        alert.setTitle("Deployment Failed");
-                        alert.showAndWait();
-                    });
-                }
-            });
-        });
     }
 }
