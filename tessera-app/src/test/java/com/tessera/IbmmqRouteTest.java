@@ -26,6 +26,7 @@ public class IbmmqRouteTest {
     @Inject
     ProducerTemplate producerTemplate;
 
+    @org.junit.jupiter.api.Disabled("Requires a running IBM MQ instance on localhost:1414")
     @Test
     public void testIbmMqKamelets() throws Exception {
         assertNotNull(context);

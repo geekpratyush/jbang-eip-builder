@@ -1,0 +1,30 @@
+# ID: mongo-crud-demo
+# DESCRIPTION: Basic MongoDB Insert and Find operations (Requires Embedded MongoDB to be active)
+# camel-k: dependency=mvn:org.apache.camel:camel-mongodb:4.18.0
+
+- route:
+    id: "mongo-insert-find-route"
+    from:
+      uri: "timer:mongo-demo?repeatCount=1&delay=1000"
+      steps:
+        - log: "Starting MongoDB integration test..."
+        
+        # 1. Insert a document
+        - setBody:
+            constant: >
+              {
+                "id": "MONGO-TEST-001",
+                "status": "SUCCESS",
+                "message": "Hello from embedded MongoDB!"
+              }
+        - to: "mongodb:mongoBean?database=testdb&collection=demo_collection&operation=insert"
+        - log: "Successfully inserted document into MongoDB"
+
+        # 2. Query the document back
+        - setBody:
+            constant: >
+              {
+                "id": "MONGO-TEST-001"
+              }
+        - to: "mongodb:mongoBean?database=testdb&collection=demo_collection&operation=findAll"
+        - log: "Queried from MongoDB. Result:\n${body}"

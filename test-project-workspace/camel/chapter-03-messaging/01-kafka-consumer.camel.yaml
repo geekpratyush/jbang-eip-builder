@@ -7,7 +7,7 @@
 - route:
     id: "kafka-order-consumer"
     from:
-      uri: "{{kafka.orders.uri}}"
+      uri: "stub:kafka:topic:orders"
       steps:
         - log: "[Chapter 3][KAFKA] Received order from Kafka: ${body}"
         - setHeader:
@@ -23,4 +23,4 @@
         - setBody:
             simple: '{"orderId":"ORD-${random(100,999)}","product":"Widget","qty":${random(1,10)}}'
         - log: "[Chapter 3][KAFKA] Sending to Kafka: ${body}"
-        - to: "{{kafka.orders.uri}}"
+        - to: "stub:kafka:topic:orders"

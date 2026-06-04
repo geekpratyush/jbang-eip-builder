@@ -19,7 +19,7 @@
       - log:
           loggingLevel: ERROR
           message: "[Chapter 4][DLQ] Routing to dead-letter after ${header.CamelRedeliveryCounter} retries: ${exception.message}"
-      - to: "{{dlq.uri}}"
+      - to: "seda:dlq"
 
 - route:
     id: "flaky-downstream"
@@ -29,5 +29,5 @@
         - setBody:
             simple: "Payload-${random(1,100)}"
         - log: "[Chapter 4] Attempting to send: ${body}"
-        - to: "{{dlq.uri}}"
+        - to: "seda:dlq"
         - log: "[Chapter 4] Sent successfully"

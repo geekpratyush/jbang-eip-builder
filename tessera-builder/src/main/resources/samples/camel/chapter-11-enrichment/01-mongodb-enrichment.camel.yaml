@@ -9,25 +9,21 @@
       steps:
         # Step 1: Seed the database with original.xml
         - setBody:
-            simple: "resource:file:original.xml"
+            simple: "resource:file:chapter-11-enrichment/original.xml"
         - convertBodyTo: "java.lang.String"
-        - setHeader:
+        - setProperty:
             name: "originalXml"
             simple: "${body}"
         - transform:
             groovy: |
-              String xml = request.headers.originalXml
+              String xml = exchange.getProperty("originalXml", String.class)
               String escaped = xml.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")
               return """{
-                "operation": "insert",
-                "collection": "pacs008",
-                "document": {
-                  "id": "MSG-pacs008-20260521-001",
-                  "payload": "${escaped}"
-                }
-              }"""
-        - to: "direct:mongo-gateway"
-        - log: "Database seeded: ${body}"
+                "_id": "MSG-pacs008-20260521-001",
+                "payload": "${escaped}"
+              }""".toString()
+        - to: "mongodb:mongoClient?database=test&collection=pacs008&operation=save"
+        - log: "Database seeded."
 
         # Step 2: Load truncated.xml and extract MsgId
         - setBody:
@@ -38,56 +34,49 @@
               String body = request.getBody(String.class)
               int idx = body.indexOf("?>")
               return idx != -1 ? body.substring(idx + 2).trim() : body
-        - setHeader:
+        - setProperty:
             name: "truncatedXml"
             simple: "${body}"
-        - setHeader:
+        - setProperty:
             name: "msgId"
             xpath:
               expression: "/*[local-name()='Document']/*[local-name()='FIToFICstmrCdtTrf']/*[local-name()='GrpHdr']/*[local-name()='MsgId']/text()"
               resultType: "String"
-        - log: "Extracted MsgId: ${header.msgId}"
+        - log: "Extracted MsgId: ${exchangeProperty.msgId}"
 
-        # Step 3: Query MongoDB simulator
+        # Step 3: Query Native Embedded MongoDB
         - setBody:
-            simple: |
-              {
-                "operation": "findOne",
-                "collection": "pacs008",
-                "query": {
-                  "id": "${header.msgId}"
-                }
-              }
-        - to: "direct:mongo-gateway"
-        - setHeader:
+            simple: "{\"_id\": \"${exchangeProperty.msgId}\"}"
+        - to: "mongodb:mongoClient?database=test&collection=pacs008&operation=findOneByQuery"
+        - setProperty:
             name: "originalXml"
-            jsonpath: "$.payload"
+            simple: "${body[payload]}"
         - setBody:
-            simple: "${header.originalXml}"
+            simple: "${exchangeProperty.originalXml}"
         - transform:
             groovy: |
               String body = request.getBody(String.class)
               int idx = body.indexOf("?>")
               return idx != -1 ? body.substring(idx + 2).trim() : body
-        - setHeader:
+        - setProperty:
             name: "originalXml"
             simple: "${body}"
-        - log: "Retrieved original message from MongoDB"
+        - log: "Retrieved original message directly from Native MongoDB"
 
         # Step 4: Wrap both XMLs inside an <envelope>
         - setBody:
             simple: |
-              <envelope>
+              <envelope>mongo-gateway
                 <original>
-                  ${header.originalXml}
+                  ${exchangeProperty.originalXml}
                 </original>
                 <truncated>
-                  ${header.truncatedXml}
+                  ${exchangeProperty.truncatedXml}
                 </truncated>
               </envelope>
         - log: "Combined Envelope XML:\n${body}"
 
         # Step 5: Perform XSLT enrichment
-        - to: "xslt-saxon:file:enrich.xslt"
+        - to: "xslt-saxon:file:chapter-11-enrichment/enrich.xslt"
         - log: "Enrichment complete!"
         - log: "Enriched Document:\n${body}"

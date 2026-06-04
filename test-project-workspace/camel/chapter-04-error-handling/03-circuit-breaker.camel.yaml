@@ -16,6 +16,8 @@
                   name: "CamelHttpMethod"
                   constant: "GET"
               - to: "stub:http:api.example.com/orders"
+              - setBody:
+                  constant: '{"orders":[{"id":"123","status":"shipped"}],"source":"live","status":"ok"}'
               - log: "[Chapter 4][CB] Success: ${body}"
               - to: "mock:cb-success"
             onFallback:

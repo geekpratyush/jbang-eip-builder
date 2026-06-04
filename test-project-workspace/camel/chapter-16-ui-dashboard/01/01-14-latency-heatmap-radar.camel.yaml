@@ -1,0 +1,30 @@
+# ID: latency-heatmap-radar
+# DESCRIPTION: Visual latency tracking map.
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+# camel-k: dependency=mvn:org.apache.camel:camel-jackson:4.18.0
+
+- route:
+    id: "ui-05-latency-init"
+    from:
+      uri: "timer:init-05-2?repeatCount=1&delay=500"
+      steps:
+        - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('latency', 'Latency Heatmap', '/05/latency', 'UI', 'fas fa-thermometer-half')"
+
+- rest:
+    get:
+      - path: "/05/latency"
+        produces: "text/html"
+        to: "direct:serve-05-latency"
+
+- route:
+    id: "ui-serve-05-latency"
+    from:
+      uri: "direct:serve-05-latency"
+      steps:
+        - setBody:
+            constant: "resource:file:../assets/chapter-16-ui-dashboard/01/ui/01-14-latency-heatmap-radar.html"
+        - convertBodyTo: "java.lang.String"
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"

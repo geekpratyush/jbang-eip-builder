@@ -1,0 +1,34 @@
+# ID: proxy-backend
+# ENABLED: true
+# DESCRIPTION: The internal backend microservice that the Gateway routes to.
+#   Run this AT THE SAME TIME as 05-1-gateway-router.
+#   Then test with: curl http://localhost:9090/gateway/products
+# AUTHOR: Camel Studio
+# STUB: none
+
+- route:
+    id: "backend-service"
+    from:
+      uri: "platform-http:/backend/api/{resource}"
+      steps:
+        - log: "[Chapter 8][BACKEND] Received request for /${header.resource}"
+        - log: "[Chapter 8][BACKEND] Auth Token: ${header.Authorization}"
+        - log: "[Chapter 8][BACKEND] Correlation ID: ${header.X-Correlation-ID}"
+        - choice:
+            when:
+              - simple: "${header.Authorization} != 'Bearer internal-service-token'"
+                steps:
+                  - log: "[Chapter 8][BACKEND] Unauthorized Request! Rejecting."
+                  - setHeader:
+                      name: "CamelHttpResponseCode"
+                      constant: "401"
+                  - setBody:
+                      constant: '{"error": "Unauthorized"}'
+            otherwise:
+              steps:
+                - log: "[Chapter 8][BACKEND] Processing secure request..."
+                - setBody:
+                    simple: '{"status": "success", "resource": "${header.resource}", "corId": "${header.X-Correlation-ID}", "data": [1, 2, 3]}'
+                - setHeader:
+                    name: "Content-Type"
+                    constant: "application/json"

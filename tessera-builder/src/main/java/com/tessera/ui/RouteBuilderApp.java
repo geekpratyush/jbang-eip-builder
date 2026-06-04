@@ -118,6 +118,8 @@ public class RouteBuilderApp extends Application {
     private HelpPortalPane helpPortalPane;
     private javafx.scene.control.Button btnPlay;
     private javafx.scene.control.Button btnStop;
+    private javafx.scene.control.CheckMenuItem mongoSimItem;
+    private javafx.scene.control.CheckMenuItem oracleSimItem;
     private final Process[] runnerProcess = {null};
 
     public static String currentThemeClass = ThemeManager.getCurrentThemeClass();
@@ -190,6 +192,7 @@ public class RouteBuilderApp extends Application {
                         editorPane.getBtnStopFile().setDisable(true);
                     }
                     if (btnPlay != null && treePane != null) {
+                        btnPlay.setStyle(""); // Clear running opacity override
                         boolean hasChecked = !treePane.getCheckedFiles().isEmpty();
                         boolean hasSelected = treePane.getTreeView().getSelectionModel().getSelectedItem() != null;
                         btnPlay.setDisable(!hasChecked && !hasSelected);
@@ -208,6 +211,12 @@ public class RouteBuilderApp extends Application {
         if (btnStop != null) {
             btnStop.setDisable(true);
         }
+        if (btnPlay != null && treePane != null) {
+            btnPlay.setStyle(""); // Remove running state opacity override
+            boolean hasChecked = !treePane.getCheckedFiles().isEmpty();
+            boolean hasSelected = treePane.getTreeView().getSelectionModel().getSelectedItem() != null;
+            btnPlay.setDisable(!hasChecked && !hasSelected);
+        }
     }
 
     public void setRunnerProcess(Process p) {
@@ -219,8 +228,17 @@ public class RouteBuilderApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        try {
+            javafx.scene.image.Image appIcon = new javafx.scene.image.Image(getClass().getResourceAsStream("/logo.png"));
+            primaryStage.getIcons().add(appIcon);
+        } catch (Exception ignored) {}
+
         // --- Splash Screen Phase ---
         Stage splashStage = new Stage(javafx.stage.StageStyle.UNDECORATED);
+        try {
+            splashStage.getIcons().add(new javafx.scene.image.Image(getClass().getResourceAsStream("/logo.png")));
+        } catch (Exception ignored) {}
+        
         javafx.scene.web.WebView splashWebView = new javafx.scene.web.WebView();
         splashWebView.setPrefSize(800, 600);
         
@@ -381,7 +399,20 @@ public class RouteBuilderApp extends Application {
         javafx.scene.control.Menu recentProjectsMenu = new javafx.scene.control.Menu("Recent Projects");
         javafx.scene.control.MenuItem exitItem = new javafx.scene.control.MenuItem("Exit");
         exitItem.setOnAction(e -> javafx.application.Platform.exit());
-        fileMenu.getItems().addAll(newMenu, openItem, recentProjectsMenu, new javafx.scene.control.SeparatorMenuItem(), exitItem);
+
+        javafx.scene.control.MenuItem saveItem = new javafx.scene.control.MenuItem("Save");
+        saveItem.setAccelerator(new javafx.scene.input.KeyCodeCombination(javafx.scene.input.KeyCode.S, javafx.scene.input.KeyCombination.CONTROL_DOWN));
+        saveItem.setOnAction(e -> {
+            if (editorPane != null) editorPane.saveFile();
+        });
+
+        javafx.scene.control.MenuItem saveAllItem = new javafx.scene.control.MenuItem("Save All");
+        saveAllItem.setAccelerator(new javafx.scene.input.KeyCodeCombination(javafx.scene.input.KeyCode.S, javafx.scene.input.KeyCombination.CONTROL_DOWN, javafx.scene.input.KeyCombination.SHIFT_DOWN));
+        saveAllItem.setOnAction(e -> {
+            if (editorPane != null) editorPane.saveAllFiles();
+        });
+
+        fileMenu.getItems().addAll(newMenu, openItem, saveItem, saveAllItem, recentProjectsMenu, new javafx.scene.control.SeparatorMenuItem(), exitItem);
         
         javafx.scene.control.Menu editMenu = new javafx.scene.control.Menu("_Edit");
         javafx.scene.control.MenuItem undoItem = new javafx.scene.control.MenuItem("Undo");
@@ -432,6 +463,16 @@ public class RouteBuilderApp extends Application {
         
         javafx.scene.control.Menu toolsMenu = new javafx.scene.control.Menu("_Tools");
         
+        mongoSimItem = new javafx.scene.control.CheckMenuItem("Embedded MongoDB (Disabled)");
+        oracleSimItem = new javafx.scene.control.CheckMenuItem("Embedded H2 DB (Disabled)");
+        
+        mongoSimItem.selectedProperty().addListener((obs, oldV, newV) -> {
+            mongoSimItem.setText(newV ? "Embedded MongoDB (Active)" : "Embedded MongoDB (Disabled)");
+        });
+        oracleSimItem.selectedProperty().addListener((obs, oldV, newV) -> {
+            oracleSimItem.setText(newV ? "Embedded H2 DB (Active)" : "Embedded H2 DB (Disabled)");
+        });
+
         javafx.scene.control.MenuItem variablesItem = new javafx.scene.control.MenuItem("Variables Editor...");
         variablesItem.setOnAction(e -> {
             java.io.File baseDir = getWorkspaceRoot();
@@ -527,8 +568,6 @@ public class RouteBuilderApp extends Application {
 
         toolsMenu.getItems().addAll(
             variablesItem,
-            toolsCryptoItem,
-            transformItem,
             validateItem,
             diagramItem,
             fakerItem,
@@ -537,7 +576,10 @@ public class RouteBuilderApp extends Application {
             dependencyCatalogItem,
             new javafx.scene.control.SeparatorMenuItem(),
             remoteDeployItem,
-            exportItem
+            exportItem,
+            new javafx.scene.control.SeparatorMenuItem(),
+            mongoSimItem,
+            oracleSimItem
         );
 
         javafx.scene.control.Menu themeMenu = new javafx.scene.control.Menu("T_heme");
@@ -643,13 +685,25 @@ public class RouteBuilderApp extends Application {
         btnSwapPanels.getStyleClass().add("toolbar-btn");
         
         btnPlay = new javafx.scene.control.Button("Play");
-        btnPlay.setGraphic(new org.kordamp.ikonli.javafx.FontIcon("fas-play"));
+        org.kordamp.ikonli.javafx.FontIcon playIcon = new org.kordamp.ikonli.javafx.FontIcon("fas-play");
+        playIcon.setIconColor(javafx.scene.paint.Color.web("#4CAF50"));
+        btnPlay.setGraphic(playIcon);
         btnPlay.getStyleClass().addAll("toolbar-btn", "btn-play");
         btnPlay.setDisable(true); // Disabled by default until a file/folder is selected or checked
 
-        btnStop = new javafx.scene.control.Button("Stop", new org.kordamp.ikonli.javafx.FontIcon("fas-stop"));
+        org.kordamp.ikonli.javafx.FontIcon stopIcon = new org.kordamp.ikonli.javafx.FontIcon("fas-stop");
+        stopIcon.setIconColor(javafx.scene.paint.Color.web("#999999"));
+        btnStop = new javafx.scene.control.Button("Stop", stopIcon);
         btnStop.getStyleClass().addAll("toolbar-btn", "btn-stop");
         btnStop.setDisable(true);
+
+        btnStop.disabledProperty().addListener((obs, oldV, newV) -> {
+            if (!newV) {
+                stopIcon.setIconColor(javafx.scene.paint.Color.web("#F44336")); // Vivid Red when enabled
+            } else {
+                stopIcon.setIconColor(javafx.scene.paint.Color.web("#999999")); // Greyed out when disabled
+            }
+        });
 
         javafx.scene.control.Button btnExport = new javafx.scene.control.Button("Export", new org.kordamp.ikonli.javafx.FontIcon("fas-download"));
         btnExport.getStyleClass().addAll("toolbar-btn", "btn-export");
@@ -775,14 +829,64 @@ public class RouteBuilderApp extends Application {
             }
         });
 
-        toolBar.getItems().addAll(btnLogo, new javafx.scene.control.Separator(), btnViewExplorer, btnViewCode, btnViewDiagram, new javafx.scene.control.Separator(), btnSwapPanels, new javafx.scene.control.Separator(), btnPlay, btnStop, new javafx.scene.control.Separator(), btnVariables, btnCrypto, btnTransform, btnValidateStudio, btnDiagramStudio, btnDocConverter, btnFakerStudio, btnKamelets, btnDeps, btnRemoteDeploy, btnExport, btnManual);
+        javafx.scene.control.ToggleButton btnMongoSim = new javafx.scene.control.ToggleButton("Mongo DB (Off)", new org.kordamp.ikonli.javafx.FontIcon("fas-leaf"));
+        btnMongoSim.getStyleClass().addAll("toolbar-btn", "btn-mongo-sim");
+        btnMongoSim.setTooltip(new javafx.scene.control.Tooltip("Turn ON to automatically start the background Native Embedded MongoDB (Flapdoodle) with your route."));
+        btnMongoSim.setOnMouseEntered(e -> {
+            if (!btnMongoSim.isSelected()) btnMongoSim.setStyle("-fx-background-color: rgba(76, 175, 80, 0.2);");
+        });
+        btnMongoSim.setOnMouseExited(e -> {
+            if (!btnMongoSim.isSelected()) btnMongoSim.setStyle("");
+        });
+        btnMongoSim.selectedProperty().addListener((obs, oldV, newV) -> {
+            if (newV) {
+                if (consolePane != null) consolePane.log("\n\033[1;32m[Tessera Studio] Embedded MongoDB injection ARMED for next Camel run.\033[0m\n");
+                btnMongoSim.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
+                btnMongoSim.setText("Mongo DB (ON)");
+            } else {
+                if (consolePane != null) consolePane.log("\n\033[1;31m[Tessera Studio] Embedded MongoDB injection DISABLED.\033[0m\n");
+                btnMongoSim.setStyle("");
+                btnMongoSim.setText("Mongo DB (Off)");
+            }
+        });
 
+        javafx.scene.control.ToggleButton btnOracleSim = new javafx.scene.control.ToggleButton("SQL DB (Off)", new org.kordamp.ikonli.javafx.FontIcon("fas-database"));
+        btnOracleSim.getStyleClass().addAll("toolbar-btn", "btn-oracle-sim");
+        btnOracleSim.setTooltip(new javafx.scene.control.Tooltip("Turn ON to automatically start the background Native Embedded H2 SQL Database with your route."));
+        btnOracleSim.setOnMouseEntered(e -> {
+            if (!btnOracleSim.isSelected()) btnOracleSim.setStyle("-fx-background-color: rgba(33, 150, 243, 0.2);");
+        });
+        btnOracleSim.setOnMouseExited(e -> {
+            if (!btnOracleSim.isSelected()) btnOracleSim.setStyle("");
+        });
+        btnOracleSim.selectedProperty().addListener((obs, oldV, newV) -> {
+            if (newV) {
+                if (consolePane != null) consolePane.log("\n\033[1;36m[Tessera Studio] Embedded H2 SQL injection ARMED for next Camel run.\033[0m\n");
+                btnOracleSim.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold;");
+                btnOracleSim.setText("SQL DB (ON)");
+            } else {
+                if (consolePane != null) consolePane.log("\n\033[1;31m[Tessera Studio] Embedded H2 SQL injection DISABLED.\033[0m\n");
+                btnOracleSim.setStyle("");
+                btnOracleSim.setText("SQL DB (Off)");
+            }
+        });
+
+        toolBar.getItems().addAll(btnLogo, new javafx.scene.control.Separator(), btnViewExplorer, new javafx.scene.control.Separator(), btnPlay, btnStop, new javafx.scene.control.Separator(), btnMongoSim, btnOracleSim, new javafx.scene.control.Separator(), btnVariables, btnCrypto, btnTransform, btnValidateStudio, btnDiagramStudio, btnDocConverter, btnFakerStudio, btnKamelets, btnDeps, btnRemoteDeploy, btnExport, btnManual);
+        
+        for (javafx.scene.Node node : toolBar.getItems()) {
+            if (node instanceof javafx.scene.control.Button && node != btnLogo) {
+                node.setOnMouseEntered(e -> node.setStyle("-fx-background-color: rgba(128, 128, 128, 0.2); -fx-cursor: hand;"));
+                node.setOnMouseExited(e -> node.setStyle(""));
+            }
+        }
 
         boolean[] swapCodeDiagram = {false};
 
         viewExplorerItem.selectedProperty().bindBidirectional(btnViewExplorer.selectedProperty());
         viewCodeItem.selectedProperty().bindBidirectional(btnViewCode.selectedProperty());
         viewDiagramItem.selectedProperty().bindBidirectional(btnViewDiagram.selectedProperty());
+        mongoSimItem.selectedProperty().bindBidirectional(btnMongoSim.selectedProperty());
+        oracleSimItem.selectedProperty().bindBidirectional(btnOracleSim.selectedProperty());
 
         javafx.scene.layout.VBox topContainer = new javafx.scene.layout.VBox(menuBar, toolBar);
         root.setTop(topContainer);
@@ -800,8 +904,10 @@ public class RouteBuilderApp extends Application {
             java.io.File selectedFile = (selectedItem != null && selectedItem.getValue().isFile()) ? selectedItem.getValue() : null;
 
             if (checkedList.size() > 1) {
-                // Multi-route mode: Hide code, show all diagrams
-                viewCodeItem.setSelected(false);
+                // Multi-route mode: Show code, show all diagrams
+                viewCodeItem.setSelected(true);
+                editorPane.loadFiles(checkedList);
+                
                 java.util.List<String> contents = new java.util.ArrayList<>();
                 for (java.io.File f : checkedList) {
                     try { contents.add(java.nio.file.Files.readString(f.toPath())); } catch (Exception ignored) {}
@@ -829,7 +935,8 @@ public class RouteBuilderApp extends Application {
             boolean hasChecked = !checked.isEmpty();
             boolean hasSelected = selectedFile != null;
             boolean isRunning = runnerProcess[0] != null && runnerProcess[0].isAlive();
-            btnPlay.setDisable(isRunning || (!hasChecked && !hasSelected));
+            if (btnPlay != null) btnPlay.setDisable(isRunning || (!hasChecked && !hasSelected));
+            if (btnStop != null) btnStop.setDisable(!isRunning);
         };
 
         // 1. Left Panel: Route Tree
@@ -876,19 +983,25 @@ helpPortalPane);
                 if (offline) command.add("--offline");
                 command.add("camel");
                 command.add("run");
-                command.add("--port=0");
-                command.add("--console"); // Enable interactive-style output
+                String portArg = System.getenv("CAMEL_SERVER_PORT");
+                command.add("--port=" + (portArg != null ? portArg : "9090"));
                 command.add("--logging-level=info");
                 
                 java.io.File propsFile = new java.io.File(baseDir, "application.properties");
-                if (!propsFile.exists() && workspaceRoot != null) {
+                if (propsFile.exists()) {
+                    command.add("--properties=application.properties");
+                } else if (workspaceRoot != null) {
                     java.io.File wsProps = new java.io.File(workspaceRoot, "application.properties");
                     if (wsProps.exists()) {
-                        command.add("--properties=../application.properties");
+                        try {
+                            String relProps = baseDir.toPath().toAbsolutePath().relativize(wsProps.toPath().toAbsolutePath()).toString().replace("\\", "/");
+                            command.add("--properties=" + relProps);
+                        } catch (Exception ex) {
+                            command.add("--properties=" + wsProps.getAbsolutePath().replace("\\", "/"));
+                        }
                     }
-                } else if (propsFile.exists()) {
-                    command.add("--properties=application.properties");
                 }
+
                 
                 java.util.Set<String> addedPaths = new java.util.HashSet<>();
                 java.util.Set<String> dependencies = new java.util.HashSet<>();
@@ -898,15 +1011,12 @@ helpPortalPane);
                     if (!checked.isEmpty()) {
                         for (java.io.File f : checked) {
                             if (f.isFile()) {
-                                String relative = baseDir.toPath().toAbsolutePath().relativize(f.toPath().toAbsolutePath()).toString().replace("\\", "/");
-                                if (addedPaths.add(relative)) {
-                                    command.add(relative);
+                                String abs = f.getAbsolutePath().replace("\\", "/");
+                                if (addedPaths.add(abs)) {
+                                    command.add(abs);
                                 }
                                 for (java.io.File srcFile : findCamelKSources(f)) {
-                                    String relSrc = baseDir.toPath().toAbsolutePath().relativize(srcFile.toPath().toAbsolutePath()).toString().replace("\\", "/");
-                                    if (addedPaths.add(relSrc)) {
-                                        command.add(relSrc);
-                                    }
+                                    processCamelSource(srcFile, baseDir, addedPaths, command);
                                 }
                                 dependencies.addAll(findCamelKDependencies(f));
                             }
@@ -915,30 +1025,12 @@ helpPortalPane);
                         command.add(".");
                     }
                 } else if (target.isFile()) {
-                    try {
-                        String relative = baseDir.toPath().toAbsolutePath().relativize(target.toPath().toAbsolutePath()).toString().replace("\\", "/");
-                        String val = relative.isEmpty() ? target.getName() : relative;
-                        if (addedPaths.add(val)) {
-                            command.add(val);
-                        }
-                    } catch (Exception ex) {
-                        String val = target.getAbsolutePath().replace("\\", "/");
-                        if (addedPaths.add(val)) {
-                            command.add(val);
-                        }
+                    String val = target.getAbsolutePath().replace("\\", "/");
+                    if (addedPaths.add(val)) {
+                        command.add(val);
                     }
                     for (java.io.File srcFile : findCamelKSources(target)) {
-                        try {
-                            String relSrc = baseDir.toPath().toAbsolutePath().relativize(srcFile.toPath().toAbsolutePath()).toString().replace("\\", "/");
-                            if (addedPaths.add(relSrc)) {
-                                command.add(relSrc);
-                            }
-                        } catch (Exception ex) {
-                            String val = srcFile.getAbsolutePath().replace("\\", "/");
-                            if (addedPaths.add(val)) {
-                                command.add(val);
-                            }
-                        }
+                        processCamelSource(srcFile, baseDir, addedPaths, command);
                     }
                     dependencies.addAll(findCamelKDependencies(target));
                 } else { // Directory
@@ -946,15 +1038,12 @@ helpPortalPane);
                     collectAllRouteFiles(target, collected);
                     if (!collected.isEmpty()) {
                         for (java.io.File f : collected) {
-                            String relative = baseDir.toPath().toAbsolutePath().relativize(f.toPath().toAbsolutePath()).toString().replace("\\", "/");
-                            if (addedPaths.add(relative)) {
-                                command.add(relative);
+                            String abs = f.getAbsolutePath().replace("\\", "/");
+                            if (addedPaths.add(abs)) {
+                                command.add(abs);
                             }
                             for (java.io.File srcFile : findCamelKSources(f)) {
-                                String relSrc = baseDir.toPath().toAbsolutePath().relativize(srcFile.toPath().toAbsolutePath()).toString().replace("\\", "/");
-                                if (addedPaths.add(relSrc)) {
-                                    command.add(relSrc);
-                                }
+                                processCamelSource(srcFile, baseDir, addedPaths, command);
                             }
                             dependencies.addAll(findCamelKDependencies(f));
                         }
@@ -968,6 +1057,54 @@ helpPortalPane);
                 }
                 for (String dep : DependencyCatalogWindow.getEnabledDependencies(workspaceRoot)) {
                     command.add("--dependency=" + dep);
+                }
+                
+                boolean needsMongo = false;
+                boolean needsSql = false;
+                java.util.List<java.io.File> scanFiles = new java.util.ArrayList<>();
+                if (target == null) {
+                    if (treePane != null) scanFiles.addAll(treePane.getCheckedFiles());
+                } else if (target.isFile()) {
+                    scanFiles.add(target);
+                } else if (target.isDirectory()) {
+                    collectAllRouteFiles(target, scanFiles);
+                }
+
+                for (java.io.File scanFile : scanFiles) {
+                    if (scanFile != null && scanFile.isFile()) {
+                        try {
+                            String content = new String(java.nio.file.Files.readAllBytes(scanFile.toPath()), java.nio.charset.StandardCharsets.UTF_8).toLowerCase();
+                            if (content.contains("mongodb:") || content.contains("mongodb-driver")) needsMongo = true;
+                            if (content.contains("sql:") || content.contains("jdbc:")) needsSql = true;
+                        } catch (Exception ignored) {}
+                    }
+                }
+
+                if (mongoSimItem != null && oracleSimItem != null) {
+                    if (mongoSimItem.isSelected() || needsMongo) {
+                        command.add("--dependency=mvn:org.mongodb:mongodb-driver-sync:4.11.1");
+                        command.add("--dependency=mvn:de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.12.2");
+                        command.add("--dependency=mvn:org.apache.camel:camel-mongodb:4.18.0");
+                        java.io.File mongoFile = new java.io.File(workspaceRoot != null ? workspaceRoot : baseDir, ".tessera/EmbeddedMongo.java");
+                        if (mongoFile.exists()) {
+                            String mongoPath = mongoFile.getAbsolutePath().replace("\\", "/");
+                            if (addedPaths.add(mongoPath)) {
+                                command.add(mongoPath);
+                            }
+                        }
+                    }
+                    if (oracleSimItem.isSelected() || needsSql) {
+                        command.add("--dependency=mvn:com.h2database:h2:2.2.224");
+                        command.add("--dependency=mvn:org.apache.camel:camel-sql:4.18.0");
+                        java.io.File h2File = new java.io.File(workspaceRoot != null ? workspaceRoot : baseDir, ".tessera/H2DataSource.java");
+                        if (h2File.exists()) {
+                            String h2Path = h2File.getAbsolutePath().replace("\\", "/");
+                            if (addedPaths.add(h2Path)) {
+                                command.add(h2Path);
+                            }
+                        }
+                    }
+
                 }
                 
                 boolean dev = "dev".equals(mode);
@@ -1007,31 +1144,37 @@ helpPortalPane);
         });
 
         btnStop.setOnAction(e -> {
-            boolean hasChecked = !treePane.getCheckedFiles().isEmpty();
-            boolean hasSelected = treePane.getTreeView().getSelectionModel().getSelectedItem() != null;
-            btnPlay.setDisable(!hasChecked && !hasSelected);
             btnStop.setDisable(true);
+            btnPlay.setDisable(true);
             System.out.println("Stopping Routes...");
-            if (runnerProcess[0] != null && runnerProcess[0].isAlive()) {
-                runnerProcess[0].destroy();
-                runnerProcess[0].descendants().forEach(ProcessHandle::destroyForcibly);
-                runnerProcess[0] = null;
-            }
-            try {
-                String executablePath = getJbangExecutable();
-                java.util.List<String> stopCmd = new java.util.ArrayList<>();
-                stopCmd.add(executablePath);
-                stopCmd.add("--main=main.CamelJBang");
-                String catalogPath = getJbangCatalog();
-                if (catalogPath != null) {
-                    stopCmd.add("--catalog=" + catalogPath);
+            new Thread(() -> {
+                if (runnerProcess[0] != null && runnerProcess[0].isAlive()) {
+                    runnerProcess[0].descendants().forEach(ProcessHandle::destroyForcibly);
+                    runnerProcess[0].destroyForcibly();
+                    runnerProcess[0] = null;
                 }
-                stopCmd.add("camel");
-                stopCmd.add("stop");
-                new ProcessBuilder(stopCmd).start();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+                try {
+                    String executablePath = getJbangExecutable();
+                    java.util.List<String> stopCmd = new java.util.ArrayList<>();
+                    stopCmd.add(executablePath);
+                    stopCmd.add("--main=main.CamelJBang");
+                    String catalogPath = getJbangCatalog();
+                    if (catalogPath != null) {
+                        stopCmd.add("--catalog=" + catalogPath);
+                    }
+                    stopCmd.add("camel");
+                    stopCmd.add("stop");
+                    Process stopProcess = new ProcessBuilder(stopCmd).start();
+                    stopProcess.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                javafx.application.Platform.runLater(() -> {
+                    boolean hasChecked = !treePane.getCheckedFiles().isEmpty();
+                    boolean hasSelected = treePane.getTreeView().getSelectionModel().getSelectedItem() != null;
+                    btnPlay.setDisable(!hasChecked && !hasSelected);
+                });
+            }).start();
         });
 
         btnExport.setOnAction(e -> {
@@ -1116,8 +1259,15 @@ helpPortalPane);
             treePane.refresh();
         });
         editorPane.setLspManager(lspManager);
-        ThemeManager.registerRoot(
-editorPane);
+        ThemeManager.registerRoot(editorPane);
+        
+        topContainer.getChildren().add(editorPane.getToolbar());
+
+        editorPane.setOnTabClosed(file -> {
+            treePane.getCheckedFiles().remove(file);
+            treePane.refresh();
+            refreshGlobalLayout.run();
+        });
 
         editorPane.setOnPlayFile((file, mode) -> {
             boolean offline = "offline".equals(mode);
@@ -1136,8 +1286,8 @@ editorPane);
                 if (offline) command.add("--offline");
                 command.add("camel");
                 command.add("run");
-                command.add("--port=0");
-                command.add("--console"); // Enable interactive-style output
+                String portArg = System.getenv("CAMEL_SERVER_PORT");
+                command.add("--port=" + (portArg != null ? portArg : "9090"));
                 command.add("--logging-level=info");
                 
                 java.io.File workspaceDir = treePane != null ? treePane.getBaseDirectory() : null;
@@ -1197,8 +1347,8 @@ editorPane);
                 Process singleProcess = pb.start();
                 
                 if (runnerProcess[0] != null && runnerProcess[0].isAlive()) {
-                    runnerProcess[0].destroy();
                     runnerProcess[0].descendants().forEach(ProcessHandle::destroyForcibly);
+                    runnerProcess[0].destroyForcibly();
                 }
                 runnerProcess[0] = singleProcess;
                 showConsole(runnerProcess[0], "Single Route: " + file.getName());
@@ -1223,17 +1373,35 @@ editorPane);
 
         editorPane.setOnStopFile(() -> {
             System.out.println("Stopping Single Route...");
-            if (runnerProcess[0] != null && runnerProcess[0].isAlive()) {
-                runnerProcess[0].destroy();
-                runnerProcess[0].descendants().forEach(ProcessHandle::destroyForcibly);
-                runnerProcess[0] = null;
-            }
             javafx.application.Platform.runLater(() -> {
                 if (editorPane != null && editorPane.getBtnStopFile() != null) {
                     editorPane.getBtnStopFile().setDisable(true);
                 }
                 if (btnStop != null) btnStop.setDisable(true);
             });
+            new Thread(() -> {
+                if (runnerProcess[0] != null && runnerProcess[0].isAlive()) {
+                    runnerProcess[0].descendants().forEach(ProcessHandle::destroyForcibly);
+                    runnerProcess[0].destroyForcibly();
+                    runnerProcess[0] = null;
+                }
+                try {
+                    String executablePath = getJbangExecutable();
+                    java.util.List<String> stopCmd = new java.util.ArrayList<>();
+                    stopCmd.add(executablePath);
+                    stopCmd.add("--main=main.CamelJBang");
+                    String catalogPath = getJbangCatalog();
+                    if (catalogPath != null) {
+                        stopCmd.add("--catalog=" + catalogPath);
+                    }
+                    stopCmd.add("camel");
+                    stopCmd.add("stop");
+                    Process stopProcess = new ProcessBuilder(stopCmd).start();
+                    stopProcess.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }).start();
         });
 
         // 3. Right Panel: Visual Diagram
@@ -1344,6 +1512,20 @@ consolePane);
 
         com.tessera.ui.components.ThemeManager.registerRoot(root);
         Scene scene = new Scene(root, 1400, 800);
+        
+        scene.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.F5) {
+                if (btnPlay != null && !btnPlay.isDisabled()) {
+                    btnPlay.fire();
+                    e.consume();
+                }
+            } else if (e.getCode() == javafx.scene.input.KeyCode.F6) {
+                if (btnStop != null && !btnStop.isDisabled()) {
+                    btnStop.fire();
+                    e.consume();
+                }
+            }
+        });
         
         // Load CSS
         String css = getClass().getResource("/styles/main.css").toExternalForm();
@@ -1765,6 +1947,13 @@ consolePane);
         return catalogFile.exists() ? catalogFile.getAbsolutePath().replace("\\", "/") : null;
     }
 
+    private static void processCamelSource(java.io.File srcFile, java.io.File baseDir, java.util.Set<String> addedPaths, java.util.List<String> command) {
+        String val = srcFile.getAbsolutePath().replace("\\", "/");
+        if (addedPaths.add(val)) {
+            command.add(val);
+        }
+    }
+
     public static String getCamelVersion() {
         String catalogPath = getJbangCatalog();
         if (catalogPath != null) {
@@ -1793,7 +1982,7 @@ consolePane);
                 }
             } else {
                 String name = f.getName().toLowerCase();
-                if (name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".groovy")) {
+                if (name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".groovy") || name.endsWith(".xslt") || name.endsWith(".xsl")) {
                     collected.add(f);
                 }
             }
@@ -1817,9 +2006,28 @@ consolePane);
         }
         if (!visited.add(canonicalPath)) return;
 
+        java.io.File parent = file.getParentFile();
+        if (parent != null && parent.exists()) {
+            java.io.File[] siblings = parent.listFiles((d, n) -> {
+                String name = n.toLowerCase();
+                return name.endsWith(".java") || name.endsWith(".xml") || name.endsWith(".json") || name.endsWith(".csv") || name.endsWith(".txt") || name.endsWith(".properties") || name.endsWith(".xslt") || name.endsWith(".xsl");
+            });
+            if (siblings != null) {
+                for (java.io.File sibling : siblings) {
+                    if (!sibling.equals(file)) {
+                        String sibCanonical;
+                        try { sibCanonical = sibling.getCanonicalPath(); } 
+                        catch (Exception ex) { sibCanonical = sibling.getAbsolutePath(); }
+                        if (visited.add(sibCanonical)) {
+                            sources.add(sibling);
+                        }
+                    }
+                }
+            }
+        }
+
         try {
             java.util.List<String> lines = java.nio.file.Files.readAllLines(file.toPath());
-            java.io.File parent = file.getParentFile();
             for (String line : lines) {
                 line = line.trim();
                 if (line.startsWith("#") && line.contains("camel-k:") && line.contains("source=")) {

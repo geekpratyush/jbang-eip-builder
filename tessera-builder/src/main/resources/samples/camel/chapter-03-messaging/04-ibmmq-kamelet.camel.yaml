@@ -18,11 +18,11 @@
         - setBody:
             constant: "Hello from dynamic IBM MQ mTLS Route!"
         - log: "Sending message to IBM MQ: ${body}"
-        - to: "{{ibmmq-sink}}?queuename={{ibmmq.queue}}"
+        - to: "stub:jms:queue:IBMMQ.INBOUND.Q"
 
 - route:
     id: ibmmq-consumer-route
     from:
-      uri: "{{ibmmq-source}}?queuename={{ibmmq.queue}}"
+      uri: "stub:jms:queue:IBMMQ.INBOUND.Q"
       steps:
         - log: "Successfully received message from IBM MQ: ${body}"

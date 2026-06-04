@@ -1,0 +1,17 @@
+# ID: gateway-client
+# ENABLED: true
+# DESCRIPTION: A client that periodically calls the API Gateway (05-1).
+#   The Gateway will automatically proxy the request to the Backend Service (05-2).
+# AUTHOR: Camel Studio
+
+- route:
+    id: "gateway-client"
+    from:
+      uri: "timer:gateway-poll?period=8000&delay=3000"
+      steps:
+        - log: "[Chapter 8][CLIENT] Calling the Gateway -> GET /gateway/users"
+        - setHeader:
+            name: "CamelHttpMethod"
+            constant: "GET"
+        - to: "http://localhost:9090/gateway/users"
+        - log: "[Chapter 8][CLIENT] Received response back through Gateway: \n${body}"

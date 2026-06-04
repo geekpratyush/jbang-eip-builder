@@ -45,3 +45,16 @@
       steps:
         - log: "[Chapter 7][DLC][DLQ] Received dead-letter: ${body} | Reason: ${header.X-DLQ-Reason}"
         - to: "mock:dlq-received"
+
+- route:
+    id: "auto-test-producer"
+    from:
+      uri: "timer:test-dlq?period=8000&delay=1500"
+      steps:
+        - log: "[Chapter 7][DLC] Auto-testing... Sending a valid and a POISON message."
+        - setBody:
+            constant: "This is a normal valid message"
+        - to: "stub:jms:queue:MAIN.QUEUE"
+        - setBody:
+            constant: "This is a POISON message"
+        - to: "stub:jms:queue:MAIN.QUEUE"

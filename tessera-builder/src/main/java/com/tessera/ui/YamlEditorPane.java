@@ -27,7 +27,9 @@ import java.util.function.Consumer;
 public class YamlEditorPane extends VBox {
 
     private MonacoEditorPane monacoPane;
-    private Label title;
+    private javafx.scene.control.TabPane tabPane;
+    private java.util.Map<File, String> fileCache = new java.util.HashMap<>();
+    private java.util.List<File> openFiles = new java.util.ArrayList<>();
     private File currentFile = null;
     private com.tessera.lsp.LspManager lspManager;
     private Consumer<String> onTextChanged;
@@ -43,6 +45,16 @@ public class YamlEditorPane extends VBox {
     private java.util.function.BiConsumer<File, String> onPlayFile;
     private Runnable onStopFile;
     private Runnable onClose;
+    private Consumer<File> onTabClosed;
+    private HBox toolbar;
+
+    public HBox getToolbar() {
+        return toolbar;
+    }
+
+    public void setOnTabClosed(Consumer<File> onTabClosed) {
+        this.onTabClosed = onTabClosed;
+    }
 
     public YamlEditorPane(Consumer<String> onTextChanged, Runnable onFileSaved) {
         this.onTextChanged = onTextChanged;
@@ -51,10 +63,22 @@ public class YamlEditorPane extends VBox {
         getStyleClass().add("editor-pane");
         ThemeManager.registerRoot(this);
         
-        title = new Label("EDITOR: Untitled.yaml");
-        title.getStyleClass().add("pane-title");
+        tabPane = new javafx.scene.control.TabPane();
+        tabPane.getStyleClass().add("editor-tab-pane");
+        VBox.setVgrow(tabPane, Priority.ALWAYS);
+        tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (oldTab != null) {
+                oldTab.setContent(null);
+            }
+            if (newTab != null && newTab.getUserData() instanceof File) {
+                newTab.setContent(monacoPane);
+                switchToFile((File) newTab.getUserData());
+            } else if (newTab == null) {
+                closeFileContent();
+            }
+        });
 
-        HBox toolbar = new HBox(10);
+        this.toolbar = new HBox(10);
         toolbar.setPadding(new Insets(5));
         toolbar.getStyleClass().add("editor-toolbar");
 
@@ -62,6 +86,21 @@ public class YamlEditorPane extends VBox {
         btnSave.setTooltip(new Tooltip("Save"));
         btnSave.getStyleClass().addAll("editor-btn", "btn-save");
         btnSave.setOnAction(e -> saveFile());
+
+        javafx.scene.layout.StackPane saveAllGraphic = new javafx.scene.layout.StackPane();
+        FontIcon backSave = new FontIcon("fas-save");
+        backSave.setOpacity(0.5);
+        backSave.setTranslateX(-3);
+        backSave.setTranslateY(-3);
+        FontIcon frontSave = new FontIcon("fas-save");
+        frontSave.setTranslateX(2);
+        frontSave.setTranslateY(2);
+        saveAllGraphic.getChildren().addAll(backSave, frontSave);
+
+        Button btnSaveAll = new Button("", saveAllGraphic);
+        btnSaveAll.setTooltip(new Tooltip("Save All"));
+        btnSaveAll.getStyleClass().addAll("editor-btn", "btn-save-all");
+        btnSaveAll.setOnAction(e -> saveAllFiles());
 
         Button btnSaveAs = new Button("", new FontIcon("fas-file-alt"));
         btnSaveAs.setTooltip(new Tooltip("Save As..."));
@@ -89,12 +128,7 @@ public class YamlEditorPane extends VBox {
             if (onToggleDiagram != null) onToggleDiagram.run();
         });
 
-        Button btnClose = new Button("", new FontIcon("fas-times"));
-        btnClose.setTooltip(new Tooltip("Close Editor"));
-        btnClose.getStyleClass().addAll("editor-btn");
-        btnClose.setOnAction(e -> {
-            if (onClose != null) onClose.run();
-        });
+
 
         btnPlayFile = new Button("", new FontIcon("fas-play"));
         btnPlayFile.setTooltip(new Tooltip("Play Current File"));
@@ -111,18 +145,20 @@ public class YamlEditorPane extends VBox {
             if (onStopFile != null) onStopFile.run();
         });
 
-        toolbar.getChildren().addAll(btnSave, btnSaveAs, btnCopy, btnCopyAll, btnToggleDiagram, new javafx.scene.control.Separator(), btnPlayFile, btnStopFile, new javafx.scene.control.Separator(), btnClose);
+        toolbar.getChildren().addAll(btnSave, btnSaveAll, btnSaveAs, btnCopy, btnCopyAll, btnToggleDiagram);
 
         // Core Monaco Editor Component
         monacoPane = new MonacoEditorPane("yaml");
         monacoPane.setOnSave(this::saveFile);
-        VBox.setVgrow(monacoPane, Priority.ALWAYS);
         monacoPane.setOnContentChanged(text -> {
+            if (currentFile != null) {
+                fileCache.put(currentFile, text);
+            }
             if (onTextChanged != null) onTextChanged.accept(text);
             if (lspManager != null) lspManager.updateDocument(text);
         });
 
-        getChildren().addAll(title, toolbar, monacoPane);
+        getChildren().addAll(tabPane);
     }
 
     public void setLspManager(com.tessera.lsp.LspManager lspManager) {
@@ -165,37 +201,114 @@ public class YamlEditorPane extends VBox {
         return monacoPane.getText();
     }
 
-    public void loadFile(File file) {
-        if (file == null) return;
-        try {
-            String content = Files.readString(file.toPath());
-            currentFile = file;
-            title.setText("EDITOR: " + file.getName());
-            
-            String ext = "";
-            int lastDot = file.getName().lastIndexOf('.');
-            if (lastDot > 0) ext = file.getName().substring(lastDot + 1).toLowerCase();
-            
-            String lang = "plaintext";
-            if (ext.equals("yaml") || ext.equals("yml")) lang = "yaml";
-            else if (ext.equals("java")) lang = "java";
-            else if (ext.equals("groovy")) lang = "groovy";
-            
-            monacoPane.setLanguage(lang);
-            if (lspManager != null && lang.equals("yaml")) lspManager.setDocumentUri(file.toURI().toString());
-            
-            monacoPane.setText(content);
-        } catch (IOException ex) { ex.printStackTrace(); }
+    public void loadFiles(java.util.List<File> files) {
+        java.util.List<File> toRemove = new java.util.ArrayList<>(openFiles);
+        toRemove.removeAll(files);
+        
+        java.util.List<File> toAdd = new java.util.ArrayList<>(files);
+        toAdd.removeAll(openFiles);
+        
+        for (File f : toRemove) {
+            fileCache.remove(f);
+            openFiles.remove(f);
+            tabPane.getTabs().removeIf(t -> f.equals(t.getUserData()));
+        }
+        
+        for (File f : toAdd) {
+            try {
+                String content = Files.readString(f.toPath());
+                fileCache.put(f, content);
+                openFiles.add(f);
+                javafx.scene.control.Tab tab = new javafx.scene.control.Tab(f.getName());
+                tab.setUserData(f);
+                tab.setClosable(true);
+                tab.setOnClosed(e -> {
+                    openFiles.remove(f);
+                    fileCache.remove(f);
+                    if (onTabClosed != null) onTabClosed.accept(f);
+                });
+                tabPane.getTabs().add(tab);
+            } catch (IOException e) {}
+        }
+        
+        if (!files.isEmpty()) {
+            if (!files.contains(currentFile)) {
+                for (javafx.scene.control.Tab t : tabPane.getTabs()) {
+                    if (files.get(0).equals(t.getUserData())) {
+                        tabPane.getSelectionModel().select(t);
+                        break;
+                    }
+                }
+            } else {
+                switchToFile(currentFile);
+            }
+        } else {
+            closeFileContent();
+        }
     }
 
-    public void closeFile() {
+    private void switchToFile(File file) {
+        if (file == null) return;
+        currentFile = file;
+        String content = fileCache.getOrDefault(file, "");
+        
+        String ext = "";
+        int lastDot = file.getName().lastIndexOf('.');
+        if (lastDot > 0) ext = file.getName().substring(lastDot + 1).toLowerCase();
+        
+        String lang = "plaintext";
+        if (ext.equals("yaml") || ext.equals("yml")) lang = "yaml";
+        else if (ext.equals("java")) lang = "java";
+        else if (ext.equals("groovy")) lang = "groovy";
+        
+        monacoPane.setLanguage(lang);
+        if (lspManager != null && lang.equals("yaml")) lspManager.setDocumentUri(file.toURI().toString());
+        
+        monacoPane.setText(content);
+    }
+
+    public void loadFile(File file) {
+        if (file == null) {
+            loadFiles(java.util.Collections.emptyList());
+        } else {
+            loadFiles(java.util.Collections.singletonList(file));
+        }
+    }
+
+    public void closeFileContent() {
         currentFile = null;
-        title.setText("EDITOR: Untitled.yaml");
         monacoPane.setText("");
         if (lspManager != null) lspManager.setDocumentUri("");
     }
 
-    public void saveFile() { if (currentFile == null) saveFileAs(); else writeToFile(currentFile); }
+    public void closeFile() {
+        loadFiles(java.util.Collections.emptyList());
+    }
+
+    public void saveAllFiles() {
+        if (currentFile != null) {
+            fileCache.put(currentFile, monacoPane.getText());
+        }
+        for (File f : openFiles) {
+            String content = fileCache.get(f);
+            if (content != null) {
+                try {
+                    Files.writeString(f.toPath(), content);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+        if (onFileSaved != null) onFileSaved.run();
+    }
+
+    public void saveFile() {
+        if (currentFile == null) saveFileAs(); 
+        else {
+            fileCache.put(currentFile, monacoPane.getText());
+            writeToFile(currentFile);
+        }
+    }
 
     private void saveFileAs() {
         FileChooser fileChooser = new FileChooser();
@@ -205,7 +318,17 @@ public class YamlEditorPane extends VBox {
         if (!dir.exists()) dir.mkdirs();
         fileChooser.setInitialDirectory(dir);
         File file = fileChooser.showSaveDialog(this.getScene().getWindow());
-        if (file != null) { currentFile = file; title.setText("EDITOR: " + file.getName()); writeToFile(file); }
+        if (file != null) {
+            currentFile = file;
+            for (javafx.scene.control.Tab t : tabPane.getTabs()) {
+                if (t.isSelected()) {
+                    t.setText(file.getName());
+                    t.setUserData(file);
+                    break;
+                }
+            }
+            writeToFile(file);
+        }
     }
 
     private void writeToFile(File file) {

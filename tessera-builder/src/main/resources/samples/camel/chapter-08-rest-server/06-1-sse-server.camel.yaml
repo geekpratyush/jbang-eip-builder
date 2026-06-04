@@ -1,0 +1,35 @@
+# ID: rest-streaming-sse
+# ENABLED: true
+# DESCRIPTION: Server-Sent Events (SSE) style streaming endpoint.
+#   Pushes a stream of price-tick events to the caller every second.
+#
+#   curl -N http://localhost:8080/stream/prices
+#
+# AUTHOR: Camel Studio
+# STUB: none — live HTTP server
+
+- route:
+    id: "price-feed-producer"
+    from:
+      uri: "timer:price-tick?period=1000"
+      steps:
+        - setBody:
+            simple: "data: {\"symbol\":\"EUR/USD\",\"price\":\"${random(10800,10900)}\",\"ts\":\"${date:now:HH:mm:ss}\"}\n\n"
+        - to: "direct:price-broadcaster"
+
+- route:
+    id: "sse-endpoint"
+    from:
+      uri: "platform-http:/stream/prices"
+      parameters:
+        httpMethodRestrict: "GET"
+      steps:
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/event-stream"
+        - setHeader:
+            name: "Cache-Control"
+            constant: "no-cache"
+        - setBody:
+            constant: "data: {\"message\":\"Connected to Camel price stream\"}\n\n"
+        - log: "[Chapter 8][SSE] Client connected to price stream"

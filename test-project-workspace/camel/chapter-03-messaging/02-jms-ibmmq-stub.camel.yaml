@@ -15,12 +15,12 @@
             name: "JMSCorrelationID"
             simple: "CID-${random(10000,99999)}"
         - log: "[Chapter 3][IBM-MQ] Sending to request queue: ${header.JMSCorrelationID}"
-        - to: "{{ibmmq.request.uri}}"
+        - to: "stub:jms:queue:REQUEST.Q"
 
 - route:
     id: "ibmmq-request-handler"
     from:
-      uri: "{{ibmmq.request.uri}}"
+      uri: "stub:jms:queue:REQUEST.Q"
       steps:
         - log: "[Chapter 3][IBM-MQ] Processing request: ${body}"
         - setBody:

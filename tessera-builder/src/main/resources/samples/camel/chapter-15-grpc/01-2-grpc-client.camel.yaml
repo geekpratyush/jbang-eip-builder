@@ -1,0 +1,19 @@
+# ID: grpc-ping-client
+# ENABLED: false
+# DESCRIPTION: A gRPC Client example using camel-grpc.
+#   NOTE: Like the server, this requires compiled Java protobuf stubs on the classpath.
+# AUTHOR: Camel Studio
+# STUB: none
+
+- route:
+    id: "grpc-client"
+    from:
+      uri: "timer:grpc-poll?period=5000"
+      steps:
+        - log: "[gRPC Client] Preparing PingRequest..."
+      # Create the PingRequest using the generated protobuf builder
+        - setBody:
+            simple: 'bean:com.tessera.grpc.ping.PingRequest?method=newBuilder().setPingName("Tessera Client").build()'
+      # Send it over gRPC
+        - to: "grpc://localhost:9091/com.tessera.grpc.ping.PingService?method=ping"
+        - log: "[gRPC Client] Received PongReply: ${body.pongMessage}"

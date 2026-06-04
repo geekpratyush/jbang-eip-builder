@@ -1,0 +1,31 @@
+# ID: visual-route-builder
+# DESCRIPTION: Serves the Drag-and-drop Visual Route Builder UI prototype.
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+# camel-k: dependency=mvn:org.apache.camel:camel-jackson:4.18.0
+
+- route:
+    id: "ui-02-builder-init"
+    from:
+      uri: "timer:init-02-1?repeatCount=1"
+      steps:
+        - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('builder', 'Visual Route Builder', '/02/builder', 'UI', 'fas fa-project-diagram')"
+        - log: "Module 02 - Visual Route Builder registered."
+
+- rest:
+    get:
+      - path: "/02/builder"
+        produces: "text/html"
+        to: "direct:serve-02-builder"
+
+- route:
+    id: "ui-serve-02-builder"
+    from:
+      uri: "direct:serve-02-builder"
+      steps:
+        - setBody:
+            constant: "resource:file:../assets/chapter-16-ui-dashboard/01/ui/01-4-visual-route-builder.html"
+        - convertBodyTo: "java.lang.String"
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"

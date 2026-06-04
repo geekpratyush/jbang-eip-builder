@@ -36,6 +36,13 @@
     from:
       uri: "direct:get-order"
       steps:
+        - to: "direct:process-get-order"
+
+- route:
+    id: "process-get-order"
+    from:
+      uri: "direct:process-get-order"
+      steps:
         - log: "[Chapter 6][REST] GET /orders/${header.id}"
         - setBody:
             simple: '{"orderId":"${header.id}","status":"ACTIVE","amount":299.99}'
@@ -48,3 +55,15 @@
         - log: "[Chapter 6][REST] DELETE /orders/${header.id}"
         - setBody:
             simple: '{"orderId":"${header.id}","status":"DELETED"}'
+
+- route:
+    id: "auto-test-rest"
+    from:
+      uri: "timer:test?period=5000&delay=2000"
+      steps:
+        - setHeader:
+            name: "id"
+            constant: "999"
+        - log: "[Chapter 6][REST] Auto-triggering internal GET request for order 999..."
+        - to: "direct:process-get-order"
+        - log: "[Chapter 6][REST] Auto-Test Response: ${body}"

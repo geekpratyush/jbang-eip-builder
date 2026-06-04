@@ -240,27 +240,42 @@ public class RouteTreePane extends VBox {
                     setText(newFile.getName());
                     updateGraphic(newFile);
                 }
-                refresh(); 
+                javafx.application.Platform.runLater(() -> refresh()); 
             }
 
             private void createTextField() {
                 textField = new TextField();
-                textField.setOnKeyReleased(t -> {
-                    if (t.getCode() == javafx.scene.input.KeyCode.ENTER) {
-                        String newName = textField.getText();
-                        File item = getItem();
-                        if (item != null) {
-                            if (!item.isDirectory() && !newName.endsWith(".yaml") && !newName.endsWith(".yml")) {
-                                newName += ".yaml";
-                            }
-                            File newFile = new File(item.getParentFile(), newName);
-                            if (item.renameTo(newFile)) {
-                                commitEdit(newFile);
-                            } else {
-                                cancelEdit();
+                textField.setOnAction(t -> {
+                    String newName = textField.getText().trim();
+                    File item = getItem();
+                    if (item != null && !newName.isEmpty()) {
+                        if (!item.isDirectory() && !newName.contains(".")) {
+                            String oldName = item.getName();
+                            if (oldName.contains(".")) {
+                                newName += oldName.substring(oldName.lastIndexOf("."));
                             }
                         }
-                    } else if (t.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
+                        File newFile = new File(item.getParentFile(), newName);
+                        if (item.equals(newFile) || item.renameTo(newFile)) {
+                            commitEdit(newFile);
+                        } else {
+                            cancelEdit();
+                        }
+                    } else {
+                        cancelEdit();
+                    }
+                    t.consume();
+                });
+                
+                textField.setOnKeyPressed(t -> {
+                    if (t.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
+                        cancelEdit();
+                        t.consume();
+                    }
+                });
+                
+                textField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                    if (!newValue && isEditing()) {
                         cancelEdit();
                     }
                 });

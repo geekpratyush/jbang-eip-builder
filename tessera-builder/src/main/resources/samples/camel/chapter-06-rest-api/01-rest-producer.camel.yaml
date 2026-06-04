@@ -17,5 +17,7 @@
             constant: "application/json"
         - log: "[Chapter 6][REST] Calling external API..."
         - to: "stub:http:api.example.com/api/v1/products"
+        - setBody:
+            constant: '{"products": [{"id": 1, "name": "Enterprise Widget", "price": 99.99}]}'
         - log: "[Chapter 6][REST] API Response: ${body}"
         - to: "mock:api-result"

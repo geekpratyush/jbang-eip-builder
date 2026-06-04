@@ -1,0 +1,22 @@
+# ID: sql-crud-demo
+# DESCRIPTION: Basic H2 SQL Insert and Select operations (Requires Embedded H2 DB to be active)
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+
+- route:
+    id: "sql-insert-select-route"
+    from:
+      uri: "timer:sql-demo?repeatCount=1&delay=2000"
+      steps:
+        - log: "Starting H2 SQL integration test..."
+        
+        # 1. Ensure table exists
+        - to: "sql:CREATE TABLE IF NOT EXISTS system_audit (audit_id VARCHAR(255) PRIMARY KEY, action_type VARCHAR(100), details VARCHAR(255))"
+        - log: "Database table system_audit is ready."
+
+        # 2. Insert a record
+        - to: "sql:INSERT INTO system_audit (audit_id, action_type, details) VALUES ('AUDIT-SQL-001', 'ROUTE_START', 'Route triggered manually by administrator')"
+        - log: "Successfully inserted audit record into SQL Database"
+
+        # 3. Query the record back
+        - to: "sql:SELECT * FROM system_audit WHERE audit_id = 'AUDIT-SQL-001'"
+        - log: "Queried audit log from SQL. Result:\n${body}"

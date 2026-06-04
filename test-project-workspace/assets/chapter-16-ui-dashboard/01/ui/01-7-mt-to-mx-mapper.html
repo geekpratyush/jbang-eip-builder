@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>MT to MX Mapper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-200 h-screen flex flex-col">
+    <header class="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-indigo-400">Universal Payload Translation (MT103 -> pacs.008)</h1>
+        <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded" onclick="translatePayload()">Translate</button>
+    </header>
+    <div class="flex-1 flex overflow-hidden">
+        <div class="w-1/3 border-r border-slate-700 relative" id="editor-left"></div>
+        <div class="w-1/3 bg-slate-850 border-r border-slate-700 p-4 flex flex-col items-center justify-center">
+            <div class="text-slate-400 mb-4">Visual Mapping</div>
+            <svg width="200" height="200" class="text-slate-600">
+                <line x1="0" y1="50" x2="200" y2="50" stroke="currentColor" stroke-width="2" />
+                <line x1="0" y1="100" x2="200" y2="150" stroke="currentColor" stroke-width="2" />
+            </svg>
+        </div>
+        <div class="w-1/3 relative" id="editor-right"></div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+    <script>
+        let editorLeft, editorRight;
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            editorLeft = monaco.editor.create(document.getElementById('editor-left'), {
+                value: "{1:F01BANKBEBBAXXX0000000000}{2:I103BANKDEFFXXXXN}{4:
+:20:123456789
+:32A:210923EUR100000,00
+-}",
+                language: "plaintext", theme: "vs-dark", automaticLayout: true
+            });
+            editorRight = monaco.editor.create(document.getElementById('editor-right'), {
+                value: "<!-- Output will appear here -->",
+                language: "xml", theme: "vs-dark", automaticLayout: true
+            });
+        });
+        function translatePayload() {
+            if(editorRight) {
+                editorRight.setValue("<?xml version=\"1.0\"?>
+<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08\">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>123456789</MsgId>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <IntrBkSttlmAmt Ccy=\"EUR\">100000.00</IntrBkSttlmAmt>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>");
+            }
+        }
+    </script>
+</body>
+</html>

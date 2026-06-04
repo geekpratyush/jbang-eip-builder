@@ -1,0 +1,50 @@
+# ID: analytics-widget
+# DESCRIPTION: Pluggable UI Feature - Registers an Analytics Chart widget and generates fake metric data.
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+# camel-k: dependency=mvn:org.apache.camel:camel-jackson:4.18.0
+
+- route:
+    id: "analytics-plugin-init"
+    from:
+      uri: "timer:init-analytics?repeatCount=1&delay=1000"
+      steps:
+        # Register the plugin with the Core Dashboard
+        # The MERGE command ensures it doesn't fail if already registered
+        - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('analytics', 'System Analytics', '/api/analytics', 'CHART', 'fas fa-chart-line')"
+        - log: "[Plugin Activated] Analytics Widget registered in UI."
+
+- rest:
+    get:
+      - path: "/api/analytics"
+        produces: "application/json"
+        to: "direct:api-analytics"
+
+- route:
+    id: "analytics-data-provider"
+    from:
+      uri: "direct:api-analytics"
+      steps:
+        # Generate random time-series data using Groovy
+        - transform:
+            groovy: |
+              def rand = new java.util.Random()
+              def labels = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"]
+              def cpu = []
+              def memory = []
+              for(int i=0; i<6; i++) {
+                cpu.add(rand.nextInt(100))
+                memory.add(rand.nextInt(100))
+              }
+              return [
+                "labels": labels,
+                "datasets": [
+                  [ "label": "CPU Usage %", "data": cpu, "borderColor": "#00BCD4" ],
+                  [ "label": "Memory Usage %", "data": memory, "borderColor": "#E040FB" ]
+                ]
+              ]
+        - marshal:
+            json: {}
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"

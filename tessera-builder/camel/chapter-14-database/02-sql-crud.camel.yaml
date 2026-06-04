@@ -1,0 +1,22 @@
+# ID: sql-crud-demo
+# DESCRIPTION: Basic H2 SQL Insert and Select operations (Requires Embedded H2 DB to be active)
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+
+- route:
+    id: "sql-insert-select-route"
+    from:
+      uri: "timer:sql-demo?repeatCount=1&delay=2000"
+      steps:
+        - log: "Starting H2 SQL integration test..."
+        
+        # 1. Ensure table exists
+        - to: "sql:CREATE TABLE IF NOT EXISTS demo_table (id VARCHAR(255) PRIMARY KEY, message VARCHAR(255))"
+        - log: "Database table demo_table is ready."
+
+        # 2. Insert a record
+        - to: "sql:INSERT INTO demo_table (id, message) VALUES ('SQL-TEST-001', 'Hello from embedded H2 SQL!')"
+        - log: "Successfully inserted record into SQL Database"
+
+        # 3. Query the record back
+        - to: "sql:SELECT * FROM demo_table WHERE id = 'SQL-TEST-001'"
+        - log: "Queried from SQL. Result:\n${body}"

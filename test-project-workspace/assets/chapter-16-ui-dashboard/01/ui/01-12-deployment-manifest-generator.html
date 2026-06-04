@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Deployment Manifest Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-200 h-screen flex flex-col">
+    <header class="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-teal-400">Kubernetes Manifest Generator</h1>
+        <div class="flex gap-2">
+            <button class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-white" onclick="alert('Copied!')">Copy to Clipboard</button>
+            <button class="bg-teal-600 hover:bg-teal-500 px-4 py-2 rounded text-white">Download YAML</button>
+        </div>
+    </header>
+    <div class="flex-1 relative" id="editor"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+    <script>
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            monaco.editor.create(document.getElementById('editor'), {
+                value: "apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tessera-router
+  labels:
+    app: tessera
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tessera
+  template:
+    metadata:
+      labels:
+        app: tessera
+    spec:
+      containers:
+      - name: camel-quarkus
+        image: registry.internal/tessera:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: QUARKUS_PROFILE
+          value: prod",
+                language: "yaml", theme: "vs-dark", automaticLayout: true, readOnly: true
+            });
+        });
+    </script>
+</body>
+</html>

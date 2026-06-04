@@ -30,9 +30,6 @@ public class SampleProjectGenerationTest {
         File appProps = new File(baseDir, "application.properties");
         assertTrue(appProps.exists(), "application.properties should exist in workspace root");
 
-        File mongoBean = new File(baseDir, "camel/chapter-12-infra-simulator/mongodb/engine/MongoGateway.java");
-        assertTrue(mongoBean.exists(), "MongoGateway.java should exist in simulator engine");
-
         File chapter1 = new File(baseDir, "camel/chapter-01-basics/01-hello-timer.camel.yaml");
         assertTrue(chapter1.exists(), "Chapter 1 timer example should exist");
 

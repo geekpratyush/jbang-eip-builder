@@ -106,6 +106,8 @@ public class DiagramPane extends VBox {
         propScroll.setPrefHeight(600); propScroll.setMaxHeight(800);
         propScroll.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
         propScroll.setEffect(new javafx.scene.effect.DropShadow(20, Color.rgb(0, 0, 0, 0.7)));
+        StackPane.setAlignment(propScroll, Pos.CENTER_LEFT);
+        StackPane.setMargin(propScroll, new Insets(0, 0, 0, 50));
 
         contentStack = new StackPane(canvasPane);
         VBox.setVgrow(contentStack, Priority.ALWAYS);

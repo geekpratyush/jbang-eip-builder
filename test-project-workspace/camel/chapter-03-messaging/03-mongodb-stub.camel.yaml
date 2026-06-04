@@ -12,6 +12,6 @@
         - setBody:
             simple: '{"_id":"${random(1000,9999)}","customer":"ACME Corp","amount":${random(100,5000)},"ts":"${date:now:yyyy-MM-dd}"}'
         - log: "[Chapter 3][MONGO] Inserting document: ${body}"
-        - to: "{{mongodb.orders.uri}}"
+        - to: "stub:mongodb:cameldb"
         - log: "[Chapter 3][MONGO] Insert complete, result: ${body}"
         - to: "mock:mongo-inserted"

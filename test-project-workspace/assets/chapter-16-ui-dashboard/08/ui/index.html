@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tessera | XSLT Visualizer Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SVG Pan Zoom -->
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+    <!-- Monaco Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #f8fafc; color: #1e293b; font-family: system-ui, -apple-system, sans-serif; }
+        .toolbar { height: 60px; background: white; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; padding: 0 24px; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .split-view { display: flex; height: calc(100vh - 60px); }
+        #editor-container { width: 40%; height: 100%; border-right: 1px solid #e2e8f0; }
+        #preview-container { width: 60%; height: 100%; background: #f1f5f9; position: relative; overflow: hidden; }
+        #mermaid-output { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        #mermaid-output svg { width: 100%; height: 100%; }
+        
+        .btn { background: #3b82f6; color: white; padding: 6px 16px; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer; border: none; outline: none; transition: background 0.2s; }
+        .btn:hover { background: #2563eb; }
+        .btn-outline { background: white; color: #3b82f6; border: 1px solid #3b82f6; }
+        .btn-outline:hover { background: #eff6ff; }
+        .input-text { border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; outline: none; font-size: 14px; }
+        .input-text:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        
+        /* Floating controls inside preview */
+        .preview-controls { position: absolute; bottom: 24px; right: 24px; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: flex; gap: 8px; z-index: 10; }
+        .icon-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; border: 1px solid #e2e8f0; background: white; cursor: pointer; color: #64748b; }
+        .icon-btn:hover { background: #f8fafc; color: #0f172a; }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <div class="flex items-center gap-2 mr-4">
+            <div class="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-white font-bold text-sm">X</div>
+            <div class="font-bold text-slate-800 text-lg">XSLT Visualizer</div>
+        </div>
+        
+        <input type="text" id="diagram-title" class="input-text w-64" value="Order Processing XSLT" placeholder="Diagram Title">
+        
+        <select id="theme-selector" class="input-text ml-auto">
+            <option value="default">Theme: Default</option>
+            <option value="dark">Theme: Dark</option>
+            <option value="forest">Theme: Forest</option>
+            <option value="neutral">Theme: Neutral</option>
+        </select>
+        
+        <button id="download-svg" class="btn flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Export SVG
+        </button>
+    </div>
+
+    <div class="split-view">
+        <div id="editor-container"></div>
+        <div id="preview-container">
+            <div id="mermaid-output"></div>
+            
+            <div class="preview-controls">
+                <button class="icon-btn" id="zoom-in" title="Zoom In">+</button>
+                <button class="icon-btn" id="zoom-out" title="Zoom Out">-</button>
+                <button class="icon-btn" id="zoom-reset" title="Reset Zoom">↺</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        
+        // Initial setup
+        mermaid.initialize({ startOnLoad: false, theme: 'default' });
+        let panZoomInstance = null;
+
+        const defaultXslt = `<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    <xsl:template match="/">
+        <OrderRequest>
+            <xsl:apply-templates select="data/order"/>
+            <xsl:call-template name="calculate-total"/>
+        </OrderRequest>
+    </xsl:template>
+
+    <xsl:template match="data/order">
+        <xsl:if test="@type = 'express'">
+            <Priority>High</Priority>
+        </xsl:if>
+        <Items>
+            <xsl:for-each select="item">
+                <ItemData>
+                    <xsl:value-of select="id"/>
+                </ItemData>
+            </xsl:for-each>
+        </Items>
+    </xsl:template>
+
+    <xsl:template name="calculate-total">
+        <xsl:variable name="tax" select="0.15"/>
+        <TotalAmount>Computed</TotalAmount>
+    </xsl:template>
+</xsl:stylesheet>`;
+
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            window.editor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: defaultXslt,
+                language: 'xml',
+                theme: 'vs-light',
+                minimap: { enabled: false },
+                automaticLayout: true,
+                fontSize: 14
+            });
+
+            // Convert XSLT to Mermaid
+            function xsltToMermaid(xmlText) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(xmlText, "text/xml");
+                
+                let title = document.getElementById('diagram-title').value;
+                let mmd = `---\ntitle: ${title}\n---\ngraph TD\n`;
+                mmd += "classDef root fill:#f1f5f9,stroke:#64748b,stroke-width:2px,stroke-dasharray: 5 5;\n";
+                mmd += "classDef template fill:#e0e7ff,stroke:#4f46e5,stroke-width:2px;\n";
+                mmd += "classDef control fill:#fff7ed,stroke:#ea580c,stroke-width:1px;\n";
+                mmd += "classDef action fill:#ecfdf5,stroke:#10b981,stroke-width:1px;\n";
+                mmd += "classDef apply fill:#fce7f3,stroke:#db2777,stroke-width:1px;\n";
+                
+                let nodeId = 0;
+                
+                function escapeLabel(text) {
+                    if (!text) return "";
+                    return text.replace(/"/g, "'").replace(/\n/g, " ");
+                }
+                
+                function traverse(node, parentId) {
+                    if (node.nodeType === 1) { // Element
+                        let currentId = "N" + (nodeId++);
+                        let local = node.localName;
+                        let isVisual = false;
+                        
+                        if (local === 'stylesheet' || local === 'transform') {
+                            mmd += `${currentId}("XSLT Document"):::root\n`;
+                            isVisual = true;
+                        } else if (local === 'template') {
+                            let match = node.getAttribute('match');
+                            let name = node.getAttribute('name');
+                            let lbl = match ? `Template match='${match}'` : `Template name='${name}'`;
+                            mmd += `${currentId}(["${lbl}"]):::template\n`;
+                            isVisual = true;
+                        } else if (local === 'apply-templates' || local === 'call-template') {
+                            let lbl = local === 'apply-templates' ? `Apply Templates (${node.getAttribute('select') || '*'}) ` : `Call '${node.getAttribute('name')}'`;
+                            mmd += `${currentId}>"${lbl}"]:::apply\n`;
+                            isVisual = true;
+                        } else if (local === 'for-each' || local === 'if' || local === 'choose' || local === 'when' || local === 'otherwise') {
+                            let lbl = local;
+                            if (node.getAttribute('select')) lbl += ` ${node.getAttribute('select')}`;
+                            if (node.getAttribute('test')) lbl += ` ${node.getAttribute('test')}`;
+                            mmd += `${currentId}{{"${escapeLabel(lbl)}"}}\:::control\n`;
+                            isVisual = true;
+                        } else if (local === 'value-of' || local === 'variable') {
+                            let lbl = local === 'value-of' ? `Value-of ${node.getAttribute('select')}` : `Var ${node.getAttribute('name')}`;
+                            mmd += `${currentId}["${escapeLabel(lbl)}"]:::action\n`;
+                            isVisual = true;
+                        } else if (node.namespaceURI !== "http://www.w3.org/1999/XSL/Transform") {
+                            // Output XML node
+                            mmd += `${currentId}["Output: <${local}>"]\n`;
+                            isVisual = true;
+                        }
+                        
+                        if (isVisual) {
+                            if (parentId) {
+                                mmd += `${parentId} --> ${currentId}\n`;
+                            }
+                            Array.from(node.children).forEach(child => traverse(child, currentId));
+                        } else {
+                            // Skip non-visual nodes but traverse children (e.g. wrapper tags)
+                            Array.from(node.children).forEach(child => traverse(child, parentId));
+                        }
+                    }
+                }
+                
+                traverse(doc.documentElement, null);
+                return mmd;
+            }
+
+            let renderTimeout;
+            
+            async function renderDiagram() {
+                const code = editor.getValue();
+                const output = document.getElementById('mermaid-output');
+                
+                try {
+                    const mmd = xsltToMermaid(code);
+                    
+                    const id = 'mermaid-xslt-' + Date.now();
+                    const { svg } = await mermaid.render(id, mmd);
+                    
+                    // Cleanup previous panZoom
+                    if (panZoomInstance) {
+                        panZoomInstance.destroy();
+                        panZoomInstance = null;
+                    }
+                    
+                    output.innerHTML = svg;
+                    
+                    // Initialize panZoom
+                    const svgElement = output.querySelector('svg');
+                    svgElement.removeAttribute('style');
+                    svgElement.setAttribute('width', '100%');
+                    svgElement.setAttribute('height', '100%');
+                    
+                    panZoomInstance = svgPanZoom(svgElement, {
+                        zoomEnabled: true,
+                        controlIconsEnabled: false,
+                        fit: true,
+                        center: true,
+                        mouseWheelZoomEnabled: true
+                    });
+                    
+                } catch (err) {
+                    console.error("Render error:", err);
+                    output.innerHTML = `<div class="p-4 bg-red-100 text-red-700 rounded">${err.message || err}</div>`;
+                }
+            }
+
+            // Bindings
+            editor.onDidChangeModelContent(() => {
+                clearTimeout(renderTimeout);
+                renderTimeout = setTimeout(renderDiagram, 500);
+            });
+            
+            document.getElementById('diagram-title').addEventListener('input', () => {
+                clearTimeout(renderTimeout);
+                renderTimeout = setTimeout(renderDiagram, 500);
+            });
+
+            document.getElementById('theme-selector').addEventListener('change', async (e) => {
+                mermaid.initialize({ startOnLoad: false, theme: e.target.value });
+                renderDiagram();
+            });
+            
+            document.getElementById('zoom-in').addEventListener('click', () => { if(panZoomInstance) panZoomInstance.zoomIn() });
+            document.getElementById('zoom-out').addEventListener('click', () => { if(panZoomInstance) panZoomInstance.zoomOut() });
+            document.getElementById('zoom-reset').addEventListener('click', () => { 
+                if(panZoomInstance) {
+                    panZoomInstance.resetZoom();
+                    panZoomInstance.center();
+                }
+            });
+
+            document.getElementById('download-svg').addEventListener('click', () => {
+                const svgElement = document.querySelector('#mermaid-output svg');
+                if (!svgElement) return;
+                
+                // Clone SVG to remove panZoom transform before saving
+                const clone = svgElement.cloneNode(true);
+                clone.removeAttribute('style');
+                clone.querySelector('.svg-pan-zoom_viewport').removeAttribute('transform');
+                
+                const svgData = new XMLSerializer().serializeToString(clone);
+                const blob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
+                const url = URL.createObjectURL(blob);
+                
+                const title = document.getElementById('diagram-title').value.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `${title || 'xslt_diagram'}.svg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            // Initial render
+            setTimeout(renderDiagram, 500);
+        });
+    </script>
+</body>
+</html>
