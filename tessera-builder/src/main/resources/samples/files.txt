@@ -878,3 +878,9 @@ FAKER/templates/admi.004.xml
 FAKER/templates/casp.008.xml
 FAKER/templates/seev.006.xml
 FAKER/templates/auth.020.xml
+camel/chapter-16-ui-ux/10/10-enterprise-chassis.camel.yaml
+camel/chapter-16-ui-ux/10/DataInitializer.java
+camel/chapter-16-ui-ux/10/ReportingService.java
+camel/chapter-16-ui-ux/10/pom.xml
+camel/chapter-16-ui-ux/10/application.properties
+assets/chapter-16-ui-ux/10/ui/index.html

@@ -1,0 +1,135 @@
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+# camel-k: dependency=mvn:com.h2database:h2:2.2.224
+# camel-k: dependency=mvn:org.apache.poi:poi-ooxml:5.2.5
+# camel-k: dependency=mvn:org.apache.pdfbox:pdfbox:2.0.31
+
+- route:
+    id: "10-enterprise-chassis-init"
+    from:
+      uri: "timer:init-db?repeatCount=1"
+      steps:
+        - log: "Bootstrapping Modular Integration Chassis database and generating mock records..."
+        - to: "bean:dataInitializer?method=init"
+        - log: "Modular Integration Chassis initialization complete!"
+
+- route:
+    id: "10-enterprise-chassis-ui"
+    from:
+      uri: "platform-http:/"
+      steps:
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/10/ui/index.html"
+        - convertBodyTo: "java.lang.String"
+        - log: "Serving Chassis Integration Operations Dashboard"
+
+- route:
+    id: "10-api-records"
+    from:
+      uri: "platform-http:/api/records"
+      steps:
+        - log: "API request received for records: page=${header.page}, size=${header.size}, sort=${header.sort}, order=${header.order}, filter=${header.filter}"
+        - setBody:
+            simple: "${bean:reportingService?method=getRecords(${header.page}, ${header.size}, ${header.sort}, ${header.order}, ${header.filter})}"
+        - marshal:
+            json: {}
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"
+
+- route:
+    id: "10-api-export-csv"
+    from:
+      uri: "platform-http:/api/export/csv"
+      steps:
+        - setBody:
+            simple: "${bean:reportingService?method=exportCsv(${header.filter})}"
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/csv"
+        - setHeader:
+            name: "Content-Disposition"
+            simple: "attachment; filename=transactions-export.csv"
+
+- route:
+    id: "10-api-export-excel"
+    from:
+      uri: "platform-http:/api/export/excel"
+      steps:
+        - setBody:
+            simple: "${bean:reportingService?method=exportExcel(${header.filter})}"
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        - setHeader:
+            name: "Content-Disposition"
+            simple: "attachment; filename=transactions-export.xlsx"
+
+- route:
+    id: "10-api-export-pdf"
+    from:
+      uri: "platform-http:/api/export/pdf"
+      steps:
+        - setBody:
+            simple: "${bean:reportingService?method=exportPdf(${header.filter})}"
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/pdf"
+        - setHeader:
+            name: "Content-Disposition"
+            simple: "attachment; filename=transactions-export.pdf"
+
+- route:
+    id: "10-api-command"
+    from:
+      uri: "platform-http:/api/command"
+      steps:
+        - convertBodyTo: "java.lang.String"
+        - log: "Chassis Ingestion Command received: ${body}"
+        - to: "seda:kafka-topic"
+        - to: "seda:ibmmq-queue"
+        - to: "seda:email-stub"
+        - setBody:
+            constant: "{ \"status\": \"INGESTED\", \"message\": \"Payload successfully routed to stubs\" }"
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"
+
+- route:
+    id: "kafka-stub-consumer"
+    from:
+      uri: "seda:kafka-topic"
+    steps:
+      - log: "[KAFKA STUB] Received message on simulated topic 'transactions-inbound': ${body}"
+
+- route:
+    id: "ibmmq-stub-consumer"
+    from:
+      uri: "seda:ibmmq-queue"
+    steps:
+      - log: "[IBM MQ STUB] Message arrived at Queue 'IN.TXN.QUEUE'. Executing validation..."
+      - choice:
+          when:
+            - simple: "${body} contains 'FAIL'"
+              steps:
+                - log: "[IBM MQ STUB] Validation failed! Sending to DLQ Queue 'IN.TXN.DLQ'..."
+                - to: "seda:ibmmq-dlq"
+          otherwise:
+            steps:
+              - log: "[IBM MQ STUB] Validation passed. Message successfully processed."
+
+- route:
+    id: "ibmmq-dlq-consumer"
+    from:
+      uri: "seda:ibmmq-dlq"
+    steps:
+      - log: "[IBM MQ DLQ] Dead Letter Queue handler received poison message: ${body}"
+
+- route:
+    id: "email-stub-consumer"
+    from:
+      uri: "seda:email-stub"
+    steps:
+      - log: "[EMAIL STUB] Outbound Email Intercepted! TO: ops-alerts@chassis.net | FROM: system@chassis.net | SUBJECT: Transaction Ingest Alert | BODY: Transaction payload received."
