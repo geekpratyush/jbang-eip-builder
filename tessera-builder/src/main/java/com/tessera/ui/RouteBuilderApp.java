@@ -1264,7 +1264,7 @@ public class RouteBuilderApp extends Application {
                 if (mongoSimItem != null && oracleSimItem != null) {
                     if (mongoSimItem.isSelected() || needsMongo) {
                         command.add("--dependency=mvn:org.mongodb:mongodb-driver-sync:4.11.1");
-                        command.add("--dependency=mvn:de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.24.0");
+                        command.add("--dependency=mvn:de.bwaldvogel:mongo-java-server:1.47.0");
                         command.add("--dependency=mvn:org.apache.camel:camel-mongodb:4.18.0");
                         java.io.File mongoFile = new java.io.File(workspaceRoot != null ? workspaceRoot : baseDir,
                                 ".tessera/EmbeddedMongo.java");
@@ -1941,8 +1941,8 @@ public class RouteBuilderApp extends Application {
 
     /**
      * Generates the EmbeddedMongo.java runtime helper fresh every time,
-     * with OS-aware Flapdoodle platform override. This prevents stale copies
-     * from the repository from forcing Linux binary downloads on Windows.
+     * using the pure-Java de.bwaldvogel.mongo.MongoServer.
+     * This avoids any external native binary downloads and is fully OS-agnostic.
      */
     private static void generateEmbeddedMongoHelper(java.io.File targetFile) {
         try {
@@ -1950,33 +1950,24 @@ public class RouteBuilderApp extends Application {
             if (parentDir != null && !parentDir.exists()) {
                 parentDir.mkdirs();
             }
-            String osName = System.getProperty("os.name", "").toLowerCase();
-            String overrideBlock;
-            if (osName.contains("linux")) {
-                overrideBlock = "        // Force Flapdoodle to treat Linux Mint as Ubuntu 22.04 for binary resolution\n"
-                        + "        System.setProperty(\"de.flapdoodle.os.override\", \"Linux|X86_64|Ubuntu|Ubuntu_22_04\");\n";
-            } else {
-                overrideBlock = "        // No override needed: let Flapdoodle auto-detect the platform (Windows/macOS)\n";
-            }
             String content = "package com.tessera.simulator;\n\n"
                     + "import org.apache.camel.BindToRegistry;\n"
                     + "import com.mongodb.client.MongoClient;\n"
                     + "import com.mongodb.client.MongoClients;\n"
-                    + "import de.flapdoodle.embed.mongo.transitions.Mongod;\n"
-                    + "import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;\n"
-                    + "import de.flapdoodle.reverse.TransitionWalker;\n"
-                    + "import de.flapdoodle.embed.mongo.distribution.Version;\n"
+                    + "import de.bwaldvogel.mongo.MongoServer;\n"
+                    + "import de.bwaldvogel.mongo.backend.memory.MemoryBackend;\n"
+                    + "import java.net.InetSocketAddress;\n"
                     + "import org.slf4j.Logger;\n"
                     + "import org.slf4j.LoggerFactory;\n\n"
                     + "public class EmbeddedMongo {\n"
                     + "    private static final Logger LOG = LoggerFactory.getLogger(EmbeddedMongo.class);\n\n"
                     + "    @BindToRegistry(\"mongoClient\")\n"
                     + "    public MongoClient mongoClient() {\n"
-                    + "        LOG.info(\"Starting Native Flapdoodle Embedded MongoDB 6.0...\");\n\n"
-                    + overrideBlock + "\n"
-                    + "        TransitionWalker.ReachedState<RunningMongodProcess> running = Mongod.instance().start(Version.Main.V6_0);\n"
-                    + "        int port = running.current().getServerAddress().getPort();\n"
-                    + "        LOG.info(\"Embedded MongoDB successfully started on port \" + port + \"!\");\n"
+                    + "        LOG.info(\"Starting Pure Java In-Memory MongoDB Server...\");\n"
+                    + "        MongoServer server = new MongoServer(new MemoryBackend());\n"
+                    + "        InetSocketAddress address = server.bind();\n"
+                    + "        int port = address.getPort();\n"
+                    + "        LOG.info(\"Pure Java MongoDB Server successfully started on port \" + port + \"!\");\n"
                     + "        return MongoClients.create(\"mongodb://localhost:\" + port);\n"
                     + "    }\n"
                     + "}\n";
