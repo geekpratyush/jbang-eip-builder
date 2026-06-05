@@ -1303,6 +1303,25 @@ public class RouteBuilderApp extends Application {
                 if (dev)
                     command.add("--dev");
 
+                if (runnerProcess[0] != null && runnerProcess[0].isAlive()) {
+                    runnerProcess[0].descendants().forEach(ProcessHandle::destroyForcibly);
+                    runnerProcess[0].destroyForcibly();
+                    try {
+                        runnerProcess[0].waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                    } catch (Exception ignored) {}
+                    runnerProcess[0] = null;
+                }
+
+                // Kill any process currently listening on the port to avoid BindExceptions
+                try {
+                    String portToUse = (portArg != null ? portArg : "9090");
+                    if (System.getProperty("os.name").toLowerCase().contains("linux") ||
+                        System.getProperty("os.name").toLowerCase().contains("mac")) {
+                        ProcessBuilder killPb = new ProcessBuilder("bash", "-c", "kill -9 $(lsof -t -i:" + portToUse + ") 2>/dev/null || true");
+                        killPb.start().waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                    }
+                } catch (Exception ignored) {}
+
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.environment().put("TERM", "xterm-256color");
                 pb.directory(baseDir);
@@ -1556,16 +1575,31 @@ public class RouteBuilderApp extends Application {
                 if (dev)
                     command.add("--dev");
 
+                if (runnerProcess[0] != null && runnerProcess[0].isAlive()) {
+                    runnerProcess[0].descendants().forEach(ProcessHandle::destroyForcibly);
+                    runnerProcess[0].destroyForcibly();
+                    try {
+                        runnerProcess[0].waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                    } catch (Exception ignored) {}
+                    runnerProcess[0] = null;
+                }
+
+                // Kill any process currently listening on the port to avoid BindExceptions
+                try {
+                    String portToUse = (portArg != null ? portArg : "9090");
+                    if (System.getProperty("os.name").toLowerCase().contains("linux") ||
+                        System.getProperty("os.name").toLowerCase().contains("mac")) {
+                        ProcessBuilder killPb = new ProcessBuilder("bash", "-c", "kill -9 $(lsof -t -i:" + portToUse + ") 2>/dev/null || true");
+                        killPb.start().waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                    }
+                } catch (Exception ignored) {}
+
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.environment().put("TERM", "xterm-256color");
                 pb.directory(baseDir);
                 pb.redirectErrorStream(true);
                 Process singleProcess = pb.start();
 
-                if (runnerProcess[0] != null && runnerProcess[0].isAlive()) {
-                    runnerProcess[0].descendants().forEach(ProcessHandle::destroyForcibly);
-                    runnerProcess[0].destroyForcibly();
-                }
                 runnerProcess[0] = singleProcess;
                 showConsole(runnerProcess[0], "Single Route: " + file.getName());
 
