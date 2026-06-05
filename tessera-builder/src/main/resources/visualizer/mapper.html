@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tessera - XSLT Architecture Visualizer Pro</title>
   
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@9.4.3/dist/mermaid.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+  <script src="../styles/mermaid.min.js"></script>
+  <script src="../styles/svg-pan-zoom.min.js"></script>
 
   <style>
     /* Dynamic Theme Variables */
@@ -485,26 +485,26 @@
         hint.style.display = 'none';
         
         const uniqueId = 'mermaid-svg-' + Date.now();
-        mermaid.render(uniqueId, mermaidSyntax, function(svgCode) {
-          container.innerHTML = svgCode;
+        const { svg } = await mermaid.render(uniqueId, mermaidSyntax);
+        
+        container.innerHTML = svg;
 
-          const svgElement = container.querySelector('svg');
-          if (svgElement) {
-            // Wait for next frame so the browser can calculate SVG dimensions
-            setTimeout(() => {
-              panZoomInstance = svgPanZoom(svgElement, {
-                zoomEnabled: true,
-                controlIconsEnabled: true,
-                fit: true,
-                center: true,
-                minZoom: 0.1,
-                maxZoom: 100,
-                zoomScaleSensitivity: 0.3
-              });
-              hint.style.display = 'block';
-            }, 100);
-          }
-        });
+        const svgElement = container.querySelector('svg');
+        if (svgElement) {
+          // Wait for next frame so the browser can calculate SVG dimensions
+          setTimeout(() => {
+            panZoomInstance = svgPanZoom(svgElement, {
+              zoomEnabled: true,
+              controlIconsEnabled: true,
+              fit: true,
+              center: true,
+              minZoom: 0.1,
+              maxZoom: 100,
+              zoomScaleSensitivity: 0.3
+            });
+            hint.style.display = 'block';
+          }, 100);
+        }
 
       } catch (err) {
         console.error("Diagram error:", err);

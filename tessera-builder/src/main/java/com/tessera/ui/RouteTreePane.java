@@ -804,7 +804,11 @@ public class RouteTreePane extends VBox {
 
     private void toggleAllNodes(TreeItem<?> item, boolean expanded) {
         if (item != null) {
-            item.setExpanded(expanded);
+            if (item == rootItem) {
+                item.setExpanded(true); // Never collapse the root, otherwise everything vanishes
+            } else {
+                item.setExpanded(expanded);
+            }
             for (TreeItem<?> child : item.getChildren()) {
                 toggleAllNodes(child, expanded);
             }

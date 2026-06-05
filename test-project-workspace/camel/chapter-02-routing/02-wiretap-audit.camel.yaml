@@ -13,7 +13,7 @@
             constant: '{"txId":"TX-${random(1000,9999)}","amount":500}'
         - log: "[Chapter 2] Processing payment: ${body}"
         - wireTap:
-            uri: "seda:audit"
+            uri: "{{wiretap.audit.uri}}"
         - to: "mock:payment-processed"
 
 - route:

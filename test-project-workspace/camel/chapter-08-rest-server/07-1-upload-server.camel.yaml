@@ -23,7 +23,7 @@
                   - setHeader:
                       name: "CamelFileName"
                       simple: "upload-${date:now:yyyyMMdd-HHmmss}.bin"
-                  - to: "file:../../assets/chapter-16-ui-dashboard/01/uploads"
+                  - to: "file:../../assets/chapter-16-ui-ux/01/uploads"
                   - log: "[Chapter 8][UPLOAD] Saved file: ${header.CamelFileName}"
                   - setBody:
                       simple: '{"status":"uploaded","file":"${header.CamelFileName}","size":"${body.length}"}'

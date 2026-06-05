@@ -10,7 +10,7 @@
       steps:
         # Step 1: Load truncated.xml and extract MsgId
         - setBody:
-            simple: "resource:file:chapter-11-enrichment/truncated.xml"
+            constant: "resource:file:{{ch11.03.assets}}/truncated.xml"
         - convertBodyTo: "java.lang.String"
         - transform:
             groovy: |
@@ -53,6 +53,6 @@
               </envelope>
 
         # Step 4: Perform XSLT enrichment
-        - to: "xslt-saxon:file:chapter-11-enrichment/enrich.xslt"
+        - to: "xslt-saxon:file:{{ch11.03.assets}}/enrich.xslt"
         - log: "Enrichment complete!"
         - log: "Enriched Document:\n${body}"

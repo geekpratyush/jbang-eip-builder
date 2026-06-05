@@ -1,0 +1,30 @@
+# ID: schema-validation-tester
+# DESCRIPTION: Validates JSON/XML payloads.
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+# camel-k: dependency=mvn:org.apache.camel:camel-jackson:4.18.0
+
+- route:
+    id: "ui-03-validation-init"
+    from:
+      uri: "timer:init-03-3?repeatCount=1&delay=1000"
+      steps:
+        - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('validation', 'Schema Validation Tester', '/03/validation', 'UI', 'fas fa-check-double')"
+
+- rest:
+    get:
+      - path: "/03/validation"
+        produces: "text/html"
+        to: "direct:serve-03-validation"
+
+- route:
+    id: "ui-serve-03-validation"
+    from:
+      uri: "direct:serve-03-validation"
+      steps:
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/01/ui/01-9-schema-validation-tester.html"
+        - convertBodyTo: "java.lang.String"
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"

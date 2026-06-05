@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tessera Modular Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: { bg: '#090a0f', panel: '#11131c', accent: '#00f0ff', secondary: '#ff003c' },
+                        enterprise: { bg: '#f3f4f6', panel: '#ffffff', accent: '#2563eb', secondary: '#10b981' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Cyberpunk Theme Overrides */
+        .theme-cyber {
+            background-color: #090a0f !important;
+            color: #e2e8f0;
+        }
+        .theme-cyber .panel {
+            background: rgba(17, 19, 28, 0.8) !important;
+            border: 1px solid #00f0ff;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        .theme-cyber .text-accent { color: #00f0ff !important; text-shadow: 0 0 5px #00f0ff; }
+        .theme-cyber .text-secondary { color: #ff003c !important; }
+
+        /* Enterprise Light Theme Overrides */
+        .theme-enterprise {
+            background-color: #f3f4f6 !important;
+            color: #1f2937;
+        }
+        .theme-enterprise .panel {
+            background: #ffffff !important;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .theme-enterprise .text-accent { color: #2563eb !important; }
+        
+        /* Smooth Transitions */
+        body, .panel { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="theme-cyber min-h-screen p-8 font-sans" x-data="dashboardApp()" x-init="initApp()">
+
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-10">
+        <div class="flex items-center gap-4">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="-252 -200 504 400" class="w-12 h-12">
+              <defs>
+                <linearGradient id="topBlueGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+                  <stop offset="49.8%" stop-color="#428EB8" /><stop offset="50.2%" stop-color="#7CC0E3" />
+                </linearGradient>
+                <linearGradient id="bottomDarkGrad" x1="-50" y1="50" x2="50" y2="-50" gradientUnits="userSpaceOnUse">
+                  <stop offset="49.8%" stop-color="#0F4A56" /><stop offset="50.2%" stop-color="#186975" />
+                </linearGradient>
+                <clipPath id="clipTL"><path d="M -100 -100 L -4 -100 L -4 -62 L -10 -62 C -14 -72, -28 -68, -28 -50 C -28 -32, -14 -28, -10 -38 L -4 -38 L -4 -4 L -38 -4 L -38 -10 C -28 -14, -32 -28, -50 -28 C -68 -28, -72 -14, -62 -10 L -62 -4 L -100 -4 Z" /></clipPath>
+                <clipPath id="clipTR"><path d="M 100 -100 L 100 -4 L 62 -4 L 62 -10 C 72 -14, 68 -28, 50 -28 C 32 -28, 28 -14, 38 -10 L 38 -4 L 4 -4 L 4 -38 L -2 -38 C -6 -28, -20 -32, -20 -50 C -20 -68, -6 -72, -2 -62 L 4 -62 L 4 -100 Z" /></clipPath>
+                <clipPath id="clipBL"><path d="M -100 100 L -100 4 L -62 4 L -62 -2 C -72 -6, -68 -20, -50 -20 C -32 -20, -28 -6, -38 -2 L -38 4 L -4 4 L -4 38 L -10 38 C -14 28, -28 32, -28 50 C -28 68, -14 72, -10 62 L -4 62 L -4 100 Z" /></clipPath>
+                <clipPath id="clipBR"><path d="M 100 100 L 4 100 L 4 62 L -2 62 C -6 72, -20 68, -20 50 C -20 32, -6 28, -2 38 L 4 38 L 4 4 L 38 4 L 38 -2 C 28 -6, 32 -20, 50 -20 C 68 -20, 72 -6, 62 -2 L 62 4 L 100 4 Z" /></clipPath>
+              </defs>
+              <g transform="scale(1.4)">
+                <g stroke-width="8" stroke-linejoin="round">
+                  <path d="M -115 40 L -55 100 L -175 100 Z" fill="#155F6E" stroke="#155F6E" />
+                  <path d="M 115 40 L 175 100 L 55 100 Z" fill="#26828E" stroke="#26828E" />
+                </g>
+                <g transform="rotate(45)" stroke-linejoin="round">
+                  <g clip-path="url(#clipTL)">
+                    <path d="M -100 -100 L -4 -100 L -4 -62 L -10 -62 C -14 -72, -28 -68, -28 -50 C -28 -32, -14 -28, -10 -38 L -4 -38 L -4 -4 L -38 -4 L -38 -10 C -28 -14, -32 -28, -50 -28 C -68 -28, -72 -14, -62 -10 L -62 -4 L -100 -4 Z" fill="url(#topBlueGrad)" />
+                    <path d="M -80 -20 L -50 -20 L -30 -40 L -30 -60 M -60 -80 L -60 -50 L -40 -30 M -20 -80 L -20 -60" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                    <circle cx="-30" cy="-60" r="2.5" fill="rgba(255,255,255,0.3)" /><circle cx="-40" cy="-30" r="2.5" fill="rgba(255,255,255,0.3)" />
+                  </g>
+                  <g clip-path="url(#clipTR)">
+                    <path d="M 100 -100 L 100 -4 L 62 -4 L 62 -10 C 72 -14, 68 -28, 50 -28 C 32 -28, 28 -14, 38 -10 L 38 -4 L 4 -4 L 4 -38 L -2 -38 C -6 -28, -20 -32, -20 -50 C -20 -68, -6 -72, -2 -62 L 4 -62 L 4 -100 Z" fill="#F3A869" />
+                    <path d="M 80 -20 L 50 -20 L 30 -40 L 30 -60 M 60 -80 L 60 -50 L 40 -30" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" />
+                    <circle cx="30" cy="-60" r="2.5" fill="rgba(255,255,255,0.4)" /><circle cx="40" cy="-30" r="2.5" fill="rgba(255,255,255,0.4)" />
+                  </g>
+                  <g clip-path="url(#clipBL)">
+                    <path d="M -100 100 L -100 4 L -62 4 L -62 -2 C -72 -6, -68 -20, -50 -20 C -32 -20, -28 -6, -38 -2 L -38 4 L -4 4 L -4 38 L -10 38 C -14 28, -28 32, -28 50 C -28 68, -14 72, -10 62 L -4 62 L -4 100 Z" fill="#156574" />
+                    <path d="M -80 20 L -50 20 L -30 40 L -30 60 M -60 80 L -60 50 L -40 30" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" />
+                    <circle cx="-30" cy="60" r="2.5" fill="rgba(255,255,255,0.2)" /><circle cx="-40" cy="30" r="2.5" fill="rgba(255,255,255,0.2)" />
+                  </g>
+                  <g clip-path="url(#clipBR)">
+                    <path d="M 100 100 L 4 100 L 4 62 L -2 62 C -6 72, -20 68, -20 50 C -20 32, -6 28, -2 38 L 4 38 L 4 4 L 38 4 L 38 -2 C 28 -6, 32 -20, 50 -20 C 68 -20, 72 -6, 62 -2 L 62 4 L 100 4 Z" fill="url(#bottomDarkGrad)" />
+                    <path d="M 80 20 L 50 20 L 30 40 L 30 60 M 60 80 L 60 50 L 40 30" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" />
+                    <circle cx="30" cy="60" r="2.5" fill="rgba(255,255,255,0.2)" /><circle cx="40" cy="30" r="2.5" fill="rgba(255,255,255,0.2)" />
+                  </g>
+                </g>
+              </g>
+            </svg>
+            <div>
+                <h1 class="text-3xl font-bold tracking-wider">TESSERA <span class="text-secondary">NEXUS</span></h1>
+                <p class="text-sm opacity-70">Pluggable UI Architecture via Camel Routes</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4 panel px-4 py-2 rounded-lg">
+            <i class="fas fa-palette text-accent"></i>
+            <select x-model="currentTheme" @change="changeTheme()" class="bg-transparent border-none outline-none font-bold">
+                <option value="theme-cyber">Cyberpunk Dark</option>
+                <option value="theme-enterprise">Enterprise Light</option>
+            </select>
+        </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+        
+        <!-- Welcome Panel (Always Visible) -->
+        <div class="panel rounded-xl p-6 col-span-full xl:col-span-1">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-satellite-dish text-accent"></i> System Status
+            </h2>
+            <p class="mb-4">The Nexus UI is dynamically adapting. Try starting more Camel routes in your Studio to inject new capabilities into this dashboard in real-time.</p>
+            
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                <span class="font-bold">Core Router: <span class="text-green-500">ONLINE</span></span>
+            </div>
+            <div class="flex items-center gap-2">
+                <i class="fas fa-plug text-gray-400"></i>
+                <span>Active Plugins: <strong x-text="features.length" class="text-accent"></strong></span>
+            </div>
+        </div>
+
+        <!-- Dynamic Feature Widgets -->
+        <template x-for="feature in features" :key="feature.ID">
+            <div class="panel rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i :class="feature.ICON" class="text-accent"></i> <span x-text="feature.TITLE"></span>
+                </h2>
+                
+                <!-- Chart Widget -->
+                <template x-if="feature.TYPE === 'CHART'">
+                    <div class="relative h-64 w-full">
+                        <canvas :id="'chart-' + feature.ID"></canvas>
+                    </div>
+                </template>
+                
+                <!-- Table Widget -->
+                <template x-if="feature.TYPE === 'TABLE'">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="opacity-70 border-b border-gray-600">
+                                    <th class="pb-2">Amount</th>
+                                    <th class="pb-2">Currency</th>
+                                    <th class="pb-2">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody :id="'table-' + feature.ID">
+                                <!-- Data populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+    </main>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('dashboardApp', () => ({
+                currentTheme: 'theme-cyber',
+                features: [],
+                charts: {},
+                
+                initApp() {
+                    this.pollFeatures();
+                    setInterval(() => this.pollFeatures(), 3000);
+                },
+                
+                changeTheme() {
+                    document.body.className = `${this.currentTheme} min-h-screen p-8 font-sans`;
+                },
+                
+                async pollFeatures() {
+                    try {
+                        const res = await fetch('/api/features');
+                        const data = await res.json();
+                        
+                        // Check if new features were added
+                        if(data.length !== this.features.length) {
+                            this.features = data;
+                            // Wait for DOM to render the canvas/table before initializing
+                            setTimeout(() => this.initWidgets(), 200);
+                        } else {
+                            // Just update data for existing widgets
+                            this.updateWidgets();
+                        }
+                    } catch (e) {
+                        console.error("Core API not reachable", e);
+                    }
+                },
+                
+                async initWidgets() {
+                    for(let f of this.features) {
+                        if(f.TYPE === 'CHART' && !this.charts[f.ID]) {
+                            const ctx = document.getElementById('chart-' + f.ID);
+                            if(ctx) {
+                                this.charts[f.ID] = new Chart(ctx, {
+                                    type: 'line',
+                                    data: { labels: [], datasets: [] },
+                                    options: { responsive: true, maintainAspectRatio: false, color: '#888' }
+                                });
+                            }
+                        }
+                    }
+                    this.updateWidgets();
+                },
+                
+                async updateWidgets() {
+                    for(let f of this.features) {
+                        try {
+                            const res = await fetch(f.ENDPOINT);
+                            const data = await res.json();
+                            
+                            if(f.TYPE === 'CHART' && this.charts[f.ID]) {
+                                const chart = this.charts[f.ID];
+                                chart.data = data;
+                                chart.update();
+                            }
+                            else if(f.TYPE === 'TABLE') {
+                                const tbody = document.getElementById('table-' + f.ID);
+                                if(tbody) {
+                                    tbody.innerHTML = '';
+                                    data.forEach(row => {
+                                        const statusColor = row.STATUS === 'COMPLETED' ? 'text-green-500' : 'text-yellow-500';
+                                        tbody.innerHTML += `
+                                            <tr class="border-b border-gray-700/50">
+                                                <td class="py-2 font-mono">${row.AMOUNT}</td>
+                                                <td class="py-2">${row.CURRENCY}</td>
+                                                <td class="py-2 ${statusColor}">${row.STATUS}</td>
+                                            </tr>
+                                        `;
+                                    });
+                                }
+                            }
+                        } catch (e) {
+                            console.error(`Failed to update widget ${f.ID}`, e);
+                        }
+                    }
+                }
+            }));
+        });
+    </script>
+</body>
+</html>

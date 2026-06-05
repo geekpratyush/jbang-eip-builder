@@ -19,7 +19,7 @@
 - route:
     id: "audit-consumer"
     from:
-      uri: "{{wiretap.audit.uri}}"
+      uri: "seda:audit"
       steps:
         - log: "[Chapter 2][AUDIT] Captured audit event: ${body}"
         - to: "mock:audit-log"

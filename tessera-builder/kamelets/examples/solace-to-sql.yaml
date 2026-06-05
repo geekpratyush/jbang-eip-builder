@@ -1,0 +1,8 @@
+# camel-k: dependency=mvn:org.apache.camel.kamelet:camel-kamelet:3.20.1
+- route:
+    id: solace-to-sql-example
+    from:
+      uri: "kamelet:kamelet-studio-solace-source?queuename=orders"
+      steps:
+        - to: "kamelet:kamelet-studio-sql-action?query=INSERT INTO orders (id, body) VALUES (#, #)"
+        - to: "kamelet:kamelet-studio-log-sink?showHeaders=false"

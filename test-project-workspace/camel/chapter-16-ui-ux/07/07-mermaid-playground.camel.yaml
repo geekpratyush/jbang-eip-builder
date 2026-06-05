@@ -1,0 +1,20 @@
+# ID: mermaid-playground
+# DESCRIPTION: Serves the Mermaid Playground application
+
+- rest:
+    get:
+      - path: "/"
+        produces: "text/html"
+        to: "direct:serve-07-app"
+
+- route:
+    id: "serve-07-app"
+    from:
+      uri: "direct:serve-07-app"
+      steps:
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/07/ui/index.html"
+        - convertBodyTo: "java.lang.String"
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Kamelet Catalog Browser</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-200 h-screen flex flex-col">
+    <header class="bg-slate-800 p-4 border-b border-slate-700">
+        <h1 class="text-xl font-bold text-blue-400">Kamelet Catalog Browser</h1>
+    </header>
+    <div class="flex flex-1 overflow-hidden relative">
+        <div class="flex-1 p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto">
+            <div class="bg-slate-800 border border-slate-700 p-5 rounded-lg hover:border-blue-500 cursor-pointer transition-colors" onclick="openDrawer('aws-s3')">
+                <div class="text-3xl mb-3">🪣</div>
+                <h3 class="font-bold text-lg">AWS S3 Source</h3>
+                <p class="text-sm text-slate-400 mt-2">Receive data from AWS S3.</p>
+                <div class="mt-4 text-xs font-mono text-slate-500">Req: bucketName, accessKey</div>
+            </div>
+            <div class="bg-slate-800 border border-slate-700 p-5 rounded-lg hover:border-blue-500 cursor-pointer transition-colors" onclick="openDrawer('kafka')">
+                <div class="text-3xl mb-3">📬</div>
+                <h3 class="font-bold text-lg">Kafka Sink</h3>
+                <p class="text-sm text-slate-400 mt-2">Send data to Kafka topics.</p>
+                <div class="mt-4 text-xs font-mono text-slate-500">Req: topic, brokers</div>
+            </div>
+        </div>
+        <div id="drawer" class="w-96 bg-slate-800 border-l border-slate-700 absolute top-0 right-0 h-full transform translate-x-full transition-transform duration-300 flex flex-col">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="font-bold text-lg" id="drawer-title">Kamelet Details</h2>
+                <button onclick="closeDrawer()" class="text-slate-400 hover:text-white">&times;</button>
+            </div>
+            <div class="p-4 flex-1">
+                <pre class="bg-slate-900 p-4 rounded text-sm text-emerald-400 font-mono overflow-x-auto" id="drawer-code"></pre>
+            </div>
+        </div>
+    </div>
+    <script>
+        const snippets = {
+            'aws-s3': "- route:
+    from:
+      uri: "kamelet:aws-s3-source"
+      parameters:
+        bucketName: "my-bucket"
+        accessKey: "{{aws.key}}"",
+            'kafka': "- route:
+    to:
+      uri: "kamelet:kafka-sink"
+      parameters:
+        topic: "events"
+        brokers: "localhost:9092""
+        };
+        function openDrawer(id) {
+            document.getElementById('drawer').classList.remove('translate-x-full');
+            document.getElementById('drawer-title').innerText = id + " snippet";
+            document.getElementById('drawer-code').innerText = snippets[id];
+        }
+        function closeDrawer() {
+            document.getElementById('drawer').classList.add('translate-x-full');
+        }
+    </script>
+</body>
+</html>

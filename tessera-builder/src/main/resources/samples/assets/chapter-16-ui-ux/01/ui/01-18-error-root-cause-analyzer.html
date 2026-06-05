@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Error Root Cause Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-200 h-screen flex flex-col">
+    <header class="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-violet-400">Root Cause Analyzer (Diff Tool)</h1>
+        <div class="text-sm px-3 py-1 rounded bg-violet-900/50 text-violet-300 border border-violet-700">Strict Schema Matching Enforced</div>
+    </header>
+    <div class="flex-1 relative" id="diff-editor"></div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+    <script>
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            const originalModel = monaco.editor.createModel(
+                "{\n  \"messageId\": \"UUID\",\n  \"payload\": {\n    \"amount\": 100.00,\n    \"currency\": \"USD\"\n  }\n}",
+                "json"
+            );
+            const modifiedModel = monaco.editor.createModel(
+                "{\n  \"messageId\": \"UUID\",\n  \"payload\": {\n    \"amount\": \"100.00\",\n    \"currency\": \"USD\"\n  }\n}",
+                "json"
+            );
+
+            const diffEditor = monaco.editor.createDiffEditor(document.getElementById('diff-editor'), {
+                theme: 'vs-dark',
+                automaticLayout: true,
+                renderSideBySide: true
+            });
+            diffEditor.setModel({
+                original: originalModel,
+                modified: modifiedModel
+            });
+        });
+    </script>
+</body>
+</html>

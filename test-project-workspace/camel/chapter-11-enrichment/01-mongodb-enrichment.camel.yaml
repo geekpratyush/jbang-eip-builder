@@ -9,7 +9,7 @@
       steps:
         # Step 1: Seed the database with original.xml
         - setBody:
-            simple: "resource:file:chapter-11-enrichment/original.xml"
+            constant: "resource:file:{{ch11.01.assets}}/original.xml"
         - convertBodyTo: "java.lang.String"
         - setProperty:
             name: "originalXml"
@@ -27,7 +27,7 @@
 
         # Step 2: Load truncated.xml and extract MsgId
         - setBody:
-            simple: "resource:file:chapter-11-enrichment/truncated.xml"
+            constant: "resource:file:{{ch11.01.assets}}/truncated.xml"
         - convertBodyTo: "java.lang.String"
         - transform:
             groovy: |
@@ -77,6 +77,6 @@
         - log: "Combined Envelope XML:\n${body}"
 
         # Step 5: Perform XSLT enrichment
-        - to: "xslt-saxon:file:chapter-11-enrichment/enrich.xslt"
+        - to: "xslt-saxon:file:{{ch11.01.assets}}/enrich.xslt"
         - log: "Enrichment complete!"
         - log: "Enriched Document:\n${body}"

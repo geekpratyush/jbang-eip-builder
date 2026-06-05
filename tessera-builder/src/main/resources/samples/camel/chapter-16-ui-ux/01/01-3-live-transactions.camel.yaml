@@ -1,0 +1,50 @@
+# ID: live-transactions
+# DESCRIPTION: Pluggable UI Feature - Registers a Live Transaction Feed widget and streams simulated DB data.
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+# camel-k: dependency=mvn:org.apache.camel:camel-jackson:4.18.0
+
+- route:
+    id: "transactions-plugin-init"
+    from:
+      uri: "timer:init-txn?repeatCount=1&delay=1500"
+      steps:
+        # Create temp table for transactions
+        - to: "sql:CREATE TABLE IF NOT EXISTS live_txns (id INT AUTO_INCREMENT PRIMARY KEY, amount DECIMAL(10,2), currency VARCHAR(3), status VARCHAR(20), ts TIMESTAMP)"
+        # Register plugin
+        - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('txns', 'Live Transactions', '/api/txns', 'TABLE', 'fas fa-exchange-alt')"
+        - log: "[Plugin Activated] Live Transactions Widget registered in UI."
+
+- route:
+    id: "transactions-generator"
+    from:
+      uri: "timer:txn-gen?period=3000"
+      steps:
+        # Continuously insert fake transactions
+        - transform:
+            groovy: |
+              def rand = new java.util.Random()
+              def amt = String.format("%.2f", rand.nextDouble() * 5000)
+              def curr = ["USD", "EUR", "GBP", "JPY"][rand.nextInt(4)]
+              def stat = rand.nextInt(10) > 1 ? "COMPLETED" : "PENDING"
+              return [ amt, curr, stat ]
+        - to: "sql:INSERT INTO live_txns (amount, currency, status, ts) VALUES (#, #, #, CURRENT_TIMESTAMP())"
+
+- rest:
+    get:
+      - path: "/api/txns"
+        produces: "application/json"
+        to: "direct:api-txns"
+
+- route:
+    id: "transactions-data-provider"
+    from:
+      uri: "direct:api-txns"
+      steps:
+        # Fetch the latest 5 transactions
+        - to: "sql:SELECT * FROM live_txns ORDER BY ts DESC LIMIT 5"
+        - marshal:
+            json: {}
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>DLQ Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-slate-900 text-slate-200 h-screen p-8" x-data="{ modalOpen: false }">
+    <h1 class="text-2xl font-bold mb-6 text-red-500">Dead Letter Queue Manager</h1>
+    
+    <table class="w-full text-left bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
+        <thead class="bg-slate-900 text-slate-400">
+            <tr>
+                <th class="p-4">Timestamp</th>
+                <th class="p-4">Original Endpoint</th>
+                <th class="p-4">Exception Type</th>
+                <th class="p-4">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-700">
+            <tr>
+                <td class="p-4 font-mono">2026-06-04 10:15:22</td>
+                <td class="p-4">amqp:queue:orders</td>
+                <td class="p-4 text-amber-400">java.net.ConnectException</td>
+                <td class="p-4"><button @click="modalOpen = true" class="bg-slate-700 px-3 py-1 rounded text-sm hover:bg-slate-600">Inspect</button></td>
+            </tr>
+            <tr>
+                <td class="p-4 font-mono">2026-06-04 10:12:05</td>
+                <td class="p-4">http://api.external.com/sync</td>
+                <td class="p-4 text-red-400">HttpOperationFailedException</td>
+                <td class="p-4"><button @click="modalOpen = true" class="bg-slate-700 px-3 py-1 rounded text-sm hover:bg-slate-600">Inspect</button></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Modal -->
+    <div x-show="modalOpen" style="display:none;" class="fixed inset-0 bg-black/80 flex items-center justify-center p-8 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-lg w-full max-w-4xl h-3/4 flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="font-bold">Failed Payload Inspection</h2>
+                <button @click="modalOpen = false" class="text-slate-400 hover:text-white">&times;</button>
+            </div>
+            <div class="flex-1 relative" id="editor"></div>
+            <div class="p-4 border-t border-slate-700 bg-slate-900 flex justify-end gap-2">
+                <button @click="modalOpen = false" class="px-4 py-2 text-slate-400 hover:text-white">Cancel</button>
+                <button class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded font-bold">Replay Message</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+    <script>
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            monaco.editor.create(document.getElementById('editor'), {
+                value: "{\n  \"orderId\": \"ORD-9921\",\n  \"status\": \"PENDING\",\n  \"retryCount\": 4\n}",
+                language: "json", theme: "vs-dark", automaticLayout: true
+            });
+        });
+    </script>
+</body>
+</html>

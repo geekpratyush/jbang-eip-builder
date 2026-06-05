@@ -1,0 +1,25 @@
+apiVersion: camel.apache.org/v1
+kind: Kamelet
+metadata:
+  name: kamelet-studio-timer-source
+  labels:
+    camel.apache.org/kamelet.type: "source"
+  annotations:
+    camel.apache.org/kamelet.title: "Kamelet Studio Timer Source"
+    camel.apache.org/kamelet.version: "1.0.0"
+spec:
+  definition:
+    title: "Timer Source"
+    description: "Produces periodic messages at a set interval."
+    properties:
+      period:
+        type: integer
+        default: 1000
+        description: "The period in milliseconds between ticks."
+  template:
+    from:
+      uri: "timer:tick?period={{period}}"
+      steps:
+        - setBody:
+            constant: "Hello from Timer Source!"
+        - to: "kamelet:sink"
