@@ -1279,11 +1279,10 @@ public class RouteBuilderApp extends Application {
                         command.add("--dependency=mvn:org.apache.camel:camel-sql:4.18.0");
                         java.io.File h2File = new java.io.File(workspaceRoot != null ? workspaceRoot : baseDir,
                                 ".tessera/H2DataSource.java");
-                        if (h2File.exists()) {
-                            String h2Path = h2File.getAbsolutePath().replace("\\", "/");
-                            if (addedPaths.add(h2Path)) {
-                                command.add(h2Path);
-                            }
+                        generateH2DataSourceHelper(h2File);
+                        String h2Path = h2File.getAbsolutePath().replace("\\", "/");
+                        if (addedPaths.add(h2Path)) {
+                            command.add(h2Path);
                         }
                     }
 
@@ -1979,6 +1978,40 @@ public class RouteBuilderApp extends Application {
                     + "        int port = running.current().getServerAddress().getPort();\n"
                     + "        LOG.info(\"Embedded MongoDB successfully started on port \" + port + \"!\");\n"
                     + "        return MongoClients.create(\"mongodb://localhost:\" + port);\n"
+                    + "    }\n"
+                    + "}\n";
+            java.nio.file.Files.writeString(targetFile.toPath(), content, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Generates the H2DataSource.java runtime helper fresh every time.
+     */
+    private static void generateH2DataSourceHelper(java.io.File targetFile) {
+        try {
+            java.io.File parentDir = targetFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+            String content = "package com.tessera.simulator;\n\n"
+                    + "import org.apache.camel.BindToRegistry;\n"
+                    + "import org.h2.jdbcx.JdbcDataSource;\n"
+                    + "import javax.sql.DataSource;\n"
+                    + "import org.slf4j.Logger;\n"
+                    + "import org.slf4j.LoggerFactory;\n\n"
+                    + "public class H2DataSource {\n"
+                    + "    private static final Logger LOG = LoggerFactory.getLogger(H2DataSource.class);\n\n"
+                    + "    @BindToRegistry(\"dataSource\")\n"
+                    + "    public DataSource dataSource() {\n"
+                    + "        LOG.info(\"Starting Native Embedded H2 SQL Database on jdbc:h2:mem:testdb...\");\n"
+                    + "        JdbcDataSource ds = new JdbcDataSource();\n"
+                    + "        ds.setURL(\"jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;INIT=CREATE SCHEMA IF NOT EXISTS PUBLIC\");\n"
+                    + "        ds.setUser(\"sa\");\n"
+                    + "        ds.setPassword(\"\");\n"
+                    + "        LOG.info(\"Embedded H2 SQL Database successfully started!\");\n"
+                    + "        return ds;\n"
                     + "    }\n"
                     + "}\n";
             java.nio.file.Files.writeString(targetFile.toPath(), content, java.nio.charset.StandardCharsets.UTF_8);

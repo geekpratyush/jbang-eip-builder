@@ -167,7 +167,6 @@ camel/chapter-14-database/02-sql-crud.camel.yaml
 camel/chapter-14-database/01-mongo-crud.camel.yaml
 camel/chapter-06-rest-api/01-rest-producer.camel.yaml
 camel/chapter-06-rest-api/02-rest-consumer.camel.yaml
-.tessera/H2DataSource.java
 assets/chapter-11-enrichment/02/original.xml
 assets/chapter-11-enrichment/02/truncated.xml
 assets/chapter-11-enrichment/02/enrich.xslt
