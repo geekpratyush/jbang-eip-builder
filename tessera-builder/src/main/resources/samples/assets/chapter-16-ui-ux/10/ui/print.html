@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Integration Chassis Report</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 30px; color: #333; }
+        h1 { margin-bottom: 5px; font-size: 20px; }
+        .meta { color: #666; font-size: 11px; margin-bottom: 25px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f8f9fa; }
+        .text-right { text-align: right; }
+    </style>
+</head>
+<body>
+    <h1>Modular Integration Chassis Transaction Report</h1>
+    <div class="meta" id="report-meta">Generating report...</div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+                <th>Counterparty</th>
+                <th>Type</th>
+                <th class="text-right">Amount</th>
+                <th>Currency</th>
+                <th>Status</th>
+                <th>Created At</th>
+            </tr>
+        </thead>
+        <tbody id="report-body">
+            <tr>
+                <td colspan="7" style="text-align:center; padding: 20px; color: #888;">Loading transaction data...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        async function loadReport() {
+            const params = new URLSearchParams(window.location.search);
+            const filter = params.get('filter') || '';
+            
+            document.getElementById('report-meta').innerText = `Generated on: ${new Date().toLocaleString()} | Filter: "${filter || 'None'}"`;
+
+            try {
+                // Fetch top 100 matching transactions
+                const response = await fetch(`/api/records?page=1&size=100&sort=created_at&order=desc&filter=${encodeURIComponent(filter)}`);
+                if (!response.ok) throw new Error('Fetch failed');
+                
+                const result = await response.json();
+                const tbody = document.getElementById('report-body');
+                tbody.innerHTML = '';
+                
+                if (result.data && result.data.length > 0) {
+                    result.data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        // Use correct case sensitivity for the json attributes returned
+                        const id = item.id || item.ID;
+                        const cp = item.counterparty || item.COUNTERPARTY;
+                        const type = item.transactionType || item.transaction_type || item.TRANSACTION_TYPE;
+                        const amt = item.amount || item.AMOUNT;
+                        const cur = item.currency || item.CURRENCY;
+                        const status = item.status || item.STATUS;
+                        const date = item.createdAt || item.created_at || item.CREATED_AT;
+
+                        tr.innerHTML = `
+                            <td><b>${id}</b></td>
+                            <td>${cp}</td>
+                            <td>${type}</td>
+                            <td class="text-right">${amt.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                            <td>${cur}</td>
+                            <td>${status}</td>
+                            <td>${date}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                    
+                    // Automatically trigger print/save dialog after render
+                    setTimeout(() => {
+                        window.print();
+                    }, 500);
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">No matching records found.</td></tr>`;
+                }
+            } catch(e) {
+                document.getElementById('report-body').innerHTML = `<tr><td colspan="7" style="text-align:center; color: red; padding: 20px;">Error loading data: ${e.message}</td></tr>`;
+            }
+        }
+        window.onload = loadReport;
+    </script>
+</body>
+</html>
