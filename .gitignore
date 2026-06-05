@@ -2,6 +2,9 @@
 .gradle/
 build/
 
+# Runtime-generated helpers (OS-specific, must not be committed)
+**/.tessera/EmbeddedMongo.java
+
 # JBang & Camel JBang
 .jbang/
 .camel-jbang/

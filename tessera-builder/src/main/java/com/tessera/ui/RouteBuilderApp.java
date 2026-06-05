@@ -1268,11 +1268,10 @@ public class RouteBuilderApp extends Application {
                         command.add("--dependency=mvn:org.apache.camel:camel-mongodb:4.18.0");
                         java.io.File mongoFile = new java.io.File(workspaceRoot != null ? workspaceRoot : baseDir,
                                 ".tessera/EmbeddedMongo.java");
-                        if (mongoFile.exists()) {
-                            String mongoPath = mongoFile.getAbsolutePath().replace("\\", "/");
-                            if (addedPaths.add(mongoPath)) {
-                                command.add(mongoPath);
-                            }
+                        generateEmbeddedMongoHelper(mongoFile);
+                        String mongoPath = mongoFile.getAbsolutePath().replace("\\", "/");
+                        if (addedPaths.add(mongoPath)) {
+                            command.add(mongoPath);
                         }
                     }
                     if (oracleSimItem.isSelected() || needsSql) {
@@ -1938,6 +1937,53 @@ public class RouteBuilderApp extends Application {
         } catch (Exception e) {
             e.printStackTrace();
             return new byte[0];
+        }
+    }
+
+    /**
+     * Generates the EmbeddedMongo.java runtime helper fresh every time,
+     * with OS-aware Flapdoodle platform override. This prevents stale copies
+     * from the repository from forcing Linux binary downloads on Windows.
+     */
+    private static void generateEmbeddedMongoHelper(java.io.File targetFile) {
+        try {
+            java.io.File parentDir = targetFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+            String osName = System.getProperty("os.name", "").toLowerCase();
+            String overrideBlock;
+            if (osName.contains("linux")) {
+                overrideBlock = "        // Force Flapdoodle to treat Linux Mint as Ubuntu 22.04 for binary resolution\n"
+                        + "        System.setProperty(\"de.flapdoodle.os.override\", \"Linux|X86_64|Ubuntu|Ubuntu_22_04\");\n";
+            } else {
+                overrideBlock = "        // No override needed: let Flapdoodle auto-detect the platform (Windows/macOS)\n";
+            }
+            String content = "package com.tessera.simulator;\n\n"
+                    + "import org.apache.camel.BindToRegistry;\n"
+                    + "import com.mongodb.client.MongoClient;\n"
+                    + "import com.mongodb.client.MongoClients;\n"
+                    + "import de.flapdoodle.embed.mongo.transitions.Mongod;\n"
+                    + "import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;\n"
+                    + "import de.flapdoodle.reverse.TransitionWalker;\n"
+                    + "import de.flapdoodle.embed.mongo.distribution.Version;\n"
+                    + "import org.slf4j.Logger;\n"
+                    + "import org.slf4j.LoggerFactory;\n\n"
+                    + "public class EmbeddedMongo {\n"
+                    + "    private static final Logger LOG = LoggerFactory.getLogger(EmbeddedMongo.class);\n\n"
+                    + "    @BindToRegistry(\"mongoClient\")\n"
+                    + "    public MongoClient mongoClient() {\n"
+                    + "        LOG.info(\"Starting Native Flapdoodle Embedded MongoDB 6.0...\");\n\n"
+                    + overrideBlock + "\n"
+                    + "        TransitionWalker.ReachedState<RunningMongodProcess> running = Mongod.instance().start(Version.Main.V6_0);\n"
+                    + "        int port = running.current().getServerAddress().getPort();\n"
+                    + "        LOG.info(\"Embedded MongoDB successfully started on port \" + port + \"!\");\n"
+                    + "        return MongoClients.create(\"mongodb://localhost:\" + port);\n"
+                    + "    }\n"
+                    + "}\n";
+            java.nio.file.Files.writeString(targetFile.toPath(), content, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
