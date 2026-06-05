@@ -1965,7 +1965,7 @@ public class RouteBuilderApp extends Application {
                     + "    public MongoClient mongoClient() {\n"
                     + "        LOG.info(\"Starting Pure Java In-Memory MongoDB Server...\");\n"
                     + "        MongoServer server = new MongoServer(new MemoryBackend());\n"
-                    + "        InetSocketAddress address = server.bind();\n"
+                    + "        InetSocketAddress address = server.bind(\"localhost\", 27017);\n"
                     + "        int port = address.getPort();\n"
                     + "        LOG.info(\"Pure Java MongoDB Server successfully started on port \" + port + \"!\");\n"
                     + "        return MongoClients.create(\"mongodb://localhost:\" + port);\n"
