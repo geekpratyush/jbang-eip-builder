@@ -323,21 +323,28 @@
                 
                 if (result.data && result.data.length > 0) {
                     result.data.forEach(item => {
+                        const id = item.id || item.ID || '';
+                        const counterparty = item.counterparty || item.COUNTERPARTY || '';
+                        const transaction_type = item.transactionType || item.transaction_type || item.TRANSACTION_TYPE || '';
+                        const amount = item.amount || item.AMOUNT || 0;
+                        const currency = item.currency || item.CURRENCY || '';
+                        const status = item.status || item.STATUS || '';
+
                         const tr = document.createElement('tr');
                         tr.className = 'hover:bg-slate-800/30 transition-colors';
                         
                         let badgeColor = 'bg-slate-800 text-slate-400 border-slate-700';
-                        if (item.status === 'APPROVED' || item.status === 'COMPLETED') badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-                        if (item.status === 'REJECTED' || item.status === 'FAILED') badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-                        if (item.status === 'PENDING_APPROVAL') badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                        if (status === 'APPROVED' || status === 'COMPLETED') badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                        if (status === 'REJECTED' || status === 'FAILED') badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+                        if (status === 'PENDING_APPROVAL') badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
 
                         tr.innerHTML = `
-                            <td class="px-4 py-3 font-medium text-white">${item.id}</td>
-                            <td class="px-4 py-3 text-slate-300">${item.counterparty}</td>
-                            <td class="px-4 py-3 text-slate-400">${item.transaction_type}</td>
-                            <td class="px-4 py-3 text-right font-mono text-brand-400 font-medium">${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                            <td class="px-4 py-3 text-slate-500 font-mono">${item.currency}</td>
-                            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full border text-[10px] font-medium ${badgeColor}">${item.status}</span></td>
+                            <td class="px-4 py-3 font-medium text-white">${id}</td>
+                            <td class="px-4 py-3 text-slate-300">${counterparty}</td>
+                            <td class="px-4 py-3 text-slate-400">${transaction_type}</td>
+                            <td class="px-4 py-3 text-right font-mono text-brand-400 font-medium">${Number(amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td class="px-4 py-3 text-slate-500 font-mono">${currency}</td>
+                            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full border text-[10px] font-medium ${badgeColor}">${status}</span></td>
                         `;
                         tbody.appendChild(tr);
                     });
