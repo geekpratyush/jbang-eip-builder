@@ -1298,7 +1298,7 @@ public class RouteBuilderApp extends Application {
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.environment().put("TERM", "xterm-256color");
                 if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                    pb.environment().put("JAVA_TOOL_OPTIONS", "-Dde.flapdoodle.os.override=Windows|X86_64|Windows|Windows_10");
+                    pb.environment().put("JAVA_TOOL_OPTIONS", "-Dde.flapdoodle.os.override=Windows|X86_64");
                 }
                 pb.directory(baseDir);
                 pb.redirectErrorStream(true);
@@ -1554,7 +1554,7 @@ public class RouteBuilderApp extends Application {
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.environment().put("TERM", "xterm-256color");
                 if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                    pb.environment().put("JAVA_TOOL_OPTIONS", "-Dde.flapdoodle.os.override=Windows|X86_64|Windows|Windows_10");
+                    pb.environment().put("JAVA_TOOL_OPTIONS", "-Dde.flapdoodle.os.override=Windows|X86_64");
                 }
                 pb.directory(baseDir);
                 pb.redirectErrorStream(true);
