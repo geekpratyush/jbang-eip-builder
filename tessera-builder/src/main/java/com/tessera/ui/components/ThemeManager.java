@@ -16,9 +16,13 @@ import java.util.prefs.Preferences;
  */
 public class ThemeManager {
 
+    private static final Preferences PREFS = Preferences.userNodeForPackage(ThemeManager.class);
+    private static final String PREF_THEME = "app_theme";
+
     private static final Map<String, String> THEMES;
     static {
         Map<String, String> m = new LinkedHashMap<>();
+        m.put("Enterprise Light", "theme-enterprise-light");
         m.put("VSCode Dark", "theme-vscode-dark");
         m.put("IntelliJ Light", "theme-intellij-light");
         m.put("Material Light", "theme-material-light");
@@ -29,16 +33,14 @@ public class ThemeManager {
         m.put("Cyberpunk 2077", "theme-cyberpunk");
         m.put("Neon Dreams", "theme-neon-dreams");
         THEMES = Collections.unmodifiableMap(m);
+        PREFS.put(PREF_THEME, "Enterprise Light");
     }
 
-    private static final Preferences PREFS = Preferences.userNodeForPackage(ThemeManager.class);
-    private static final String PREF_THEME = "app_theme";
-    
     // We use a WeakHashMap to avoid memory leaks while keeping track of all roots
     private static final Set<Parent> registeredRoots = Collections.newSetFromMap(new WeakHashMap<>());
     
-    private static String currentThemeName = PREFS.get(PREF_THEME, "VSCode Dark");
-    private static String currentThemeClass = THEMES.getOrDefault(currentThemeName, "theme-vscode-dark");
+    private static String currentThemeName = PREFS.get(PREF_THEME, "Enterprise Light");
+    private static String currentThemeClass = THEMES.getOrDefault(currentThemeName, "theme-enterprise-light");
 
     public static Map<String, String> getAvailableThemes() { return THEMES; }
     public static String getCurrentThemeName() { return currentThemeName; }
