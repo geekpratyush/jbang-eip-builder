@@ -1264,7 +1264,7 @@ public class RouteBuilderApp extends Application {
                 if (mongoSimItem != null && oracleSimItem != null) {
                     if (mongoSimItem.isSelected() || needsMongo) {
                         command.add("--dependency=mvn:org.mongodb:mongodb-driver-sync:4.11.1");
-                        command.add("--dependency=mvn:de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.12.2");
+                        command.add("--dependency=mvn:de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.24.0");
                         command.add("--dependency=mvn:org.apache.camel:camel-mongodb:4.18.0");
                         java.io.File mongoFile = new java.io.File(workspaceRoot != null ? workspaceRoot : baseDir,
                                 ".tessera/EmbeddedMongo.java");
@@ -1297,6 +1297,9 @@ public class RouteBuilderApp extends Application {
 
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.environment().put("TERM", "xterm-256color");
+                if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                    pb.environment().put("JAVA_TOOL_OPTIONS", "-Dde.flapdoodle.os.override=Windows|X86_64|Windows|Windows_10");
+                }
                 pb.directory(baseDir);
                 pb.redirectErrorStream(true);
                 runnerProcess[0] = pb.start();
@@ -1550,6 +1553,9 @@ public class RouteBuilderApp extends Application {
 
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.environment().put("TERM", "xterm-256color");
+                if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                    pb.environment().put("JAVA_TOOL_OPTIONS", "-Dde.flapdoodle.os.override=Windows|X86_64|Windows|Windows_10");
+                }
                 pb.directory(baseDir);
                 pb.redirectErrorStream(true);
                 Process singleProcess = pb.start();
