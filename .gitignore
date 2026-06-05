@@ -3,7 +3,7 @@
 build/
 
 # Runtime-generated helpers (OS-specific, must not be committed)
-**/.tessera/EmbeddedMongo.java
+**/.tessera/
 
 # JBang & Camel JBang
 .jbang/
