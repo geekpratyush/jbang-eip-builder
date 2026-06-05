@@ -497,7 +497,10 @@ public class RouteBuilderApp extends Application {
                 editorPane.saveAllFiles();
         });
 
-        fileMenu.getItems().addAll(newMenu, openItem, saveItem, saveAllItem, recentProjectsMenu,
+        javafx.scene.control.MenuItem refreshSamplesItem = new javafx.scene.control.MenuItem("Refresh Samples");
+        refreshSamplesItem.setOnAction(e -> refreshSamples(true));
+
+        fileMenu.getItems().addAll(newMenu, openItem, saveItem, saveAllItem, refreshSamplesItem, recentProjectsMenu,
                 new javafx.scene.control.SeparatorMenuItem(), exitItem);
 
         javafx.scene.control.Menu editMenu = new javafx.scene.control.Menu("_Edit");
@@ -1036,11 +1039,18 @@ public class RouteBuilderApp extends Application {
             }
         });
 
+        javafx.scene.control.Button btnRefreshSamples = new javafx.scene.control.Button("Refresh Samples",
+                new org.kordamp.ikonli.javafx.FontIcon("fas-sync"));
+        btnRefreshSamples.getStyleClass().addAll("toolbar-btn", "btn-refresh-samples");
+        btnRefreshSamples.setTooltip(new javafx.scene.control.Tooltip(
+                "Refresh/overwrite all sample routes and templates in your workspace."));
+        btnRefreshSamples.setOnAction(e -> refreshSamples(true));
+
         toolBar.getItems().addAll(btnLogo, new javafx.scene.control.Separator(), btnViewExplorer,
                 new javafx.scene.control.Separator(), btnPlay, btnStop, new javafx.scene.control.Separator(),
                 btnMongoSim, btnOracleSim, new javafx.scene.control.Separator(), btnVariables, btnCrypto, btnTransform,
                 btnValidateStudio, btnDiagramStudio, btnDocConverter, btnFakerStudio, btnKamelets, btnDeps,
-                btnRemoteDeploy, btnExport, btnManual);
+                btnRemoteDeploy, btnExport, btnManual, btnRefreshSamples);
 
         for (javafx.scene.Node node : toolBar.getItems()) {
             if (node instanceof javafx.scene.control.Button && node != btnLogo) {
@@ -1896,6 +1906,10 @@ public class RouteBuilderApp extends Application {
     }
 
     private void generateFromIndex(java.io.File base, String resourcePrefix) throws java.io.IOException {
+        generateFromIndex(base, resourcePrefix, false);
+    }
+
+    private void generateFromIndex(java.io.File base, String resourcePrefix, boolean forceOverwrite) throws java.io.IOException {
         byte[] indexBytes = readResourceBytes(resourcePrefix + "files.txt");
         if (indexBytes.length == 0)
             return;
@@ -1908,7 +1922,7 @@ public class RouteBuilderApp extends Application {
                 continue;
 
             java.io.File targetFile = new java.io.File(base, relativePath);
-            if (targetFile.exists())
+            if (targetFile.exists() && !forceOverwrite)
                 continue;
 
             byte[] content = readResourceBytes(resourcePrefix + relativePath);
@@ -1922,6 +1936,42 @@ public class RouteBuilderApp extends Application {
             java.nio.file.Files.write(targetFile.toPath(), content);
         }
     }
+
+    private void refreshSamples(boolean forceOverwrite) {
+        java.io.File base = getWorkspaceRoot();
+        if (base == null) {
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                    javafx.scene.control.Alert.AlertType.WARNING, "Please open a folder or workspace first.");
+            themeDialog(alert);
+            alert.showAndWait();
+            return;
+        }
+
+        javafx.scene.control.Alert confirm = new javafx.scene.control.Alert(
+                javafx.scene.control.Alert.AlertType.CONFIRMATION,
+                "Are you sure you want to refresh all samples? This will overwrite existing sample files in the workspace with fresh templates.");
+        themeDialog(confirm);
+        java.util.Optional<javafx.scene.control.ButtonType> result = confirm.showAndWait();
+        if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
+            try {
+                generateFromIndex(base, "/samples/", forceOverwrite);
+                if (treePane != null) {
+                    treePane.refresh();
+                }
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                        javafx.scene.control.Alert.AlertType.INFORMATION, "Samples successfully refreshed/updated!");
+                themeDialog(alert);
+                alert.showAndWait();
+            } catch (Exception e) {
+                e.printStackTrace();
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                        javafx.scene.control.Alert.AlertType.ERROR, "Failed to refresh samples: " + e.getMessage());
+                themeDialog(alert);
+                alert.showAndWait();
+            }
+        }
+    }
+
 
     public void dumpSamplesToResources() {
         generateChapterSamples(null, null);
