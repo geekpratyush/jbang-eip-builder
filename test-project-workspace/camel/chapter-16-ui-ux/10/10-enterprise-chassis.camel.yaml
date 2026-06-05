@@ -134,23 +134,23 @@
     id: "10-export-csv-shared"
     from:
       uri: "direct:export-csv-shared"
-      steps:
-        - choice:
-            when:
-              - simple: "${header.filter} == null"
-                steps:
-                  - setHeader:
-                      name: "filter"
-                      constant: ""
-        - setHeader:
-            name: "sqlFilter"
-            simple: "%${header.filter}%"
-        - toD: "sql:SELECT id, counterparty, transaction_type as transaction_type, amount, currency, status, created_at as created_at FROM chassis.transactions WHERE (LOWER(counterparty) LIKE :#sqlFilter OR LOWER(id) LIKE :#sqlFilter OR :#sqlFilter IS NULL) ORDER BY created_at DESC LIMIT 5000"
-        - marshal:
-            csv: {}
-        - setHeader:
-            name: "Content-Type"
-            constant: "text/csv"
+    steps:
+      - choice:
+          when:
+            - simple: "${header.filter} == null"
+              steps:
+                - setHeader:
+                    name: "filter"
+                    constant: ""
+      - setHeader:
+          name: "sqlFilter"
+          simple: "%${header.filter}%"
+      - toD: "sql:SELECT id, counterparty, transaction_type as transaction_type, amount, currency, status, created_at as created_at FROM chassis.transactions WHERE (LOWER(counterparty) LIKE :#sqlFilter OR LOWER(id) LIKE :#sqlFilter OR :#sqlFilter IS NULL) ORDER BY created_at DESC LIMIT 5000"
+      - marshal:
+          csv: {}
+      - setHeader:
+          name: "Content-Type"
+          constant: "text/csv"
 
 - route:
     id: "10-api-export-pdf"
@@ -199,35 +199,35 @@
     id: "kafka-stub-consumer"
     from:
       uri: "seda:kafka-topic"
-      steps:
-        - log: "[KAFKA STUB] Received message on simulated topic 'transactions-inbound': ${body}"
+    steps:
+      - log: "[KAFKA STUB] Received message on simulated topic 'transactions-inbound': ${body}"
 
 - route:
     id: "ibmmq-stub-consumer"
     from:
       uri: "seda:ibmmq-queue"
-      steps:
-        - log: "[IBM MQ STUB] Message arrived at Queue 'IN.TXN.QUEUE'. Executing validation..."
-        - choice:
-            when:
-              - simple: "${body} contains 'FAIL'"
-                steps:
-                  - log: "[IBM MQ STUB] Validation failed! Sending to DLQ Queue 'IN.TXN.DLQ'..."
-                  - to: "seda:ibmmq-dlq"
-            otherwise:
+    steps:
+      - log: "[IBM MQ STUB] Message arrived at Queue 'IN.TXN.QUEUE'. Executing validation..."
+      - choice:
+          when:
+            - simple: "${body} contains 'FAIL'"
               steps:
-                - log: "[IBM MQ STUB] Validation passed. Message successfully processed."
+                - log: "[IBM MQ STUB] Validation failed! Sending to DLQ Queue 'IN.TXN.DLQ'..."
+                - to: "seda:ibmmq-dlq"
+          otherwise:
+            steps:
+              - log: "[IBM MQ STUB] Validation passed. Message successfully processed."
 
 - route:
     id: "ibmmq-dlq-consumer"
     from:
       uri: "seda:ibmmq-dlq"
-      steps:
-        - log: "[IBM MQ DLQ] Dead Letter Queue handler received poison message: ${body}"
+    steps:
+      - log: "[IBM MQ DLQ] Dead Letter Queue handler received poison message: ${body}"
 
 - route:
     id: "email-stub-consumer"
     from:
       uri: "seda:email-stub"
-      steps:
-        - log: "[EMAIL STUB] Outbound Email Intercepted! TO: ops-alerts@chassis.net | FROM: system@chassis.net | SUBJECT: Transaction Ingest Alert | BODY: Transaction payload received."
+    steps:
+      - log: "[EMAIL STUB] Outbound Email Intercepted! TO: ops-alerts@chassis.net | FROM: system@chassis.net | SUBJECT: Transaction Ingest Alert | BODY: Transaction payload received."
