@@ -17,8 +17,12 @@ public class EmbeddedMongo {
     public MongoClient mongoClient() {
         LOG.info("Starting Native Flapdoodle Embedded MongoDB 6.0...");
         
-        // Force Flapdoodle to treat Linux Mint as Ubuntu 22.04 to guarantee MongoDB 6.0 binary resolution
-        System.setProperty("de.flapdoodle.os.override", "Linux|X86_64|Ubuntu|Ubuntu_22_04");
+        // Force Flapdoodle platform override only on Linux (e.g. Linux Mint -> Ubuntu) to guarantee binary resolution.
+        // On Windows, let the library auto-detect so it downloads the correct Windows binary.
+        String osName = System.getProperty("os.name", "").toLowerCase();
+        if (osName.contains("linux")) {
+            System.setProperty("de.flapdoodle.os.override", "Linux|X86_64|Ubuntu|Ubuntu_22_04");
+        }
 
         TransitionWalker.ReachedState<RunningMongodProcess> running = Mongod.instance().start(Version.Main.V6_0);
         int port = running.current().getServerAddress().getPort();
