@@ -21,6 +21,11 @@ routes/.camel-jbang-run/
 .project
 .classpath
 .settings/
+bin/
+node_modules/
+*.tmp
+__pycache__/
+*.pyc
 
 # OS-specific files
 .DS_Store
