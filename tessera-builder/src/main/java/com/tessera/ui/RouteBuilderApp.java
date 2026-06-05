@@ -182,6 +182,7 @@ public class RouteBuilderApp extends Application {
     private com.tessera.lsp.LspManager lspManager;
     private com.tessera.ui.components.ConsolePane consolePane;
     private HelpPortalPane helpPortalPane;
+    private javafx.stage.Stage helpPortalStage;
     private javafx.scene.control.Button btnPlay;
     private javafx.scene.control.Button btnStop;
     private javafx.scene.control.CheckMenuItem mongoSimItem;
@@ -534,12 +535,9 @@ public class RouteBuilderApp extends Application {
         viewCodeItem.setSelected(true);
         javafx.scene.control.CheckMenuItem viewDiagramItem = new javafx.scene.control.CheckMenuItem("Diagram Canvas");
         viewDiagramItem.setSelected(true);
-        javafx.scene.control.CheckMenuItem viewHelpItem = new javafx.scene.control.CheckMenuItem(
-                "Interactive Help Portal");
-        viewHelpItem.setSelected(false);
         javafx.scene.control.MenuItem resetLayoutItem = new javafx.scene.control.MenuItem("Reset Layout");
         javafx.scene.control.MenuItem swapLayoutItem = new javafx.scene.control.MenuItem("Swap Code and Diagram");
-        viewMenu.getItems().addAll(viewExplorerItem, viewCodeItem, viewDiagramItem, viewHelpItem,
+        viewMenu.getItems().addAll(viewExplorerItem, viewCodeItem, viewDiagramItem,
                 new javafx.scene.control.SeparatorMenuItem(), swapLayoutItem, resetLayoutItem);
 
         javafx.scene.control.Menu helpMenu = new javafx.scene.control.Menu("_Help");
@@ -552,11 +550,29 @@ public class RouteBuilderApp extends Application {
                 new org.kordamp.ikonli.javafx.FontIcon("fas-question-circle"));
         helpGuideItem.setOnAction(e -> new RouteBuilderHelpWindow().show());
 
+        javafx.scene.control.MenuItem interactiveHelpItem = new javafx.scene.control.MenuItem("Interactive Help Portal...",
+                new org.kordamp.ikonli.javafx.FontIcon("fas-book"));
+        interactiveHelpItem.setOnAction(e -> {
+            if (helpPortalStage == null) {
+                helpPortalStage = new javafx.stage.Stage();
+                helpPortalStage.setTitle("Tessera Interactive Help Portal");
+                javafx.scene.Scene scene = new javafx.scene.Scene(helpPortalPane, 900, 650);
+                scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
+                helpPortalStage.setScene(scene);
+                com.tessera.ui.components.ThemeManager.registerRoot(helpPortalPane);
+                
+                // Set app-root and current theme class so CSS applies correctly to the new stage
+                helpPortalPane.getStyleClass().addAll("app-root", currentThemeClass);
+            }
+            helpPortalStage.show();
+            helpPortalStage.toFront();
+        });
+
         javafx.scene.control.MenuItem aboutItem = new javafx.scene.control.MenuItem("About Tessera...",
                 new org.kordamp.ikonli.javafx.FontIcon("fas-info-circle"));
         aboutItem.setOnAction(e -> showAboutDialog());
 
-        helpMenu.getItems().addAll(maxItem, restoreItem, new javafx.scene.control.SeparatorMenuItem(), helpGuideItem,
+        helpMenu.getItems().addAll(maxItem, restoreItem, new javafx.scene.control.SeparatorMenuItem(), helpGuideItem, interactiveHelpItem,
                 new javafx.scene.control.SeparatorMenuItem(), aboutItem);
 
         javafx.scene.control.Menu toolsMenu = new javafx.scene.control.Menu("_Tools");
@@ -1114,14 +1130,11 @@ public class RouteBuilderApp extends Application {
             refreshGlobalLayout.run();
         });
 
-        ThemeManager.registerRoot(
-                treePane);
-
         helpPortalPane = new HelpPortalPane(() -> {
-            viewHelpItem.setSelected(false);
+            if (helpPortalStage != null) {
+                helpPortalStage.hide();
+            }
         });
-        ThemeManager.registerRoot(
-                helpPortalPane);
 
         java.util.function.BiConsumer<java.io.File, String> playProject = (target, mode) -> {
             boolean offline = "offline".equals(mode);
@@ -1624,14 +1637,8 @@ public class RouteBuilderApp extends Application {
                     mainSplitPane.getItems().add(diagramPane);
             }
 
-            if (viewHelpItem.isSelected()) {
-                mainSplitPane.getItems().add(helpPortalPane);
-            }
-
             int count = mainSplitPane.getItems().size();
-            if (count == 4) {
-                mainSplitPane.setDividerPositions(0.15, 0.45, 0.75);
-            } else if (count == 3) {
+            if (count == 3) {
                 mainSplitPane.setDividerPositions(0.18, 0.58);
             } else if (count == 2) {
                 mainSplitPane.setDividerPositions(0.3);
@@ -1650,7 +1657,6 @@ public class RouteBuilderApp extends Application {
         viewExplorerItem.selectedProperty().addListener((obs, oldVal, newVal) -> updateLayout.run());
         viewCodeItem.selectedProperty().addListener((obs, oldVal, newVal) -> updateLayout.run());
         viewDiagramItem.selectedProperty().addListener((obs, oldVal, newVal) -> updateLayout.run());
-        viewHelpItem.selectedProperty().addListener((obs, oldVal, newVal) -> updateLayout.run());
 
         editorPane.setOnToggleDiagram(() -> {
             viewDiagramItem.setSelected(!viewDiagramItem.isSelected());

@@ -481,6 +481,64 @@ public class RouteBuilderHelpWindow {
             "loader.management.api.enabled=true\n\n" +
             "# Active environment tag\n" +
             "loader.management.api.environment=development</pre>"));
+
+        topics.add(new HelpTopic("Interactive Examples & Architecture Guide", "Advanced Tools", "architecture examples mongodb h2 faker timer kafka mq stubs", "fas-sitemap",
+            "<h1>Comprehensive Architecture & Examples Guide</h1>" +
+            "<p>This guide walks you through the core architectural arrangement of Tessera's sample projects, showing you how they reference assets, execute routing from start to finish, and leverage embedded databases (MongoDB, H2) and simulation tools (Faker, Timer, MQ/Kafka Stubs).</p>" +
+            "<h3>1. Project Arrangement & Asset Referencing</h3>" +
+            "<p>Tessera workspaces follow a decoupled, modular design. Routes and their supporting files are strictly separated:</p>" +
+            "<ul>" +
+            "  <li><strong>Camel Routes Directory (<code>camel/</code>):</strong> Contains the YAML DSL definitions for your routes. E.g., <code>camel/chapter-16-ui-ux/09-sql-workbench.camel.yaml</code>.</li>" +
+            "  <li><strong>Assets Directory (<code>assets/</code>):</strong> Contains static HTML, CSS, JavaScript, and images. E.g., <code>assets/chapter-16-ui-ux/09/ui/index.html</code>.</li>" +
+            "  <li><strong>Referencing Mechanism:</strong> Camel routes use the <code>platform-http</code> or <code>jetty</code> components to serve these static assets directly from the file system.</li>" +
+            "</ul>" +
+            "<pre>- route:\n" +
+            "    from: \"platform-http:/?matchOnUriPrefix=true\"\n" +
+            "    steps:\n" +
+            "      - to: \"file://{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/09/ui\"</pre>" +
+            "<h3>2. In-Memory Databases: MongoDB to H2 SQL</h3>" +
+            "<p>Tessera can seamlessly bootstrap embedded, offline databases to support local development.</p>" +
+            "<h4>H2 Embedded SQL Database</h4>" +
+            "<p>The H2 database runs directly in-memory and can be initialized with SQL DDL/DML statements at startup:</p>" +
+            "<pre>- route:\n" +
+            "    id: \"sql-workbench-init\"\n" +
+            "    from: \"timer:init?repeatCount=1\"\n" +
+            "    steps:\n" +
+            "      - to: \"sql:CREATE SCHEMA IF NOT EXISTS core\"\n" +
+            "      - to: \"sql:CREATE TABLE IF NOT EXISTS core.credit_earmarks (earmark_id VARCHAR(50), status VARCHAR(50))\"\n" +
+            "      - to: \"sql:INSERT INTO core.credit_earmarks VALUES ('EMK-7011', 'APPROVED')\"</pre>" +
+            "<h4>MongoDB (Stubbed/Embedded)</h4>" +
+            "<p>Similarly, when you need NoSQL capabilities, you can interface with MongoDB. In a stubbed or testing environment, Camel can route JSON directly to Mongo collections:</p>" +
+            "<pre>- route:\n" +
+            "    id: \"mongo-ingestion\"\n" +
+            "    from: \"direct:insert-mongo\"\n" +
+            "    steps:\n" +
+            "      - to: \"mongodb:myDb?database=records&amp;collection=transactions&amp;operation=insert\"</pre>" +
+            "<h3>3. Simulating Workloads with Faker, Timer, Kafka, and MQ</h3>" +
+            "<p>You don't need live upstream systems to test high-throughput scenarios. Tessera's <code>Faker</code> component generates realistic mock data, driven by a <code>timer</code>, which is then pushed to messaging stubs (Kafka or IBM MQ).</p>" +
+            "<h4>Example: Faker -&gt; Timer -&gt; Kafka</h4>" +
+            "<pre>- route:\n" +
+            "    id: \"faker-to-kafka\"\n" +
+            "    # 1. Trigger every 1 second\n" +
+            "    from: \"timer:faker-stream?period=1000\"\n" +
+            "    steps:\n" +
+            "      # 2. Generate Fake JSON Payload\n" +
+            "      - setBody:\n" +
+            "          constant: |\n" +
+            "            {\n" +
+            "              \"transactionId\": \"{{uuid}}\",\n" +
+            "              \"customer\": \"{{name.fullName}}\",\n" +
+            "              \"amount\": \"{{commerce.price}}\",\n" +
+            "              \"iban\": \"{{finance.iban}}\"\n" +
+            "            }\n" +
+            "      # 3. Process the Faker template\n" +
+            "      - to: \"faker:process\"\n" +
+            "      # 4. Push to Kafka (or MQ)\n" +
+            "      - to: \"kafka:financial-transactions-topic?brokers=localhost:9092\"</pre>" +
+            "<h4>Example: Faker -&gt; IBM MQ</h4>" +
+            "<p>You can swap the target endpoint to IBM MQ seamlessly:</p>" +
+            "<pre>      # 4. Push to IBM MQ Queue\n" +
+            "      - to: \"jms:queue:DEV.QUEUE.1\"</pre>"));
     }
 
     private void buildUi() {

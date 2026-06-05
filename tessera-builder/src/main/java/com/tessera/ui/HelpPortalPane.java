@@ -427,6 +427,80 @@ public class HelpPortalPane extends BorderPane {
             "Generates complete directory structures containing runnable shell scripts (`run.sh` / `run.bat`), properties files, and routing configurations."
         ));
 
+        allTopics.add(new HelpTopic("16. Interactive Examples & Architecture Guide", "Architecture",
+            "# Comprehensive Architecture & Examples Guide\n\n" +
+            "This guide walks you through the core architectural arrangement of Tessera's sample projects, showing you how they reference assets, execute routing from start to finish, and leverage embedded databases (MongoDB, H2) and simulation tools (Faker, Timer, MQ/Kafka Stubs).\n\n" +
+            "## 1. Project Arrangement & Asset Referencing\n" +
+            "Tessera workspaces follow a decoupled, modular design. Routes and their supporting files are strictly separated:\n\n" +
+            "* **Camel Routes Directory (`camel/`)**: Contains the YAML DSL definitions for your routes. E.g., `camel/chapter-16-ui-ux/09-sql-workbench.camel.yaml`.\n" +
+            "* **Assets Directory (`assets/`)**: Contains static HTML, CSS, JavaScript, and images. E.g., `assets/chapter-16-ui-ux/09/ui/index.html`.\n" +
+            "* **Referencing Mechanism**: Camel routes use the `platform-http` or `jetty` components to serve these static assets directly from the file system.\n" +
+            "```yaml\n" +
+            "- route:\n" +
+            "    from: \"platform-http:/?matchOnUriPrefix=true\"\n" +
+            "    steps:\n" +
+            "      - to: \"file://{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/09/ui\"\n" +
+            "```\n" +
+            "This decoupling ensures that front-end logic (HTML/JS) and integration logic (Camel/SQL) remain independent.\n\n" +
+            "## 2. In-Memory Databases: MongoDB to H2 SQL\n" +
+            "Tessera can seamlessly bootstrap embedded, offline databases to support local development.\n\n" +
+            "### H2 Embedded SQL Database\n" +
+            "The H2 database runs directly in-memory and can be initialized with SQL DDL/DML statements at startup:\n" +
+            "```yaml\n" +
+            "- route:\n" +
+            "    id: \"sql-workbench-init\"\n" +
+            "    from: \"timer:init?repeatCount=1\"\n" +
+            "    steps:\n" +
+            "      - to: \"sql:CREATE SCHEMA IF NOT EXISTS core\"\n" +
+            "      - to: \"sql:CREATE TABLE IF NOT EXISTS core.credit_earmarks (earmark_id VARCHAR(50), status VARCHAR(50))\"\n" +
+            "      - to: \"sql:INSERT INTO core.credit_earmarks VALUES ('EMK-7011', 'APPROVED')\"\n" +
+            "```\n\n" +
+            "### MongoDB (Stubbed/Embedded)\n" +
+            "Similarly, when you need NoSQL capabilities, you can interface with MongoDB. In a stubbed or testing environment, Camel can route JSON directly to Mongo collections:\n" +
+            "```yaml\n" +
+            "- route:\n" +
+            "    id: \"mongo-ingestion\"\n" +
+            "    from: \"direct:insert-mongo\"\n" +
+            "    steps:\n" +
+            "      - to: \"mongodb:myDb?database=records&collection=transactions&operation=insert\"\n" +
+            "```\n\n" +
+            "## 3. Simulating Workloads with Faker, Timer, Kafka, and MQ\n" +
+            "You don't need live upstream systems to test high-throughput scenarios. Tessera's `Faker` component generates realistic mock data, driven by a `timer`, which is then pushed to messaging stubs (Kafka or IBM MQ).\n\n" +
+            "### The Architecture of a Simulation\n" +
+            "1. **Timer**: Triggers the route every `N` milliseconds.\n" +
+            "2. **Faker**: Generates random names, addresses, or financial data based on templates.\n" +
+            "3. **Kafka/MQ Stub**: Receives the payload. If you run the workspace in `--stub=all` mode, Camel creates a mock endpoint automatically.\n\n" +
+            "### Example: Faker -> Timer -> Kafka\n" +
+            "```yaml\n" +
+            "- route:\n" +
+            "    id: \"faker-to-kafka\"\n" +
+            "    # 1. Trigger every 1 second\n" +
+            "    from: \"timer:faker-stream?period=1000\"\n" +
+            "    steps:\n" +
+            "      # 2. Generate Fake JSON Payload\n" +
+            "      - setBody:\n" +
+            "          constant: |\n" +
+            "            {\n" +
+            "              \"transactionId\": \"{{uuid}}\",\n" +
+            "              \"customer\": \"{{name.fullName}}\",\n" +
+            "              \"amount\": \"{{commerce.price}}\",\n" +
+            "              \"iban\": \"{{finance.iban}}\"\n" +
+            "            }\n" +
+            "      # 3. Process the Faker template\n" +
+            "      - to: \"faker:process\"\n" +
+            "      # 4. Push to Kafka (or MQ)\n" +
+            "      - to: \"kafka:financial-transactions-topic?brokers=localhost:9092\"\n" +
+            "```\n\n" +
+            "### Example: Faker -> IBM MQ\n" +
+            "You can swap the target endpoint to IBM MQ seamlessly:\n" +
+            "```yaml\n" +
+            "      # 4. Push to IBM MQ Queue\n" +
+            "      - to: \"jms:queue:DEV.QUEUE.1\"\n" +
+            "```\n\n" +
+            "### Summary\n" +
+            "By combining **Timers**, **Faker**, and **Embedded Databases/Stubs**, you can build, visualize, and execute complex enterprise integration scenarios entirely offline and with realistic simulated data."
+        ));
+
         topicListView.setItems(FXCollections.observableArrayList(allTopics));
     }
 
