@@ -1,0 +1,2658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Pipeline & Route Orchestrator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-panel: #111827;
+            --bg-node: #1f2937;
+            --bg-node-hover: #374151;
+            --border-color: #2e3b4e;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #a855f7;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-orange: #f97316;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --font-main: 'Outfit', sans-serif;
+            --font-code: 'Fira Code', monospace;
+            --shadow-glow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Header */
+        header {
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #fff;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .title-section h1 {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(to right, #fff, var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title-section p {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .controls-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            background-color: #2b3548;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-weight: 500;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: #374151;
+            border-color: var(--accent-cyan);
+        }
+
+        .btn-play {
+            background: linear-gradient(135deg, var(--accent-green), #059669);
+            border: none;
+        }
+
+        .btn-play:hover {
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, var(--accent-red), #b91c1c);
+            border: none;
+        }
+
+        .btn-stop:hover {
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(6, 182, 212, 0.1);
+        }
+
+        /* Workspace Main Layout */
+        .workspace {
+            display: flex;
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Left Sidebar: Components Library */
+        .sidebar-left {
+            width: 260px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 5;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-left.collapsed {
+            width: 0px;
+            margin-left: -260px;
+            border-right-width: 0px;
+        }
+
+        /* Sidebar Toggle Button */
+        .sidebar-toggle-btn {
+            position: absolute;
+            top: 15px;
+            left: 248px; /* 260px sidebar width - 12px half width of button */
+            width: 24px;
+            height: 24px;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            color: var(--text-secondary);
+            transition: all 0.2s ease, left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .sidebar-toggle-btn:hover {
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+        }
+
+        .sidebar-left.collapsed + .sidebar-toggle-btn {
+            left: 12px;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .components-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .category-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .comp-item {
+            background-color: var(--bg-node);
+            border: 1px solid var(--border-color);
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .comp-item:hover {
+            background-color: var(--bg-node-hover);
+            border-color: var(--accent-cyan);
+            transform: translateY(-1px);
+        }
+
+        .comp-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .icon-source { background-color: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+        .icon-processor { background-color: var(--accent-purple); box-shadow: 0 0 6px var(--accent-purple); }
+        .icon-sink { background-color: var(--accent-red); box-shadow: 0 0 6px var(--accent-red); }
+        .icon-custom { background-color: var(--accent-cyan); box-shadow: 0 0 6px var(--accent-cyan); }
+
+        /* Canvas Area */
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            background-color: var(--bg-main);
+            background-size: 24px 24px;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+            overflow: hidden;
+            outline: none;
+        }
+
+        /* SVG Overlay for Connections */
+        #connections-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .connection-line {
+            fill: none;
+            stroke: var(--border-color);
+            stroke-width: 3;
+            transition: stroke 0.3s ease;
+        }
+
+        .connection-line.active {
+            stroke: var(--accent-cyan);
+            stroke-dasharray: 8 6;
+            animation: flowDash 25s linear infinite;
+        }
+
+        @keyframes flowDash {
+            to {
+                stroke-dashoffset: -1000;
+            }
+        }
+
+        .connection-flow-particle {
+            fill: var(--accent-cyan);
+            filter: drop-shadow(0 0 4px var(--accent-cyan));
+        }
+
+        /* Node Cards */
+        .node-card {
+            position: absolute;
+            background: rgba(31, 41, 55, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            width: 200px;
+            z-index: 2;
+            cursor: move;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            user-select: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .node-card:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .node-card.selected {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
+        }
+
+        .node-card.active-running {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 18px rgba(16, 185, 129, 0.4);
+        }
+
+        .node-header {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .node-body {
+            padding: 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .node-delete-btn {
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-weight: bold;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .node-delete-btn:hover {
+            color: var(--accent-red);
+        }
+
+        /* Node Handles (Connection Points) */
+        .node-handle {
+            width: 12px;
+            height: 12px;
+            background-color: var(--bg-panel);
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: crosshair;
+            transition: all 0.2s ease;
+            z-index: 3;
+        }
+
+        .node-handle:hover {
+            background-color: var(--accent-cyan);
+            border-color: #fff;
+            transform: translateY(-50%) scale(1.3);
+        }
+
+        .handle-input {
+            left: -6px;
+        }
+
+        .handle-output {
+            right: -6px;
+        }
+
+        .node-handle.handle-input.highlight-target {
+            background-color: var(--accent-green) !important;
+            border-color: #fff !important;
+            transform: translateY(-50%) scale(1.6) !important;
+            box-shadow: 0 0 10px var(--accent-green) !important;
+            z-index: 100 !important;
+        }
+
+        /* Right Sidebar: Config Panel */
+        .sidebar-right {
+            width: 300px;
+            background-color: var(--bg-panel);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 5;
+            transition: transform 0.3s ease;
+        }
+
+        .config-title {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .config-body {
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: var(--font-main);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+            font-family: var(--font-code);
+            font-size: 11px;
+        }
+
+        /* Bottom Drawer: Output Console & Payload Inspector */
+        .bottom-drawer {
+            height: 250px;
+            background-color: var(--bg-panel);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            z-index: 6;
+        }
+
+        .console-logs {
+            flex: 1;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: rgba(255,255,255,0.01);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .log-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+            font-family: var(--font-code);
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background-color: #080d16;
+        }
+
+        .log-entry {
+            line-height: 1.4;
+        }
+
+        .log-time {
+            color: var(--accent-purple);
+            margin-right: 8px;
+        }
+
+        .log-level-info {
+            color: var(--accent-cyan);
+            margin-right: 8px;
+        }
+
+        .payload-inspector {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .inspector-tabs {
+            display: flex;
+            background-color: rgba(0,0,0,0.2);
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 10px 16px;
+            background: transparent;
+            border: none;
+            border-right: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-family: var(--font-main);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background-color: var(--bg-panel);
+            color: var(--accent-cyan);
+            border-bottom: 2px solid var(--accent-cyan);
+        }
+
+        .tab-content {
+            flex: 1;
+            padding: 12px 16px;
+            overflow: auto;
+            background-color: #070a13;
+            font-family: var(--font-code);
+            font-size: 11px;
+            white-space: pre-wrap;
+            color: #d1d5db;
+        }
+
+        /* Custom Context Menu */
+        .context-menu {
+            position: absolute;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            padding: 6px 0;
+            min-width: 180px;
+            z-index: 100;
+            display: none;
+        }
+
+        .menu-item {
+            padding: 8px 16px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: var(--bg-node-hover);
+            color: var(--accent-cyan);
+        }
+
+        .menu-separator {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 6px 0;
+        }
+
+        .menu-submenu-header {
+            padding: 4px 16px;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* XML/JSON Syntax Coloring (Simple mock) */
+        .xml-tag { color: var(--accent-purple); }
+        .xml-attr { color: var(--accent-orange); }
+        .xml-val { color: var(--accent-green); }
+        .json-key { color: var(--accent-cyan); }
+        .json-val { color: var(--accent-green); }
+    </style>
+</head>
+<<body>
+
+    <!-- Header Panel -->
+    <header>
+        <div class="logo-section">
+            <div class="logo-icon">T</div>
+            <div class="title-section">
+                <h1>Visual Pipeline & Route Orchestrator</h1>
+                <p>Compose, Simulate, and Monitor Distributed Enterprise Workflows</p>
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <div style="margin-right: 12px; display: flex; gap: 8px;">
+                <button class="btn btn-outline" onclick="loadTemplate('translation')">MT103 Translation</button>
+                <button class="btn btn-outline" onclick="loadTemplate('enrichment')">Database Enrichment</button>
+                <button class="btn btn-outline" onclick="loadTemplate('dlq')">Resilience (DLQ) Flow</button>
+            </div>
+            
+            <button class="btn btn-outline" onclick="openYamlPreview()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Save & Preview DSL
+            </button>
+            <button class="btn btn-play" id="play-btn" onclick="startPipelineSimulation()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                Play
+            </button>
+            <button class="btn btn-stop" id="stop-btn" onclick="stopPipelineSimulation()" disabled>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
+                Stop
+            </button>
+            <button class="btn btn-outline" onclick="clearCanvas(); addLog('New canvas initialized.');">New Flow</button>
+            <button class="btn" onclick="clearCanvas()">Clear</button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+        <!-- Left Sidebar: Assets & Components -->
+        <div class="sidebar-left" id="sidebar-left">
+            <div class="sidebar-header">COMPONENTS</div>
+            
+            <div class="components-search-container" style="padding: 10px 16px; border-bottom: 1px solid var(--border-color);">
+                <input type="text" id="comp-search-input" placeholder="Search components..." oninput="filterComponents(this.value)" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-primary); font-family: var(--font-main); font-size: 13px; outline: none;" />
+            </div>
+
+            <div class="components-list" style="padding: 12px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto;">
+                <!-- Group 1: Sources -->
+                <div class="category-group" id="group-sources">
+                    <div class="category-header" onclick="toggleCategoryGroup('sources')" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 4px 0;">
+                        <span class="category-title" style="margin-bottom: 0;">Sources</span>
+                        <svg class="chevron-icon" id="chevron-sources" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transform: rotate(90deg); transition: transform 0.2s;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                    <div class="category-content" id="content-sources" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'timer')">
+                            <div class="comp-icon icon-source"></div>Timer Source
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'file_source')">
+                            <div class="comp-icon icon-source"></div>File Source
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'kafka_source')">
+                            <div class="comp-icon icon-source"></div>Kafka Source
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'ibmmq_source')">
+                            <div class="comp-icon icon-source"></div>IBM MQ Source
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'faker')">
+                            <div class="comp-icon icon-source"></div>Faker Universal
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 2: Transformation -->
+                <div class="category-group" id="group-processors">
+                    <div class="category-header" onclick="toggleCategoryGroup('processors')" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 4px 0;">
+                        <span class="category-title" style="margin-bottom: 0;">Transformation</span>
+                        <svg class="chevron-icon" id="chevron-processors" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transform: rotate(90deg); transition: transform 0.2s;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                    <div class="category-content" id="content-processors" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'mt_to_mx')">
+                            <div class="comp-icon icon-processor"></div>MT to MX Parser
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'mx_to_mt')">
+                            <div class="comp-icon icon-processor"></div>MX to MT Parser
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'xslt_mapper')">
+                            <div class="comp-icon icon-processor"></div>XSLT Saxon
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'jslt_converter')">
+                            <div class="comp-icon icon-processor"></div>JSLT Converter
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'groovy_script')">
+                            <div class="comp-icon icon-processor"></div>Groovy Script
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'joor_script')">
+                            <div class="comp-icon icon-processor"></div>jOOR Compile
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'flatpack')">
+                            <div class="comp-icon icon-processor"></div>Flatpack Parser
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'smooks')">
+                            <div class="comp-icon icon-processor"></div>Smooks Filter
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 3: EIP Patterns -->
+                <div class="category-group" id="group-eips">
+                    <div class="category-header" onclick="toggleCategoryGroup('eips')" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 4px 0;">
+                        <span class="category-title" style="margin-bottom: 0;">EIP Patterns</span>
+                        <svg class="chevron-icon" id="chevron-eips" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transform: rotate(90deg); transition: transform 0.2s;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                    <div class="category-content" id="content-eips" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'set_body')">
+                            <div class="comp-icon icon-custom"></div>Set Body
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'set_header')">
+                            <div class="comp-icon icon-custom"></div>Set Header
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'choice')">
+                            <div class="comp-icon icon-custom"></div>Choice Router
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'splitter')">
+                            <div class="comp-icon icon-custom"></div>Splitter
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'aggregator')">
+                            <div class="comp-icon icon-custom"></div>Aggregator
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'wiretap')">
+                            <div class="comp-icon icon-custom"></div>WireTap
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 4: Sinks -->
+                <div class="category-group" id="group-sinks">
+                    <div class="category-header" onclick="toggleCategoryGroup('sinks')" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 4px 0;">
+                        <span class="category-title" style="margin-bottom: 0;">Sinks</span>
+                        <svg class="chevron-icon" id="chevron-sinks" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transform: rotate(90deg); transition: transform 0.2s;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                    <div class="category-content" id="content-sinks" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'log_sink')">
+                            <div class="comp-icon icon-sink"></div>Log Sink
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'kafka_sink')">
+                            <div class="comp-icon icon-sink"></div>Kafka Sink
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'ibmmq_sink')">
+                            <div class="comp-icon icon-sink"></div>IBM MQ Sink
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'db_stub')">
+                            <div class="comp-icon icon-sink"></div>MongoDB Archive
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'dlq')">
+                            <div class="comp-icon icon-sink"></div>Dead Letter Queue
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 5: Workspace Routes -->
+                <div class="category-group" id="group-custom">
+                    <div class="category-header" onclick="toggleCategoryGroup('custom')" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 4px 0;">
+                        <span class="category-title" style="margin-bottom: 0;">Workspace Routes</span>
+                        <svg class="chevron-icon" id="chevron-custom" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transform: rotate(90deg); transition: transform 0.2s;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                    <div class="category-content" id="workspace-routes-list" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+                        <!-- dynamic routes list -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Toggle Button (placed outside sidebar-left to prevent clipping) -->
+        <div class="sidebar-toggle-btn" id="sidebar-toggle-btn" onclick="toggleLeftSidebar(event)">
+            <svg id="toggle-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </div>
+
+        <!-- Canvas Node Area -->
+        <div class="canvas-area" id="canvas-area" ondragover="event.preventDefault()" ondrop="handleDrop(event)" tabindex="0">
+            <div id="canvas-viewport" style="position: absolute; top: 0; left: 0; width: 5000px; height: 5000px; transform-origin: 0 0; transform: translate(100px, 100px) scale(1);">
+                <svg id="connections-svg"></svg>
+                <div id="nodes-container"></div>
+            </div>
+            
+            <!-- Canvas Floating Control Icons -->
+            <div style="position: absolute; bottom: 20px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);" onclick="zoomIn()" title="Zoom In">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+                <button class="btn" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);" onclick="zoomOut()" title="Zoom Out">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+                <button class="btn" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);" onclick="fitToWindow()" title="Fit to Window">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                </button>
+                <button class="btn" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);" onclick="resetZoomPan()" title="Reset Zoom/Pan">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 8 12 12 14 14"></polyline></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Sidebar: Configuration properties -->
+        <div class="sidebar-right" id="config-sidebar">
+            <div class="config-title">Properties Panel</div>
+            <div class="config-body" id="config-body">
+                <div style="color: var(--text-secondary); text-align: center; margin-top: 40px; font-size: 13px;">
+                    Select a node to inspect and configure its attributes.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Drawer: Console Log & Payloads -->
+    <div class="bottom-drawer">
+        <!-- Live Console Logs -->
+        <div class="console-logs">
+            <div class="panel-header">
+                <span>Execution Trace</span>
+                <span style="font-size: 10px; color: var(--accent-green);">● SIMULATION LIVE</span>
+            </div>
+            <div class="log-list" id="log-list">
+                <div class="log-entry"><span class="log-time">[12:42:00]</span><span class="log-level-info">[INFO]</span> Pipeline Composer ready. Drag components or select a template to begin.</div>
+            </div>
+        </div>
+
+        <!-- Payload Inspector -->
+        <div class="payload-inspector">
+            <div class="panel-header">Payload Inspector</div>
+            <div class="inspector-tabs" id="inspector-tabs">
+                <button class="tab-btn active">No Data</button>
+            </div>
+            <div class="tab-content" id="tab-content">
+                No payload captured. Run the simulation to trace messages.
+            </div>
+        </div>
+    </div>
+
+    <!-- Right-click Custom Context Menu -->
+    <div class="context-menu" id="context-menu">
+        <div class="menu-submenu-header">Add Source</div>
+        <div class="menu-item" onclick="addNodeFromMenu('timer')">Timer Source</div>
+        <div class="menu-item" onclick="addNodeFromMenu('file_source')">File Source</div>
+        <div class="menu-item" onclick="addNodeFromMenu('kafka_source')">Kafka Source</div>
+        <div class="menu-item" onclick="addNodeFromMenu('ibmmq_source')">IBM MQ Source</div>
+        <div class="menu-item" onclick="addNodeFromMenu('faker')">Faker Universal</div>
+        <div class="menu-separator"></div>
+        <div class="menu-submenu-header">Add Processor</div>
+        <div class="menu-item" onclick="addNodeFromMenu('mt_to_mx')">MT to MX Parser</div>
+        <div class="menu-item" onclick="addNodeFromMenu('mx_to_mt')">MX to MT Parser</div>
+        <div class="menu-item" onclick="addNodeFromMenu('xslt_mapper')">XSLT Saxon</div>
+        <div class="menu-item" onclick="addNodeFromMenu('jslt_converter')">JSLT Converter</div>
+        <div class="menu-item" onclick="addNodeFromMenu('groovy_script')">Groovy Script</div>
+        <div class="menu-item" onclick="addNodeFromMenu('joor_script')">jOOR Compile</div>
+        <div class="menu-separator"></div>
+        <div class="menu-submenu-header">Add EIP Pattern</div>
+        <div class="menu-item" onclick="addNodeFromMenu('set_body')">Set Body</div>
+        <div class="menu-item" onclick="addNodeFromMenu('set_header')">Set Header</div>
+        <div class="menu-item" onclick="addNodeFromMenu('choice')">Choice Router</div>
+        <div class="menu-item" onclick="addNodeFromMenu('splitter')">Splitter</div>
+        <div class="menu-item" onclick="addNodeFromMenu('aggregator')">Aggregator</div>
+        <div class="menu-item" onclick="addNodeFromMenu('wiretap')">WireTap</div>
+        <div class="menu-separator"></div>
+        <div class="menu-submenu-header">Add Sink</div>
+        <div class="menu-item" onclick="addNodeFromMenu('log_sink')">Log Sink</div>
+        <div class="menu-item" onclick="addNodeFromMenu('kafka_sink')">Kafka Sink</div>
+        <div class="menu-item" onclick="addNodeFromMenu('ibmmq_sink')">IBM MQ Sink</div>
+        <div class="menu-item" onclick="addNodeFromMenu('db_stub')">MongoDB Archive</div>
+        <div class="menu-item" onclick="addNodeFromMenu('dlq')">Dead Letter Queue</div>
+        <div class="menu-separator"></div>
+        <div class="menu-submenu-header">Workspace Routes</div>
+        <div id="menu-custom-routes-container">
+            <!-- dynamic custom routes -->
+        </div>
+    </div>
+
+    <!-- YAML DSL Preview Modal -->
+    <div id="yaml-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="width: 80%; height: 85%; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden;">
+            <div style="padding: 16px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <h3 style="font-size: 16px; font-weight: 600; color: var(--accent-cyan); font-family: var(--font-main);">Apache Camel Route DSL Preview (YAML)</h3>
+                    <span style="font-size: 11px; background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); padding: 2px 8px; border-radius: 10px; font-family: var(--font-main);">read-only dsl</span>
+                </div>
+                <span style="cursor: pointer; font-size: 24px; font-weight: bold; color: var(--text-secondary);" onclick="closeYamlPreview()">&times;</span>
+            </div>
+            <div style="flex: 1; display: flex; overflow: hidden;">
+                <!-- Left Side: Monaco Editor -->
+                <div id="yaml-monaco-container" style="flex: 1; height: 100%;"></div>
+                
+                <!-- Right Side: Info and Actions -->
+                <div style="width: 280px; padding: 24px; border-left: 1px solid var(--border-color); background: rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary); font-family: var(--font-main);">Route Metadata</h4>
+                        <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px; font-family: var(--font-main);">
+                            This YAML is dynamically generated from your visual nodes and connection graph using standard Apache Camel DSL mappings.
+                        </p>
+                        <div style="background: var(--bg-main); border: 1px solid var(--border-color); padding: 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 8px; font-family: var(--font-main);">
+                            <div style="font-size: 11px; color: var(--text-secondary);">Total Nodes: <strong id="yaml-info-nodes" style="color: var(--text-primary);">0</strong></div>
+                            <div style="font-size: 11px; color: var(--text-secondary);">Total Connections: <strong id="yaml-info-conns" style="color: var(--text-primary);">0</strong></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px; font-family: var(--font-main);">
+                        <button class="btn btn-play" style="width: 100%; justify-content: center;" onclick="downloadYamlDsl()">
+                            Download YAML
+                        </button>
+                        <button class="btn" style="width: 100%; justify-content: center;" onclick="closeYamlPreview()">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripting for Canvas and Simulating -->
+    <script>
+        let nodes = [];
+        let connections = [];
+        let selectedNodeId = null;
+        let isConnecting = false;
+        let connectionSource = null;
+        let customRoutesList = [];
+        let lastHighlightedHandle = null;
+        let dragStartPos = { x: 0, y: 0 };
+        let dragStarted = false;
+
+        // Viewport and Panning State
+        let zoom = 1;
+        let panX = 100;
+        let panY = 100;
+        let isPanning = false;
+        let startPanX = 0;
+        let startPanY = 0;
+
+        // Simulation Variables
+        let simulationInterval = null;
+        let isSimulating = false;
+        let currentStep = 0;
+        let tracePayloads = {};
+
+        // DOM elements
+        const canvasArea = document.getElementById('canvas-area');
+        const viewport = document.getElementById('canvas-viewport');
+        const nodesContainer = document.getElementById('nodes-container');
+        const connectionsSvg = document.getElementById('connections-svg');
+        const contextMenu = document.getElementById('context-menu');
+        const configBody = document.getElementById('config-body');
+        const logList = document.getElementById('log-list');
+        const inspectorTabs = document.getElementById('inspector-tabs');
+        const tabContent = document.getElementById('tab-content');
+
+        let propertiesEditor = null;
+        let yamlEditor = null;
+
+        // Viewport Transform helper
+        function updateViewportTransform() {
+            viewport.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+        }
+
+        function screenToLocal(clientX, clientY) {
+            const rect = canvasArea.getBoundingClientRect();
+            const x = (clientX - rect.left - panX) / zoom;
+            const y = (clientY - rect.top - panY) / zoom;
+            return { x, y };
+        }
+
+        // Zoom & Pan Event Listeners
+        canvasArea.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = 1.15;
+            const rect = canvasArea.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const beforeZoomX = (mouseX - panX) / zoom;
+            const beforeZoomY = (mouseY - panY) / zoom;
+
+            if (e.deltaY < 0) {
+                zoom = Math.min(3, zoom * zoomFactor);
+            } else {
+                zoom = Math.max(0.3, zoom / zoomFactor);
+            }
+
+            panX = mouseX - beforeZoomX * zoom;
+            panY = mouseY - beforeZoomY * zoom;
+
+            updateViewportTransform();
+        });
+
+        canvasArea.addEventListener('mousedown', (e) => {
+            if (e.target === canvasArea || e.target === connectionsSvg || e.target.id === 'canvas-viewport') {
+                isPanning = true;
+                canvasArea.style.cursor = 'grabbing';
+                startPanX = e.clientX - panX;
+                startPanY = e.clientY - panY;
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                panX = e.clientX - startPanX;
+                panY = e.clientY - startPanY;
+                updateViewportTransform();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isPanning) {
+                isPanning = false;
+                canvasArea.style.cursor = 'default';
+            }
+        });
+
+        function zoomIn() {
+            zoom = Math.min(3, zoom * 1.15);
+            updateViewportTransform();
+        }
+
+        function zoomOut() {
+            zoom = Math.max(0.3, zoom / 1.15);
+            updateViewportTransform();
+        }
+
+        function resetZoomPan() {
+            zoom = 1;
+            panX = 100;
+            panY = 100;
+            updateViewportTransform();
+        }
+
+        function fitToWindow() {
+            if (nodes.length === 0) {
+                resetZoomPan();
+                return;
+            }
+            
+            let minX = Infinity, maxX = -Infinity;
+            let minY = Infinity, maxY = -Infinity;
+            
+            nodes.forEach(node => {
+                if (node.x < minX) minX = node.x;
+                if (node.x + 200 > maxX) maxX = node.x + 200;
+                if (node.y < minY) minY = node.y;
+                if (node.y + 70 > maxY) maxY = node.y + 70;
+            });
+            
+            const rect = canvasArea.getBoundingClientRect();
+            const margin = 50;
+            
+            const contentWidth = maxX - minX;
+            const contentHeight = maxY - minY;
+            
+            const scaleX = (rect.width - margin * 2) / contentWidth;
+            const scaleY = (rect.height - margin * 2) / contentHeight;
+            
+            zoom = Math.min(1.5, Math.max(0.4, Math.min(scaleX, scaleY)));
+            
+            const centerX = minX + contentWidth / 2;
+            const centerY = minY + contentHeight / 2;
+            
+            panX = rect.width / 2 - centerX * zoom;
+            panY = rect.height / 2 - centerY * zoom;
+            
+            updateViewportTransform();
+        }
+
+        // Left Sidebar category collapse toggle
+        function toggleCategoryGroup(name) {
+            const content = document.getElementById('content-' + name) || document.getElementById('workspace-routes-list');
+            const chevron = document.getElementById('chevron-' + name);
+            if (content.style.display === 'none') {
+                content.style.display = 'flex';
+                chevron.style.transform = 'rotate(90deg)';
+            } else {
+                content.style.display = 'none';
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Left Sidebar Search Filter
+        function filterComponents(query) {
+            const q = query.toLowerCase().trim();
+            document.querySelectorAll('.category-group').forEach(group => {
+                let hasVisible = false;
+                group.querySelectorAll('.comp-item').forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(q)) {
+                        item.style.display = 'flex';
+                        hasVisible = true;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                const content = group.querySelector('.category-content') || group.querySelector('#workspace-routes-list');
+                const chevron = group.querySelector('.chevron-icon');
+                if (q !== '') {
+                    if (hasVisible) {
+                        group.style.display = 'block';
+                        content.style.display = 'flex';
+                        chevron.style.transform = 'rotate(90deg)';
+                    } else {
+                        group.style.display = 'none';
+                    }
+                } else {
+                    group.style.display = 'block';
+                    content.style.display = 'flex';
+                    chevron.style.transform = 'rotate(90deg)';
+                }
+            });
+        }
+
+        function toggleLeftSidebar(e) {
+            if (e) e.stopPropagation();
+            const sidebar = document.getElementById('sidebar-left');
+            const icon = document.getElementById('toggle-icon');
+            sidebar.classList.toggle('collapsed');
+            
+            if (sidebar.classList.contains('collapsed')) {
+                icon.innerHTML = '<polyline points="9 18 15 12 9 6"></polyline>';
+            } else {
+                icon.innerHTML = '<polyline points="15 18 9 12 15 6"></polyline>';
+            }
+            
+            let start = null;
+            function step(timestamp) {
+                if (!start) start = timestamp;
+                redrawConnections();
+                if (timestamp - start < 350) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    redrawConnections();
+                }
+            }
+            window.requestAnimationFrame(step);
+        }
+
+        // Context Menu Handler
+        canvasArea.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const rect = canvasArea.getBoundingClientRect();
+            const x = (e.clientX - rect.left - panX) / zoom;
+            const y = (e.clientY - rect.top - panY) / zoom;
+            
+            contextMenu.style.left = `${e.clientX}px`;
+            contextMenu.style.top = `${e.clientY}px`;
+            contextMenu.style.display = 'block';
+
+            contextMenu.dataset.posX = x;
+            contextMenu.dataset.posY = y;
+        });
+
+        document.addEventListener('click', () => {
+            contextMenu.style.display = 'none';
+        });
+
+        // Load Custom Assets from Rest endpoint
+        async function fetchWorkspaceAssets() {
+            try {
+                const res = await fetch('/api/assets');
+                if (res.ok) {
+                    const data = await res.json();
+                    customRoutesList = data;
+                    renderCustomAssets();
+                }
+            } catch (err) {
+                console.warn("Could not fetch workspace assets. Using fallback defaults.", err);
+                customRoutesList = [
+                    { id: "faker-route", name: "faker-route.camel.yaml", description: "Universal Faker simulation route" },
+                    { id: "credit-earmarking", name: "10-enterprise-chassis.camel.yaml", description: "Credit allocation core transaction processor" },
+                    { id: "xslt-visualizer", name: "08-xslt-visualizer.camel.yaml", description: "Web-view visual transformation route" }
+                ];
+                renderCustomAssets();
+            }
+        }
+
+        function renderCustomAssets() {
+            const routesListEl = document.getElementById('workspace-routes-list');
+            routesListEl.innerHTML = '';
+            
+            const menuRoutesEl = document.getElementById('menu-custom-routes-container');
+            menuRoutesEl.innerHTML = '';
+
+            customRoutesList.forEach(route => {
+                const item = document.createElement('div');
+                item.className = 'comp-item';
+                item.draggable = true;
+                item.innerHTML = `<div class="comp-icon icon-custom"></div> ${route.id}`;
+                item.addEventListener('dragstart', (e) => handleDragStart(e, 'custom', route.id));
+                routesListEl.appendChild(item);
+
+                const menuItem = document.createElement('div');
+                menuItem.className = 'menu-item';
+                menuItem.textContent = route.id;
+                menuItem.onclick = () => addNodeFromMenu('custom', route.id);
+                menuRoutesEl.appendChild(menuItem);
+            });
+        }
+
+        // Drag and Drop implementation
+        function handleDragStart(e, type, customId = '') {
+            e.dataTransfer.setData('node-type', type);
+            e.dataTransfer.setData('custom-id', customId);
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const localPos = screenToLocal(e.clientX - 100, e.clientY - 25);
+            const type = e.dataTransfer.getData('node-type');
+            const customId = e.dataTransfer.getData('custom-id');
+
+            createNode(type, localPos.x, localPos.y, customId);
+        }
+
+        function addNodeFromMenu(type, customId = '') {
+            const x = parseFloat(contextMenu.dataset.posX) || 200;
+            const y = parseFloat(contextMenu.dataset.posY) || 200;
+            createNode(type, x, y, customId);
+        }
+
+        // Dynamic Silent Node Builder
+        function createNodeSilent(type, x, y, customId = '') {
+            const id = 'node_' + Math.random().toString(36).substr(2, 9);
+            let name = type.toUpperCase().replace('_', ' ');
+            let details = 'Pipeline component';
+            let props = {};
+            
+            if (type === 'timer') {
+                name = 'Timer Source';
+                details = 'Triggers route periodically';
+                props = { period: '5000' };
+            } else if (type === 'file_source') {
+                name = 'File Source';
+                details = 'Consumes incoming files';
+                props = { directory: 'src/data/input' };
+            } else if (type === 'kafka_source') {
+                name = 'Kafka Source';
+                details = 'Consumes stream topics';
+                props = { topic: 'payment-inbound' };
+            } else if (type === 'ibmmq_source') {
+                name = 'IBM MQ Source';
+                details = 'Reads message queues';
+                props = { queue: 'payment-queue' };
+            } else if (type === 'faker') {
+                name = 'Faker Source';
+                details = 'Generates mock messages';
+                props = { template: 'mt103', interval: '3' };
+            } else if (type === 'mt_to_mx') {
+                name = 'MT-MX Parser';
+                details = 'SWIFT MT to MX (Unmarshal)';
+                props = { parser: 'MT103_TO_PACS008' };
+            } else if (type === 'mx_to_mt') {
+                name = 'MX-MT Parser';
+                details = 'SWIFT MX to MT (Marshal)';
+                props = { parser: 'PACS008_TO_MT103' };
+            } else if (type === 'xslt_mapper') {
+                name = 'XSLT Transform';
+                details = 'XSLT Saxon stylesheet';
+                props = { stylesheet: 'pacs008-enrich.xslt' };
+            } else if (type === 'jslt_converter') {
+                name = 'JSLT Converter';
+                details = 'JSON-to-JSON JSLT rules';
+                props = { jslt: '{\n  "id": .id,\n  "amount": .payment.value\n}' };
+            } else if (type === 'groovy_script') {
+                name = 'Groovy Script';
+                details = 'Executes Groovy logic';
+                props = { script: 'request.body = request.body.toUpperCase();' };
+            } else if (type === 'joor_script') {
+                name = 'jOOR Compile';
+                details = 'Compiles Java on-the-fly';
+                props = { script: 'body.toString().trim()' };
+            } else if (type === 'flatpack') {
+                name = 'Flatpack Parser';
+                details = 'Parses fixed-width files';
+                props = { config: 'flatpack-schema.xml' };
+            } else if (type === 'smooks') {
+                name = 'Smooks Filter';
+                details = 'Smooks XML/EDI translation';
+                props = { config: 'smooks-config.xml' };
+            } else if (type === 'set_body') {
+                name = 'Set Body';
+                details = 'Mutates body content';
+                props = { body: '{\n  "status": "APPROVED",\n  "amount": 1000\n}' };
+            } else if (type === 'set_header') {
+                name = 'Set Header';
+                details = 'Sets request header';
+                props = { name: 'CamelAcceptHeader', value: 'application/json' };
+            } else if (type === 'choice') {
+                name = 'Choice Router';
+                details = 'Content-Based Routing';
+                props = { condition1: 'header.type == "VIP"', condition2: 'otherwise' };
+            } else if (type === 'splitter') {
+                name = 'Splitter';
+                details = 'Splits payload into items';
+                props = { expression: 'body.items' };
+            } else if (type === 'aggregator') {
+                name = 'Aggregator';
+                details = 'Aggregates message flows';
+                props = { strategy: 'GroupedExchangeAggregationStrategy', completionSize: '5' };
+            } else if (type === 'wiretap') {
+                name = 'WireTap';
+                details = 'Asynchronous audit tap';
+                props = { uri: 'direct:audit-log' };
+            } else if (type === 'log_sink') {
+                name = 'Log Sink';
+                details = 'Prints trace lines';
+                props = { logger: 'com.tessera.Log' };
+            } else if (type === 'kafka_sink') {
+                name = 'Kafka Sink';
+                details = 'Publishes event topics';
+                props = { topic: 'payment-events' };
+            } else if (type === 'ibmmq_sink') {
+                name = 'IBM MQ Sink';
+                details = 'Saves to queue';
+                props = { queue: 'payment-outbound' };
+            } else if (type === 'db_stub') {
+                name = 'MongoDB Archive';
+                details = 'Stores full document';
+                props = { collection: 'transactions' };
+            } else if (type === 'dlq') {
+                name = 'Dead Letter Queue';
+                details = 'Stores failed transfers';
+                props = { queue: 'payment-errors' };
+            } else if (type === 'custom') {
+                const route = customRoutesList.find(r => r.id === customId);
+                name = route ? route.id : customId;
+                details = route ? route.description : 'Custom workspace component';
+                props = { routeId: customId };
+            }
+            
+            const node = { id, type, name, x, y, details, properties: props };
+            nodes.push(node);
+            renderNode(node);
+            return node;
+        }
+
+        // Main Node Builder (supports EIP template groups)
+        function createNode(type, x, y, customId = '') {
+            const node = createNodeSilent(type, x, y, customId);
+            const id = node.id;
+            
+            if (type === 'splitter') {
+                setTimeout(() => {
+                    const child1 = createNodeSilent('log_sink', x + 280, y - 100);
+                    child1.name = 'Split Item A';
+                    child1.details = 'Log part A';
+                    
+                    const child2 = createNodeSilent('log_sink', x + 280, y);
+                    child2.name = 'Split Item B';
+                    child2.details = 'Log part B';
+                    
+                    const child3 = createNodeSilent('log_sink', x + 280, y + 100);
+                    child3.name = 'Split Item C';
+                    child3.details = 'Log part C';
+                    
+                    connections.push({ fromNode: id, toNode: child1.id });
+                    connections.push({ fromNode: id, toNode: child2.id });
+                    connections.push({ fromNode: id, toNode: child3.id });
+                    redrawConnections();
+                }, 50);
+            } else if (type === 'choice') {
+                setTimeout(() => {
+                    const child1 = createNodeSilent('kafka_sink', x + 280, y - 80);
+                    child1.name = 'VIP Route';
+                    child1.details = 'Priority Payments';
+                    child1.properties.topic = 'priority-orders';
+                    
+                    const child2 = createNodeSilent('db_stub', x + 280, y + 80);
+                    child2.name = 'Standard Route';
+                    child2.details = 'Archival & Store';
+                    child2.properties.collection = 'standard_payments';
+                    
+                    connections.push({ fromNode: id, toNode: child1.id });
+                    connections.push({ fromNode: id, toNode: child2.id });
+                    redrawConnections();
+                }, 50);
+            }
+            
+            selectNode(id);
+        }
+
+        // Render nodes
+        function renderNode(node) {
+            const card = document.createElement('div');
+            card.className = 'node-card';
+            card.id = node.id;
+            card.style.left = `${node.x}px`;
+            card.style.top = `${node.y}px`;
+
+            card.innerHTML = `
+                <div class="node-header">
+                    <span>${node.name}</span>
+                    <span class="node-delete-btn" onclick="deleteNode(event, '${node.id}')">&times;</span>
+                </div>
+                <div class="node-body">
+                    ${node.details}
+                </div>
+            `;
+
+            // Node Handles
+            const isSource = ['faker', 'timer', 'file_source', 'kafka_source', 'ibmmq_source'].includes(node.type);
+            const isSink = ['kafka_sink', 'ibmmq_sink', 'db_stub', 'dlq', 'log_sink'].includes(node.type);
+
+            if (!isSource) {
+                const inHandle = document.createElement('div');
+                inHandle.className = 'node-handle handle-input';
+                inHandle.dataset.nodeId = node.id;
+                inHandle.onclick = (e) => {
+                    e.stopPropagation();
+                    if (isConnecting && connectionSource && connectionSource !== node.id) {
+                        completeConnection(connectionSource, node.id);
+                    }
+                };
+                inHandle.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                });
+                card.appendChild(inHandle);
+            }
+
+            if (!isSink) {
+                const outHandle = document.createElement('div');
+                outHandle.className = 'node-handle handle-output';
+                outHandle.dataset.nodeId = node.id;
+                outHandle.onclick = (e) => {
+                    e.stopPropagation();
+                    if (!isConnecting) {
+                        startConnection(node.id, e);
+                    }
+                };
+                outHandle.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    startConnection(node.id, e);
+                });
+                card.appendChild(outHandle);
+            }
+
+            // Draggability inside visual canvas (supports Zoom offsets)
+            card.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('node-handle') || e.target.classList.contains('node-delete-btn')) return;
+                selectNode(node.id);
+                
+                const localStart = screenToLocal(e.clientX, e.clientY);
+                const offsetNodeX = localStart.x - node.x;
+                const offsetNodeY = localStart.y - node.y;
+
+                function dragMove(event) {
+                    const localCurrent = screenToLocal(event.clientX, event.clientY);
+                    node.x = localCurrent.x - offsetNodeX;
+                    node.y = localCurrent.y - offsetNodeY;
+                    card.style.left = `${node.x}px`;
+                    card.style.top = `${node.y}px`;
+                    redrawConnections();
+                }
+
+                function dragEnd() {
+                    document.removeEventListener('mousemove', dragMove);
+                    document.removeEventListener('mouseup', dragEnd);
+                }
+
+                document.addEventListener('mousemove', dragMove);
+                document.addEventListener('mouseup', dragEnd);
+            });
+
+            nodesContainer.appendChild(card);
+        }
+
+        function deleteNode(e, nodeId) {
+            e.stopPropagation();
+            connections = connections.filter(c => c.fromNode !== nodeId && c.toNode !== nodeId);
+            nodes = nodes.filter(n => n.id !== nodeId);
+            
+            const card = document.getElementById(nodeId);
+            if (card) card.remove();
+            
+            if (selectedNodeId === nodeId) {
+                selectedNodeId = null;
+                renderPropertiesPanel(null);
+            }
+            redrawConnections();
+        }
+
+        // Connection Handling
+        function startConnection(nodeId, e) {
+            isConnecting = true;
+            connectionSource = nodeId;
+            canvasArea.style.cursor = 'crosshair';
+            dragStarted = false;
+            if (e) {
+                dragStartPos = { x: e.clientX, y: e.clientY };
+            } else {
+                dragStartPos = { x: 0, y: 0 };
+            }
+        }
+
+        function completeConnection(fromNodeId, toNodeId) {
+            const exists = connections.some(c => c.fromNode === fromNodeId && c.toNode === toNodeId);
+            if (!exists) {
+                connections.push({ fromNode: fromNodeId, toNode: toNodeId });
+                redrawConnections();
+                renderPropertiesPanel(nodes.find(n => n.id === selectedNodeId));
+            }
+            cancelConnection();
+        }
+
+        function cancelConnection() {
+            isConnecting = false;
+            connectionSource = null;
+            dragStarted = false;
+            canvasArea.style.cursor = 'default';
+            const tempLine = document.getElementById('temp-connection-line');
+            if (tempLine) tempLine.remove();
+            if (lastHighlightedHandle) {
+                lastHighlightedHandle.classList.remove('highlight-target');
+                lastHighlightedHandle = null;
+            }
+        }
+
+        canvasArea.addEventListener('mousemove', (e) => {
+            if (isConnecting && connectionSource) {
+                const fromNode = nodes.find(n => n.id === connectionSource);
+                if (fromNode) {
+                    const rect = canvasArea.getBoundingClientRect();
+                    const startX = fromNode.x + 200;
+                    const startY = fromNode.y + 35;
+                    
+                    const localPos = screenToLocal(e.clientX, e.clientY);
+                    const mouseX = localPos.x;
+                    const mouseY = localPos.y;
+
+                    const dist = Math.hypot(e.clientX - dragStartPos.x, e.clientY - dragStartPos.y);
+                    if (dist > 5) {
+                        dragStarted = true;
+                    }
+
+                    const controlOffset = Math.abs(mouseX - startX) * 0.5;
+
+                    let tempLine = document.getElementById('temp-connection-line');
+                    if (!tempLine) {
+                        tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        tempLine.setAttribute('id', 'temp-connection-line');
+                        tempLine.setAttribute('fill', 'none');
+                        tempLine.setAttribute('stroke', 'var(--accent-cyan)');
+                        tempLine.setAttribute('stroke-width', '3');
+                        tempLine.setAttribute('stroke-dasharray', '4 4');
+                        connectionsSvg.appendChild(tempLine);
+                    }
+                    const d = `M ${startX} ${startY} C ${startX + controlOffset} ${startY}, ${mouseX - controlOffset} ${mouseY}, ${mouseX} ${mouseY}`;
+                    tempLine.setAttribute('d', d);
+
+                    // Dynamic highlight
+                    const elem = document.elementFromPoint(e.clientX, e.clientY);
+                    let targetHandle = null;
+                    if (elem) {
+                        if (elem.classList.contains('handle-input')) {
+                            targetHandle = elem;
+                        } else {
+                            const nodeCard = elem.closest('.node-card');
+                            if (nodeCard) {
+                                const targetNode = nodes.find(n => n.id === nodeCard.id);
+                                if (targetNode && !['faker', 'timer', 'file_source', 'kafka_source', 'ibmmq_source'].includes(targetNode.type) && nodeCard.id !== connectionSource) {
+                                    targetHandle = nodeCard.querySelector('.handle-input');
+                                }
+                            }
+                        }
+                    }
+
+                    if (targetHandle) {
+                        if (lastHighlightedHandle !== targetHandle) {
+                            if (lastHighlightedHandle) {
+                                lastHighlightedHandle.classList.remove('highlight-target');
+                            }
+                            targetHandle.classList.add('highlight-target');
+                            lastHighlightedHandle = targetHandle;
+                        }
+                    } else {
+                        if (lastHighlightedHandle) {
+                            lastHighlightedHandle.classList.remove('highlight-target');
+                            lastHighlightedHandle = null;
+                        }
+                    }
+                }
+            }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (isConnecting && connectionSource) {
+                const elem = document.elementFromPoint(e.clientX, e.clientY);
+                if (elem) {
+                    if (elem.classList.contains('handle-input')) {
+                        const targetNodeId = elem.dataset.nodeId;
+                        if (targetNodeId && targetNodeId !== connectionSource) {
+                            completeConnection(connectionSource, targetNodeId);
+                            return;
+                        }
+                    }
+                    
+                    const nodeCard = elem.closest('.node-card');
+                    if (nodeCard) {
+                        const targetNodeId = nodeCard.id;
+                        const targetNode = nodes.find(n => n.id === targetNodeId);
+                        if (targetNode && !['faker', 'timer', 'file_source', 'kafka_source', 'ibmmq_source'].includes(targetNode.type) && targetNodeId !== connectionSource) {
+                            completeConnection(connectionSource, targetNodeId);
+                            return;
+                        }
+                    }
+                }
+                
+                if (dragStarted) {
+                    cancelConnection();
+                }
+            }
+        });
+
+        canvasArea.addEventListener('mousedown', (e) => {
+            if (isConnecting && e.target === canvasArea) {
+                cancelConnection();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isConnecting) {
+                cancelConnection();
+            }
+        });
+
+        // Render Bezier Curves
+        function redrawConnections() {
+            connectionsSvg.innerHTML = '';
+
+            connections.forEach(conn => {
+                const fromNode = nodes.find(n => n.id === conn.fromNode);
+                const toNode = nodes.find(n => n.id === conn.toNode);
+
+                if (fromNode && toNode) {
+                    const startX = fromNode.x + 200;
+                    const startY = fromNode.y + 35;
+                    const endX = toNode.x;
+                    const endY = toNode.y + 35;
+
+                    const controlOffset = Math.abs(endX - startX) * 0.5;
+
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    const d = `M ${startX} ${startY} C ${startX + controlOffset} ${startY}, ${endX - controlOffset} ${endY}, ${endX} ${endY}`;
+                    path.setAttribute('d', d);
+                    path.setAttribute('class', `connection-line ${isSimulating ? 'active' : ''}`);
+                    path.style.pointerEvents = 'none';
+
+                    const interactPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    interactPath.setAttribute('d', d);
+                    interactPath.setAttribute('fill', 'none');
+                    interactPath.setAttribute('stroke', 'rgba(0, 0, 0, 0.01)');
+                    interactPath.setAttribute('stroke-width', '16');
+                    interactPath.style.cursor = 'pointer';
+                    interactPath.style.pointerEvents = 'stroke';
+
+                    interactPath.addEventListener('mouseenter', () => {
+                        path.style.stroke = 'var(--accent-cyan)';
+                        path.style.strokeWidth = '5px';
+                    });
+                    interactPath.addEventListener('mouseleave', () => {
+                        path.style.stroke = '';
+                        path.style.strokeWidth = '';
+                    });
+
+                    interactPath.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        connections = connections.filter(c => c !== conn);
+                        redrawConnections();
+                        renderPropertiesPanel(nodes.find(n => n.id === selectedNodeId));
+                    });
+
+                    connectionsSvg.appendChild(path);
+                    connectionsSvg.appendChild(interactPath);
+                }
+            });
+        }
+
+        // Select Node
+        function selectNode(id) {
+            selectedNodeId = id;
+            document.querySelectorAll('.node-card').forEach(c => c.classList.remove('selected'));
+            const card = document.getElementById(id);
+            if (card) card.classList.add('selected');
+
+            const node = nodes.find(n => n.id === id);
+            renderPropertiesPanel(node);
+        }
+
+        function addConnectionFromPanel() {
+            const fromId = document.getElementById('conn-from-select').value;
+            const toId = document.getElementById('conn-to-select').value;
+
+            if (!fromId || !toId) {
+                alert("Please select both a source and target component!");
+                return;
+            }
+
+            if (fromId === toId) {
+                alert("Cannot connect a component to itself!");
+                return;
+            }
+
+            const exists = connections.some(c => c.fromNode === fromId && c.toNode === toId);
+            if (exists) {
+                alert("These components are already connected!");
+                return;
+            }
+
+            connections.push({ fromNode: fromId, toNode: toId });
+            redrawConnections();
+            renderPropertiesPanel(nodes.find(n => n.id === selectedNodeId));
+        }
+
+        function deleteConnectionFromPanel(idx) {
+            connections.splice(idx, 1);
+            redrawConnections();
+            renderPropertiesPanel(nodes.find(n => n.id === selectedNodeId));
+        }
+
+        // Properties Settings Panel Renderer
+        function renderPropertiesPanel(node) {
+            let html = '';
+            if (propertiesEditor) {
+                propertiesEditor.dispose();
+                propertiesEditor = null;
+            }
+            
+            if (node) {
+                html += `
+                    <div style="margin-bottom: 24px;">
+                        <h4 style="font-size: 13px; font-weight: 600; color: var(--accent-purple); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Node Settings</h4>
+                        <div class="form-group">
+                            <label>Node ID</label>
+                            <input class="form-control" type="text" value="${node.id}" disabled />
+                        </div>
+                        <div class="form-group">
+                            <label>Node Name</label>
+                            <input class="form-control" type="text" value="${node.name}" oninput="updateNodeName('${node.id}', this.value)" />
+                        </div>
+                `;
+                
+                let hasCodeEditor = false;
+                let codeValue = '';
+                let codeLanguage = 'plaintext';
+                let codeKey = '';
+
+                if (node.type === 'timer') {
+                    html += `
+                        <div class="form-group">
+                            <label>Period (ms)</label>
+                            <input class="form-control" type="number" value="${node.properties.period || 5000}" oninput="updateProperty('${node.id}', 'period', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'file_source') {
+                    html += `
+                        <div class="form-group">
+                            <label>Source Directory</label>
+                            <input class="form-control" type="text" value="${node.properties.directory || 'src/data/input'}" oninput="updateProperty('${node.id}', 'directory', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'kafka_source') {
+                    html += `
+                        <div class="form-group">
+                            <label>Kafka Topic</label>
+                            <input class="form-control" type="text" value="${node.properties.topic || 'payment-inbound'}" oninput="updateProperty('${node.id}', 'topic', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'ibmmq_source') {
+                    html += `
+                        <div class="form-group">
+                            <label>Queue Name</label>
+                            <input class="form-control" type="text" value="${node.properties.queue || 'payment-queue'}" oninput="updateProperty('${node.id}', 'queue', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'faker') {
+                    html += `
+                        <div class="form-group">
+                            <label>Faker Template Schema</label>
+                            <select class="form-control" onchange="updateProperty('${node.id}', 'template', this.value)">
+                                <option value="mt103" ${node.properties.template === 'mt103' ? 'selected' : ''}>MT103 Standard Message</option>
+                                <option value="pacs008" ${node.properties.template === 'pacs008' ? 'selected' : ''}>pacs.008 (ISO 20022)</option>
+                                <option value="pain001" ${node.properties.template === 'pain001' ? 'selected' : ''}>pain.001 (Credit Transfer)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Interval (seconds)</label>
+                            <input class="form-control" type="number" min="1" max="10" value="${node.properties.interval || 3}" oninput="updateProperty('${node.id}', 'interval', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'mt_to_mx') {
+                    html += `
+                        <div class="form-group">
+                            <label>Parsing Standard</label>
+                            <select class="form-control" onchange="updateProperty('${node.id}', 'parser', this.value)">
+                                <option value="MT103_TO_PACS008" ${node.properties.parser === 'MT103_TO_PACS008' ? 'selected' : ''}>MT103 to pacs.008.001.08</option>
+                                <option value="MT202_TO_PACS009" ${node.properties.parser === 'MT202_TO_PACS009' ? 'selected' : ''}>MT202 to pacs.009.001.08</option>
+                            </select>
+                        </div>
+                    `;
+                } else if (node.type === 'mx_to_mt') {
+                    html += `
+                        <div class="form-group">
+                            <label>Parsing Standard</label>
+                            <select class="form-control" onchange="updateProperty('${node.id}', 'parser', this.value)">
+                                <option value="PACS008_TO_MT103" ${node.properties.parser === 'PACS008_TO_MT103' ? 'selected' : ''}>pacs.008 to MT103</option>
+                                <option value="PACS009_TO_MT202" ${node.properties.parser === 'PACS009_TO_MT202' ? 'selected' : ''}>pacs.009 to MT202</option>
+                            </select>
+                        </div>
+                    `;
+                } else if (node.type === 'xslt_mapper') {
+                    html += `
+                        <div class="form-group">
+                            <label>XSLT Stylesheet File</label>
+                            <input class="form-control" type="text" value="${node.properties.stylesheet || 'enrich.xslt'}" oninput="updateProperty('${node.id}', 'stylesheet', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'jslt_converter') {
+                    hasCodeEditor = true;
+                    codeKey = 'jslt';
+                    codeLanguage = 'json';
+                    codeValue = node.properties.jslt || '{\n  "id": .id,\n  "amount": .payment.value\n}';
+                    html += `
+                        <div class="form-group">
+                            <label>JSLT Transform Expression</label>
+                            <div id="properties-monaco-editor" style="width: 100%; height: 180px; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px;"></div>
+                        </div>
+                    `;
+                } else if (node.type === 'groovy_script') {
+                    hasCodeEditor = true;
+                    codeKey = 'script';
+                    codeLanguage = 'groovy';
+                    codeValue = node.properties.script || 'request.body = request.body.toUpperCase();';
+                    html += `
+                        <div class="form-group">
+                            <label>Groovy Script Logic</label>
+                            <div id="properties-monaco-editor" style="width: 100%; height: 180px; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px;"></div>
+                        </div>
+                    `;
+                } else if (node.type === 'joor_script') {
+                    hasCodeEditor = true;
+                    codeKey = 'script';
+                    codeLanguage = 'java';
+                    codeValue = node.properties.script || 'body.toString().trim()';
+                    html += `
+                        <div class="form-group">
+                            <label>jOOR Java Expression</label>
+                            <div id="properties-monaco-editor" style="width: 100%; height: 180px; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px;"></div>
+                        </div>
+                    `;
+                } else if (node.type === 'flatpack') {
+                    html += `
+                        <div class="form-group">
+                            <label>Flatpack Configuration File</label>
+                            <input class="form-control" type="text" value="${node.properties.config || 'flatpack-schema.xml'}" oninput="updateProperty('${node.id}', 'config', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'smooks') {
+                    html += `
+                        <div class="form-group">
+                            <label>Smooks Configuration File</label>
+                            <input class="form-control" type="text" value="${node.properties.config || 'smooks-config.xml'}" oninput="updateProperty('${node.id}', 'config', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'set_body') {
+                    hasCodeEditor = true;
+                    codeKey = 'body';
+                    codeLanguage = 'json';
+                    codeValue = node.properties.body || '{\n  "status": "APPROVED",\n  "amount": 1000\n}';
+                    html += `
+                        <div class="form-group">
+                            <label>New Message Body Content</label>
+                            <div id="properties-monaco-editor" style="width: 100%; height: 180px; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px;"></div>
+                        </div>
+                    `;
+                } else if (node.type === 'set_header') {
+                    html += `
+                        <div class="form-group">
+                            <label>Header Name</label>
+                            <input class="form-control" type="text" value="${node.properties.name || ''}" oninput="updateProperty('${node.id}', 'name', this.value)" />
+                        </div>
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Header Value</label>
+                            <input class="form-control" type="text" value="${node.properties.value || ''}" oninput="updateProperty('${node.id}', 'value', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'choice') {
+                    html += `
+                        <div class="form-group">
+                            <label>Condition 1 (When)</label>
+                            <input class="form-control" type="text" value="${node.properties.condition1 || 'header.type == \"VIP\"'}" oninput="updateProperty('${node.id}', 'condition1', this.value)" />
+                        </div>
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Condition 2 (Otherwise)</label>
+                            <input class="form-control" type="text" value="${node.properties.condition2 || 'otherwise'}" oninput="updateProperty('${node.id}', 'condition2', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'splitter') {
+                    html += `
+                        <div class="form-group">
+                            <label>Split Expression</label>
+                            <input class="form-control" type="text" value="${node.properties.expression || 'body.items'}" oninput="updateProperty('${node.id}', 'expression', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'aggregator') {
+                    html += `
+                        <div class="form-group">
+                            <label>Aggregation Strategy</label>
+                            <input class="form-control" type="text" value="${node.properties.strategy || 'GroupedExchangeAggregationStrategy'}" oninput="updateProperty('${node.id}', 'strategy', this.value)" />
+                        </div>
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Completion Size</label>
+                            <input class="form-control" type="number" value="${node.properties.completionSize || 5}" oninput="updateProperty('${node.id}', 'completionSize', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'wiretap') {
+                    html += `
+                        <div class="form-group">
+                            <label>WireTap Target URI</label>
+                            <input class="form-control" type="text" value="${node.properties.uri || 'direct:audit-log'}" oninput="updateProperty('${node.id}', 'uri', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'log_sink') {
+                    html += `
+                        <div class="form-group">
+                            <label>Logger Category</label>
+                            <input class="form-control" type="text" value="${node.properties.logger || 'com.tessera.Log'}" oninput="updateProperty('${node.id}', 'logger', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'kafka_sink') {
+                    html += `
+                        <div class="form-group">
+                            <label>Kafka Output Topic</label>
+                            <input class="form-control" type="text" value="${node.properties.topic || ''}" oninput="updateProperty('${node.id}', 'topic', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'ibmmq_sink') {
+                    html += `
+                        <div class="form-group">
+                            <label>Queue Name</label>
+                            <input class="form-control" type="text" value="${node.properties.queue || ''}" oninput="updateProperty('${node.id}', 'queue', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'db_stub') {
+                    html += `
+                        <div class="form-group">
+                            <label>Target MongoDB Collection</label>
+                            <input class="form-control" type="text" value="${node.properties.collection || ''}" oninput="updateProperty('${node.id}', 'collection', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'dlq') {
+                    html += `
+                        <div class="form-group">
+                            <label>Dead Letter JMS Queue</label>
+                            <input class="form-control" type="text" value="${node.properties.queue || ''}" oninput="updateProperty('${node.id}', 'queue', this.value)" />
+                        </div>
+                    `;
+                }
+                
+                html += `</div>`;
+            }
+
+            // Connection Manager Section
+            html += `
+                <div style="border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px;">
+                    <h4 style="font-size: 13px; font-weight: 600; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; font-family: var(--font-main);">Connections Manager</h4>
+                    
+                    <div class="form-group">
+                        <label>From Node (Source)</label>
+                        <select class="form-control" id="conn-from-select">
+                            <option value="">-- Select Source Node --</option>
+                            ${nodes.filter(n => !['kafka_sink', 'ibmmq_sink', 'db_stub', 'dlq', 'log_sink'].includes(n.type)).map(n => `<option value="${n.id}">${n.name} (${n.id})</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 8px;">
+                        <label>To Node (Target)</label>
+                        <select class="form-control" id="conn-to-select">
+                            <option value="">-- Select Target Node --</option>
+                            ${nodes.filter(n => !['faker', 'timer', 'file_source', 'kafka_source', 'ibmmq_source'].includes(n.type)).map(n => `<option value="${n.id}">${n.name} (${n.id})</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <button class="btn btn-outline" style="width: 100%; margin-top: 12px; justify-content: center;" onclick="addConnectionFromPanel()">
+                        Connect Components
+                    </button>
+
+                    <div style="margin-top: 20px;">
+                        <label style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 600;">Active Connections</label>
+                        <div id="panel-connections-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; max-height: 200px; overflow-y: auto;">
+                            ${connections.length === 0 ? `<div style="font-size: 11px; color: var(--text-secondary); font-style: italic;">No active connections.</div>` : ''}
+                            ${connections.map((c, idx) => {
+                                const fromNode = nodes.find(n => n.id === c.fromNode);
+                                const toNode = nodes.find(n => n.id === c.toNode);
+                                return `
+                                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-node); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; font-size: 11px;">
+                                        <span>${fromNode ? fromNode.name : 'Unknown'} ➔ ${toNode ? toNode.name : 'Unknown'}</span>
+                                        <span class="node-delete-btn" style="font-size: 12px;" onclick="deleteConnectionFromPanel(${idx})">&times;</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            configBody.innerHTML = html;
+
+            // Instantiate properties Monaco code editor if present
+            if (node && hasCodeEditor) {
+                setTimeout(() => {
+                    const container = document.getElementById('properties-monaco-editor');
+                    if (container && typeof monaco !== 'undefined') {
+                        propertiesEditor = monaco.editor.create(container, {
+                            value: codeValue,
+                            language: codeLanguage,
+                            theme: 'vs-dark',
+                            minimap: { enabled: false },
+                            fontSize: 11,
+                            lineHeight: 16,
+                            fontFamily: 'monospace',
+                            scrollbar: {
+                                verticalScrollbarSize: 6,
+                                horizontalScrollbarSize: 6
+                            }
+                        });
+                        
+                        propertiesEditor.onDidChangeModelContent(() => {
+                            const val = propertiesEditor.getValue();
+                            updateProperty(node.id, codeKey, val);
+                        });
+                    }
+                }, 50);
+            }
+        }
+
+        function updateNodeName(id, val) {
+            const node = nodes.find(n => n.id === id);
+            if (node) {
+                node.name = val;
+                const header = document.querySelector(`#${id} .node-header span`);
+                if (header) header.textContent = val;
+            }
+        }
+
+        function updateProperty(id, key, val) {
+            const node = nodes.find(n => n.id === id);
+            if (node) {
+                node.properties[key] = val;
+            }
+        }
+
+        function clearCanvas() {
+            nodes = [];
+            connections = [];
+            selectedNodeId = null;
+            nodesContainer.innerHTML = '';
+            redrawConnections();
+            renderPropertiesPanel(null);
+            addLog("Canvas cleared.");
+        }
+
+        // Add Log entry to bottom console
+        function addLog(message) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString();
+            entry.innerHTML = `<span class="log-time">[${time}]</span><span class="log-level-info">[INFO]</span> ${message}`;
+            logList.appendChild(entry);
+            logList.scrollTop = logList.scrollHeight;
+        }
+
+        // Live Pipeline simulation
+        function startPipelineSimulation() {
+            const source = nodes.find(n => ['faker', 'timer', 'file_source', 'kafka_source', 'ibmmq_source'].includes(n.type));
+            if (!source) {
+                alert("Please add at least one Source node to kickstart the pipeline simulation!");
+                return;
+            }
+
+            isSimulating = true;
+            document.getElementById('play-btn').disabled = true;
+            document.getElementById('stop-btn').disabled = false;
+            redrawConnections();
+            addLog("Simulation engine started.");
+
+            let msgId = 1000;
+            const intervalSec = parseFloat(source.properties.interval || 3);
+            simulationInterval = setInterval(() => {
+                msgId++;
+                simulateTransactionCycle(msgId);
+            }, intervalSec * 1000);
+
+            simulateTransactionCycle(msgId);
+        }
+
+        function stopPipelineSimulation() {
+            isSimulating = false;
+            clearInterval(simulationInterval);
+            document.getElementById('play-btn').disabled = false;
+            document.getElementById('stop-btn').disabled = true;
+            redrawConnections();
+            
+            document.querySelectorAll('.node-card').forEach(c => c.classList.remove('active-running'));
+            addLog("Simulation engine stopped.");
+        }
+
+        // Single execution path cycle
+        function simulateTransactionCycle(msgId) {
+            const source = nodes.find(n => ['faker', 'timer', 'file_source', 'kafka_source', 'ibmmq_source'].includes(n.type));
+            if (!source) return;
+
+            let payloads = {};
+            const uuid = 'msg-' + Math.random().toString(36).substr(2, 9);
+            const timeStr = new Date().toISOString().split('T')[0].replace(/-/g, '').substring(2);
+            
+            let mockRaw = '';
+            if (source.type === 'faker') {
+                const schema = source.properties.template || 'mt103';
+                if (schema === 'mt103') {
+                    mockRaw = `{1:F01DEUTDEDBFRAXXXX0000000000}{2:I103BARCGB22XXXXN}{3:{108:MSG-${uuid}}}\n` +
+                              `:20:${uuid}\n` +
+                              `:23B:CRED\n` +
+                              `:32A:${timeStr}USD78500,20\n` +
+                              `:50K:/Horizon Venture Group\n` +
+                              `:59:/Blackstone Financial Services\n` +
+                              `-}`;
+                } else if (schema === 'pacs008') {
+                    mockRaw = `<?xml version="1.0" encoding="UTF-8"?>\n<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">\n` +
+                              `  <FIToFICstmrCdtTrf>\n` +
+                              `    <GrpHdr>\n` +
+                              `      <MsgId>${uuid}</MsgId>\n` +
+                              `      <CreDtTm>${new Date().toISOString()}</CreDtTm>\n` +
+                              `    </GrpHdr>\n` +
+                              `    <CdtTrfTxInf>\n` +
+                              `      <IntrBkSttlmAmt Ccy="USD">78500.20</IntrBkSttlmAmt>\n` +
+                              `      <Dbtr><Nm>Horizon Venture Group</Nm></Dbtr>\n` +
+                              `      <Cdtr><Nm>Blackstone Financial Services</Nm></Cdtr>\n` +
+                              `    </CdtTrfTxInf>\n` +
+                              `  </FIToFICstmrCdtTrf>\n</Document>`;
+                } else {
+                    mockRaw = `<?xml version="1.0" encoding="UTF-8"?>\n<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.08">\n` +
+                              `  <CstmrCdtTrfInitn>\n` +
+                              `    <GrpHdr>\n` +
+                              `      <MsgId>${uuid}</MsgId>\n` +
+                              `    </GrpHdr>\n` +
+                              `  </CstmrCdtTrfInitn>\n</Document>`;
+                }
+            } else {
+                mockRaw = `{\n  "msgId": "${uuid}",\n  "timestamp": "${new Date().toISOString()}",\n  "source": "${source.name}"\n}`;
+            }
+
+            payloads[source.id] = mockRaw;
+            animateNodeActivation(source.id);
+            addLog(`[${source.name}] Dispatched message ID: ${uuid}`);
+
+            let stepDelay = 0;
+
+            function processNextStep(currentNodeId) {
+                const nextConnections = connections.filter(c => c.fromNode === currentNodeId);
+                
+                nextConnections.forEach(conn => {
+                    const toNode = nodes.find(n => n.id === conn.toNode);
+                    if (!toNode) return;
+
+                    stepDelay += 800;
+
+                    setTimeout(() => {
+                        if (!isSimulating) return;
+
+                        animateNodeActivation(toNode.id);
+                        animateFlowAlongConnection(conn);
+
+                        let prevPayload = payloads[currentNodeId];
+                        let nextPayload = prevPayload;
+
+                        if (toNode.type === 'mt_to_mx') {
+                            addLog(`[MT-MX Parser] Processing raw MT103 Swift text message`);
+                            nextPayload = `<?xml version="1.0" encoding="UTF-8"?>\n<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">\n` +
+                                          `  <FIToFICstmrCdtTrf>\n` +
+                                          `    <GrpHdr>\n` +
+                                          `      <MsgId>${uuid}</MsgId>\n` +
+                                          `    </GrpHdr>\n` +
+                                          `  </FIToFICstmrCdtTrf>\n</Document>`;
+                        } else if (toNode.type === 'mx_to_mt') {
+                            addLog(`[MX-MT Parser] Marshaling ISO 20022 Pacs008 to MT103 text`);
+                            nextPayload = `{1:F01DEUTDEDBFRAXXXX0000000000}{2:I103BARCGB22XXXXN}\n:20:${uuid}\n-}`;
+                        } else if (toNode.type === 'xslt_mapper') {
+                            addLog(`[XSLT Saxon] Transforming message structure using: ${toNode.properties.stylesheet || 'default.xslt'}`);
+                            nextPayload = prevPayload.replace('<FIToFICstmrCdtTrf>', '<FIToFICstmrCdtTrf enriched="true">');
+                        } else if (toNode.type === 'jslt_converter') {
+                            addLog(`[JSLT Converter] Transforming JSON tags via JSLT stylesheet`);
+                            nextPayload = JSON.stringify({ messageId: uuid, status: "TRANSLATED_VIA_JSLT" }, null, 2);
+                        } else if (toNode.type === 'groovy_script') {
+                            addLog(`[Groovy Script] Executed Groovy transformation`);
+                            nextPayload = prevPayload + "\n// Processed by Groovy Script";
+                        } else if (toNode.type === 'joor_script') {
+                            addLog(`[jOOR Compile] Evaluated dynamic compiled Java expression`);
+                            nextPayload = prevPayload + "\n// Processed by jOOR Expression";
+                        } else if (toNode.type === 'flatpack') {
+                            addLog(`[Flatpack Parser] Parsing fixed-width payload`);
+                            nextPayload = JSON.stringify({ record: "flatpack-parsed-record", id: uuid }, null, 2);
+                        } else if (toNode.type === 'smooks') {
+                            addLog(`[Smooks Filter] Applied Smooks EDI XML mappings`);
+                            nextPayload = prevPayload + "\n<!-- Smooks EDI Enriched -->";
+                        } else if (toNode.type === 'set_body') {
+                            addLog(`[Set Body] Mutated body content`);
+                            nextPayload = toNode.properties.body || prevPayload;
+                        } else if (toNode.type === 'set_header') {
+                            addLog(`[Set Header] Injected header: ${toNode.properties.name || 'Accept'}`);
+                            nextPayload = prevPayload;
+                        } else if (toNode.type === 'choice') {
+                            addLog(`[Choice Router] Routing message along branches`);
+                            nextPayload = prevPayload;
+                        } else if (toNode.type === 'splitter') {
+                            addLog(`[Splitter] Splitting payload`);
+                            nextPayload = prevPayload;
+                        } else if (toNode.type === 'aggregator') {
+                            addLog(`[Aggregator] Combined payloads (completion size: ${toNode.properties.completionSize || 5})`);
+                            nextPayload = prevPayload;
+                        } else if (toNode.type === 'wiretap') {
+                            addLog(`[WireTap] Tapped message to: ${toNode.properties.uri || 'direct:audit-log'}`);
+                            nextPayload = prevPayload;
+                        } else if (toNode.type === 'log_sink') {
+                            addLog(`[Log Sink] Logged message payload`);
+                            nextPayload = prevPayload;
+                        } else if (toNode.type === 'kafka_sink') {
+                            addLog(`[Kafka Sink] Dispatched payload to Kafka topic: ${toNode.properties.topic || 'payment-events'}`);
+                            nextPayload = `Topic: ${toNode.properties.topic || 'payment-events'}\n\n${prevPayload}`;
+                        } else if (toNode.type === 'ibmmq_sink') {
+                            addLog(`[IBM MQ Sink] Saved message to queue: ${toNode.properties.queue || 'payment-out'}`);
+                            nextPayload = `Queue: ${toNode.properties.queue || 'payment-out'}\n\n${prevPayload}`;
+                        } else if (toNode.type === 'db_stub') {
+                            addLog(`[MongoDB] Archiving document in: ${toNode.properties.collection || 'transactions'}`);
+                            nextPayload = `Collection: ${toNode.properties.collection || 'transactions'}\n\n${prevPayload}`;
+                        } else if (toNode.type === 'dlq') {
+                            addLog(`[Dead Letter Queue] Diverted failed payload to queue: ${toNode.properties.queue || 'payment-errors'}`);
+                            nextPayload = `JMSMessageID: DLQ-${Math.floor(Math.random()*90000)}\n\n${prevPayload}`;
+                        }
+
+                        payloads[toNode.id] = nextPayload;
+                        tracePayloads = payloads;
+                        updatePayloadInspector();
+
+                        processNextStep(toNode.id);
+                    }, stepDelay);
+                });
+            }
+
+            processNextStep(source.id);
+        }
+
+        function animateNodeActivation(nodeId) {
+            const card = document.getElementById(nodeId);
+            if (card) {
+                card.classList.add('active-running');
+                setTimeout(() => {
+                    card.classList.remove('active-running');
+                }, 1200);
+            }
+        }
+
+        function animateFlowAlongConnection(conn) {
+            const fromNode = nodes.find(n => n.id === conn.fromNode);
+            const toNode = nodes.find(n => n.id === conn.toNode);
+
+            if (fromNode && toNode) {
+                const startX = fromNode.x + 200;
+                const startY = fromNode.y + 35;
+                const endX = toNode.x;
+                const endY = toNode.y + 35;
+                const controlOffset = Math.abs(endX - startX) * 0.5;
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('r', '6');
+                circle.setAttribute('class', 'connection-flow-particle');
+
+                const pathId = `path_${Math.random().toString(36).substr(2, 9)}`;
+                const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const d = `M ${startX} ${startY} C ${startX + controlOffset} ${startY}, ${endX - controlOffset} ${endY}, ${endX} ${endY}`;
+                tempPath.setAttribute('d', d);
+                tempPath.setAttribute('id', pathId);
+                tempPath.setAttribute('fill', 'none');
+                tempPath.style.display = 'none';
+
+                const animateMotion = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+                animateMotion.setAttribute('dur', '0.8s');
+                animateMotion.setAttribute('repeatCount', '1');
+                animateMotion.setAttribute('fill', 'freeze');
+
+                const mpath = document.createElementNS('http://www.w3.org/2000/svg', 'mpath');
+                mpath.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${pathId}`);
+
+                animateMotion.appendChild(mpath);
+                circle.appendChild(animateMotion);
+                
+                connectionsSvg.appendChild(tempPath);
+                connectionsSvg.appendChild(circle);
+
+                animateMotion.beginElement();
+
+                setTimeout(() => {
+                    circle.remove();
+                    tempPath.remove();
+                }, 850);
+            }
+        }
+
+        function updatePayloadInspector() {
+            inspectorTabs.innerHTML = '';
+            let activeTabId = null;
+
+            const nodeIds = Object.keys(tracePayloads);
+            nodeIds.forEach((nodeId, idx) => {
+                const node = nodes.find(n => n.id === nodeId);
+                if (node) {
+                    const btn = document.createElement('button');
+                    btn.className = `tab-btn ${idx === nodeIds.length - 1 ? 'active' : ''}`;
+                    btn.textContent = node.name;
+                    btn.onclick = () => {
+                        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        displayPayloadText(tracePayloads[nodeId]);
+                    };
+                    inspectorTabs.appendChild(btn);
+                    if (idx === nodeIds.length - 1) {
+                        activeTabId = nodeId;
+                    }
+                }
+            });
+
+            if (activeTabId) {
+                displayPayloadText(tracePayloads[activeTabId]);
+            }
+        }
+
+        function displayPayloadText(text) {
+            let escaped = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            escaped = escaped
+                .replace(/(&lt;\/?[a-zA-Z0-9_\-:]+)(&gt;|\s)/g, '<span class="xml-tag">$1</span>$2')
+                .replace(/([a-zA-Z0-9_\-:]+)="([^"]*)"/g, '<span class="xml-attr">$1</span>="<span class="xml-val">$2</span>"')
+                .replace(/"([^"]+)":/g, '"<span class="json-key">$1</span>":');
+
+            tabContent.innerHTML = escaped;
+        }
+
+        // Camel YAML DSL Generation
+        function generateCamelYaml() {
+            let yaml = "";
+            yaml += "# Apache Camel YAML DSL Generated by Tessera Visual Pipeline Composer\n";
+            yaml += "# Generated at: " + new Date().toLocaleString() + "\n\n";
+            
+            const sourceNodes = nodes.filter(n => 
+                ['faker', 'timer', 'file_source', 'kafka_source', 'ibmmq_source'].includes(n.type)
+            );
+            
+            if (sourceNodes.length === 0) {
+                yaml += "- route:\n";
+                yaml += "    id: \"visual-route\"\n";
+                yaml += "    from:\n";
+                yaml += "      uri: \"timer:placeholder?period=5000\"\n";
+                yaml += "      steps:\n";
+                yaml += "        - log: \"No source node found in visual workspace\"\n";
+                return yaml;
+            }
+            
+            sourceNodes.forEach((src) => {
+                yaml += "- route:\n";
+                yaml += `    id: "visual-route-${src.id}"\n`;
+                yaml += "    from:\n";
+                
+                let fromUri = "";
+                if (src.type === 'timer') {
+                    fromUri = `timer:trigger?period=${src.properties.period || 5000}`;
+                } else if (src.type === 'file_source') {
+                    fromUri = `file:${src.properties.directory || 'src/data/input'}`;
+                } else if (src.type === 'kafka_source') {
+                    fromUri = `kafka:${src.properties.topic || 'payment-inbound'}`;
+                } else if (src.type === 'ibmmq_source') {
+                    fromUri = `ibmmq:${src.properties.queue || 'payment-queue'}`;
+                } else if (src.type === 'faker') {
+                    fromUri = `timer:faker?period=${(src.properties.interval || 3) * 1000}`;
+                }
+                
+                yaml += `      uri: "${fromUri}"\n`;
+                yaml += "      steps:\n";
+                
+                if (src.type === 'faker') {
+                    yaml += `        - setBody:\n`;
+                    yaml += `            constant: "Generating Swift MT103 mock message"\n`;
+                }
+                
+                let steps = [];
+                let visited = new Set();
+                let queue = [src.id];
+                visited.add(src.id);
+                
+                while (queue.length > 0) {
+                    const currentId = queue.shift();
+                    const nextConns = connections.filter(c => c.fromNode === currentId);
+                    
+                    if (nextConns.length > 0) {
+                        const currentNode = nodes.find(n => n.id === currentId);
+                        if (currentNode && currentNode.type === 'choice') {
+                            steps.push({ type: 'choice', node: currentNode, branches: nextConns });
+                            continue;
+                        }
+                        
+                        nextConns.forEach(conn => {
+                            const nextNode = nodes.find(n => n.id === conn.toNode);
+                            if (nextNode && !visited.has(nextNode.id)) {
+                                visited.add(nextNode.id);
+                                steps.push({ type: 'step', node: nextNode });
+                                queue.push(nextNode.id);
+                            }
+                        });
+                    }
+                }
+                
+                if (steps.length === 0) {
+                    yaml += `        - log: "Route completed without processors"\n`;
+                } else {
+                    steps.forEach(step => {
+                        const node = step.node;
+                        if (step.type === 'step') {
+                            if (node.type === 'mt_to_mx') {
+                                yaml += `        - to: "direct:unmarshal-swift-mt"\n`;
+                            } else if (node.type === 'mx_to_mt') {
+                                yaml += `        - to: "direct:marshal-swift-mx"\n`;
+                            } else if (node.type === 'xslt_mapper') {
+                                yaml += `        - to: "xslt-saxon:${node.properties.stylesheet || 'enrich.xslt'}"\n`;
+                            } else if (node.type === 'jslt_converter') {
+                                yaml += `        - to: "jslt:${node.properties.jslt ? 'custom-jslt-expression' : 'default-mapper.jslt'}"\n`;
+                            } else if (node.type === 'groovy_script') {
+                                yaml += `        - transform:\n`;
+                                yaml += `            groovy: "${(node.properties.script || '').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"\n`;
+                            } else if (node.type === 'joor_script') {
+                                yaml += `        - transform:\n`;
+                                yaml += `            joor: "${(node.properties.script || '').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"\n`;
+                            } else if (node.type === 'flatpack') {
+                                yaml += `        - to: "flatpack:fixed:${node.properties.config || 'flatpack-schema.xml'}"\n`;
+                            } else if (node.type === 'smooks') {
+                                yaml += `        - to: "smooks:${node.properties.config || 'smooks-config.xml'}"\n`;
+                            } else if (node.type === 'set_body') {
+                                yaml += `        - setBody:\n`;
+                                yaml += `            constant: "${(node.properties.body || '').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"\n`;
+                            } else if (node.type === 'set_header') {
+                                yaml += `        - setHeader:\n`;
+                                yaml += `            name: "${node.properties.name || 'header'}"\n`;
+                                yaml += `            constant: "${node.properties.value || 'value'}"\n`;
+                            } else if (node.type === 'splitter') {
+                                yaml += `        - split:\n`;
+                                yaml += `            tokenize: "${node.properties.expression || ','}"\n`;
+                            } else if (node.type === 'aggregator') {
+                                yaml += `        - aggregate:\n`;
+                                yaml += `            strategyRef: "${node.properties.strategy || 'strategy'}"\n`;
+                                yaml += `            completionSize: ${node.properties.completionSize || 5}\n`;
+                            } else if (node.type === 'wiretap') {
+                                yaml += `        - wireTap:\n`;
+                                yaml += `            uri: "${node.properties.uri || 'direct:audit-log'}"\n`;
+                            } else if (node.type === 'log_sink') {
+                                yaml += `        - to: "log:${node.properties.logger || 'com.tessera.Log'}?showAll=true"\n`;
+                            } else if (node.type === 'kafka_sink') {
+                                yaml += `        - to: "kafka:${node.properties.topic || 'payment-out'}"\n`;
+                            } else if (node.type === 'ibmmq_sink') {
+                                yaml += `        - to: "ibmmq:${node.properties.queue || 'payment-out'}"\n`;
+                            } else if (node.type === 'db_stub') {
+                                yaml += `        - to: "mongodb:db?database=tessera_audit&collection=${node.properties.collection || 'transactions'}&operation=insert"\n`;
+                            } else if (node.type === 'dlq') {
+                                yaml += `        - to: "activemq:queue:${node.properties.queue || 'payment-errors'}"\n`;
+                            }
+                        } else if (step.type === 'choice') {
+                            yaml += `        - choice:\n`;
+                            yaml += `            when:\n`;
+                            yaml += `              - simple: "\${${node.properties.condition1 || 'header.type == \"VIP\"' }}"\n`;
+                            const branches = step.branches;
+                            if (branches.length > 0) {
+                                const targetNode1 = nodes.find(n => n.id === branches[0].toNode);
+                                if (targetNode1) {
+                                    yaml += `                steps:\n`;
+                                    if (targetNode1.type === 'kafka_sink') {
+                                        yaml += `                  - to: "kafka:${targetNode1.properties.topic || 'priority-orders'}"\n`;
+                                    } else {
+                                        yaml += `                  - to: "direct:${targetNode1.name}"\n`;
+                                    }
+                                }
+                            }
+                            yaml += `            otherwise:\n`;
+                            if (branches.length > 1) {
+                                const targetNode2 = nodes.find(n => n.id === branches[1].toNode);
+                                if (targetNode2) {
+                                    yaml += `                steps:\n`;
+                                    if (targetNode2.type === 'db_stub') {
+                                        yaml += `                  - to: "mongodb:db?collection=${targetNode2.properties.collection || 'standard_payments'}"\n`;
+                                    } else {
+                                        yaml += `                  - to: "direct:${targetNode2.name}"\n`;
+                                    }
+                                }
+                            } else {
+                                yaml += `                steps:\n`;
+                                yaml += `                  - log: "Otherwise route taken"\n`;
+                            }
+                        }
+                    });
+                }
+                yaml += "\n";
+            });
+            
+            return yaml;
+        }
+
+        function openYamlPreview() {
+            const yamlContent = generateCamelYaml();
+            document.getElementById('yaml-info-nodes').textContent = nodes.length;
+            document.getElementById('yaml-info-conns').textContent = connections.length;
+            
+            document.getElementById('yaml-modal').style.display = 'flex';
+            
+            setTimeout(() => {
+                const container = document.getElementById('yaml-monaco-container');
+                if (container && typeof monaco !== 'undefined') {
+                    if (yamlEditor) {
+                        yamlEditor.dispose();
+                    }
+                    yamlEditor = monaco.editor.create(container, {
+                        value: yamlContent,
+                        language: 'yaml',
+                        theme: 'vs-dark',
+                        readOnly: true,
+                        minimap: { enabled: true },
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                        scrollbar: {
+                            verticalScrollbarSize: 8,
+                            horizontalScrollbarSize: 8
+                        }
+                    });
+                }
+            }, 50);
+        }
+
+        function closeYamlPreview() {
+            document.getElementById('yaml-modal').style.display = 'none';
+            if (yamlEditor) {
+                yamlEditor.dispose();
+                yamlEditor = null;
+            }
+        }
+
+        function downloadYamlDsl() {
+            const yamlContent = generateCamelYaml();
+            const blob = new Blob([yamlContent], { type: 'text/yaml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'camel-route.yaml';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            addLog("Downloaded route Camel YAML DSL.");
+        }
+
+        // Load templates
+        function loadTemplate(type) {
+            clearCanvas();
+            addLog(`Loading template workflow: ${type.toUpperCase()}`);
+
+            if (type === 'translation') {
+                createNode('faker', 50, 150);
+                createNode('mt_to_mx', 300, 150);
+                createNode('xslt_mapper', 550, 150);
+                createNode('jslt_converter', 800, 150);
+                createNode('kafka_sink', 1050, 150);
+
+                setTimeout(() => {
+                    connections.push({ fromNode: nodes[0].id, toNode: nodes[1].id });
+                    connections.push({ fromNode: nodes[1].id, toNode: nodes[2].id });
+                    connections.push({ fromNode: nodes[2].id, toNode: nodes[3].id });
+                    connections.push({ fromNode: nodes[3].id, toNode: nodes[4].id });
+                    redrawConnections();
+                    
+                    updateProperty(nodes[0].id, 'template', 'mt103');
+                    updateProperty(nodes[2].id, 'stylesheet', 'pacs008-enrich.xslt');
+                    updateProperty(nodes[4].id, 'topic', 'iso-pacs008-payments');
+                    selectNode(nodes[0].id);
+                }, 100);
+
+            } else if (type === 'enrichment') {
+                createNode('faker', 80, 150);
+                createNode('xslt_mapper', 350, 150);
+                createNode('db_stub', 620, 150);
+
+                setTimeout(() => {
+                    connections.push({ fromNode: nodes[0].id, toNode: nodes[1].id });
+                    connections.push({ fromNode: nodes[1].id, toNode: nodes[2].id });
+                    redrawConnections();
+
+                    updateProperty(nodes[0].id, 'template', 'pacs008');
+                    updateProperty(nodes[1].id, 'stylesheet', 'regulatory-archival.xslt');
+                    updateProperty(nodes[2].id, 'collection', 'ledger_archive');
+                    selectNode(nodes[0].id);
+                }, 100);
+
+            } else if (type === 'dlq') {
+                createNode('faker', 80, 100);
+                createNode('custom', 350, 100, 'faker-route');
+                createNode('dlq', 620, 200);
+
+                setTimeout(() => {
+                    connections.push({ fromNode: nodes[0].id, toNode: nodes[1].id });
+                    connections.push({ fromNode: nodes[1].id, toNode: nodes[2].id });
+                    redrawConnections();
+
+                    updateProperty(nodes[0].id, 'template', 'pain001');
+                    updateProperty(nodes[2].id, 'queue', 'dlq-validation-errors');
+                    selectNode(nodes[0].id);
+                }, 100);
+            }
+        }
+
+        // On Load dynamic script loader for Monaco
+        window.addEventListener('load', () => {
+            const script = document.createElement('script');
+            script.src = "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js";
+            script.onload = () => {
+                require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' }});
+                require(['vs/editor/editor.main'], function() {
+                    console.log("Monaco Editor loaded successfully for visual composer.");
+                });
+            };
+            document.head.appendChild(script);
+
+            fetchWorkspaceAssets();
+            loadTemplate('translation');
+        });
+    </script>
+</body>
+</html>/html>

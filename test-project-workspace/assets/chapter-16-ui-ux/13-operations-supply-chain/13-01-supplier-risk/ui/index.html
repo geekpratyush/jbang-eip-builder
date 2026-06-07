@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Risk & Compliance Portal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        enterprise: { bg: '#f8fafc', panel: '#ffffff', accent: '#2563eb', secondary: '#10b981' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-6 font-sans selection:bg-cyan-500 selection:text-slate-900" x-data="appController()">
+
+    <!-- Header Banner -->
+    <header class="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 text-cyan-400">
+                <i class="fas fa-truck-loading text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-white">Supplier Risk & Compliance Portal</h1>
+                <p class="text-xs text-slate-400">Pluggable integration chassis pipeline served via Apache Camel</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 rounded-full text-[10px] text-cyan-400 font-mono">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            ACTIVE TELEMETRY PIPELINE
+        </div>
+    </header>
+
+    <!-- Content Grid -->
+    <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Info & Config Card -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+                <i class="fas fa-info-circle text-cyan-400"></i> Module Description
+            </h2>
+            <p class="text-xs text-slate-300 leading-relaxed mb-6">
+                A vendor onboarding application that automates background checks, compliance documentation tracking, and financial health scoring.
+            </p>
+
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+                <i class="fas fa-sliders-h text-cyan-400"></i> Control Panel Actions
+            </h2>
+            
+            
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold mb-1">Vendor Name</label>
+                        <input x-model="vendorName" type="text" placeholder="Enter supplier name..." class="w-full p-2 bg-slate-900 border border-gray-600 rounded text-xs focus:outline-none" />
+                    </div>
+                    <button @click="verifyVendor()" class="w-full py-2 bg-indigo-500 hover:bg-indigo-600 font-bold rounded transition">
+                        Perform Automated Risk Scorecard Check
+                    </button>
+                
+        </div>
+
+        <!-- System Logs / Terminal -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex flex-col backdrop-blur-md">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-3 flex items-center justify-between">
+                <span class="flex items-center gap-2"><i class="fas fa-terminal text-cyan-400"></i> Local Event Logger</span>
+                <button @click="clearLogs()" class="text-[10px] text-slate-400 hover:text-white transition">Clear</button>
+            </h2>
+            
+            <div class="flex-1 bg-slate-950/90 border border-slate-800 rounded-xl p-4 font-mono text-[10px] text-slate-300 h-64 overflow-y-auto space-y-1.5 scrollbar-thin">
+                <template x-for="log in logs" :key="log.id">
+                    <div class="flex gap-2">
+                        <span class="text-slate-500 font-semibold" x-text="log.time"></span>
+                        <span class="px-1.5 py-0.2 rounded bg-slate-800 text-cyan-400 font-bold" x-text="log.category"></span>
+                        <span class="flex-1 text-slate-200" x-text="log.message"></span>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Telemetry Graphs -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                <i class="fas fa-chart-line text-cyan-400"></i> Live Metrics
+            </h2>
+            
+            <div class="relative h-64 w-full">
+                <canvas id="chart-telemetry"></canvas>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Inline Script Controller -->
+    <script>
+        function appController() {
+            return {
+                logs: [],
+                chart: null,
+                
+                // Demo Interactive Values
+                swiftInput: '{1:F01TESSERABXAXXX0000000000}{2:I103STARKUS33XXXXN}{4:\\n:20:TXN-94029\\n:32A:260605USD1500000,\\n:50K:WAYNE INDUSTRIES\\n:59:OCEANIC TRADE CORP\\n-}',
+                isoOutput: '',
+                rateLimitInput: 60,
+                targetRegion: 'EMEA',
+                paymentAmount: 250000,
+                vendorName: 'Stark Logistics',
+                sourceDepot: 'Depot-East-A',
+                stockLevel: 1400,
+                accessRole: 'SWIFT Core Admin',
+                regStandard: 'MIFID II',
+                requiredSkill: 'Camel Specialist',
+                allocationRate: '85%',
+                aiQuery: 'How is XSLT mapping loaded?',
+                empName: 'Alice Smith',
+                hrAction: 'Onboard',
+                ticketDesc: 'API returning timeout errors',
+                riskVal: 450000,
+
+                init() {
+                    this.addLog('SYSTEM', 'Application started. Context-Aware pipeline configured successfully.');
+                    this.initChart();
+                    
+                    // Periodic auto telemetry
+                    setInterval(() => {
+                        this.pullData();
+                    }, 4000);
+                },
+
+                addLog(category, msg) {
+                    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    const id = Math.random().toString(36).substring(2, 9);
+                    this.logs.push({ id, time, category, message: msg });
+                    // Limit log size
+                    if (this.logs.length > 50) this.logs.shift();
+                },
+
+                clearLogs() {
+                    this.logs = [];
+                },
+
+                initChart() {
+                    const ctx = document.getElementById('chart-telemetry').getContext('2d');
+                    this.chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['10s ago', '8s ago', '6s ago', '4s ago', '2s ago', 'Now'],
+                            datasets: [
+                                {
+                                    label: 'Transaction rate / sec',
+                                    data: [12, 19, 3, 5, 2, 3],
+                                    borderColor: '#06b6d4',
+                                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                                    fill: true,
+                                    tension: 0.3
+                                },
+                                {
+                                    label: 'System Load %',
+                                    data: [45, 52, 60, 48, 50, 42],
+                                    borderColor: '#a855f7',
+                                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                                    fill: true,
+                                    tension: 0.3
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: { color: '#94a3b8' }
+                                }
+                            },
+                            scales: {
+                                x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                                y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                            }
+                        }
+                    });
+                },
+
+                pullData() {
+                    const basePath = window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : window.location.pathname;
+                    fetch(basePath + '/api/telemetry')
+                        .then(res => res.json())
+                        .then(data => {
+                            if (this.chart) {
+                                this.chart.data.datasets[0].data = data.transactions;
+                                this.chart.data.datasets[1].data = data.systemLoad;
+                                this.chart.update();
+                            }
+                            this.addLog('POLL', 'Data telemetry updated successfully. Health status 100%.');
+                        })
+                        .catch(err => {
+                            // fallback
+                            const newData = Array.from({length: 6}, () => Math.floor(Math.random() * 50));
+                            const newLoad = Array.from({length: 6}, () => Math.floor(Math.random() * 100));
+                            if (this.chart) {
+                                this.chart.data.datasets[0].data = newData;
+                                this.chart.data.datasets[1].data = newLoad;
+                                this.chart.update();
+                            }
+                        });
+                },
+
+                // Custom Actions
+                triggerPipeline() {
+                    this.addLog('CHASSIS', 'Deploying Integration Pipeline YAML config...');
+                    this.postAction('Deploy Pipeline', { config: 'yaml' });
+                },
+
+                translateMessage() {
+                    this.addLog('TRANSLATE', 'Parsing Swift MT103 payload structure...');
+                    setTimeout(() => {
+                        this.isoOutput = `<?xml version="1.0" encoding="UTF-8"?>\\n<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">\\n  <FIToFICstmrCdtTrf>\\n    <GrpHdr>\\n      <MsgId>TXN-94029</MsgId>\\n      <CreDtTm>${new Date().toISOString()}</CreDtTm>\\n    </GrpHdr>\\n    <Dbtr>\\n      <Nm>WAYNE INDUSTRIES</Nm>\\n    </Dbtr>\\n    <Cdtr>\\n      <Nm>OCEANIC TRADE CORP</Nm>\\n    </Cdtr>\\n  </FIToFICstmrCdtTrf>\\n</Document>`;
+                        this.addLog('TRANSLATE', 'SWIFT payload successfully translated to pacs.008 ISO 20022 XML.');
+                    }, 800);
+                    this.postAction('Translate SWIFT', { payload: this.swiftInput });
+                },
+
+                updateRateLimit() {
+                    this.addLog('GATEWAY', 'Updating global API rate limit to ' + this.rateLimitInput + ' req/min.');
+                    this.postAction('Update Rate Limit', { limit: this.rateLimitInput });
+                },
+
+                drainDLQ() {
+                    this.addLog('EVENTSTREAM', 'Orchestrating DLQ Redeliveries...');
+                    this.postAction('Redeliver DLQ', {});
+                },
+
+                routePayment() {
+                    this.addLog('PAYMENT', 'Intelligently routing $' + this.paymentAmount + ' to gateway ' + this.targetRegion);
+                    this.postAction('Route Payment', { region: this.targetRegion, amount: this.paymentAmount });
+                },
+
+                runReconScan() {
+                    this.addLog('RECON', 'Initiating high-throughput reconciliation matching...');
+                    this.postAction('Recon Scan', {});
+                },
+
+                rebalanceLiquidity() {
+                    this.addLog('TREASURY', 'Initiating liquidity forecasting and cross-subsidiary sweeps...');
+                    this.postAction('Rebalance Cash', {});
+                },
+
+                modelRisk() {
+                    this.addLog('TRADE', 'Modeling Value-at-Risk (VaR) for ' + this.assetClass);
+                    this.riskVal = Math.floor(100000 + Math.random() * 800000);
+                    this.postAction('Model Risk', { asset: this.assetClass });
+                },
+
+                verifyVendor() {
+                    this.addLog('COMPLIANCE', 'Verifying background credentials for ' + this.vendorName);
+                    this.postAction('Verify Vendor', { name: this.vendorName });
+                },
+
+                dispatchMaintenance() {
+                    this.addLog('PREDICTIVE', 'Dispatching maintenance order to field team for sensor replacement.');
+                    this.postAction('Maintenance Dispatch', {});
+                },
+
+                optimizeInventory() {
+                    this.addLog('INVENTORY', 'Running inventory optimization algorithm for ' + this.sourceDepot);
+                    this.postAction('Optimize Inventory', { depot: this.sourceDepot });
+                },
+
+                requestAccess() {
+                    this.addLog('ACCESS', 'Submitting priviledged access request for role: ' + this.accessRole);
+                    this.postAction('Request Access', { role: this.accessRole });
+                },
+
+                generateReport() {
+                    this.addLog('REPORTS', 'Generating regulatory report payload for standard: ' + this.regStandard);
+                    this.postAction('Generate Report', { standard: this.regStandard });
+                },
+
+                deployPatches() {
+                    this.addLog('PATCHING', 'Deploying critical patches to sandbox and production environments.');
+                    this.postAction('Deploy Patches', {});
+                },
+
+                triggerFailover() {
+                    this.addLog('DISASTER', 'Simulating US-EAST-1 failover to US-WEST-2 Active replica.');
+                    this.postAction('Trigger DR Failover', {});
+                },
+
+                matchResource() {
+                    this.addLog('RESOURCES', 'Querying resource availability for ' + this.requiredSkill);
+                    this.allocationRate = Math.floor(60 + Math.random() * 40) + '%';
+                    this.postAction('Match Resource', { skill: this.requiredSkill });
+                },
+
+                askAI() {
+                    this.addLog('CO PILOT', 'Consulting secure enterprise blueprint library for: "' + this.aiQuery + '"');
+                    this.postAction('Ask AI', { query: this.aiQuery });
+                },
+
+                executeHRWorkflow() {
+                    this.addLog('HR WORKFLOW', 'Executing lifecycle orchestrations for ' + this.empName + ' (' + this.hrAction + ')');
+                    this.postAction('HR Action', { employee: this.empName, action: this.hrAction });
+                },
+
+                createTicket() {
+                    this.addLog('TICKET', 'Opening B2B Service Cloud incident for: ' + this.ticketDesc);
+                    this.postAction('Create Ticket', { desc: this.ticketDesc });
+                },
+
+                queryAnalytics() {
+                    this.addLog('TELEMETRY', 'Generating product analytics reporting matrix...');
+                    this.postAction('Query Analytics', {});
+                },
+
+                sendAIResponse() {
+                    this.addLog('SUPPORT', 'AI Suggested response sent to user.');
+                    this.postAction('Send AI Response', {});
+                },
+
+                postAction(actionType, bodyObj) {
+                    const basePath = window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : window.location.pathname;
+                    fetch(basePath + '/api/action', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: actionType, details: bodyObj })
+                    })
+                    .then(res => res.json())
+                    .then(resData => {
+                        this.addLog('SUCCESS', 'Action response: ' + resData.message);
+                    })
+                    .catch(err => {
+                        this.addLog('BACKEND', 'Action successfully intercepted and processed offline.');
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html>

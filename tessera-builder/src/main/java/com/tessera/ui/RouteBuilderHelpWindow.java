@@ -489,13 +489,13 @@ public class RouteBuilderHelpWindow {
             "<p>Tessera workspaces follow a decoupled, modular design. Routes and their supporting files are strictly separated:</p>" +
             "<ul>" +
             "  <li><strong>Camel Routes Directory (<code>camel/</code>):</strong> Contains the YAML DSL definitions for your routes. E.g., <code>camel/chapter-16-ui-ux/09-sql-workbench.camel.yaml</code>.</li>" +
-            "  <li><strong>Assets Directory (<code>assets/</code>):</strong> Contains static HTML, CSS, JavaScript, and images. E.g., <code>assets/chapter-16-ui-ux/09/ui/index.html</code>.</li>" +
+            "  <li><strong>Assets Directory (<code>assets/</code>):</strong> Contains static HTML, CSS, JavaScript, and images. E.g., <code>assets/chapter-16-ui-ux/09-sql-workbench/ui/index.html</code>.</li>" +
             "  <li><strong>Referencing Mechanism:</strong> Camel routes use the <code>platform-http</code> or <code>jetty</code> components to serve these static assets directly from the file system.</li>" +
             "</ul>" +
             "<pre>- route:\n" +
             "    from: \"platform-http:/?matchOnUriPrefix=true\"\n" +
             "    steps:\n" +
-            "      - to: \"file://{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/09/ui\"</pre>" +
+            "      - to: \"file://{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/09-sql-workbench/ui\"</pre>" +
             "<h3>2. In-Memory Databases: MongoDB to H2 SQL</h3>" +
             "<p>Tessera can seamlessly bootstrap embedded, offline databases to support local development.</p>" +
             "<h4>H2 Embedded SQL Database</h4>" +
@@ -539,6 +539,48 @@ public class RouteBuilderHelpWindow {
             "<p>You can swap the target endpoint to IBM MQ seamlessly:</p>" +
             "<pre>      # 4. Push to IBM MQ Queue\n" +
             "      - to: \"jms:queue:DEV.QUEUE.1\"</pre>"));
+
+        topics.add(new HelpTopic("Visual Pipeline Composer", "Advanced Tools", "visual pipeline composer drag drop canvas pan zoom monaco simulation", "fas-project-diagram",
+            "<h1>Visual Pipeline Composer</h1>" +
+            "<p>The Visual Pipeline Composer enables drag-and-drop routing and dynamic flow simulation.</p>" +
+            "<h3>Core Features</h3>" +
+            "<ul>" +
+            "  <li><strong>Interactive Canvas:</strong> Pan, zoom, and fit-to-window operations.</li>" +
+            "  <li><strong>Collapsible Catalog:</strong> Sidebar category grouping for sources, processors, and sinks.</li>" +
+            "  <li><strong>Monaco Editor Integration:</strong> Custom scripts (Java, Groovy) with syntax highlighting.</li>" +
+            "  <li><strong>Data Flow Simulation:</strong> Particle-based animations tracing payloads from source to sink.</li>" +
+            "</ul>"));
+
+        topics.add(new HelpTopic("Global Earmark & Credit Services Architecture", "Advanced Tools", "global earmark credit services architecture gee clue gls citi", "fas-sitemap",
+            "<h1>Global Earmark & Credit Services Architecture</h1>" +
+            "<p>A detailed architectural overview of the GEE (Global Earmarking Engine) and CLUE (Credit Engine) subsystems.</p>" +
+            "<h3>Extended Reading Resources</h3>" +
+            "<ul>" +
+            "  <li><a href=\"file:///home/pratyush/Downloads/global-earmark-architecture.html\">Global Earmark Architecture Page (HTML)</a></li>" +
+            "  <li><a href=\"file:///home/pratyush/Downloads/architecture.md\">Target State Architecture Document (Markdown)</a></li>" +
+            "</ul>" +
+            "<h3>Architectural Blueprint</h3>" +
+            "<p>The <strong>Global Earmark and Credit Services</strong> platform is a real-time financial processing system that manages fund reservations across Citibank's global networks.</p>" +
+            "<h3>Subsystems & Engines</h3>" +
+            "<h4>1. Global Earmarking Engine (GEE)</h4>" +
+            "<p>Acts as the brain of the platform. It handles:</p>" +
+            "<ul>" +
+            "  <li><strong>Sequencing & Prioritization:</strong> Redis-backed transactional queues order incoming requests.</li>" +
+            "  <li><strong>Limit Verification:</strong> Checks transaction amounts against daily aggregate thresholds.</li>" +
+            "  <li><strong>Partner Rules:</strong> Pluggable Drools-based rules engine for custom client integrations.</li>" +
+            "</ul>" +
+            "<h4>2. Credit Engine (CLUE)</h4>" +
+            "<p>Acts as the underwriting engine for deficit transactions. It evaluates:</p>" +
+            "<ul>" +
+            "  <li><strong>Credit Checks:</strong> Validates client ratings against AMCAR.</li>" +
+            "  <li><strong>Intraday Liquidity Pools:</strong> Allocates overnight credit lines via Treasury Services (FTS).</li>" +
+            "</ul>" +
+            "<h3>Pipeline Workflow Map</h3>" +
+            "<pre>Request ──► [GEE: Sequencing] ──► [GEE: Limit Check] ──► [GEE: Partner Rules]\n" +
+            "                                                              │\n" +
+            "             Earmark Active ◄── Sufficient Balance ◄──────────┤\n" +
+            "                                                              │ Insufficient\n" +
+            "             Earmark Active ◄── [CLUE: Approve] ◄─────────────┘</pre>"));
     }
 
     private void buildUi() {
@@ -763,6 +805,76 @@ public class RouteBuilderHelpWindow {
             "</head>\n" +
             "<body>\n" +
             topic.contentHtml +
+            "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js\"></script>\n" +
+            "<script>\n" +
+            "if (typeof require !== 'undefined') {\n" +
+            "  require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' }});\n" +
+            "  require(['vs/editor/editor.main'], function() {\n" +
+            "    var isLight = " + isLight + ";\n" +
+            "    var themeName = isLight ? 'custom-light' : 'custom-dark';\n" +
+            "    monaco.editor.defineTheme('custom-dark', {\n" +
+            "      base: 'vs-dark',\n" +
+            "      inherit: true,\n" +
+            "      rules: [],\n" +
+            "      colors: {\n" +
+            "        'editor.background': '" + bg + "',\n" +
+            "        'editorGutter.background': '" + bg + "'\n" +
+            "      }\n" +
+            "    });\n" +
+            "    monaco.editor.defineTheme('custom-light', {\n" +
+            "      base: 'vs',\n" +
+            "      inherit: true,\n" +
+            "      rules: [],\n" +
+            "      colors: {\n" +
+            "        'editor.background': '" + bg + "',\n" +
+            "        'editorGutter.background': '" + bg + "'\n" +
+            "      }\n" +
+            "    });\n" +
+            "    document.querySelectorAll('pre').forEach(function(pre) {\n" +
+            "      var codeEl = pre.querySelector('code');\n" +
+            "      var lang = 'plaintext';\n" +
+            "      var codeText = '';\n" +
+            "      if (codeEl) {\n" +
+            "        codeText = codeEl.textContent;\n" +
+            "        if (codeEl.className) {\n" +
+            "          var match = codeEl.className.match(/language-(\\\\w+)/);\n" +
+            "          if (match) lang = match[1];\n" +
+            "        }\n" +
+            "      } else {\n" +
+            "        codeText = pre.textContent;\n" +
+            "      }\n" +
+            "      pre.innerHTML = '';\n" +
+            "      pre.style.padding = '0';\n" +
+            "      pre.style.border = '1px solid " + border + "';\n" +
+            "      pre.style.overflow = 'hidden';\n" +
+            "      var lineCount = codeText.split('\\n').length;\n" +
+            "      var height = Math.max(45, Math.min(600, lineCount * 19 + 10));\n" +
+            "      pre.style.height = height + 'px';\n" +
+            "      monaco.editor.create(pre, {\n" +
+            "        value: codeText,\n" +
+            "        language: lang,\n" +
+            "        theme: themeName,\n" +
+            "        readOnly: true,\n" +
+            "        automaticLayout: true,\n" +
+            "        minimap: { enabled: false },\n" +
+            "        fontSize: 12,\n" +
+            "        fontFamily: 'monospace',\n" +
+            "        lineHeight: 19,\n" +
+            "        scrollBeyondLastLine: false,\n" +
+            "        scrollbar: {\n" +
+            "          vertical: 'visible',\n" +
+            "          horizontal: 'visible',\n" +
+            "          useShadows: false,\n" +
+            "          verticalScrollbarSize: 8,\n" +
+            "          horizontalScrollbarSize: 8\n" +
+            "        }\n" +
+            "      });\n" +
+            "    });\n" +
+            "  }, function(err) {\n" +
+            "    console.log('Monaco load failed, using fallback standard styling.', err);\n" +
+            "  });\n" +
+            "}\n" +
+            "</script>\n" +
             "</body>\n" +
             "</html>";
 

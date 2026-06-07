@@ -22,7 +22,15 @@ javafx {
     modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.graphics', 'javafx.web', 'javafx.swing' ]
 }
 
+configurations {
+    lspServer {
+        transitive = false
+    }
+}
+
 dependencies {
+    lspServer 'com.github.camel-tooling:camel-lsp-server:1.34.0'
+    
     implementation project(':tessera-faker')
     
     // RichTextFX for Editor
@@ -106,7 +114,13 @@ distributions {
     main {
         contents {
             from('.') {
-                include 'jbang', 'jbang.cmd', 'jbang.ps1', 'jbang-catalog.json'
+                include 'jbang'
+                filePermissions {
+                    unix("0755")
+                }
+            }
+            from('.') {
+                include 'jbang.cmd', 'jbang.ps1', 'jbang-catalog.json'
                 include 'User Manual.md'
                 include 'README.md'
             }
@@ -121,4 +135,14 @@ distributions {
             }
         }
     }
+}
+
+tasks.register('downloadLspServer', Copy) {
+    from configurations.lspServer
+    into "${projectDir}/lsp"
+    rename { String filename -> 'camel-lsp-server.jar' }
+}
+
+tasks.named('processResources') {
+    dependsOn tasks.named('downloadLspServer')
 }

@@ -1,0 +1,20 @@
+# ID: observability-radar
+# DESCRIPTION: Serves the Observability Radar application
+
+- rest:
+    get:
+      - path: "/"
+        produces: "text/html"
+        to: "direct:serve-05-app"
+
+- route:
+    id: "serve-05-app"
+    from:
+      uri: "direct:serve-05-app"
+      steps:
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/05-observability/ui/index.html"
+        - convertBodyTo: "java.lang.String"
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"

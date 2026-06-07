@@ -33,13 +33,36 @@ Thumbs.db
 
 # Log files
 *.log
+*.log*
+*.FDC
+**/FFDC/
 lsp_log*.txt
 
+# Infrastructure and Binaries
+infra-setup/docker-compose
+
+# Dynamic Certificates, Keystores, and Keys
+**/certs/
+*.key
+*.crt
+*.pem
+*.jks
+*.p12
+*.csr
+*.srl
+
 # Generated Sandbox Workspace Directories
-/route-builder/chapter-*/
-/route-builder/infra-simulator/
-/route-builder/FAKER/
-/route-builder/application.properties
+/tessera-builder/assets/
+/tessera-builder/camel/
+/tessera-builder/diagrams/
+/tessera-builder/FAKER/
+/tessera-builder/kamelets/
+/tessera-builder/mappings/
+/tessera-builder/schemas/
+/tessera-builder/validator/
+/tessera-builder/routes/
+/tessera-builder/application.properties
+/tessera-builder/validation-mapping.json
 /test-project-workspace/FAKER/
 /test-project-workspace/infra-simulator/
 /infra-simulator/
@@ -53,3 +76,4 @@ db-update/*.jar
 db-update/.env
 .env
 **/.env
+tessera-builder/lsp/camel-lsp-server.jar

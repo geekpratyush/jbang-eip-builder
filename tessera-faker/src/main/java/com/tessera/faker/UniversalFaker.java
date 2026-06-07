@@ -112,6 +112,20 @@ public class UniversalFaker {
                 p = root.resolve(path);
             }
         }
+        if (!java.nio.file.Files.exists(p)) {
+            Path root = findWorkspaceRoot();
+            if (root != null) {
+                Path fallback = root.resolve("FAKER").resolve("templates");
+                if (java.nio.file.Files.exists(fallback)) {
+                    p = fallback;
+                } else {
+                    fallback = root.resolve("templates");
+                    if (java.nio.file.Files.exists(fallback)) {
+                        p = fallback;
+                    }
+                }
+            }
+        }
         initialize(p, dbService != null ? dbService.getDbDir() : null);
     }
 
@@ -125,6 +139,20 @@ public class UniversalFaker {
             Path root = findWorkspaceRoot();
             if (root != null) {
                 p = root.resolve(path);
+            }
+        }
+        if (!java.nio.file.Files.exists(p)) {
+            Path root = findWorkspaceRoot();
+            if (root != null) {
+                Path fallback = root.resolve("FAKER").resolve("faker-db").resolve("financial");
+                if (java.nio.file.Files.exists(fallback)) {
+                    p = fallback;
+                } else {
+                    fallback = root.resolve("faker-db").resolve("financial");
+                    if (java.nio.file.Files.exists(fallback)) {
+                        p = fallback;
+                    }
+                }
             }
         }
         initialize(discovery != null ? discovery.getTemplatesDir() : null, p);

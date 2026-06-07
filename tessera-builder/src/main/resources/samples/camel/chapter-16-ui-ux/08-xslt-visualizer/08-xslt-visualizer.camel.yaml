@@ -1,0 +1,20 @@
+# ID: xslt-visualizer
+# DESCRIPTION: Serves the XSLT Visualizer Studio application
+
+- rest:
+    get:
+      - path: "/"
+        produces: "text/html"
+        to: "direct:serve-08-app"
+
+- route:
+    id: "serve-08-app"
+    from:
+      uri: "direct:serve-08-app"
+      steps:
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/08-xslt-visualizer/ui/index.html"
+        - convertBodyTo: "java.lang.String"
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"

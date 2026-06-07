@@ -1,0 +1,64 @@
+# ID: 14-02-regulatory-reporting
+# TITLE: Regulatory Reporting Generator
+# DESCRIPTION: An application that ingests transactional data and automatically generates compliant reports for regulatory bodies.
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+# camel-k: dependency=mvn:org.apache.camel:camel-jackson:4.18.0
+
+- route:
+    id: "14-02-regulatory-reporting-init"
+    from:
+      uri: "timer:init?repeatCount=1"
+      steps:
+        - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('14-02-regulatory-reporting', 'Regulatory Reporting Generator', '/api/telemetry', 'CHART', 'fas fa-paste')"
+        - log: "[Plugin Activated] Regulatory Reporting Generator registered inside Core Dashboard"
+
+- route:
+    id: "14-02-regulatory-reporting-ui"
+    from:
+      uri: "platform-http:/"
+      steps:
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/14-security-risk/14-02-regulatory-reporting/ui/index.html"
+        - convertBodyTo: "java.lang.String"
+
+- route:
+    id: "14-02-regulatory-reporting-telemetry-api"
+    from:
+      uri: "platform-http:/api/telemetry"
+      steps:
+        # Returns random data for charts telemetry
+        - transform:
+            groovy: |
+                def rand = new java.util.Random()
+                def txns = []
+                def load = []
+                for(int i=0; i<6; i++) {
+                    txns.add(rand.nextInt(30) + 5)
+                    load.add(rand.nextInt(40) + 40)
+                }
+                return [
+                    "transactions": txns,
+                    "systemLoad": load
+                ]
+        - marshal:
+            json: {}
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"
+
+- route:
+    id: "14-02-regulatory-reporting-action-api"
+    from:
+      uri: "platform-http:/api/action"
+      steps:
+        - convertBodyTo: "java.lang.String"
+        - log: "[Action Triggered] Received operation request: ${body}"
+        - setBody:
+            constant: '{ "status": "COMPLETED", "message": "Operation successfully executed by Apache Camel Integration Engine" }'
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"

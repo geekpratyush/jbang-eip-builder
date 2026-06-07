@@ -1,0 +1,30 @@
+# ID: realtime-tps-monitor
+# DESCRIPTION: Realtime TPS line chart.
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+# camel-k: dependency=mvn:org.apache.camel:camel-jackson:4.18.0
+
+- route:
+    id: "ui-05-tps-init"
+    from:
+      uri: "timer:init-05-1?repeatCount=1"
+      steps:
+        - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('tps', 'Realtime TPS Monitor', '/05/tps', 'UI', 'fas fa-chart-area')"
+
+- rest:
+    get:
+      - path: "/05/tps"
+        produces: "text/html"
+        to: "direct:serve-05-tps"
+
+- route:
+    id: "ui-serve-05-tps"
+    from:
+      uri: "direct:serve-05-tps"
+      steps:
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/01-ui-core/ui/01-13-realtime-tps-monitor.html"
+        - convertBodyTo: "java.lang.String"
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"

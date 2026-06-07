@@ -1,0 +1,73 @@
+# ID: pipeline-composer
+# DESCRIPTION: Visual pipeline composer and route orchestrator (n8n style)
+# camel-k: dependency=mvn:org.apache.camel:camel-groovy
+
+- rest:
+    get:
+      - path: "/"
+        produces: "text/html"
+        to: "direct:serve-ui"
+      - path: "/api/assets"
+        produces: "application/json"
+        to: "direct:get-assets"
+
+- route:
+    id: "serve-ui"
+    from:
+      uri: "direct:serve-ui"
+      steps:
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-17-visual-pipeline/ui/index.html"
+        - convertBodyTo: "java.lang.String"
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"
+
+- route:
+    id: "get-assets"
+    from:
+      uri: "direct:get-assets"
+      steps:
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"
+        - setBody:
+            groovy: |
+              String wsRoot = exchange.context.resolvePropertyPlaceholders("{{WORKSPACE_ROOT_DIR}}") ?: "."
+              def camelFolder = new java.io.File(wsRoot, "camel")
+              def routes = []
+              if (camelFolder.exists()) {
+                  camelFolder.eachFileRecurse { file ->
+                      if (file.name.endsWith(".camel.yaml") && !file.name.contains("17-pipeline-composer")) {
+                          def text = file.text
+                          def id = file.name.replace(".camel.yaml", "")
+                          def description = "Custom Camel route component"
+                          text.eachLine { line ->
+                              if (line.trim().startsWith("# ID:")) {
+                                  id = line.trim().substring(5).trim()
+                              } else if (line.trim().startsWith("# DESCRIPTION:")) {
+                                  description = line.trim().substring(14).trim()
+                                  if (description.startsWith('"') && description.endsWith('"')) {
+                                      description = description.substring(1, description.length() - 1)
+                                  }
+                              }
+                          }
+                          routes << [
+                              id: id,
+                              name: file.name,
+                              path: file.absolutePath.replace(wsRoot + "/", ""),
+                              description: description
+                          ]
+                      }
+                  }
+              }
+              def json = new StringBuilder("[")
+              routes.eachWithIndex { r, idx ->
+                  if (idx > 0) json.append(",")
+                  json.append("{\"id\":\"").append(r.id.replace('"', '\\"')).append("\",")
+                      .append("\"name\":\"").append(r.name.replace('"', '\\"')).append("\",")
+                      .append("\"path\":\"").append(r.path.replace('"', '\\"')).append("\",")
+                      .append("\"description\":\"").append(r.description.replace('"', '\\"')).append("\"}")
+              }
+              json.append("]")
+              return json.toString()

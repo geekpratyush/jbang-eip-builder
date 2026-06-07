@@ -1,0 +1,112 @@
+# ID: 11-01-integration-chassis
+# TITLE: Modular Integration Chassis
+# DESCRIPTION: A low-code platform for building, deploying, and monitoring data pipelines and routing logic (e.g., using YAML DSL).
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+# camel-k: dependency=mvn:org.apache.camel:camel-jackson:4.18.0
+
+- route:
+    id: "11-01-integration-chassis-init"
+    from:
+      uri: "timer:init?repeatCount=1"
+      steps:
+        - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('11-01-integration-chassis', 'Modular Integration Chassis', '/11-01-integration-chassis/api/telemetry', 'CHART', 'fas fa-network-wired')"
+        - log: "[Plugin Activated] Modular Integration Chassis registered inside Core Dashboard"
+
+# Prefixed UI endpoint (always active)
+- route:
+    id: "11-01-integration-chassis-ui-prefixed"
+    from:
+      uri: "platform-http:/11-01-integration-chassis"
+      steps:
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/11-enterprise-integration/11-01-integration-chassis/ui/index.html"
+        - convertBodyTo: "java.lang.String"
+
+# Root UI endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
+- route:
+    id: "11-01-integration-chassis-ui-root"
+    from:
+      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-11-01-integration-chassis}}/"
+      steps:
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/11-enterprise-integration/11-01-integration-chassis/ui/index.html"
+        - convertBodyTo: "java.lang.String"
+
+# Prefixed Telemetry API endpoint (always active)
+- route:
+    id: "11-01-integration-chassis-telemetry-api-prefixed"
+    from:
+      uri: "platform-http:/11-01-integration-chassis/api/telemetry"
+      steps:
+        - to: "direct:11-01-integration-chassis-telemetry-api-impl"
+
+# Root Telemetry API endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
+- route:
+    id: "11-01-integration-chassis-telemetry-api-root"
+    from:
+      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-11-01-integration-chassis}}/api/telemetry"
+      steps:
+        - to: "direct:11-01-integration-chassis-telemetry-api-impl"
+
+# Telemetry API Implementation
+- route:
+    id: "11-01-integration-chassis-telemetry-api-impl"
+    from:
+      uri: "direct:11-01-integration-chassis-telemetry-api-impl"
+      steps:
+        # Returns random data for charts telemetry
+        - transform:
+            groovy: |
+                def rand = new java.util.Random()
+                def txns = []
+                def load = []
+                for(int i=0; i<6; i++) {
+                    txns.add(rand.nextInt(30) + 5)
+                    load.add(rand.nextInt(40) + 40)
+                }
+                return [
+                    "transactions": txns,
+                    "systemLoad": load
+                ]
+        - marshal:
+            json: {}
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"
+
+# Prefixed Action API endpoint (always active)
+- route:
+    id: "11-01-integration-chassis-action-api-prefixed"
+    from:
+      uri: "platform-http:/11-01-integration-chassis/api/action"
+      steps:
+        - to: "direct:11-01-integration-chassis-action-api-impl"
+
+# Root Action API endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
+- route:
+    id: "11-01-integration-chassis-action-api-root"
+    from:
+      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-11-01-integration-chassis}}/api/action"
+      steps:
+        - to: "direct:11-01-integration-chassis-action-api-impl"
+
+# Action API Implementation
+- route:
+    id: "11-01-integration-chassis-action-api-impl"
+    from:
+      uri: "direct:11-01-integration-chassis-action-api-impl"
+      steps:
+        - convertBodyTo: "java.lang.String"
+        - log: "[Action Triggered] Received operation request: ${body}"
+        - setBody:
+            constant: '{ "status": "COMPLETED", "message": "Operation successfully executed by Apache Camel Integration Engine" }'
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"

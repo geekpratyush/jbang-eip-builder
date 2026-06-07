@@ -28,8 +28,16 @@ Thumbs.db
 lsp_log*.txt
 
 # Generated Sandbox Workspace Directories
-/chapter-*/
-/infra-simulator/
+/assets/
+/camel/
+/diagrams/
 /FAKER/
+/kamelets/
+/mappings/
+/schemas/
+/validator/
+/routes/
 /application.properties
+/validation-mapping.json
+/infra-simulator/
 

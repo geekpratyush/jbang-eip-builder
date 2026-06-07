@@ -1,0 +1,30 @@
+# ID: dead-letter-queue-manager
+# DESCRIPTION: Triage for failed DLQ messages.
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+# camel-k: dependency=mvn:org.apache.camel:camel-jackson:4.18.0
+
+- route:
+    id: "ui-05-dlq-init"
+    from:
+      uri: "timer:init-05-3?repeatCount=1&delay=1000"
+      steps:
+        - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('dlq', 'DLQ Manager', '/05/dlq', 'UI', 'fas fa-trash-restore')"
+
+- rest:
+    get:
+      - path: "/05/dlq"
+        produces: "text/html"
+        to: "direct:serve-05-dlq"
+
+- route:
+    id: "ui-serve-05-dlq"
+    from:
+      uri: "direct:serve-05-dlq"
+      steps:
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/01-ui-core/ui/01-15-dead-letter-queue-manager.html"
+        - convertBodyTo: "java.lang.String"
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"

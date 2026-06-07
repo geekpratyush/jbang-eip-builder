@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Earmark & Credit Services — Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --citi-blue: #003087;
+    --citi-red: #e31837;
+    --accent: #00a3e0;
+    --gold: #c8963e;
+    --green: #00875a;
+    --warn: #f59e0b;
+    --bg: #0a0f1e;
+    --bg2: #111827;
+    --bg3: #1a2235;
+    --card: #1e2d45;
+    --border: #2a3f5f;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  .site-header {
+    background: linear-gradient(135deg, #001a4f 0%, #003087 50%, #001a4f 100%);
+    border-bottom: 2px solid var(--citi-red);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-arc {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--citi-red);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: white;
+    font-family: var(--mono);
+  }
+  .site-title { font-size: 18px; font-weight: 600; letter-spacing: 0.02em; }
+  .site-subtitle { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
+  .header-badges { margin-left: auto; display: flex; gap: 8px; }
+  .badge {
+    padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; font-family: var(--mono);
+  }
+  .badge-blue { background: rgba(0,163,224,0.2); border: 1px solid var(--accent); color: var(--accent); }
+  .badge-red { background: rgba(227,24,55,0.2); border: 1px solid var(--citi-red); color: var(--citi-red); }
+  .badge-green { background: rgba(0,135,90,0.2); border: 1px solid var(--green); color: var(--green); }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex; gap: 0;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 14px 20px;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.05em;
+    text-transform: uppercase; cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* MAIN LAYOUT */
+  .main { display: flex; min-height: calc(100vh - 120px); }
+  .sidebar {
+    width: 240px; min-width: 240px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky; top: 120px; height: calc(100vh - 120px); overflow-y: auto;
+  }
+  .sidebar-section { margin-bottom: 24px; }
+  .sidebar-label {
+    padding: 4px 20px; font-size: 10px; font-weight: 600;
+    color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase;
+    font-family: var(--mono);
+  }
+  .sidebar-item {
+    padding: 8px 20px; cursor: pointer; font-size: 13px; color: var(--text);
+    transition: all 0.15s; display: flex; align-items: center; gap: 8px;
+  }
+  .sidebar-item:hover { background: var(--bg3); color: var(--accent); }
+  .sidebar-item.active { background: rgba(0,163,224,0.1); color: var(--accent); border-right: 2px solid var(--accent); }
+  .sidebar-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+  .sidebar-item.active .sidebar-dot { background: var(--accent); }
+
+  /* CONTENT */
+  .content { flex: 1; padding: 40px; overflow-y: auto; }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* SECTION HEADERS */
+  .section-header { margin-bottom: 32px; }
+  .section-tag {
+    font-family: var(--mono); font-size: 10px; color: var(--accent);
+    letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .section-title { font-size: 28px; font-weight: 700; line-height: 1.2; }
+  .section-desc { color: var(--muted); margin-top: 8px; max-width: 700px; line-height: 1.7; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+  /* ARCHITECTURE DIAGRAM */
+  .arch-diagram {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .system-node {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+  }
+  .node-box {
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    border: 2px solid;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .node-box:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+
+  .node-blue { background: rgba(0,48,135,0.4); border-color: #003087; color: #7ab2ff; }
+  .node-green { background: rgba(0,100,60,0.4); border-color: #2d7a4f; color: #4cde8c; }
+  .node-yellow { background: rgba(120,90,0,0.4); border-color: #c8963e; color: #ffd080; }
+  .node-teal { background: rgba(0,80,120,0.4); border-color: #0070a0; color: #40c0f0; }
+  .node-red { background: rgba(100,0,20,0.4); border-color: #a01030; color: #ff6080; }
+
+  /* TOOLTIP */
+  .tooltip {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0d1b2e;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 16px;
+    width: 260px;
+    font-size: 12px;
+    color: var(--text);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 50;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--accent);
+  }
+  .system-node:hover .tooltip { opacity: 1; }
+  .tooltip-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; font-size: 13px; }
+  .tooltip-body { color: var(--muted); line-height: 1.5; }
+  .tooltip-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .tooltip-tag {
+    font-size: 9px; padding: 2px 6px; border-radius: 3px;
+    background: rgba(0,163,224,0.15); color: var(--accent);
+    font-family: var(--mono); letter-spacing: 0.05em;
+  }
+
+  /* FLOW DIAGRAM */
+  .flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin: 16px 0; }
+  .flow-step {
+    display: flex; flex-direction: column; align-items: center;
+    position: relative;
+  }
+  .flow-box {
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 11px; font-weight: 600;
+    text-align: center;
+    background: var(--card);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 100px;
+  }
+  .flow-box:hover { border-color: var(--accent); color: var(--accent); }
+  .flow-arrow {
+    width: 32px; height: 2px; background: var(--border);
+    flex-shrink: 0; position: relative;
+  }
+  .flow-arrow::after {
+    content: '▶'; position: absolute; right: -4px; top: -7px;
+    color: var(--border); font-size: 8px;
+  }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #080e1a;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  .code-header {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg3); padding: 8px 16px;
+    border-radius: 6px 6px 0 0;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    font-family: var(--mono); font-size: 11px;
+  }
+  .code-lang { color: var(--accent); font-weight: 600; }
+  .code-file { color: var(--muted); }
+  .code-block.with-header { border-radius: 0 0 6px 6px; margin-top: 0; }
+
+  .kw { color: #c792ea; }
+  .str { color: #c3e88d; }
+  .cm { color: #546e7a; font-style: italic; }
+  .fn { color: #82aaff; }
+  .num { color: #f78c6c; }
+  .key { color: #ffcb6b; }
+  .op { color: var(--accent); }
+
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  .data-table th {
+    background: var(--bg3); padding: 10px 14px;
+    text-align: left; font-size: 11px; font-weight: 600;
+    color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 10px 14px; border-bottom: 1px solid rgba(42,63,95,0.5);
+    font-size: 13px;
+  }
+  .data-table tr:hover td { background: rgba(30,45,70,0.4); }
+  .data-table code { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+
+  /* STATUS PILLS */
+  .pill {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: 600; font-family: var(--mono);
+  }
+  .pill-blue { background: rgba(0,163,224,0.2); color: var(--accent); }
+  .pill-green { background: rgba(0,135,90,0.2); color: #4cde8c; }
+  .pill-yellow { background: rgba(200,150,62,0.2); color: var(--gold); }
+  .pill-red { background: rgba(227,24,55,0.2); color: #ff6080; }
+
+  /* GRID LAYOUT */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* ARCH SVG DIAGRAM */
+  .svg-container { width: 100%; overflow-x: auto; }
+  svg text { font-family: var(--sans); }
+
+  /* KAFKA TOPICS */
+  .topic-list { display: flex; flex-direction: column; gap: 8px; }
+  .topic-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg3); border-radius: 6px; padding: 10px 14px;
+    border-left: 3px solid var(--accent);
+  }
+  .topic-name { font-family: var(--mono); font-size: 12px; color: var(--accent); flex: 1; }
+  .topic-arrow { color: var(--border); }
+  .topic-producer { font-size: 11px; color: var(--muted); }
+  .topic-consumer { font-size: 11px; color: var(--text); }
+
+  /* ROUTE CARD */
+  .route-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 16px; overflow: hidden;
+  }
+  .route-header {
+    background: rgba(0,163,224,0.08);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .route-id { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .route-from { font-size: 11px; color: var(--muted); margin-left: auto; }
+
+  /* OPENSHIFT */
+  .k8s-namespace {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .k8s-ns-label {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .k8s-pods { display: flex; flex-wrap: wrap; gap: 12px; }
+  .k8s-pod {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; padding: 12px 16px;
+    font-size: 12px; min-width: 160px;
+  }
+  .k8s-pod-name { font-family: var(--mono); color: var(--accent); font-size: 11px; margin-bottom: 4px; }
+  .k8s-pod-type { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* SEPARATOR */
+  .sep { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* CALLOUT */
+  .callout {
+    border-radius: 6px; padding: 14px 16px; margin: 16px 0;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .callout-blue { background: rgba(0,163,224,0.08); border-left: 3px solid var(--accent); }
+  .callout-yellow { background: rgba(200,150,62,0.08); border-left: 3px solid var(--gold); }
+  .callout-green { background: rgba(0,135,90,0.08); border-left: 3px solid var(--green); }
+  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+  .callout-text { font-size: 13px; color: var(--text); line-height: 1.6; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .two-col, .three-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">
+    <div class="logo-arc">C</div>
+    <div>
+      <div class="site-title">Global Earmark &amp; Credit Services</div>
+      <div class="site-subtitle">Target State Architecture · Internal Engineering Reference</div>
+    </div>
+  </div>
+  <div class="header-badges">
+    <span class="badge badge-blue">Quarkus</span>
+    <span class="badge badge-blue">Apache Camel</span>
+    <span class="badge badge-green">OpenShift</span>
+    <span class="badge badge-red">Kafka · IBM MQ</span>
+  </div>
+</header>
+
+<div class="nav-tabs">
+  <div class="tab active" onclick="showPanel('overview')">Overview</div>
+  <div class="tab" onclick="showPanel('architecture')">Architecture</div>
+  <div class="tab" onclick="showPanel('gee')">GEE — Dev Guide</div>
+  <div class="tab" onclick="showPanel('clue')">CLUE — Dev Guide</div>
+  <div class="tab" onclick="showPanel('messaging')">Messaging</div>
+  <div class="tab" onclick="showPanel('apis')">REST &amp; gRPC APIs</div>
+  <div class="tab" onclick="showPanel('openshift')">OpenShift Deploy</div>
+  <div class="tab" onclick="showPanel('opsui')">OpsUI</div>
+</div>
+
+<div class="main">
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Overview</div>
+    <div class="sidebar-item active" onclick="showPanel('overview')"><span class="sidebar-dot"></span>System Landscape</div>
+    <div class="sidebar-item" onclick="showPanel('architecture')"><span class="sidebar-dot"></span>Architecture Diagram</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Core Engines</div>
+    <div class="sidebar-item" onclick="showPanel('gee')"><span class="sidebar-dot"></span>Earmarking Engine</div>
+    <div class="sidebar-item" onclick="showPanel('clue')"><span class="sidebar-dot"></span>Credit Engine (CLUE)</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Infrastructure</div>
+    <div class="sidebar-item" onclick="showPanel('messaging')"><span class="sidebar-dot"></span>Kafka &amp; IBM MQ</div>
+    <div class="sidebar-item" onclick="showPanel('apis')"><span class="sidebar-dot"></span>REST &amp; gRPC APIs</div>
+    <div class="sidebar-item" onclick="showPanel('openshift')"><span class="sidebar-dot"></span>OpenShift Deployment</div>
+    <div class="sidebar-item" onclick="showPanel('opsui')"><span class="sidebar-dot"></span>OpsUI Interface</div>
+  </div>
+</nav>
+
+<main class="content">
+
+<!-- ===== OVERVIEW PANEL ===== -->
+<section class="panel active" id="panel-overview">
+  <div class="section-header">
+    <div class="section-tag">// System Landscape</div>
+    <h1 class="section-title">Global Earmark &amp; Credit Services</h1>
+    <p class="section-desc">A real-time financial processing platform managing earmarking of funds across Citi's global operations. Processes millions of earmark requests daily from Markets, Trade, Loans, Custody and Payment channels through a unified resilient pipeline.</p>
+  </div>
+
+  <div class="three-col" style="margin-bottom:24px">
+    <div class="card">
+      <div class="card-title">🏦 Request Channels</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>Markets</span><span class="pill pill-blue">HIGH VOLUME</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>Payment Processors</span><span class="pill pill-blue">REAL-TIME</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>Trade Finance</span><span class="pill pill-green">BATCH+RT</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>Loans</span><span class="pill pill-yellow">SCHEDULED</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>Custody</span><span class="pill pill-green">ASYNC</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚙️ Processing Engines</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>Global Earmarking Engine</span><span class="pill pill-green">CORE</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>Credit Engine (CLUE)</span><span class="pill pill-yellow">CREDIT</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>Global Liquidity Sharing</span><span class="pill pill-blue">LIQUIDITY</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>DDA (Balance Store)</span><span class="pill pill-blue">AUTHORITY</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>GCE (Cash Engine)</span><span class="pill pill-green">SWEEP</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📡 Publishers / Data Feeds</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>HMC</span><span class="pill pill-yellow">HOLIDAY CAL</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>PMC</span><span class="pill pill-blue">FX RATES</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>AMCAR</span><span class="pill pill-green">ACCOUNTS</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>DDA</span><span class="pill pill-blue">BALANCES</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="font-size:14px;margin-bottom:16px">🗺️ Interactive System Map — hover nodes for details</div>
+    <div class="svg-container">
+      <svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:800px;background:#0d1b2e;border-radius:8px;padding:8px">
+        <defs>
+          <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="#2a3f5f"/>
+          </marker>
+          <marker id="arrb" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="#00a3e0"/>
+          </marker>
+          <marker id="arry" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="#c8963e"/>
+          </marker>
+        </defs>
+
+        <!-- PUBLISHERS ROW -->
+        <rect x="20" y="20" width="80" height="36" rx="4" fill="#1a2a4a" stroke="#003087" stroke-width="1.5"/>
+        <text x="60" y="42" text-anchor="middle" fill="#7ab2ff" font-size="11" font-weight="600">HMC</text>
+
+        <rect x="130" y="20" width="80" height="36" rx="4" fill="#1a2a4a" stroke="#003087" stroke-width="1.5"/>
+        <text x="170" y="42" text-anchor="middle" fill="#7ab2ff" font-size="11" font-weight="600">PMC</text>
+
+        <rect x="790" y="20" width="80" height="36" rx="4" fill="#1a2a4a" stroke="#003087" stroke-width="1.5"/>
+        <text x="830" y="42" text-anchor="middle" fill="#7ab2ff" font-size="11" font-weight="600">AMCAR</text>
+
+        <!-- REQUEST CHANNELS (left) -->
+        <rect x="20" y="130" width="100" height="34" rx="4" fill="#1a2a4a" stroke="#2d5a8e" stroke-width="1.5"/>
+        <text x="70" y="151" text-anchor="middle" fill="#a0c4ff" font-size="11">Markets</text>
+
+        <rect x="20" y="175" width="100" height="34" rx="4" fill="#1a2a4a" stroke="#2d5a8e" stroke-width="1.5"/>
+        <text x="70" y="196" text-anchor="middle" fill="#a0c4ff" font-size="10">Payment Proc.</text>
+
+        <rect x="20" y="220" width="100" height="34" rx="4" fill="#1a2a4a" stroke="#2d5a8e" stroke-width="1.5"/>
+        <text x="70" y="241" text-anchor="middle" fill="#a0c4ff" font-size="11">Trade</text>
+
+        <rect x="20" y="265" width="100" height="34" rx="4" fill="#1a2a4a" stroke="#2d5a8e" stroke-width="1.5"/>
+        <text x="70" y="286" text-anchor="middle" fill="#a0c4ff" font-size="11">Loans</text>
+
+        <rect x="20" y="310" width="100" height="34" rx="4" fill="#1a2a4a" stroke="#2d5a8e" stroke-width="1.5"/>
+        <text x="70" y="331" text-anchor="middle" fill="#a0c4ff" font-size="11">Custody</text>
+
+        <rect x="20" y="390" width="100" height="34" rx="4" fill="#1a2a4a" stroke="#2d5a8e" stroke-width="1.5"/>
+        <text x="70" y="411" text-anchor="middle" fill="#a0c4ff" font-size="11">GCCS</text>
+
+        <!-- GEE ENGINE (center-left) -->
+        <rect x="170" y="100" width="220" height="300" rx="6" fill="rgba(30,80,40,0.2)" stroke="#2d7a4f" stroke-width="2" stroke-dasharray="4,3"/>
+        <text x="280" y="122" text-anchor="middle" fill="#4cde8c" font-size="12" font-weight="700">Global Earmarking Engine</text>
+
+        <rect x="185" y="135" width="190" height="36" rx="4" fill="rgba(0,80,60,0.4)" stroke="#2d7a4f" stroke-width="1"/>
+        <text x="280" y="157" text-anchor="middle" fill="#4cde8c" font-size="11">Sequencing / Prioritization</text>
+
+        <rect x="185" y="180" width="190" height="36" rx="4" fill="rgba(0,80,60,0.4)" stroke="#2d7a4f" stroke-width="1"/>
+        <text x="280" y="202" text-anchor="middle" fill="#4cde8c" font-size="11">Excess Approval / Retry</text>
+
+        <rect x="185" y="225" width="190" height="36" rx="4" fill="rgba(0,80,60,0.4)" stroke="#2d7a4f" stroke-width="1"/>
+        <text x="280" y="247" text-anchor="middle" fill="#4cde8c" font-size="11">Limit Check</text>
+
+        <rect x="185" y="270" width="190" height="36" rx="4" fill="rgba(0,80,60,0.4)" stroke="#2d7a4f" stroke-width="1"/>
+        <text x="280" y="292" text-anchor="middle" fill="#4cde8c" font-size="11">Partner Specific Rules</text>
+
+        <!-- GLS ENGINE (center) -->
+        <rect x="530" y="100" width="220" height="290" rx="6" fill="rgba(0,40,80,0.3)" stroke="#0070a0" stroke-width="2" stroke-dasharray="4,3"/>
+        <text x="640" y="122" text-anchor="middle" fill="#40c0f0" font-size="12" font-weight="700">Global Liquidity Sharing</text>
+
+        <rect x="545" y="135" width="190" height="36" rx="4" fill="rgba(0,50,90,0.5)" stroke="#0070a0" stroke-width="1"/>
+        <text x="640" y="150" text-anchor="middle" fill="#40c0f0" font-size="10">Structure Maintenance</text>
+        <text x="640" y="163" text-anchor="middle" fill="#40c0f0" font-size="10">(TBA / Non-TBA)</text>
+
+        <rect x="545" y="180" width="190" height="36" rx="4" fill="rgba(0,50,90,0.5)" stroke="#0070a0" stroke-width="1"/>
+        <text x="640" y="202" text-anchor="middle" fill="#40c0f0" font-size="10">Net Id Balance Calculator</text>
+
+        <rect x="545" y="225" width="190" height="36" rx="4" fill="rgba(0,50,90,0.5)" stroke="#0070a0" stroke-width="1"/>
+        <text x="640" y="247" text-anchor="middle" fill="#40c0f0" font-size="11">RTF</text>
+
+        <rect x="545" y="270" width="190" height="36" rx="4" fill="rgba(0,50,90,0.5)" stroke="#0070a0" stroke-width="1"/>
+        <text x="640" y="292" text-anchor="middle" fill="#40c0f0" font-size="11">BV (Balance Verification)</text>
+
+        <!-- CLUE ENGINE (bottom) -->
+        <rect x="200" y="430" width="210" height="90" rx="6" fill="rgba(100,80,0,0.25)" stroke="#c8963e" stroke-width="2" stroke-dasharray="4,3"/>
+        <text x="305" y="450" text-anchor="middle" fill="#ffd080" font-size="12" font-weight="700">Credit Engine (CLUE)</text>
+        <rect x="215" y="458" width="82" height="28" rx="3" fill="rgba(100,70,0,0.4)" stroke="#c8963e" stroke-width="1"/>
+        <text x="256" y="476" text-anchor="middle" fill="#ffd080" font-size="10">FTS</text>
+        <rect x="305" y="458" width="96" height="28" rx="3" fill="rgba(100,70,0,0.4)" stroke="#c8963e" stroke-width="1"/>
+        <text x="353" y="476" text-anchor="middle" fill="#ffd080" font-size="10">Excess Approval</text>
+        <rect x="215" y="492" width="88" height="24" rx="3" fill="rgba(100,70,0,0.4)" stroke="#c8963e" stroke-width="1"/>
+        <text x="259" y="508" text-anchor="middle" fill="#ffd080" font-size="10">Credit Check</text>
+        <rect x="309" y="492" width="92" height="24" rx="3" fill="rgba(100,70,0,0.4)" stroke="#c8963e" stroke-width="1"/>
+        <text x="355" y="508" text-anchor="middle" fill="#ffd080" font-size="10">Credit Earmark</text>
+
+        <!-- DDA (right) -->
+        <rect x="790" y="150" width="100" height="60" rx="6" fill="#1a1a3a" stroke="#003087" stroke-width="2"/>
+        <text x="840" y="178" text-anchor="middle" fill="#7ab2ff" font-size="12" font-weight="700">DDA</text>
+        <text x="840" y="195" text-anchor="middle" fill="#5080b0" font-size="9">Balance Store</text>
+
+        <!-- GCE (right-bottom) -->
+        <rect x="790" y="340" width="100" height="50" rx="6" fill="#1a1a3a" stroke="#003087" stroke-width="2"/>
+        <text x="840" y="370" text-anchor="middle" fill="#7ab2ff" font-size="12" font-weight="700">GCE</text>
+
+        <!-- Arrows: Publishers → GEE -->
+        <line x1="60" y1="56" x2="60" y2="130" stroke="#003087" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text x="65" y="100" fill="#546e7a" font-size="9">Holiday</text>
+        <line x1="170" y1="56" x2="200" y2="130" stroke="#003087" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text x="175" y="100" fill="#546e7a" font-size="9">Rate Pub.</text>
+
+        <!-- Arrows: Channels → GEE -->
+        <line x1="120" y1="147" x2="170" y2="185" stroke="#2d5a8e" stroke-width="1" marker-end="url(#arr)"/>
+        <line x1="120" y1="192" x2="170" y2="210" stroke="#2d5a8e" stroke-width="1" marker-end="url(#arr)"/>
+        <line x1="120" y1="237" x2="170" y2="237" stroke="#2d5a8e" stroke-width="1" marker-end="url(#arr)"/>
+        <line x1="120" y1="282" x2="170" y2="260" stroke="#2d5a8e" stroke-width="1" marker-end="url(#arr)"/>
+        <line x1="120" y1="327" x2="170" y2="280" stroke="#2d5a8e" stroke-width="1" marker-end="url(#arr)"/>
+        <text x="125" y="248" fill="#546e7a" font-size="9">Earmark Req.</text>
+
+        <!-- GCCS → CLUE -->
+        <line x1="120" y1="407" x2="200" y2="470" stroke="#c8963e" stroke-width="1" marker-end="url(#arry)"/>
+
+        <!-- GEE → GLS arrows -->
+        <line x1="390" y1="200" x2="530" y2="200" stroke="#00a3e0" stroke-width="1.5" marker-end="url(#arrb)"/>
+        <text x="440" y="195" fill="#00a3e0" font-size="9">Liquidity Enquiry</text>
+        <line x1="390" y1="240" x2="530" y2="240" stroke="#00a3e0" stroke-width="1.5" marker-end="url(#arrb)"/>
+        <text x="420" y="258" fill="#546e7a" font-size="8">BV Request</text>
+        <line x1="530" y1="220" x2="390" y2="220" stroke="#2d7a4f" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text x="430" y="216" fill="#546e7a" font-size="8">Structure Pub.</text>
+
+        <!-- GEE → CLUE -->
+        <line x1="280" y1="400" x2="280" y2="430" stroke="#c8963e" stroke-width="1.5" marker-end="url(#arry)"/>
+        <text x="285" y="420" fill="#c8963e" font-size="9">Excess Approval</text>
+
+        <!-- GLS → DDA -->
+        <line x1="750" y1="200" x2="790" y2="195" stroke="#2d5a8e" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text x="752" y="192" fill="#546e7a" font-size="8">Bal. Enquiry</text>
+
+        <!-- AMCAR → GLS -->
+        <line x1="830" y1="56" x2="750" y2="160" stroke="#003087" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text x="800" y="100" fill="#546e7a" font-size="9">Acct Publish</text>
+
+        <!-- GLS → GCE -->
+        <line x1="680" y1="390" x2="790" y2="360" stroke="#2d5a8e" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text x="695" y="382" fill="#546e7a" font-size="8">RTF Sweep</text>
+
+        <!-- Legend -->
+        <rect x="20" y="530" width="1" height="1" fill="none"/>
+        <line x1="20" y1="530" x2="50" y2="530" stroke="#2d7a4f" stroke-width="2"/>
+        <text x="55" y="534" fill="#4cde8c" font-size="9">GEE Flow</text>
+        <line x1="120" y1="530" x2="150" y2="530" stroke="#00a3e0" stroke-width="2"/>
+        <text x="155" y="534" fill="#40c0f0" font-size="9">GLS Flow</text>
+        <line x1="220" y1="530" x2="250" y2="530" stroke="#c8963e" stroke-width="2"/>
+        <text x="255" y="534" fill="#ffd080" font-size="9">Credit Flow</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ARCHITECTURE PANEL ===== -->
+<section class="panel" id="panel-architecture">
+  <div class="section-header">
+    <div class="section-tag">// Architecture</div>
+    <h1 class="section-title">System Architecture</h1>
+    <p class="section-desc">Detailed component breakdown with data flow and technology mapping for all subsystems.</p>
+  </div>
+
+  <div class="callout callout-blue">
+    <span class="callout-icon">ℹ️</span>
+    <div class="callout-text">All services are built as <strong>Quarkus microservices</strong> with <strong>Apache Camel YAML DSL</strong> routing. Deployed to <strong>OpenShift</strong> with Kafka for async messaging and IBM MQ for legacy partner integrations.</div>
+  </div>
+
+  <h3 style="margin:24px 0 12px;font-size:16px">Technology Stack</h3>
+  <table class="data-table">
+    <thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Runtime</td><td><code>Quarkus 3.x</code></td><td>Microservice framework</td><td>Native compilation for fast startup</td></tr>
+      <tr><td>Integration</td><td><code>Apache Camel 4.x</code></td><td>EIP routing engine</td><td>YAML DSL; GitOps-friendly</td></tr>
+      <tr><td>Async Messaging</td><td><code>Apache Kafka</code></td><td>Event streaming</td><td>Between all microservices</td></tr>
+      <tr><td>Legacy MQ</td><td><code>IBM MQ</code></td><td>Partner integration</td><td>DDA, GCE legacy channels</td></tr>
+      <tr><td>REST API</td><td><code>Quarkus REST</code></td><td>OpsUI + external</td><td>OpenAPI 3.0 documented</td></tr>
+      <tr><td>RPC</td><td><code>gRPC / Protobuf</code></td><td>Low-latency service mesh</td><td>EarmarkService, CreditService, BalanceService</td></tr>
+      <tr><td>Deployment</td><td><code>OpenShift</code></td><td>Container orchestration</td><td>HPA, ConfigMaps, Secrets</td></tr>
+      <tr><td>Service Mesh</td><td><code>Istio / OSSM</code></td><td>mTLS, traffic mgmt</td><td>Observability, circuit breaking</td></tr>
+      <tr><td>Observability</td><td><code>OTel + Jaeger + Prometheus</code></td><td>Traces, metrics, logs</td><td>Auto-instrumented by Quarkus</td></tr>
+      <tr><td>Cache</td><td><code>Infinispan / Redis</code></td><td>Sequencing queues</td><td>Session state, rate limiting</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin:24px 0 12px;font-size:16px">GEE — Component Details</h3>
+  <div class="card-grid">
+    <div class="card" style="border-left:3px solid #2d7a4f">
+      <div class="card-title">🔢 Sequencing / Prioritization</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Assigns processing order to concurrent earmark requests. Implements configurable priority rules using an in-memory sorted queue (Redis-backed). Prevents race conditions via optimistic locking.</p>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+        <span class="pill pill-blue">Redis Queue</span><span class="pill pill-green">Optimistic Lock</span><span class="pill pill-yellow">Configurable Priority</span>
+      </div>
+    </div>
+    <div class="card" style="border-left:3px solid #2d7a4f">
+      <div class="card-title">🔄 Excess Approval / Retry</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Routes excess requests to CLUE. Implements exponential backoff retry. Dead-letter queue for unresolvable cases. Configurable retry limits per product type.</p>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+        <span class="pill pill-yellow">Exponential Backoff</span><span class="pill pill-red">DLQ</span><span class="pill pill-blue">CLUE Integration</span>
+      </div>
+    </div>
+    <div class="card" style="border-left:3px solid #2d7a4f">
+      <div class="card-title">🛡️ Limit Check</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Per-transaction, daily aggregate, counterparty, and product-level limit validation. Integrates with Limit Management System via gRPC for real-time limit data.</p>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+        <span class="pill pill-blue">gRPC LMS</span><span class="pill pill-green">Multi-dimension</span><span class="pill pill-yellow">Real-time</span>
+      </div>
+    </div>
+    <div class="card" style="border-left:3px solid #2d7a4f">
+      <div class="card-title">🔧 Partner Specific Rules</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Pluggable rule engine (Drools / custom DSL). Rules hot-reloadable from ConfigMap. Handles partner exceptions, enrichments, and field overrides without redeployment.</p>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+        <span class="pill pill-green">Hot Reload</span><span class="pill pill-blue">Drools DSL</span><span class="pill pill-yellow">ConfigMap Driven</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin:24px 0 12px;font-size:16px">CLUE — Component Details</h3>
+  <div class="card-grid">
+    <div class="card" style="border-left:3px solid #c8963e">
+      <div class="card-title">💰 FTS (Funding / Treasury)</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Queries intraday funding availability from treasury pools. Interfaces with Treasury Management System. Returns available credit lines.</p>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><span class="pill pill-yellow">TMS Integration</span><span class="pill pill-blue">Intraday Credit</span></div>
+    </div>
+    <div class="card" style="border-left:3px solid #c8963e">
+      <div class="card-title">✅ Excess Approval Engine</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Rule-based decision engine for approving/rejecting excess requests. Full audit trail. ML-assisted scoring planned for Phase 2.</p>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><span class="pill pill-green">Full Audit</span><span class="pill pill-yellow">Rule Engine</span></div>
+    </div>
+    <div class="card" style="border-left:3px solid #c8963e">
+      <div class="card-title">🔍 Credit Check</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Validates counterparty credit exposure via AMCAR. Enforces regulatory limits (Basel III, local regulations).</p>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><span class="pill pill-red">Basel III</span><span class="pill pill-blue">AMCAR</span></div>
+    </div>
+    <div class="card" style="border-left:3px solid #c8963e">
+      <div class="card-title">📝 Credit Earmark</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Creates credit-backed earmark on approval. Publishes credit events. Triggers DOL (Daylight Overdraft Limit) Block/Release via GLS.</p>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><span class="pill pill-yellow">DOL Control</span><span class="pill pill-green">Event Publish</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== GEE DEV GUIDE PANEL ===== -->
+<section class="panel" id="panel-gee">
+  <div class="section-header">
+    <div class="section-tag">// Development Guide</div>
+    <h1 class="section-title">Global Earmarking Engine</h1>
+    <p class="section-desc">Complete development guide for building GEE with Quarkus + Apache Camel YAML DSL, deployed on OpenShift.</p>
+  </div>
+
+  <div class="callout callout-green">
+    <span class="callout-icon">🚀</span>
+    <div class="callout-text"><strong>Stack:</strong> Quarkus 3.x · Apache Camel 4.x YAML DSL · Kafka (SmallRye Reactive) · IBM MQ · OpenShift · gRPC + REST APIs</div>
+  </div>
+
+  <h3 style="margin:20px 0 12px;font-size:15px">Project Structure</h3>
+  <div class="code-header"><span class="code-lang">DIRECTORY</span><span class="code-file">gee-service/</span></div>
+  <div class="code-block with-header"><span class="cm">gee-service/
+├── src/main/
+│   ├── java/com/citi/gee/
+│   │   ├── api/
+│   │   │   ├── EarmarkRestResource.java      REST endpoints
+│   │   │   └── EarmarkGrpcService.java       gRPC service impl
+│   │   ├── domain/
+│   │   │   ├── EarmarkRequest.java
+│   │   │   ├── EarmarkResponse.java
+│   │   │   └── EarmarkStatus.java
+│   │   ├── engine/
+│   │   │   ├── SequencingEngine.java
+│   │   │   ├── LimitCheckEngine.java
+│   │   │   ├── PartnerRulesEngine.java
+│   │   │   └── ExcessApprovalHandler.java
+│   │   ├── integration/
+│   │   │   ├── KafkaEarmarkConsumer.java
+│   │   │   └── GlsClient.java
+│   │   └── config/
+│   │       └── AppConfig.java
+│   └── resources/
+│       ├── camel/
+│       │   ├── gee-main-pipeline.yaml        Main earmark route
+│       │   ├── gee-error-handling.yaml       DLQ + retry
+│       │   ├── gee-gls-bridge.yaml           GLS integration
+│       │   └── gee-publisher-routes.yaml     HMC/PMC consumers
+│       ├── application.properties
+│       └── openapi.yaml
+├── kubernetes/
+│   ├── deployment.yaml
+│   ├── configmap-routes.yaml
+│   ├── service.yaml
+│   ├── route.yaml                            OpenShift Route
+│   └── hpa.yaml
+└── Dockerfile</span></div>
+
+  <h3 style="margin:20px 0 12px;font-size:15px">Main Pipeline Route (YAML DSL)</h3>
+  <div class="code-header"><span class="code-lang">YAML</span><span class="code-file">camel/gee-main-pipeline.yaml</span></div>
+  <div class="code-block with-header"><span class="cm"># Error handler — applied globally to all routes below</span>
+<span class="kw">- errorHandler:</span>
+    <span class="key">deadLetterChannel:</span>
+      <span class="key">deadLetterUri:</span> <span class="str">"kafka:earmark.dlq"</span>
+      <span class="key">maximumRedeliveries:</span> <span class="num">3</span>
+      <span class="key">redeliveryDelay:</span> <span class="num">1000</span>
+      <span class="key">useExponentialBackOff:</span> <span class="num">true</span>
+      <span class="key">backOffMultiplier:</span> <span class="num">2</span>
+
+<span class="cm"># ROUTE 1: Ingest earmark requests from Kafka</span>
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">earmark-ingestion</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"kafka:earmark.requests"</span>
+      <span class="key">parameters:</span>
+        <span class="key">groupId:</span> <span class="str">gee-consumer-group</span>
+        <span class="key">autoOffsetReset:</span> <span class="str">earliest</span>
+        <span class="key">maxPollRecords:</span> <span class="num">100</span>
+    <span class="key">steps:</span>
+      <span class="kw">- unmarshal:</span>
+          <span class="key">json:</span>
+            <span class="key">unmarshalType:</span> <span class="str">com.citi.gee.domain.EarmarkRequest</span>
+      <span class="kw">- setHeader:</span>
+          <span class="key">name:</span> <span class="str">correlationId</span>
+          <span class="key">simple:</span> <span class="str">"${body.earmarkId}"</span>
+      <span class="kw">- to:</span> <span class="str">"direct:sequencing"</span>
+
+<span class="cm"># ROUTE 2: Sequencing and prioritization</span>
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">sequencing-prioritization</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"direct:sequencing"</span>
+    <span class="key">steps:</span>
+      <span class="kw">- bean:</span>
+          <span class="key">ref:</span> <span class="str">sequencingEngine</span>
+          <span class="key">method:</span> <span class="str">assignPriority</span>
+      <span class="kw">- log:</span>
+          <span class="key">message:</span> <span class="str">"[GEE] Prioritized earmark ${header.correlationId} priority=${body.priority}"</span>
+      <span class="kw">- to:</span> <span class="str">"direct:limit-check"</span>
+
+<span class="cm"># ROUTE 3: Limit check</span>
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">limit-check</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"direct:limit-check"</span>
+    <span class="key">steps:</span>
+      <span class="kw">- bean:</span>
+          <span class="key">ref:</span> <span class="str">limitCheckEngine</span>
+          <span class="key">method:</span> <span class="str">validate</span>
+      <span class="kw">- choice:</span>
+          <span class="key">when:</span>
+            <span class="kw">- simple:</span> <span class="str">"${body.limitCheckPassed} == true"</span>
+              <span class="key">steps:</span>
+                <span class="kw">- to:</span> <span class="str">"direct:partner-rules"</span>
+          <span class="key">otherwise:</span>
+            <span class="key">steps:</span>
+              <span class="kw">- bean:</span>
+                  <span class="key">ref:</span> <span class="str">rejectionHandler</span>
+                  <span class="key">method:</span> <span class="str">reject</span>
+              <span class="kw">- marshal:</span>
+                  <span class="key">json:</span> {}
+              <span class="kw">- to:</span> <span class="str">"kafka:earmark.rejected"</span>
+
+<span class="cm"># ROUTE 4: Partner specific rules</span>
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">partner-rules</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"direct:partner-rules"</span>
+    <span class="key">steps:</span>
+      <span class="kw">- bean:</span>
+          <span class="key">ref:</span> <span class="str">partnerRulesEngine</span>
+          <span class="key">method:</span> <span class="str">applyRules</span>
+      <span class="kw">- to:</span> <span class="str">"direct:liquidity-enquiry"</span>
+
+<span class="cm"># ROUTE 5: Liquidity enquiry → GLS</span>
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">liquidity-enquiry</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"direct:liquidity-enquiry"</span>
+    <span class="key">steps:</span>
+      <span class="kw">- to:</span> <span class="str">"grpc://gls-service:9000/com.citi.gls.BalanceService?method=GetBalance"</span>
+      <span class="kw">- choice:</span>
+          <span class="key">when:</span>
+            <span class="kw">- simple:</span> <span class="str">"${body.sufficientBalance} == true"</span>
+              <span class="key">steps:</span>
+                <span class="kw">- to:</span> <span class="str">"direct:create-earmark"</span>
+          <span class="key">otherwise:</span>
+            <span class="key">steps:</span>
+              <span class="kw">- to:</span> <span class="str">"kafka:earmark.excess.requests"</span></div>
+
+  <h3 style="margin:20px 0 12px;font-size:15px">SequencingEngine.java</h3>
+  <div class="code-header"><span class="code-lang">JAVA</span><span class="code-file">engine/SequencingEngine.java</span></div>
+  <div class="code-block with-header"><span class="kw">@ApplicationScoped</span>
+<span class="kw">public class</span> <span class="fn">SequencingEngine</span> {
+
+    <span class="kw">private static final</span> Map&lt;String, Integer&gt; CHANNEL_PRIORITY = Map.of(
+        <span class="str">"MARKETS"</span>, <span class="num">1</span>,
+        <span class="str">"PAYMENT_PROCESSORS"</span>, <span class="num">2</span>,
+        <span class="str">"TRADE"</span>, <span class="num">3</span>,
+        <span class="str">"LOANS"</span>, <span class="num">4</span>,
+        <span class="str">"CUSTODY"</span>, <span class="num">5</span>
+    );
+
+    <span class="kw">@Inject</span>
+    RedisSequenceQueue sequenceQueue;
+
+    <span class="kw">public</span> EarmarkRequest <span class="fn">assignPriority</span>(EarmarkRequest request) {
+        <span class="kw">int</span> priority = CHANNEL_PRIORITY.getOrDefault(
+            request.getChannel(), <span class="num">99</span>
+        );
+        request.setPriority(priority);
+
+        <span class="cm">// Enqueue for ordered processing per account</span>
+        sequenceQueue.enqueue(request.getAccountId(), request);
+        <span class="kw">return</span> sequenceQueue.nextFor(request.getAccountId());
+    }
+}</div>
+
+  <h3 style="margin:20px 0 12px;font-size:15px">OpenShift Deployment (HPA)</h3>
+  <div class="code-header"><span class="code-lang">YAML</span><span class="code-file">kubernetes/hpa.yaml</span></div>
+  <div class="code-block with-header"><span class="key">apiVersion:</span> <span class="str">autoscaling/v2</span>
+<span class="key">kind:</span> <span class="str">HorizontalPodAutoscaler</span>
+<span class="key">metadata:</span>
+  <span class="key">name:</span> <span class="str">gee-hpa</span>
+  <span class="key">namespace:</span> <span class="str">earmark-platform</span>
+<span class="key">spec:</span>
+  <span class="key">scaleTargetRef:</span>
+    <span class="key">apiVersion:</span> <span class="str">apps/v1</span>
+    <span class="key">kind:</span> <span class="str">Deployment</span>
+    <span class="key">name:</span> <span class="str">gee-service</span>
+  <span class="key">minReplicas:</span> <span class="num">3</span>
+  <span class="key">maxReplicas:</span> <span class="num">10</span>
+  <span class="key">metrics:</span>
+    <span class="kw">- type:</span> <span class="str">Resource</span>
+      <span class="key">resource:</span>
+        <span class="key">name:</span> <span class="str">cpu</span>
+        <span class="key">target:</span>
+          <span class="key">type:</span> <span class="str">Utilization</span>
+          <span class="key">averageUtilization:</span> <span class="num">65</span>
+    <span class="kw">- type:</span> <span class="str">External</span>
+      <span class="key">external:</span>
+        <span class="key">metric:</span>
+          <span class="key">name:</span> <span class="str">kafka_consumer_lag</span>
+        <span class="key">target:</span>
+          <span class="key">type:</span> <span class="str">AverageValue</span>
+          <span class="key">averageValue:</span> <span class="str">"1000"</span></div>
+</section>
+
+<!-- ===== CLUE DEV GUIDE PANEL ===== -->
+<section class="panel" id="panel-clue">
+  <div class="section-header">
+    <div class="section-tag">// Development Guide</div>
+    <h1 class="section-title">Credit Engine — CLUE</h1>
+    <p class="section-desc">Credit and Liquidity Underwriting Engine. Handles excess approval flows, credit checks, and credit-backed earmark creation.</p>
+  </div>
+
+  <div class="callout callout-yellow">
+    <span class="callout-icon">⚡</span>
+    <div class="callout-text"><strong>CLUE</strong> is invoked when GEE cannot satisfy an earmark from available liquidity alone. It runs a 4-stage pipeline: Credit Check → FTS Funding Check → Excess Approval → Credit Earmark Creation.</div>
+  </div>
+
+  <h3 style="margin:20px 0 12px;font-size:15px">CLUE Decision Flow</h3>
+  <div class="card" style="background:var(--bg2)">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0">
+      <div style="text-align:center;padding:10px">
+        <div style="background:rgba(200,150,62,0.2);border:1px solid var(--gold);border-radius:6px;padding:10px 14px;font-size:12px;font-weight:600;color:var(--gold)">Excess Request<br/><span style="font-size:10px;color:var(--muted)">from GEE via Kafka</span></div>
+      </div>
+      <div style="color:var(--border);font-size:18px;padding:0 4px">→</div>
+      <div style="text-align:center;padding:10px">
+        <div style="background:rgba(200,150,62,0.2);border:1px solid var(--gold);border-radius:6px;padding:10px 14px;font-size:12px;font-weight:600;color:var(--gold)">Credit Check<br/><span style="font-size:10px;color:var(--muted)">AMCAR + Basel III</span></div>
+        <div style="font-size:10px;color:var(--citi-red);margin-top:4px">FAIL → Reject</div>
+      </div>
+      <div style="color:var(--border);font-size:18px;padding:0 4px">→</div>
+      <div style="text-align:center;padding:10px">
+        <div style="background:rgba(200,150,62,0.2);border:1px solid var(--gold);border-radius:6px;padding:10px 14px;font-size:12px;font-weight:600;color:var(--gold)">FTS Check<br/><span style="font-size:10px;color:var(--muted)">Intraday Credit Lines</span></div>
+        <div style="font-size:10px;color:var(--citi-red);margin-top:4px">FAIL → Reject</div>
+      </div>
+      <div style="color:var(--border);font-size:18px;padding:0 4px">→</div>
+      <div style="text-align:center;padding:10px">
+        <div style="background:rgba(200,150,62,0.2);border:1px solid var(--gold);border-radius:6px;padding:10px 14px;font-size:12px;font-weight:600;color:var(--gold)">Excess Approval<br/><span style="font-size:10px;color:var(--muted)">Rule Engine Decision</span></div>
+      </div>
+      <div style="color:var(--border);font-size:18px;padding:0 4px">→</div>
+      <div style="text-align:center;padding:10px">
+        <div style="background:rgba(0,135,90,0.2);border:1px solid var(--green);border-radius:6px;padding:10px 14px;font-size:12px;font-weight:600;color:#4cde8c">Credit Earmark<br/><span style="font-size:10px;color:var(--muted)">+ DOL Block + Event</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin:20px 0 12px;font-size:15px">Project Structure</h3>
+  <div class="code-header"><span class="code-lang">DIRECTORY</span><span class="code-file">clue-service/</span></div>
+  <div class="code-block with-header"><span class="cm">clue-service/
+├── src/main/
+│   ├── java/com/citi/clue/
+│   │   ├── api/
+│   │   │   ├── CreditRestResource.java
+│   │   │   └── CreditGrpcService.java
+│   │   ├── domain/
+│   │   │   ├── ExcessRequest.java
+│   │   │   ├── CreditDecision.java
+│   │   │   └── FundingCheckResult.java
+│   │   ├── engine/
+│   │   │   ├── CreditCheckEngine.java
+│   │   │   ├── FtsEngine.java
+│   │   │   ├── ExcessApprovalEngine.java
+│   │   │   └── CreditEarmarkEngine.java
+│   │   └── audit/
+│   │       └── AuditLogger.java
+│   └── resources/
+│       ├── camel/
+│       │   ├── clue-processing.yaml
+│       │   ├── clue-dol-control.yaml
+│       │   └── clue-audit.yaml
+│       └── application.properties
+└── kubernetes/</span></div>
+
+  <h3 style="margin:20px 0 12px;font-size:15px">CLUE Camel Routes (YAML DSL)</h3>
+  <div class="code-header"><span class="code-lang">YAML</span><span class="code-file">camel/clue-processing.yaml</span></div>
+  <div class="code-block with-header"><span class="cm"># CLUE main processing pipeline</span>
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">clue-entry</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"kafka:earmark.excess.requests"</span>
+      <span class="key">parameters:</span>
+        <span class="key">groupId:</span> <span class="str">clue-consumer-group</span>
+    <span class="key">steps:</span>
+      <span class="kw">- unmarshal:</span>
+          <span class="key">json:</span>
+            <span class="key">unmarshalType:</span> <span class="str">com.citi.clue.domain.ExcessRequest</span>
+      <span class="kw">- to:</span> <span class="str">"direct:credit-check"</span>
+
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">credit-check</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"direct:credit-check"</span>
+    <span class="key">steps:</span>
+      <span class="kw">- bean:</span>
+          <span class="key">ref:</span> <span class="str">creditCheckEngine</span>
+          <span class="key">method:</span> <span class="str">evaluate</span>
+      <span class="kw">- choice:</span>
+          <span class="key">when:</span>
+            <span class="kw">- simple:</span> <span class="str">"${body.creditCheckPassed} == true"</span>
+              <span class="key">steps:</span>
+                <span class="kw">- to:</span> <span class="str">"direct:fts-check"</span>
+          <span class="key">otherwise:</span>
+            <span class="key">steps:</span>
+              <span class="kw">- bean:</span>
+                  <span class="key">ref:</span> <span class="str">auditLogger</span>
+                  <span class="key">method:</span> <span class="str">logRejection</span>
+              <span class="kw">- marshal:</span>
+                  <span class="key">json:</span> {}
+              <span class="kw">- to:</span> <span class="str">"kafka:credit.rejected"</span>
+
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">fts-check</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"direct:fts-check"</span>
+    <span class="key">steps:</span>
+      <span class="kw">- bean:</span>
+          <span class="key">ref:</span> <span class="str">ftsEngine</span>
+          <span class="key">method:</span> <span class="str">checkFunding</span>
+      <span class="kw">- choice:</span>
+          <span class="key">when:</span>
+            <span class="kw">- simple:</span> <span class="str">"${body.fundingAvailable} == true"</span>
+              <span class="key">steps:</span>
+                <span class="kw">- to:</span> <span class="str">"direct:excess-approval"</span>
+          <span class="key">otherwise:</span>
+            <span class="key">steps:</span>
+              <span class="kw">- to:</span> <span class="str">"kafka:credit.rejected"</span>
+
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">excess-approval</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"direct:excess-approval"</span>
+    <span class="key">steps:</span>
+      <span class="kw">- bean:</span>
+          <span class="key">ref:</span> <span class="str">excessApprovalEngine</span>
+          <span class="key">method:</span> <span class="str">decide</span>
+      <span class="kw">- bean:</span>
+          <span class="key">ref:</span> <span class="str">auditLogger</span>
+          <span class="key">method:</span> <span class="str">log</span>
+      <span class="kw">- choice:</span>
+          <span class="key">when:</span>
+            <span class="kw">- simple:</span> <span class="str">"${body.approved} == true"</span>
+              <span class="key">steps:</span>
+                <span class="kw">- to:</span> <span class="str">"direct:credit-earmark"</span>
+          <span class="key">otherwise:</span>
+            <span class="key">steps:</span>
+              <span class="kw">- to:</span> <span class="str">"kafka:credit.rejected"</span>
+
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">credit-earmark</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"direct:credit-earmark"</span>
+    <span class="key">steps:</span>
+      <span class="kw">- bean:</span>
+          <span class="key">ref:</span> <span class="str">creditEarmarkEngine</span>
+          <span class="key">method:</span> <span class="str">create</span>
+      <span class="kw">- multicast:</span>
+          <span class="key">parallel:</span> <span class="num">true</span>
+          <span class="key">steps:</span>
+            <span class="kw">- marshal:</span>
+                <span class="key">json:</span> {}
+            <span class="kw">- to:</span> <span class="str">"kafka:credit.decisions"</span>
+          <span class="key">steps:</span>
+            <span class="kw">- to:</span> <span class="str">"direct:dol-block"</span></div>
+
+  <h3 style="margin:20px 0 12px;font-size:15px">DOL Control Route</h3>
+  <div class="code-header"><span class="code-lang">YAML</span><span class="code-file">camel/clue-dol-control.yaml</span></div>
+  <div class="code-block with-header"><span class="cm"># DOL Block/Release via GLS</span>
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">dol-block</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"direct:dol-block"</span>
+    <span class="key">steps:</span>
+      <span class="kw">- transform:</span>
+          <span class="key">jq:</span> <span class="str">'{accountId: .accountId, dolAction: "BLOCK", amount: .approvedAmount}'</span>
+      <span class="kw">- to:</span> <span class="str">"kafka:gls.dol.control"</span>
+
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">dol-release</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"kafka:earmark.released"</span>
+    <span class="key">steps:</span>
+      <span class="kw">- filter:</span>
+          <span class="key">simple:</span> <span class="str">"${body.wasCreditBacked} == true"</span>
+          <span class="key">steps:</span>
+            <span class="kw">- transform:</span>
+                <span class="key">jq:</span> <span class="str">'{accountId: .accountId, dolAction: "RELEASE", amount: .amount}'</span>
+            <span class="kw">- to:</span> <span class="str">"kafka:gls.dol.control"</span></div>
+</section>
+
+<!-- ===== MESSAGING PANEL ===== -->
+<section class="panel" id="panel-messaging">
+  <div class="section-header">
+    <div class="section-tag">// Infrastructure</div>
+    <h1 class="section-title">Messaging — Kafka &amp; IBM MQ</h1>
+    <p class="section-desc">All async inter-service communication uses Kafka. IBM MQ bridges legacy partner integrations (DDA, GCE).</p>
+  </div>
+
+  <h3 style="margin:0 0 16px;font-size:15px">Kafka Topics</h3>
+  <div class="topic-list">
+    <div class="topic-item"><span class="topic-name">earmark.requests</span><span class="topic-arrow">→</span><span class="topic-producer">Markets, Trade, Loans...</span><span class="topic-arrow">→</span><span class="topic-consumer">GEE</span></div>
+    <div class="topic-item"><span class="topic-name">earmark.excess.requests</span><span class="topic-arrow">→</span><span class="topic-producer">GEE</span><span class="topic-arrow">→</span><span class="topic-consumer">CLUE</span></div>
+    <div class="topic-item"><span class="topic-name">earmark.created</span><span class="topic-arrow">→</span><span class="topic-producer">GEE</span><span class="topic-arrow">→</span><span class="topic-consumer">GLS, DDA, OpsUI</span></div>
+    <div class="topic-item"><span class="topic-name">earmark.rejected</span><span class="topic-arrow">→</span><span class="topic-producer">GEE</span><span class="topic-arrow">→</span><span class="topic-consumer">Channel Systems, OpsUI</span></div>
+    <div class="topic-item"><span class="topic-name">earmark.released</span><span class="topic-arrow">→</span><span class="topic-producer">GEE</span><span class="topic-arrow">→</span><span class="topic-consumer">CLUE (DOL), GLS</span></div>
+    <div class="topic-item"><span class="topic-name">earmark.dlq</span><span class="topic-arrow">→</span><span class="topic-producer">All Services (DLQ)</span><span class="topic-arrow">→</span><span class="topic-consumer">Ops Alert + Manual Review</span></div>
+    <div class="topic-item"><span class="topic-name">credit.decisions</span><span class="topic-arrow">→</span><span class="topic-producer">CLUE</span><span class="topic-arrow">→</span><span class="topic-consumer">GEE, OpsUI</span></div>
+    <div class="topic-item"><span class="topic-name">credit.rejected</span><span class="topic-arrow">→</span><span class="topic-producer">CLUE</span><span class="topic-arrow">→</span><span class="topic-consumer">GEE, OpsUI</span></div>
+    <div class="topic-item"><span class="topic-name">holiday.publish</span><span class="topic-arrow">→</span><span class="topic-producer">HMC</span><span class="topic-arrow">→</span><span class="topic-consumer">GEE</span></div>
+    <div class="topic-item"><span class="topic-name">rate.publish</span><span class="topic-arrow">→</span><span class="topic-producer">PMC</span><span class="topic-arrow">→</span><span class="topic-consumer">GEE</span></div>
+    <div class="topic-item"><span class="topic-name">account.publish</span><span class="topic-arrow">→</span><span class="topic-producer">AMCAR</span><span class="topic-arrow">→</span><span class="topic-consumer">GLS, GEE</span></div>
+    <div class="topic-item"><span class="topic-name">account.balance.updates</span><span class="topic-arrow">→</span><span class="topic-producer">GLS/DDA</span><span class="topic-arrow">→</span><span class="topic-consumer">OpsUI (streaming)</span></div>
+    <div class="topic-item"><span class="topic-name">gls.dol.control</span><span class="topic-arrow">→</span><span class="topic-producer">CLUE</span><span class="topic-arrow">→</span><span class="topic-consumer">GLS</span></div>
+    <div class="topic-item"><span class="topic-name">rtf.sweep.trigger</span><span class="topic-arrow">→</span><span class="topic-producer">GLS</span><span class="topic-arrow">→</span><span class="topic-consumer">GCE</span></div>
+    <div class="topic-item"><span class="topic-name">transaction.credit.events</span><span class="topic-arrow">→</span><span class="topic-producer">GCE</span><span class="topic-arrow">→</span><span class="topic-consumer">DDA</span></div>
+  </div>
+
+  <h3 style="margin:28px 0 12px;font-size:15px">Quarkus Kafka Configuration</h3>
+  <div class="code-header"><span class="code-lang">PROPERTIES</span><span class="code-file">application.properties</span></div>
+  <div class="code-block with-header"><span class="cm"># Kafka bootstrap</span>
+<span class="key">kafka.bootstrap.servers</span>=<span class="str">kafka-cluster.earmark-platform.svc:9092</span>
+<span class="key">kafka.security.protocol</span>=<span class="str">SASL_SSL</span>
+<span class="key">kafka.sasl.mechanism</span>=<span class="str">SCRAM-SHA-512</span>
+<span class="key">kafka.sasl.jaas.config</span>=<span class="str">org.apache.kafka.common.security.scram.ScramLoginModule required \
+  username="${KAFKA_USER}" password="${KAFKA_PASSWORD}";</span>
+
+<span class="cm"># GEE consumer</span>
+<span class="key">mp.messaging.incoming.earmark-requests.connector</span>=<span class="str">smallrye-kafka</span>
+<span class="key">mp.messaging.incoming.earmark-requests.topic</span>=<span class="str">earmark.requests</span>
+<span class="key">mp.messaging.incoming.earmark-requests.group.id</span>=<span class="str">gee-consumer-group</span>
+<span class="key">mp.messaging.incoming.earmark-requests.auto.offset.reset</span>=<span class="str">earliest</span>
+<span class="key">mp.messaging.incoming.earmark-requests.enable.auto.commit</span>=<span class="str">false</span>
+
+<span class="cm"># GEE producer</span>
+<span class="key">mp.messaging.outgoing.earmark-created.connector</span>=<span class="str">smallrye-kafka</span>
+<span class="key">mp.messaging.outgoing.earmark-created.topic</span>=<span class="str">earmark.created</span>
+
+<span class="cm"># IBM MQ (Camel component)</span>
+<span class="key">camel.component.ibmmq.host</span>=<span class="str">${IBMMQ_HOST}</span>
+<span class="key">camel.component.ibmmq.port</span>=<span class="num">1414</span>
+<span class="key">camel.component.ibmmq.queue-manager</span>=<span class="str">QM.EARMARK</span>
+<span class="key">camel.component.ibmmq.channel</span>=<span class="str">EARMARK.CHANNEL</span>
+<span class="key">camel.component.ibmmq.username</span>=<span class="str">${IBMMQ_USER}</span>
+<span class="key">camel.component.ibmmq.password</span>=<span class="str">${IBMMQ_PASSWORD}</span></div>
+
+  <h3 style="margin:20px 0 12px;font-size:15px">IBM MQ Camel Routes</h3>
+  <div class="code-header"><span class="code-lang">YAML</span><span class="code-file">camel/ibmmq-integration.yaml</span></div>
+  <div class="code-block with-header"><span class="cm"># DDA Balance Enquiry bridge (MQ → Kafka)</span>
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">dda-balance-bridge</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"ibmmq:queue:DDA.BALANCE.RESPONSE"</span>
+      <span class="key">parameters:</span>
+        <span class="key">connectionFactory:</span> <span class="str">"#ibmMQConnectionFactory"</span>
+    <span class="key">steps:</span>
+      <span class="kw">- unmarshal:</span>
+          <span class="key">json:</span> {}
+      <span class="kw">- transform:</span>
+          <span class="key">jq:</span> <span class="str">".balanceResponse"</span>
+      <span class="kw">- marshal:</span>
+          <span class="key">json:</span> {}
+      <span class="kw">- to:</span> <span class="str">"kafka:account.balance.updates"</span>
+
+<span class="cm"># Non-GLS account balance enquiry → DDA via MQ</span>
+<span class="kw">- route:</span>
+    <span class="key">id:</span> <span class="str">balance-enquiry-nongls</span>
+    <span class="key">from:</span>
+      <span class="key">uri:</span> <span class="str">"direct:balance-enquiry-nongls"</span>
+    <span class="key">steps:</span>
+      <span class="kw">- marshal:</span>
+          <span class="key">json:</span> {}
+      <span class="kw">- to:</span>
+          <span class="key">uri:</span> <span class="str">"ibmmq:queue:DDA.BALANCE.ENQUIRY"</span>
+          <span class="key">parameters:</span>
+            <span class="key">connectionFactory:</span> <span class="str">"#ibmMQConnectionFactory"</span>
+            <span class="key">replyTo:</span> <span class="str">DDA.BALANCE.RESPONSE</span>
+            <span class="key">requestTimeout:</span> <span class="num">5000</span></div>
+</section>
+
+<!-- ===== APIs PANEL ===== -->
+<section class="panel" id="panel-apis">
+  <div class="section-header">
+    <div class="section-tag">// API Design</div>
+    <h1 class="section-title">REST &amp; gRPC APIs</h1>
+    <p class="section-desc">REST for OpsUI and external integrations. gRPC for high-performance inter-service communication within the cluster.</p>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 style="margin:0 0 12px;font-size:15px">REST API Endpoints</h3>
+      <table class="data-table">
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill pill-blue">POST</span></td><td><code>/api/v1/earmarks</code></td><td>Create earmark request</td></tr>
+          <tr><td><span class="pill pill-green">GET</span></td><td><code>/api/v1/earmarks/{id}</code></td><td>Get earmark by ID</td></tr>
+          <tr><td><span class="pill pill-green">GET</span></td><td><code>/api/v1/earmarks</code></td><td>Search earmarks (accountId, status, date)</td></tr>
+          <tr><td><span class="pill pill-yellow">PUT</span></td><td><code>/api/v1/earmarks/{id}/release</code></td><td>Release earmark</td></tr>
+          <tr><td><span class="pill pill-green">GET</span></td><td><code>/api/v1/accounts/{id}/balance</code></td><td>Real-time account balance</td></tr>
+          <tr><td><span class="pill pill-green">GET</span></td><td><code>/api/v1/credit/decisions/{id}</code></td><td>CLUE credit decision</td></tr>
+          <tr><td><span class="pill pill-green">GET</span></td><td><code>/api/v1/credit/decisions</code></td><td>Search credit decisions</td></tr>
+          <tr><td><span class="pill pill-green">GET</span></td><td><code>/api/v1/liquidity/pools/{id}</code></td><td>GLS pool state</td></tr>
+          <tr><td><span class="pill pill-green">GET</span></td><td><code>/api/v1/health/live</code></td><td>Liveness probe</td></tr>
+          <tr><td><span class="pill pill-green">GET</span></td><td><code>/api/v1/health/ready</code></td><td>Readiness probe</td></tr>
+          <tr><td><span class="pill pill-green">GET</span></td><td><code>/api/v1/metrics</code></td><td>Prometheus metrics</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3 style="margin:0 0 12px;font-size:15px">gRPC Services</h3>
+      <div class="code-header"><span class="code-lang">PROTO</span><span class="code-file">earmark_service.proto</span></div>
+      <div class="code-block with-header" style="font-size:11px"><span class="kw">service</span> <span class="fn">EarmarkService</span> {
+  <span class="kw">rpc</span> <span class="fn">CreateEarmark</span>(EarmarkRequest)
+      <span class="kw">returns</span> (EarmarkResponse);
+  <span class="kw">rpc</span> <span class="fn">ReleaseEarmark</span>(ReleaseRequest)
+      <span class="kw">returns</span> (ReleaseResponse);
+  <span class="kw">rpc</span> <span class="fn">StreamEarmarkEvents</span>(EventStreamRequest)
+      <span class="kw">returns</span> (<span class="kw">stream</span> EarmarkEvent);
+}
+
+<span class="kw">service</span> <span class="fn">CreditService</span> {
+  <span class="kw">rpc</span> <span class="fn">CheckCredit</span>(CreditCheckRequest)
+      <span class="kw">returns</span> (CreditCheckResponse);
+  <span class="kw">rpc</span> <span class="fn">ApproveCreditExcess</span>(ExcessRequest)
+      <span class="kw">returns</span> (ExcessResponse);
+}
+
+<span class="kw">service</span> <span class="fn">BalanceService</span> {
+  <span class="kw">rpc</span> <span class="fn">GetBalance</span>(BalanceRequest)
+      <span class="kw">returns</span> (BalanceResponse);
+  <span class="kw">rpc</span> <span class="fn">StreamBalanceUpdates</span>(AccountRef)
+      <span class="kw">returns</span> (<span class="kw">stream</span> BalanceUpdate);
+}
+
+<span class="kw">message</span> EarmarkRequest {
+  <span class="kw">string</span> earmark_id = <span class="num">1</span>;
+  <span class="kw">string</span> account_id = <span class="num">2</span>;
+  <span class="kw">double</span> amount = <span class="num">3</span>;
+  <span class="kw">string</span> currency = <span class="num">4</span>;
+  <span class="kw">string</span> channel = <span class="num">5</span>;
+  <span class="kw">string</span> partner_id = <span class="num">6</span>;
+  <span class="kw">string</span> value_date = <span class="num">7</span>;
+  <span class="kw">int32</span>  priority = <span class="num">8</span>;
+}</div>
+    </div>
+  </div>
+
+  <h3 style="margin:24px 0 12px;font-size:15px">REST Resource Implementation</h3>
+  <div class="code-header"><span class="code-lang">JAVA</span><span class="code-file">api/EarmarkRestResource.java</span></div>
+  <div class="code-block with-header"><span class="kw">@Path</span>(<span class="str">"/api/v1/earmarks"</span>)
+<span class="kw">@Produces</span>(MediaType.APPLICATION_JSON)
+<span class="kw">@Consumes</span>(MediaType.APPLICATION_JSON)
+<span class="kw">public class</span> <span class="fn">EarmarkRestResource</span> {
+
+    <span class="kw">@Inject</span> ProducerTemplate camelProducer;
+    <span class="kw">@Inject</span> EarmarkRepository repository;
+
+    <span class="kw">@POST</span>
+    <span class="kw">@Counted</span>(name = <span class="str">"earmark.create.count"</span>)
+    <span class="kw">@Timed</span>(name = <span class="str">"earmark.create.time"</span>)
+    <span class="kw">public</span> Response <span class="fn">createEarmark</span>(EarmarkRequest request) {
+        request.setEarmarkId(<span class="str">"EMK-"</span> + UUID.randomUUID());
+        camelProducer.sendBody(<span class="str">"direct:sequencing"</span>, request);
+        <span class="kw">return</span> Response.accepted()
+            .entity(Map.of(<span class="str">"earmarkId"</span>, request.getEarmarkId()))
+            .build();
+    }
+
+    <span class="kw">@GET @Path</span>(<span class="str">"/{id}"</span>)
+    <span class="kw">public</span> EarmarkResponse <span class="fn">getEarmark</span>(<span class="kw">@PathParam</span>(<span class="str">"id"</span>) String id) {
+        <span class="kw">return</span> repository.findById(id)
+            .orElseThrow(() -> <span class="kw">new</span> NotFoundException(<span class="str">"Earmark not found"</span>));
+    }
+
+    <span class="kw">@PUT @Path</span>(<span class="str">"/{id}/release"</span>)
+    <span class="kw">public</span> Response <span class="fn">releaseEarmark</span>(<span class="kw">@PathParam</span>(<span class="str">"id"</span>) String id) {
+        camelProducer.sendBody(<span class="str">"kafka:earmark.released"</span>,
+            Map.of(<span class="str">"earmarkId"</span>, id, <span class="str">"action"</span>, <span class="str">"RELEASE"</span>));
+        <span class="kw">return</span> Response.ok().build();
+    }
+}</div>
+</section>
+
+<!-- ===== OPENSHIFT PANEL ===== -->
+<section class="panel" id="panel-openshift">
+  <div class="section-header">
+    <div class="section-tag">// Deployment</div>
+    <h1 class="section-title">OpenShift Deployment</h1>
+    <p class="section-desc">All services deploy to a dedicated OpenShift namespace with HPA, ConfigMaps for YAML DSL routes, and Vault-backed secrets.</p>
+  </div>
+
+  <h3 style="margin:0 0 16px;font-size:15px">Namespace Topology</h3>
+  <div class="k8s-namespace">
+    <div class="k8s-ns-label">namespace: earmark-platform</div>
+    <div class="k8s-pods">
+      <div class="k8s-pod"><div class="k8s-pod-name">gee-service</div><div class="k8s-pod-type">Deployment · 3–10 replicas · HPA</div></div>
+      <div class="k8s-pod"><div class="k8s-pod-name">clue-service</div><div class="k8s-pod-type">Deployment · 2–6 replicas · HPA</div></div>
+      <div class="k8s-pod"><div class="k8s-pod-name">gls-service</div><div class="k8s-pod-type">Deployment · 3–10 replicas · HPA</div></div>
+      <div class="k8s-pod"><div class="k8s-pod-name">ops-ui-backend</div><div class="k8s-pod-type">Deployment · 2 replicas</div></div>
+      <div class="k8s-pod" style="border-color:var(--gold)"><div class="k8s-pod-name" style="color:var(--gold)">camel-routes-gee</div><div class="k8s-pod-type">ConfigMap (YAML DSL)</div></div>
+      <div class="k8s-pod" style="border-color:var(--gold)"><div class="k8s-pod-name" style="color:var(--gold)">camel-routes-clue</div><div class="k8s-pod-type">ConfigMap (YAML DSL)</div></div>
+      <div class="k8s-pod" style="border-color:var(--citi-red)"><div class="k8s-pod-name" style="color:#ff6080">kafka-credentials</div><div class="k8s-pod-type">Secret (Vault-backed)</div></div>
+      <div class="k8s-pod" style="border-color:var(--citi-red)"><div class="k8s-pod-name" style="color:#ff6080">ibmmq-credentials</div><div class="k8s-pod-type">Secret (Vault-backed)</div></div>
+    </div>
+  </div>
+
+  <h3 style="margin:20px 0 12px;font-size:15px">GEE Deployment Manifest</h3>
+  <div class="code-header"><span class="code-lang">YAML</span><span class="code-file">kubernetes/deployment.yaml</span></div>
+  <div class="code-block with-header"><span class="key">apiVersion:</span> <span class="str">apps/v1</span>
+<span class="key">kind:</span> <span class="str">Deployment</span>
+<span class="key">metadata:</span>
+  <span class="key">name:</span> <span class="str">gee-service</span>
+  <span class="key">namespace:</span> <span class="str">earmark-platform</span>
+  <span class="key">labels:</span>
+    <span class="key">app:</span> <span class="str">gee-service</span>
+    <span class="key">version:</span> <span class="str">v1</span>
+<span class="key">spec:</span>
+  <span class="key">replicas:</span> <span class="num">3</span>
+  <span class="key">selector:</span>
+    <span class="key">matchLabels:</span>
+      <span class="key">app:</span> <span class="str">gee-service</span>
+  <span class="key">template:</span>
+    <span class="key">spec:</span>
+      <span class="key">containers:</span>
+        <span class="kw">- name:</span> <span class="str">gee-service</span>
+          <span class="key">image:</span> <span class="str">registry.citi.com/earmark/gee-service:latest</span>
+          <span class="key">ports:</span>
+            <span class="kw">- containerPort:</span> <span class="num">8080</span>  <span class="cm"># REST</span>
+            <span class="kw">- containerPort:</span> <span class="num">9000</span>  <span class="cm"># gRPC</span>
+          <span class="key">resources:</span>
+            <span class="key">requests:</span>
+              <span class="key">cpu:</span> <span class="str">"500m"</span>
+              <span class="key">memory:</span> <span class="str">"512Mi"</span>
+            <span class="key">limits:</span>
+              <span class="key">cpu:</span> <span class="str">"2000m"</span>
+              <span class="key">memory:</span> <span class="str">"1Gi"</span>
+          <span class="key">env:</span>
+            <span class="kw">- name:</span> <span class="str">KAFKA_BOOTSTRAP_SERVERS</span>
+              <span class="key">valueFrom:</span>
+                <span class="key">configMapKeyRef:</span>
+                  <span class="key">name:</span> <span class="str">kafka-config</span>
+                  <span class="key">key:</span> <span class="str">bootstrap.servers</span>
+            <span class="kw">- name:</span> <span class="str">KAFKA_PASSWORD</span>
+              <span class="key">valueFrom:</span>
+                <span class="key">secretKeyRef:</span>
+                  <span class="key">name:</span> <span class="str">kafka-credentials</span>
+                  <span class="key">key:</span> <span class="str">password</span>
+          <span class="key">volumeMounts:</span>
+            <span class="kw">- name:</span> <span class="str">camel-routes</span>
+              <span class="key">mountPath:</span> <span class="str">/deployments/camel</span>
+          <span class="key">livenessProbe:</span>
+            <span class="key">httpGet:</span>
+              <span class="key">path:</span> <span class="str">/q/health/live</span>
+              <span class="key">port:</span> <span class="num">8080</span>
+            <span class="key">initialDelaySeconds:</span> <span class="num">10</span>
+            <span class="key">periodSeconds:</span> <span class="num">10</span>
+          <span class="key">readinessProbe:</span>
+            <span class="key">httpGet:</span>
+              <span class="key">path:</span> <span class="str">/q/health/ready</span>
+              <span class="key">port:</span> <span class="num">8080</span>
+            <span class="key">initialDelaySeconds:</span> <span class="num">15</span>
+      <span class="key">volumes:</span>
+        <span class="kw">- name:</span> <span class="str">camel-routes</span>
+          <span class="key">configMap:</span>
+            <span class="key">name:</span> <span class="str">camel-routes-gee</span></div>
+
+  <div class="callout callout-blue">
+    <span class="callout-icon">💡</span>
+    <div class="callout-text"><strong>GitOps tip:</strong> Camel YAML DSL routes are mounted as a ConfigMap volume. Updating the ConfigMap and rolling the deployment triggers a hot reload of routes — no image rebuild required for routing logic changes.</div>
+  </div>
+</section>
+
+<!-- ===== OPSUI PANEL ===== -->
+<section class="panel" id="panel-opsui">
+  <div class="section-header">
+    <div class="section-tag">// Operations Interface</div>
+    <h1 class="section-title">OpsUI — Visualization Interface</h1>
+    <p class="section-desc">React SPA consuming the OpsUI Backend via REST (polling) and gRPC-Web (streaming) for real-time visualization of the earmark pipeline.</p>
+  </div>
+
+  <div class="three-col" style="margin-bottom:24px">
+    <div class="card" style="border-top:2px solid var(--accent)">
+      <div class="card-title">📊 Earmark Pipeline View</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Real-time flow of earmarks through GEE stages. Shows queue depth per stage, processing latency, and throughput charts. Drill down to individual earmark trace.</p>
+    </div>
+    <div class="card" style="border-top:2px solid var(--green)">
+      <div class="card-title">💧 Liquidity Dashboard</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Live account balances, pool structure visualization, DOL utilization bars, and RTF sweep history. Streaming via gRPC BalanceService.</p>
+    </div>
+    <div class="card" style="border-top:2px solid var(--gold)">
+      <div class="card-title">✅ Credit Decisions Board</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">CLUE decision stream with approval/rejection reasons, FTS utilization, and excess queue depth. Includes manual override capability for ops team.</p>
+    </div>
+    <div class="card" style="border-top:2px solid var(--citi-red)">
+      <div class="card-title">🔧 Partner Rule Inspector</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Browse active partner rules, simulate rule execution against test payloads, and trigger hot-reload from ConfigMap.</p>
+    </div>
+    <div class="card" style="border-top:2px solid var(--accent)">
+      <div class="card-title">📡 Kafka Monitor</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Consumer group lag per topic, message throughput, DLQ depth alerts, and replay controls for dead-lettered messages.</p>
+    </div>
+    <div class="card" style="border-top:2px solid var(--warn)">
+      <div class="card-title">🔔 Alert Management</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">SLA breach alerts, excess approval queue depth warnings, circuit breaker state, and operational runbook links.</p>
+    </div>
+  </div>
+
+  <h3 style="margin:0 0 12px;font-size:15px">OpsUI Backend — Streaming gRPC</h3>
+  <div class="code-header"><span class="code-lang">JAVA</span><span class="code-file">EarmarkStreamingService.java</span></div>
+  <div class="code-block with-header"><span class="kw">@GrpcService</span>
+<span class="kw">public class</span> <span class="fn">EarmarkStreamingService</span> <span class="kw">extends</span> EarmarkServiceImplBase {
+
+    <span class="kw">@Inject</span> @Channel(<span class="str">"earmark-created"</span>)
+    Multi&lt;EarmarkEvent&gt; earmarkStream;
+
+    <span class="kw">@Override</span>
+    <span class="kw">public</span> Multi&lt;EarmarkEvent&gt; <span class="fn">streamEarmarkEvents</span>(EventStreamRequest req) {
+        <span class="kw">return</span> earmarkStream
+            .filter(e -> req.getAccountIdList().isEmpty()
+                || req.getAccountIdList().contains(e.getAccountId()))
+            .map(<span class="kw">this</span>::toProtoEvent);
+    }
+}</div>
+
+  <h3 style="margin:20px 0 12px;font-size:15px">OpsUI React Hook (gRPC-Web)</h3>
+  <div class="code-header"><span class="code-lang">JAVASCRIPT</span><span class="code-file">hooks/useEarmarkStream.js</span></div>
+  <div class="code-block with-header"><span class="kw">export function</span> <span class="fn">useEarmarkStream</span>(accountIds) {
+  <span class="kw">const</span> [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    <span class="kw">const</span> client = <span class="kw">new</span> EarmarkServiceClient(<span class="str">'/api/grpc'</span>);
+    <span class="kw">const</span> req = <span class="kw">new</span> EventStreamRequest();
+    req.setAccountIdList(accountIds);
+
+    <span class="kw">const</span> stream = client.streamEarmarkEvents(req, {});
+    stream.on(<span class="str">'data'</span>, (event) => {
+      setEvents(prev => [toDisplayEvent(event), ...prev].slice(<span class="num">0</span>, <span class="num">500</span>));
+    });
+    <span class="kw">return</span> () => stream.cancel();
+  }, [accountIds]);
+
+  <span class="kw">return</span> events;
+}</div>
+</section>
+
+</main>
+</div>
+
+<script>
+window.monacoEditors = [];
+
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+
+  const panel = document.getElementById('panel-' + name);
+  if (panel) panel.classList.add('active');
+
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.getAttribute('onclick') === `showPanel('${name}')`) t.classList.add('active');
+  });
+  document.querySelectorAll('.sidebar-item').forEach(i => {
+    if (i.getAttribute('onclick') === `showPanel('${name}')`) i.classList.add('active');
+  });
+
+  // Re-layout any Monaco editors now visible inside the active panel
+  if (window.monacoEditors) {
+    window.monacoEditors.forEach(editor => {
+      if (editor.getDomNode().offsetParent !== null) {
+        editor.layout();
+      }
+    });
+  }
+}
+
+// Load Monaco Editor dynamically
+(function() {
+  const script = document.createElement('script');
+  script.src = "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js";
+  script.onload = () => {
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' }});
+    require(['vs/editor/editor.main'], function() {
+      monaco.editor.defineTheme('custom-dark', {
+        base: 'vs-dark',
+        inherit: true,
+        rules: [],
+        colors: {
+          'editor.background': '#080e1a',
+          'editorGutter.background': '#080e1a'
+        }
+      });
+
+      document.querySelectorAll('.code-block').forEach(function(block) {
+        let lang = 'plaintext';
+        let header = block.previousElementSibling;
+        if (header && header.classList.contains('code-header')) {
+          const langSpan = header.querySelector('.code-lang');
+          if (langSpan) {
+            const l = langSpan.textContent.trim().toLowerCase();
+            if (l === 'yaml') lang = 'yaml';
+            else if (l === 'java') lang = 'java';
+            else if (l === 'properties') lang = 'ini';
+            else if (l === 'javascript') lang = 'javascript';
+            else if (l === 'proto') lang = 'protobuf';
+          }
+        }
+
+        const codeText = block.textContent;
+        block.innerHTML = '';
+        block.style.padding = '0';
+        block.style.overflow = 'hidden';
+
+        const lineCount = codeText.split('\n').length;
+        const height = Math.max(80, Math.min(600, lineCount * 19 + 10));
+        block.style.height = height + 'px';
+
+        const editor = monaco.editor.create(block, {
+          value: codeText,
+          language: lang,
+          theme: 'custom-dark',
+          readOnly: true,
+          automaticLayout: true,
+          minimap: { enabled: false },
+          fontSize: 12,
+          fontFamily: 'monospace',
+          lineHeight: 19,
+          scrollBeyondLastLine: false,
+          scrollbar: {
+            vertical: 'visible',
+            horizontal: 'visible',
+            useShadows: false,
+            verticalScrollbarSize: 8,
+            horizontalScrollbarSize: 8
+          }
+        });
+        window.monacoEditors.push(editor);
+      });
+    });
+  };
+  document.head.appendChild(script);
+})();
+</script>
+</body>
+</html>

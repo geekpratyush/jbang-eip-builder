@@ -1,0 +1,112 @@
+# ID: 18-01-global-earmark
+# TITLE: Global Earmark Architecture
+# DESCRIPTION: Architectural overview of the Global Earmarking Engine (GEE) and Credit Engine (CLUE).
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+# camel-k: dependency=mvn:org.apache.camel:camel-jackson:4.18.0
+
+- route:
+    id: "18-01-global-earmark-init"
+    from:
+      uri: "timer:init?repeatCount=1"
+      steps:
+        - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('18-01-global-earmark', 'Global Earmark Architecture', '/18/01/api/telemetry', 'CHART', 'fas fa-sitemap')"
+        - log: "[Plugin Activated] Global Earmark Architecture registered inside Core Dashboard"
+
+# Prefixed UI endpoint (always active)
+- route:
+    id: "18-01-global-earmark-ui-prefixed"
+    from:
+      uri: "platform-http:/18/01"
+      steps:
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/18-global-earmark/18-01-global-earmark/ui/index.html"
+        - convertBodyTo: "java.lang.String"
+
+# Root UI endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
+- route:
+    id: "18-01-global-earmark-ui-root"
+    from:
+      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-18-01}}/"
+      steps:
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/18-global-earmark/18-01-global-earmark/ui/index.html"
+        - convertBodyTo: "java.lang.String"
+
+# Prefixed Telemetry API endpoint (always active)
+- route:
+    id: "18-01-global-earmark-telemetry-api-prefixed"
+    from:
+      uri: "platform-http:/18/01/api/telemetry"
+      steps:
+        - to: "direct:18-01-global-earmark-telemetry-api-impl"
+
+# Root Telemetry API endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
+- route:
+    id: "18-01-global-earmark-telemetry-api-root"
+    from:
+      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-18-01}}/api/telemetry"
+      steps:
+        - to: "direct:18-01-global-earmark-telemetry-api-impl"
+
+# Telemetry API Implementation
+- route:
+    id: "18-01-global-earmark-telemetry-api-impl"
+    from:
+      uri: "direct:18-01-global-earmark-telemetry-api-impl"
+      steps:
+        # Returns random data for charts telemetry
+        - transform:
+            groovy: |
+                def rand = new java.util.Random()
+                def txns = []
+                def load = []
+                for(int i=0; i<6; i++) {
+                    txns.add(rand.nextInt(30) + 5)
+                    load.add(rand.nextInt(40) + 40)
+                }
+                return [
+                    "transactions": txns,
+                    "systemLoad": load
+                ]
+        - marshal:
+            json: {}
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"
+
+# Prefixed Action API endpoint (always active)
+- route:
+    id: "18-01-global-earmark-action-api-prefixed"
+    from:
+      uri: "platform-http:/18/01/api/action"
+      steps:
+        - to: "direct:18-01-global-earmark-action-api-impl"
+
+# Root Action API endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
+- route:
+    id: "18-01-global-earmark-action-api-root"
+    from:
+      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-18-01}}/api/action"
+      steps:
+        - to: "direct:18-01-global-earmark-action-api-impl"
+
+# Action API Implementation
+- route:
+    id: "18-01-global-earmark-action-api-impl"
+    from:
+      uri: "direct:18-01-global-earmark-action-api-impl"
+      steps:
+        - convertBodyTo: "java.lang.String"
+        - log: "[Action Triggered] Received operation request: ${body}"
+        - setBody:
+            constant: '{ "status": "COMPLETED", "message": "Operation successfully executed by Apache Camel Integration Engine" }'
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"

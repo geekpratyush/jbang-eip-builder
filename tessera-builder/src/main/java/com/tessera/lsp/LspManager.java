@@ -92,7 +92,16 @@ public class LspManager {
                 InitializeParams initParams = new InitializeParams();
                 initParams.setProcessId((int) ProcessHandle.current().pid());
                 initParams.setRootUri(new File(".").toURI().toString());
-                initParams.setCapabilities(new ClientCapabilities());
+
+                ClientCapabilities clientCapabilities = new ClientCapabilities();
+                TextDocumentClientCapabilities textDocument = new TextDocumentClientCapabilities();
+                CompletionCapabilities completion = new CompletionCapabilities();
+                CompletionItemCapabilities completionItem = new CompletionItemCapabilities();
+                completionItem.setDocumentationFormat(java.util.Collections.singletonList(MarkupKind.MARKDOWN));
+                completion.setCompletionItem(completionItem);
+                textDocument.setCompletion(completion);
+                clientCapabilities.setTextDocument(textDocument);
+                initParams.setCapabilities(clientCapabilities);
 
                 java.util.Map<String, Object> camelConfig = new java.util.HashMap<>();
                 camelConfig.put("camelCatalogProvider", "Main");

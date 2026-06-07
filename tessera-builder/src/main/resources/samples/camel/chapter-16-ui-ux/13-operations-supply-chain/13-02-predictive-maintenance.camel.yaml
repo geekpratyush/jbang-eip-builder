@@ -1,0 +1,64 @@
+# ID: 13-02-predictive-maintenance
+# TITLE: Predictive Maintenance Dashboard
+# DESCRIPTION: An IoT-integrated application that monitors the health of physical assets or IT infrastructure, predicting failures before they occur.
+# camel-k: dependency=mvn:org.apache.camel:camel-sql:4.18.0
+# camel-k: dependency=mvn:org.apache.camel:camel-jackson:4.18.0
+
+- route:
+    id: "13-02-predictive-maintenance-init"
+    from:
+      uri: "timer:init?repeatCount=1"
+      steps:
+        - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('13-02-predictive-maintenance', 'Predictive Maintenance Dashboard', '/api/telemetry', 'CHART', 'fas fa-tools')"
+        - log: "[Plugin Activated] Predictive Maintenance Dashboard registered inside Core Dashboard"
+
+- route:
+    id: "13-02-predictive-maintenance-ui"
+    from:
+      uri: "platform-http:/"
+      steps:
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/13-operations-supply-chain/13-02-predictive-maintenance/ui/index.html"
+        - convertBodyTo: "java.lang.String"
+
+- route:
+    id: "13-02-predictive-maintenance-telemetry-api"
+    from:
+      uri: "platform-http:/api/telemetry"
+      steps:
+        # Returns random data for charts telemetry
+        - transform:
+            groovy: |
+                def rand = new java.util.Random()
+                def txns = []
+                def load = []
+                for(int i=0; i<6; i++) {
+                    txns.add(rand.nextInt(30) + 5)
+                    load.add(rand.nextInt(40) + 40)
+                }
+                return [
+                    "transactions": txns,
+                    "systemLoad": load
+                ]
+        - marshal:
+            json: {}
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"
+
+- route:
+    id: "13-02-predictive-maintenance-action-api"
+    from:
+      uri: "platform-http:/api/action"
+      steps:
+        - convertBodyTo: "java.lang.String"
+        - log: "[Action Triggered] Received operation request: ${body}"
+        - setBody:
+            constant: '{ "status": "COMPLETED", "message": "Operation successfully executed by Apache Camel Integration Engine" }'
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"

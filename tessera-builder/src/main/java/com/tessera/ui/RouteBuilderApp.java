@@ -1324,6 +1324,9 @@ public class RouteBuilderApp extends Application {
 
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.environment().put("TERM", "xterm-256color");
+                if (target != null && target.isFile() && !target.getName().contains("dashboard")) {
+                    pb.environment().put("CAMEL_UI_ROOT_PATH", "");
+                }
                 pb.directory(baseDir);
                 pb.redirectErrorStream(true);
                 runnerProcess[0] = pb.start();
@@ -1596,6 +1599,9 @@ public class RouteBuilderApp extends Application {
 
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.environment().put("TERM", "xterm-256color");
+                if (file != null && file.isFile() && !file.getName().contains("dashboard")) {
+                    pb.environment().put("CAMEL_UI_ROOT_PATH", "");
+                }
                 pb.directory(baseDir);
                 pb.redirectErrorStream(true);
                 Process singleProcess = pb.start();
@@ -2315,6 +2321,11 @@ public class RouteBuilderApp extends Application {
         }
         if (!jbangExe.exists()) {
             jbangExe = new java.io.File(new java.io.File(System.getProperty("user.dir"), "route-builder"), jbangScript);
+        }
+        if (jbangExe.exists() && !os.contains("win")) {
+            try {
+                jbangExe.setExecutable(true);
+            } catch (Exception ignored) {}
         }
         return jbangExe.exists() ? jbangExe.getAbsolutePath() : jbangScript;
     }

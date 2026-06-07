@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Analytics</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        enterprise: { bg: '#f8fafc', panel: '#ffffff', accent: '#2563eb', secondary: '#10b981' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-6 font-sans selection:bg-cyan-500 selection:text-slate-900" x-data="appController()">
+
+    <!-- Header Banner -->
+    <header class="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 text-cyan-400">
+                <i class="fas fa-chart-area text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-white">Market Analytics</h1>
+                <p class="text-xs text-slate-400">Pluggable integration chassis pipeline served via Apache Camel</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 rounded-full text-[10px] text-cyan-400 font-mono">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            ACTIVE TELEMETRY PIPELINE
+        </div>
+    </header>
+
+    <!-- Content Grid -->
+    <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Info & Config Card -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+                <i class="fas fa-info-circle text-cyan-400"></i> Module Description
+            </h2>
+            <p class="text-xs text-slate-300 leading-relaxed mb-6">
+                Advanced market sentiment analysis and high-frequency trading volume tracking across global exchanges.
+            </p>
+
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+                <i class="fas fa-sliders-h text-cyan-400"></i> Control Panel Actions
+            </h2>
+            
+            
+                    <div class="grid grid-cols-2 gap-2 mb-4 text-center">
+                        <div class="bg-slate-800 p-2 rounded">
+                            <div class="text-[10px] opacity-75">Global Volume</div>
+                            <div class="text-sm font-bold text-cyan-400">$42.8B</div>
+                        </div>
+                        <div class="bg-slate-800 p-2 rounded">
+                            <div class="text-[10px] opacity-75">Sentiment Index</div>
+                            <div class="text-sm font-bold text-emerald-400">Bullish</div>
+                        </div>
+                    </div>
+                    <button @click="queryAnalytics()" class="w-full py-2 bg-blue-500 hover:bg-blue-600 font-bold rounded text-xs transition">
+                        Refresh Market Sentiment
+                    </button>
+                
+        </div>
+
+        <!-- System Logs / Terminal -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex flex-col backdrop-blur-md">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-3 flex items-center justify-between">
+                <span class="flex items-center gap-2"><i class="fas fa-terminal text-cyan-400"></i> Local Event Logger</span>
+                <button @click="clearLogs()" class="text-[10px] text-slate-400 hover:text-white transition">Clear</button>
+            </h2>
+            
+            <div class="flex-1 bg-slate-950/90 border border-slate-800 rounded-xl p-4 font-mono text-[10px] text-slate-300 h-64 overflow-y-auto space-y-1.5 scrollbar-thin">
+                <template x-for="log in logs" :key="log.id">
+                    <div class="flex gap-2">
+                        <span class="text-slate-500 font-semibold" x-text="log.time"></span>
+                        <span class="px-1.5 py-0.2 rounded bg-slate-800 text-cyan-400 font-bold" x-text="log.category"></span>
+                        <span class="flex-1 text-slate-200" x-text="log.message"></span>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Telemetry Graphs -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                <i class="fas fa-chart-line text-cyan-400"></i> Live Metrics
+            </h2>
+            
+            <div class="relative h-64 w-full">
+                <canvas id="chart-telemetry"></canvas>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Inline Script Controller -->
+    <script>
+        function appController() {
+            return {
+                logs: [],
+                chart: null,
+                
+                init() {
+                    this.addLog('SYSTEM', 'Market Analytics started. Real-time exchange feeds connected.');
+                    this.initChart();
+                    
+                    // Periodic auto telemetry
+                    setInterval(() => {
+                        this.pullData();
+                    }, 4000);
+                },
+
+                addLog(category, msg) {
+                    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    const id = Math.random().toString(36).substring(2, 9);
+                    this.logs.push({ id, time, category, message: msg });
+                    if (this.logs.length > 50) this.logs.shift();
+                },
+
+                clearLogs() {
+                    this.logs = [];
+                },
+
+                initChart() {
+                    const ctx = document.getElementById('chart-telemetry').getContext('2d');
+                    this.chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['10s ago', '8s ago', '6s ago', '4s ago', '2s ago', 'Now'],
+                            datasets: [
+                                {
+                                    label: 'Trading Volume (K)',
+                                    data: [12, 19, 3, 5, 2, 3],
+                                    borderColor: '#06b6d4',
+                                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                                    fill: true,
+                                    tension: 0.3
+                                },
+                                {
+                                    label: 'Volatility Index',
+                                    data: [45, 52, 60, 48, 50, 42],
+                                    borderColor: '#a855f7',
+                                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                                    fill: true,
+                                    tension: 0.3
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: { color: '#94a3b8' }
+                                }
+                            },
+                            scales: {
+                                x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                                y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                            }
+                        }
+                    });
+                },
+
+                pullData() {
+                    const basePath = window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : window.location.pathname;
+                    fetch(basePath + '/api/telemetry')
+                        .then(res => res.json())
+                        .then(data => {
+                            if (this.chart) {
+                                this.chart.data.datasets[0].data = data.transactions;
+                                this.chart.data.datasets[1].data = data.systemLoad;
+                                this.chart.update();
+                            }
+                            this.addLog('POLL', 'Market telemetry updated.');
+                        })
+                        .catch(err => {
+                            const newData = Array.from({length: 6}, () => Math.floor(Math.random() * 50));
+                            const newLoad = Array.from({length: 6}, () => Math.floor(Math.random() * 100));
+                            if (this.chart) {
+                                this.chart.data.datasets[0].data = newData;
+                                this.chart.data.datasets[1].data = newLoad;
+                                this.chart.update();
+                            }
+                        });
+                },
+
+                queryAnalytics() {
+                    this.addLog('ANALYTICS', 'Running global sentiment analysis across 50+ exchanges...');
+                    this.postAction('Query Analytics', {});
+                },
+
+                postAction(actionType, bodyObj) {
+                    const basePath = window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : window.location.pathname;
+                    fetch(basePath + '/api/action', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: actionType, details: bodyObj })
+                    })
+                    .then(res => res.json())
+                    .then(resData => {
+                        this.addLog('SUCCESS', 'Action response: ' + resData.message);
+                    })
+                    .catch(err => {
+                        this.addLog('BACKEND', 'Action processed offline.');
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html>

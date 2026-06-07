@@ -1,0 +1,20 @@
+# ID: interactive-dashboard
+# DESCRIPTION: Serves the Enterprise Interactive Datasets application
+
+- rest:
+    get:
+      - path: "/"
+        produces: "text/html"
+        to: "direct:serve-06-app"
+
+- route:
+    id: "serve-06-app"
+    from:
+      uri: "direct:serve-06-app"
+      steps:
+        - setBody:
+            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/06-interactive-dashboard/ui/index.html"
+        - convertBodyTo: "java.lang.String"
+        - setHeader:
+            name: "Content-Type"
+            constant: "text/html"

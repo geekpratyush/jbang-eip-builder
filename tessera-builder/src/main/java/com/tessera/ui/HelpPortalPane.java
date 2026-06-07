@@ -179,6 +179,7 @@ public class HelpPortalPane extends BorderPane {
             codeBg = "#001a00";
             borderColor = "#004d00";
         }
+        boolean isLight = "IntelliJ Light".equalsIgnoreCase(currentTheme);
         
         return "<html><head><style>" +
                "body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background-color: " + bgColor + "; color: " + textColor + "; padding: 15px; line-height: 1.6; }" +
@@ -195,7 +196,78 @@ public class HelpPortalPane extends BorderPane {
                "hr { border: 0; border-top: 1px solid " + borderColor + "; margin: 20px 0; }" +
                "ul { padding-left: 20px; }" +
                "li { margin-bottom: 5px; }" +
-               "</style></head><body>" + bodyHtml + "</body></html>";
+               "</style></head><body>" + bodyHtml + 
+               "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js\"></script>\n" +
+               "<script>\n" +
+               "if (typeof require !== 'undefined') {\n" +
+               "  require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' }});\n" +
+               "  require(['vs/editor/editor.main'], function() {\n" +
+               "    var isLight = " + isLight + ";\n" +
+               "    var themeName = isLight ? 'custom-light' : 'custom-dark';\n" +
+               "    monaco.editor.defineTheme('custom-dark', {\n" +
+               "      base: 'vs-dark',\n" +
+               "      inherit: true,\n" +
+               "      rules: [],\n" +
+               "      colors: {\n" +
+               "        'editor.background': '" + bgColor + "',\n" +
+               "        'editorGutter.background': '" + bgColor + "'\n" +
+               "      }\n" +
+               "    });\n" +
+               "    monaco.editor.defineTheme('custom-light', {\n" +
+               "      base: 'vs',\n" +
+               "      inherit: true,\n" +
+               "      rules: [],\n" +
+               "      colors: {\n" +
+               "        'editor.background': '" + bgColor + "',\n" +
+               "        'editorGutter.background': '" + bgColor + "'\n" +
+               "      }\n" +
+               "    });\n" +
+               "    document.querySelectorAll('pre').forEach(function(pre) {\n" +
+               "      var codeEl = pre.querySelector('code');\n" +
+               "      var lang = 'plaintext';\n" +
+               "      var codeText = '';\n" +
+               "      if (codeEl) {\n" +
+               "        codeText = codeEl.textContent;\n" +
+               "        if (codeEl.className) {\n" +
+               "          var match = codeEl.className.match(/language-(\\\\w+)/);\n" +
+               "          if (match) lang = match[1];\n" +
+               "        }\n" +
+               "      } else {\n" +
+               "        codeText = pre.textContent;\n" +
+               "      }\n" +
+               "      pre.innerHTML = '';\n" +
+               "      pre.style.padding = '0';\n" +
+               "      pre.style.border = '1px solid " + borderColor + "';\n" +
+               "      pre.style.overflow = 'hidden';\n" +
+               "      var lineCount = codeText.split('\\n').length;\n" +
+               "      var height = Math.max(45, Math.min(600, lineCount * 19 + 10));\n" +
+               "      pre.style.height = height + 'px';\n" +
+               "      monaco.editor.create(pre, {\n" +
+               "        value: codeText,\n" +
+               "        language: lang,\n" +
+               "        theme: themeName,\n" +
+               "        readOnly: true,\n" +
+               "        automaticLayout: true,\n" +
+               "        minimap: { enabled: false },\n" +
+               "        fontSize: 12,\n" +
+               "        fontFamily: 'monospace',\n" +
+               "        lineHeight: 19,\n" +
+               "        scrollBeyondLastLine: false,\n" +
+               "        scrollbar: {\n" +
+               "          vertical: 'visible',\n" +
+               "          horizontal: 'visible',\n" +
+               "          useShadows: false,\n" +
+               "          verticalScrollbarSize: 8,\n" +
+               "          horizontalScrollbarSize: 8\n" +
+               "        }\n" +
+               "      });\n" +
+               "    });\n" +
+               "  }, function(err) {\n" +
+               "    console.log('Monaco load failed, using fallback standard styling.', err);\n" +
+               "  });\n" +
+               "}\n" +
+               "</script>\n" +
+               "</body></html>";
     }
 
     private void loadHelpTopics() {
@@ -433,13 +505,13 @@ public class HelpPortalPane extends BorderPane {
             "## 1. Project Arrangement & Asset Referencing\n" +
             "Tessera workspaces follow a decoupled, modular design. Routes and their supporting files are strictly separated:\n\n" +
             "* **Camel Routes Directory (`camel/`)**: Contains the YAML DSL definitions for your routes. E.g., `camel/chapter-16-ui-ux/09-sql-workbench.camel.yaml`.\n" +
-            "* **Assets Directory (`assets/`)**: Contains static HTML, CSS, JavaScript, and images. E.g., `assets/chapter-16-ui-ux/09/ui/index.html`.\n" +
+            "* **Assets Directory (`assets/`)**: Contains static HTML, CSS, JavaScript, and images. E.g., `assets/chapter-16-ui-ux/09-sql-workbench/ui/index.html`.\n" +
             "* **Referencing Mechanism**: Camel routes use the `platform-http` or `jetty` components to serve these static assets directly from the file system.\n" +
             "```yaml\n" +
             "- route:\n" +
             "    from: \"platform-http:/?matchOnUriPrefix=true\"\n" +
             "    steps:\n" +
-            "      - to: \"file://{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/09/ui\"\n" +
+            "      - to: \"file://{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/09-sql-workbench/ui\"\n" +
             "```\n" +
             "This decoupling ensures that front-end logic (HTML/JS) and integration logic (Camel/SQL) remain independent.\n\n" +
             "## 2. In-Memory Databases: MongoDB to H2 SQL\n" +
@@ -499,6 +571,44 @@ public class HelpPortalPane extends BorderPane {
             "```\n\n" +
             "### Summary\n" +
             "By combining **Timers**, **Faker**, and **Embedded Databases/Stubs**, you can build, visualize, and execute complex enterprise integration scenarios entirely offline and with realistic simulated data."
+        ));
+
+        allTopics.add(new HelpTopic("17. Visual Pipeline Composer", "Visualization",
+            "# Visual Pipeline Composer\n\n" +
+            "The Visual Pipeline Composer enables drag-and-drop routing and dynamic flow simulation.\n\n" +
+            "## Core Features\n" +
+            "* **Interactive Canvas**: Pan, zoom, and fit-to-window operations.\n" +
+            "* **Collapsible Catalog**: Sidebar category grouping for sources, processors, and sinks.\n" +
+            "* **Monaco Editor Integration**: Custom scripts (Java, Groovy) with syntax highlighting.\n" +
+            "* **Data Flow Simulation**: Particle-based animations tracing payloads from source to sink."
+        ));
+
+        allTopics.add(new HelpTopic("18. Global Earmark & Credit Services Architecture", "Architecture",
+            "# Global Earmark & Credit Services Architecture\n\n" +
+            "A detailed architectural overview of the GEE (Global Earmarking Engine) and CLUE (Credit Engine) subsystems.\n\n" +
+            "### Extended Reading Resources\n" +
+            "* [Global Earmark Architecture Page (HTML)](file:///home/pratyush/Downloads/global-earmark-architecture.html)\n" +
+            "* [Target State Architecture Document (Markdown)](file:///home/pratyush/Downloads/architecture.md)\n\n" +
+            "## Architectural Blueprint\n" +
+            "The **Global Earmark and Credit Services** platform is a real-time financial processing system that manages fund reservations across Citibank's global networks.\n\n" +
+            "### Subsystems & Engines\n\n" +
+            "#### 1. Global Earmarking Engine (GEE)\n" +
+            "Acts as the brain of the platform. It handles:\n" +
+            "* **Sequencing & Prioritization**: Redis-backed transactional queues order incoming requests.\n" +
+            "* **Limit Verification**: Checks transaction amounts against daily aggregate thresholds.\n" +
+            "* **Partner Rules**: Pluggable Drools-based rules engine for custom client integrations.\n\n" +
+            "#### 2. Credit Engine (CLUE)\n" +
+            "Acts as the underwriting engine for deficit transactions. It evaluates:\n" +
+            "* **Credit Checks**: Validates client ratings against AMCAR.\n" +
+            "* **Intraday Liquidity Pools**: Allocates overnight credit lines via Treasury Services (FTS).\n\n" +
+            "## Pipeline Workflow Map\n" +
+            "```\n" +
+            "Request ──► [GEE: Sequencing] ──► [GEE: Limit Check] ──► [GEE: Partner Rules]\n" +
+            "                                                              │\n" +
+            "             Earmark Active ◄── Sufficient Balance ◄──────────┤\n" +
+            "                                                              │ Insufficient\n" +
+            "             Earmark Active ◄── [CLUE: Approve] ◄─────────────┘\n" +
+            "```"
         ));
 
         topicListView.setItems(FXCollections.observableArrayList(allTopics));
