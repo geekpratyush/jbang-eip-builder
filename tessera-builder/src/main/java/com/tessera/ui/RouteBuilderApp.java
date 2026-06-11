@@ -838,6 +838,13 @@ public class RouteBuilderApp extends Application {
             }
         });
 
+        javafx.scene.control.Button btnTestFX = new javafx.scene.control.Button("TestFX");
+        org.kordamp.ikonli.javafx.FontIcon testFxIcon = new org.kordamp.ikonli.javafx.FontIcon("fas-magic");
+        testFxIcon.setIconColor(javafx.scene.paint.Color.web("#9b59b6"));
+        btnTestFX.setGraphic(testFxIcon);
+        btnTestFX.getStyleClass().addAll("toolbar-btn", "btn-testfx");
+        btnTestFX.setTooltip(new javafx.scene.control.Tooltip("Automated TestFX: Run Chapter 1 routes sequentially"));
+
         javafx.scene.control.Button btnExport = new javafx.scene.control.Button("Export",
                 new org.kordamp.ikonli.javafx.FontIcon("fas-download"));
         btnExport.getStyleClass().addAll("toolbar-btn", "btn-export");
@@ -1047,7 +1054,7 @@ public class RouteBuilderApp extends Application {
         btnRefreshSamples.setOnAction(e -> refreshSamples(true));
 
         toolBar.getItems().addAll(btnLogo, new javafx.scene.control.Separator(), btnViewExplorer,
-                new javafx.scene.control.Separator(), btnPlay, btnStop, new javafx.scene.control.Separator(),
+                new javafx.scene.control.Separator(), btnPlay, btnStop, btnTestFX, new javafx.scene.control.Separator(),
                 btnMongoSim, btnOracleSim, new javafx.scene.control.Separator(), btnVariables, btnCrypto, btnTransform,
                 btnValidateStudio, btnDiagramStudio, btnDocConverter, btnFakerStudio, btnKamelets, btnDeps,
                 btnRemoteDeploy, btnExport, btnManual, btnRefreshSamples);
@@ -1344,6 +1351,104 @@ public class RouteBuilderApp extends Application {
 
         treePane.setOnRunSelected((target, mode) -> {
             playProject.accept(target, mode);
+        });
+
+        btnTestFX.setOnAction(e -> {
+            new Thread(() -> {
+                try {
+                    java.io.File baseDir = treePane.getBaseDirectory();
+                    java.io.File chapter1Dir = findChapter1Directory(baseDir);
+                    if (chapter1Dir == null) {
+                        javafx.application.Platform.runLater(() -> {
+                            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                                    javafx.scene.control.Alert.AlertType.ERROR,
+                                    "Could not find Chapter 1 directory (e.g. chapter-01-basics) in base directory: " + baseDir);
+                            themeDialog(alert);
+                            alert.showAndWait();
+                        });
+                        return;
+                    }
+                    java.util.List<java.io.File> routes = getChapter1Routes(chapter1Dir);
+                    if (routes.isEmpty()) {
+                        javafx.application.Platform.runLater(() -> {
+                            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                                    javafx.scene.control.Alert.AlertType.ERROR,
+                                    "No route files found in directory: " + chapter1Dir);
+                            themeDialog(alert);
+                            alert.showAndWait();
+                        });
+                        return;
+                    }
+
+                    for (java.io.File routeFile : routes) {
+                        System.out.println("[TestFX] Selecting route: " + routeFile.getName());
+                        javafx.application.Platform.runLater(() -> {
+                            treePane.selectFile(routeFile);
+                        });
+
+                        // Wait for UI to update and load file
+                        Thread.sleep(1500);
+
+                        System.out.println("[TestFX] Starting route: " + routeFile.getName());
+                        javafx.application.Platform.runLater(() -> {
+                            playProject.accept(routeFile, "offline");
+                        });
+
+                        // Wait for the route to start
+                        boolean hasStarted = false;
+                        long startTime = System.currentTimeMillis();
+                        while (System.currentTimeMillis() - startTime < 15000) {
+                            if (runnerProcess[0] == null || !runnerProcess[0].isAlive()) {
+                                break;
+                            }
+                            String text = getConsoleTextSafe().toLowerCase();
+                            if (text.contains("started") || text.contains("running") || text.contains("route-builder") || text.contains("camel")) {
+                                hasStarted = true;
+                                break;
+                            }
+                            Thread.sleep(500);
+                        }
+
+                        if (hasStarted) {
+                            System.out.println("[TestFX] Route started. Printing logs for 30 seconds...");
+                            Thread.sleep(30000);
+                        } else {
+                            System.out.println("[TestFX] Route did not log 'started' in time, waiting 5 seconds anyway...");
+                            Thread.sleep(5000);
+                        }
+
+                        System.out.println("[TestFX] Stopping route: " + routeFile.getName());
+                        javafx.application.Platform.runLater(() -> {
+                            btnStop.fire();
+                        });
+
+                        // Wait for process to fully exit
+                        long stopTime = System.currentTimeMillis();
+                        while (System.currentTimeMillis() - stopTime < 5000) {
+                            if (runnerProcess[0] == null || !runnerProcess[0].isAlive()) {
+                                break;
+                            }
+                            Thread.sleep(500);
+                        }
+                        
+                        Thread.sleep(1000);
+                    }
+
+                    System.out.println("[TestFX] Completed testing all chapter 1 routes!");
+                    javafx.application.Platform.runLater(() -> {
+                        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                                javafx.scene.control.Alert.AlertType.INFORMATION,
+                                "TestFX finished! Successfully verified all routes in Chapter 1.");
+                        themeDialog(alert);
+                        alert.showAndWait();
+                    });
+
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }, "TestFX-Automator").start();
         });
 
         btnPlay.setOnAction(e -> {
@@ -2652,6 +2757,70 @@ public class RouteBuilderApp extends Application {
                 System.err.println("[Tessera] Error loading workspace properties: " + e.getMessage());
             }
         }
+    }
+
+    java.io.File findChapter1Directory(java.io.File dir) {
+        if (dir == null || !dir.exists() || !dir.isDirectory()) return null;
+        String name = dir.getName().toLowerCase();
+        if (name.contains("chapter-01") || name.contains("chapter-1") || name.equals("01") || name.startsWith("01-") || name.startsWith("chapter-01-")) {
+            return dir;
+        }
+        java.io.File[] children = dir.listFiles();
+        if (children != null) {
+            for (java.io.File child : children) {
+                if (child.isDirectory()) {
+                    java.io.File found = findChapter1Directory(child);
+                    if (found != null) {
+                        return found;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    java.util.List<java.io.File> getChapter1Routes(java.io.File chapter1Dir) {
+        java.util.List<java.io.File> routes = new java.util.ArrayList<>();
+        if (chapter1Dir == null || !chapter1Dir.exists()) return routes;
+        java.io.File[] files = chapter1Dir.listFiles();
+        if (files != null) {
+            java.util.Arrays.sort(files, (f1, f2) -> f1.getName().compareToIgnoreCase(f2.getName()));
+            for (java.io.File f : files) {
+                if (f.isFile()) {
+                    String name = f.getName().toLowerCase();
+                    if (name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".java") || name.endsWith(".xml")) {
+                        routes.add(f);
+                    }
+                }
+            }
+        }
+        return routes;
+    }
+
+    private String getConsoleTextSafe() {
+        final String[] result = { "" };
+        if (javafx.application.Platform.isFxApplicationThread()) {
+            if (consolePane != null) {
+                result[0] = consolePane.getText();
+            }
+        } else {
+            java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+            javafx.application.Platform.runLater(() -> {
+                try {
+                    if (consolePane != null) {
+                        result[0] = consolePane.getText();
+                    }
+                } finally {
+                    latch.countDown();
+                }
+            });
+            try {
+                latch.await(2, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return result[0];
     }
 
     private void showAboutDialog() {

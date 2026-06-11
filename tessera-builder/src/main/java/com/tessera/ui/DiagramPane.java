@@ -49,6 +49,7 @@ public class DiagramPane extends VBox {
     private String currentTheme = "VSCode Dark";
     private Consumer<String> yamlUpdater;
     private JsonNode rootNode;
+    private List<BeanData> javaBeans = null;
     private VBox propertyPane;
     private Pane selectedNodeUi;
     private StackPane contentStack;
@@ -351,16 +352,23 @@ public class DiagramPane extends VBox {
 
     public void renderDiagrams(List<String> yamls) {
         this.currentYamls = yamls;
+        this.javaBeans = new java.util.ArrayList<>();
         ArrayNode compositeRoot = yamlMapper.createArrayNode();
         for (String yaml : yamls) {
             try {
                 JsonNode node = yamlMapper.readTree(yaml);
-                if (node.isArray()) {
+                if (node != null && node.isArray()) {
                     for (JsonNode sub : node) compositeRoot.add(sub);
-                } else {
+                } else if (node != null && node.isObject() && (node.has("route") || node.has("from") || node.has("beans") || node.has("rest") || node.has("onException"))) {
                     compositeRoot.add(node);
+                } else {
+                    List<BeanData> beans = parseJavaBeans(yaml, null);
+                    if (!beans.isEmpty()) this.javaBeans.addAll(beans);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                List<BeanData> beans = parseJavaBeans(yaml, null);
+                if (!beans.isEmpty()) this.javaBeans.addAll(beans);
+            }
         }
         this.rootNode = compositeRoot;
         renderFromRoot();
@@ -368,10 +376,17 @@ public class DiagramPane extends VBox {
 
     public void renderDiagram(String yaml) {
         this.currentYaml = yaml;
+        this.javaBeans = null;
         try {
             this.rootNode = yamlMapper.readTree(yaml);
+            boolean isCamelYaml = rootNode != null && (rootNode.isArray() || (rootNode.isObject() && (rootNode.has("route") || rootNode.has("from") || rootNode.has("beans") || rootNode.has("rest") || rootNode.has("onException"))));
+            if (!isCamelYaml) {
+                this.javaBeans = parseJavaBeans(yaml, currentFile);
+                if (this.javaBeans == null || this.javaBeans.isEmpty()) this.rootNode = yamlMapper.createArrayNode();
+            }
         } catch (Exception e) {
             this.rootNode = yamlMapper.createArrayNode();
+            this.javaBeans = parseJavaBeans(yaml, currentFile);
         }
         renderFromRoot();
     }
@@ -388,23 +403,129 @@ public class DiagramPane extends VBox {
                 else if (item.has("beans")) renderBeansNode(item.get("beans"), i, arr);
             }
         }
+        if (javaBeans != null && !javaBeans.isEmpty()) {
+            for (BeanData bean : javaBeans) {
+                renderBeanDataNode(bean, null, null, -1, null, -1);
+            }
+        }
     }
 
     private void renderBeansNode(JsonNode beans, int idx, ArrayNode arr) {
+        List<BeanData> parsedBeans = parseYamlBeans(beans);
+        if (parsedBeans.isEmpty()) {
+            Pane w = createBaseContainer(0);
+            StackPane node = createEipNode("BEANS", "Configuration", "fas-cubes", "node-nested");
+            node.setOnMouseClicked(e -> selectNode(node, "beans", beans, arr, idx));
+            
+            ContextMenu m = new ContextMenu();
+            m.getItems().addAll(
+                new MenuItem("Edit Beans", new FontIcon("fas-edit")) {{ setOnAction(e -> selectNode(node, "beans", beans, arr, idx)); }},
+                new SeparatorMenuItem(),
+                new MenuItem("Delete Beans Config", new FontIcon("fas-trash")) {{ setOnAction(e -> { arr.remove(idx); renderFromRoot(); updateYamlFromRoot(); closePropertyPane(); }); }}
+            );
+            node.setOnContextMenuRequested(e -> { if(activeContextMenu!=null) activeContextMenu.hide(); m.show(node, e.getScreenX(), e.getScreenY()); activeContextMenu=m; e.consume(); });
+            
+            w.getChildren().add(node);
+            diagramContainer.getChildren().add(w);
+        } else {
+            ArrayNode beansArr = (ArrayNode) beans;
+            for (int i = 0; i < parsedBeans.size(); i++) {
+                BeanData data = parsedBeans.get(i);
+                if (i < beansArr.size()) {
+                    renderBeanDataNode(data, beansArr.get(i), beansArr, i, arr, idx);
+                } else {
+                    renderBeanDataNode(data, null, null, -1, null, -1);
+                }
+            }
+        }
+    }
+
+    private void renderBeanDataNode(BeanData bean, JsonNode sourceNode, ArrayNode beansArr, int beanIdx, ArrayNode rootArr, int rootIdx) {
         Pane w = createBaseContainer(0);
-        StackPane node = createEipNode("BEANS", "Configuration", "fas-cubes", "node-nested");
-        node.setOnMouseClicked(e -> selectNode(node, "beans", beans, arr, idx));
-        
-        ContextMenu m = new ContextMenu();
-        m.getItems().addAll(
-            new MenuItem("Edit Beans", new FontIcon("fas-edit")) {{ setOnAction(e -> selectNode(node, "beans", beans, arr, idx)); }},
-            new SeparatorMenuItem(),
-            new MenuItem("Delete Beans Config", new FontIcon("fas-trash")) {{ setOnAction(e -> { arr.remove(idx); renderFromRoot(); updateYamlFromRoot(); closePropertyPane(); }); }}
-        );
-        node.setOnContextMenuRequested(e -> { if(activeContextMenu!=null) activeContextMenu.hide(); m.show(node, e.getScreenX(), e.getScreenY()); activeContextMenu=m; e.consume(); });
-        
+        StackPane node = createBeanNode(bean);
+        node.setOnMouseClicked(e -> {
+            if (e.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
+                if (sourceNode != null) {
+                    renderBeanPropertyForm(bean.name, sourceNode, beansArr, beanIdx, rootArr, rootIdx);
+                } else {
+                    showReadOnlyBeanDetails(bean);
+                }
+            }
+        });
+
+        if (sourceNode != null) {
+            ContextMenu m = new ContextMenu();
+            m.getItems().addAll(
+                new MenuItem("Edit Bean", new FontIcon("fas-edit")) {{ setOnAction(e -> renderBeanPropertyForm(bean.name, sourceNode, beansArr, beanIdx, rootArr, rootIdx)); }},
+                new SeparatorMenuItem(),
+                new MenuItem("Delete Bean", new FontIcon("fas-trash")) {{ setOnAction(e -> {
+                    beansArr.remove(beanIdx);
+                    if (beansArr.size() == 0) { rootArr.remove(rootIdx); }
+                    renderFromRoot(); updateYamlFromRoot(); closePropertyPane();
+                }); }}
+            );
+            node.setOnContextMenuRequested(e -> { if(activeContextMenu!=null) activeContextMenu.hide(); m.show(node, e.getScreenX(), e.getScreenY()); activeContextMenu=m; e.consume(); });
+        }
+
         w.getChildren().add(node);
         diagramContainer.getChildren().add(w);
+    }
+
+    private void renderBeanPropertyForm(String beanName, JsonNode beanNode, ArrayNode beansArr, int beanIdx, ArrayNode rootArr, int rootIdx) {
+        propertyPane.getChildren().clear();
+        HBox head = new HBox(new Label("EDIT BEAN: " + beanName) {{ setStyle("-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #007acc;"); }}, new Region() {{ HBox.setHgrow(this, Priority.ALWAYS); }}, new Button("X") {{ setOnAction(e -> closePropertyPane()); }});
+        
+        com.tessera.ui.components.MonacoEditorPane editor = new com.tessera.ui.components.MonacoEditorPane("yaml");
+        editor.setPrefHeight(400);
+        editor.setText(extractDetails(beanNode));
+
+        Button save = new Button("Save & Close") {{ setOnAction(e -> { 
+            try { 
+                JsonNode newNode = yamlMapper.readTree(editor.getText());
+                beansArr.set(beanIdx, newNode);
+                renderFromRoot(); updateYamlFromRoot(); closePropertyPane(); 
+            } catch (Exception ex) {
+                // handle error?
+            } 
+        }); }};
+        
+        propertyPane.getChildren().addAll(head, new Label("Bean Definition (YAML):"), editor, save);
+        openPropertyPane();
+    }
+
+    private void showReadOnlyBeanDetails(BeanData bean) {
+        propertyPane.getChildren().clear();
+        HBox head = new HBox(new Label("BEAN: " + bean.name) {{ setStyle("-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #007acc;"); }}, new Region() {{ HBox.setHgrow(this, Priority.ALWAYS); }}, new Button("X") {{ setOnAction(ex -> closePropertyPane()); }});
+        VBox details = new VBox(5, new Label("Type: " + bean.type));
+        if (bean.isLocal) details.getChildren().add(new Label("(External Reference or Java Bean)") {{ setStyle("-fx-font-style: italic; -fx-text-fill: #888;"); }});
+        if (!bean.properties.isEmpty()) {
+            details.getChildren().add(new Label("Properties:") {{ setStyle("-fx-font-weight: bold; -fx-margin: 10 0 5 0;"); }});
+            bean.properties.forEach((k, v) -> {
+                details.getChildren().add(new HBox(10, new Label(k + ":") {{ setStyle("-fx-font-weight: bold;"); }}, new Label(v)));
+            });
+        }
+        propertyPane.getChildren().addAll(head, details);
+        openPropertyPane();
+    }
+
+    private StackPane createBeanNode(BeanData bean) {
+        VBox box = new VBox(2); box.setAlignment(Pos.CENTER);
+        box.getChildren().addAll(
+            new FontIcon("fas-seedling"){{setIconSize(20); getStyleClass().add("node-icon"); }},
+            new Label(bean.name) {{ getStyleClass().add("node-title"); setStyle("-fx-font-weight: bold;"); }},
+            new Label(limitString(bean.type, 30)) {{ getStyleClass().add("node-details"); setStyle("-fx-font-style: italic;"); }}
+        );
+        if (!bean.properties.isEmpty()) {
+            Separator sep = new Separator(); sep.setPadding(new Insets(5, 0, 5, 0));
+            box.getChildren().add(sep);
+            int count = 0;
+            for (Map.Entry<String, String> entry : bean.properties.entrySet()) {
+                if (count++ >= 5) { box.getChildren().add(new Label("...") {{ getStyleClass().add("node-details"); }}); break; }
+                box.getChildren().add(new Label(entry.getKey() + ": " + limitString(entry.getValue(), 15)) {{ getStyleClass().add("node-details"); setStyle("-fx-font-size: 10px;"); }});
+            }
+        }
+        StackPane rootNodeWrapper = new StackPane(box); rootNodeWrapper.setPadding(new Insets(12)); rootNodeWrapper.getStyleClass().addAll("diagram-node", "node-nested");
+        return rootNodeWrapper;
     }
 
     private Pane createBaseContainer(double spacing) {
@@ -696,6 +817,14 @@ public class DiagramPane extends VBox {
     private void openPropertyPane() { if(!contentStack.getChildren().contains(propScroll)) contentStack.getChildren().add(propScroll); }
     private void closePropertyPane() { contentStack.getChildren().remove(propScroll); }
 
+    private boolean isKeyword(String s) {
+        String[] keywords = {"return", "package", "import", "throw", "new", "class", "interface", "enum", "extends", "implements", "static", "final", "transient", "volatile", "public", "private", "protected", "void", "boolean", "int", "long", "float", "double", "char", "byte", "short"};
+        for (String kw : keywords) {
+            if (kw.equals(s)) return true;
+        }
+        return false;
+    }
+
     private String determineIcon(String uri, String def) {
         if(uri==null) return def; String l = uri.toLowerCase();
         if(l.startsWith("timer")) return "fas-clock";
@@ -790,7 +919,10 @@ public class DiagramPane extends VBox {
 
     public List<BeanData> parseJavaBeans(String javaContent, File file) {
         List<BeanData> result = new java.util.ArrayList<>();
-        Pattern clsPattern = Pattern.compile("public\\s+class\\s+([A-Za-z0-9_]+)");
+        if (javaContent == null || javaContent.isEmpty()) return result;
+
+        // Pattern to find class name, allowing for annotations and other stuff before it
+        Pattern clsPattern = Pattern.compile("(?:public\\s+)?class\\s+([A-Za-z0-9_]+)");
         Matcher clsMatcher = clsPattern.matcher(javaContent);
         if (clsMatcher.find()) {
             BeanData data = new BeanData();
@@ -798,17 +930,27 @@ public class DiagramPane extends VBox {
             data.type = data.name;
             data.isLocal = true;
             
-            Pattern fieldPattern = Pattern.compile("private\\s+([A-Za-z0-9_]+)\\s+([A-Za-z0-9_]+)\\s*;");
+            // Match fields: private|protected|public [type] [name]; or just [type] [name];
+            // We allow characters like <> for generics in the type
+            Pattern fieldPattern = Pattern.compile("(?:private|protected|public)?\\s+([A-Za-z0-9_<>]+)\\s+([A-Za-z0-9_]+)\\s*;");
             Matcher fieldMatcher = fieldPattern.matcher(javaContent);
             while (fieldMatcher.find()) {
-                data.properties.put(fieldMatcher.group(2), fieldMatcher.group(1));
+                String type = fieldMatcher.group(1);
+                String name = fieldMatcher.group(2);
+                // Basic check to avoid keywords being picked up as types/names if regex matches weirdly
+                if (!isKeyword(type) && !isKeyword(name)) {
+                    data.properties.put(name, type);
+                }
             }
             result.add(data);
             
             if (file != null && file.getParentFile() != null) {
                 for (String type : new java.util.HashSet<>(data.properties.values())) {
-                    File other = new File(file.getParentFile(), type + ".java");
-                    if (other.exists() && result.stream().noneMatch(b -> b.name.equals(type))) {
+                    // Try to find the type in the same directory (simplified resolution)
+                    final String targetType = type.contains("<") ? type.substring(0, type.indexOf("<")) : type;
+                    
+                    File other = new File(file.getParentFile(), targetType + ".java");
+                    if (other.exists() && result.stream().noneMatch(b -> b.name.equals(targetType))) {
                         try {
                             result.addAll(parseJavaBeans(Files.readString(other.toPath()), other));
                         } catch (Exception ignored) {}

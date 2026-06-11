@@ -4,7 +4,7 @@
       type: "com.tessera.faker.UniversalFaker"
       properties:
         templatesDir: "../FAKER/templates"
-        dbDir: "../FAKER/faker-db/financial"
+        dbDir: "../FAKER/db"
 - route:
     id: "faker-demo"
     from:

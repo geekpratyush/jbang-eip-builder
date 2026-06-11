@@ -1119,6 +1119,28 @@ public class RouteTreePane extends VBox {
         return null;
     }
 
+    public void selectFile(File file) {
+        if (file == null) return;
+        TreeItem<File> item = findTreeItem(rootItem, file);
+        if (item != null) {
+            treeView.getSelectionModel().clearSelection();
+            treeView.getSelectionModel().select(item);
+            
+            // Expand all parents
+            TreeItem<File> p = item.getParent();
+            while (p != null) {
+                p.setExpanded(true);
+                p = p.getParent();
+            }
+            
+            // Scroll to it
+            int index = treeView.getRow(item);
+            if (index >= 0) {
+                treeView.scrollTo(index);
+            }
+        }
+    }
+
     public TreeItem<File> getRootItem() {
         return rootItem;
     }

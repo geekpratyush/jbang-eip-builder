@@ -1,0 +1,7 @@
+{
+  "name": "Production SEPA MT103 to pacs.008",
+  "source": { "file": "source.txt", "type": "mt" },
+  "logic": [{ "file": "transform.xslt", "type": "xslt" }],
+  "type": "xslt",
+  "target": { "xsd": "pacs.008.001.02.xsd", "type": "xml" }
+}

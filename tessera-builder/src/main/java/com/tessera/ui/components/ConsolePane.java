@@ -104,6 +104,10 @@ public class ConsolePane extends VBox {
         Platform.runLater(() -> appendRaw(message));
     }
 
+    public String getText() {
+        return textArea.getText();
+    }
+
     public void clear() {
         Platform.runLater(() -> {
             textArea.clear();

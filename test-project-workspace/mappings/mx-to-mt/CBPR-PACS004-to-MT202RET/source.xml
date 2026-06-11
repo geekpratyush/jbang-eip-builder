@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.004.001.09">
+    <PmtRtr>
+        <GrpHdr>
+            <MsgId>CBPR-PACS004-001</MsgId>
+            <CreDtTm>2026-06-09T16:30:00Z</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <SttlmInf><SttlmMtd>INDA</SttlmMtd></SttlmInf>
+            <InstgAgt><FinInstnId><BICFI>SENDERBKAXXX</BICFI></FinInstnId></InstgAgt>
+            <InstdAgt><FinInstnId><BICFI>RECEIVERBKAXXX</BICFI></FinInstnId></InstdAgt>
+        </GrpHdr>
+        <TxInf>
+            <RtrId>RTR-PACS004-123</RtrId>
+            <OrgnlGrpInf>
+                <OrgnlMsgId>CBPR-PACS009-001</OrgnlMsgId>
+                <OrgnlMsgNmId>pacs.009.001.08</OrgnlMsgNmId>
+            </OrgnlGrpInf>
+            <OrgnlEndToEndId>E2E-009-123</OrgnlEndToEndId>
+            <OrgnlTxId>TX-009-123</OrgnlTxId>
+            <OrgnlUETR>eb5f1a7d-2b4e-4f7d-8f1a-7d2b4e4f7d8f</OrgnlUETR>
+            <RtrdIntrBkSttlmAmt Ccy="EUR">250000.00</RtrdIntrBkSttlmAmt>
+            <IntrBkSttlmDt>2026-06-09</IntrBkSttlmDt>
+            <RtrRsnInf>
+                <Rsn><Cd>AC04</Cd></Rsn>
+                <AddtlInf>Account Closed</AddtlInf>
+            </RtrRsnInf>
+            <InstgAgt><FinInstnId><BICFI>RECEIVERBKAXXX</BICFI></FinInstnId></InstgAgt>
+            <InstdAgt><FinInstnId><BICFI>SENDERBKAXXX</BICFI></FinInstnId></InstdAgt>
+        </TxInf>
+    </PmtRtr>
+</Document>

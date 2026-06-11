@@ -65,7 +65,7 @@
                         <label class="block text-xs font-semibold mb-1">Active Chat Feed</label>
                         <div class="p-2 h-16 overflow-y-auto bg-slate-900 rounded border border-gray-600 text-[10px] space-y-1">
                             <div class="text-yellow-400">Client: "Where is my SWIFT MT103 confirmation?"</div>
-                            <div class="text-cyan-400">AI: "Recommended Response: Check Chapter 16 Core."</div>
+                            <div class="text-cyan-400">AI: "Recommended Response: Check Chapter 16 Ingestion."</div>
                         </div>
                     </div>
                     <button @click="sendAIResponse()" class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold rounded transition">
@@ -113,7 +113,7 @@
                 chart: null,
                 
                 // Demo Interactive Values
-                swiftInput: '{1:F01TESSERABXAXXX0000000000}{2:I103STARKUS33XXXXN}{4:\\n:20:TXN-94029\\n:32A:260605USD1500000,\\n:50K:WAYNE INDUSTRIES\\n:59:OCEANIC TRADE CORP\\n-}',
+                swiftInput: '{1:F01TESSERABXAXXX0000000000}{2:I103STARKUS33XXXXN}{4:\n:20:TXN-94029\n:32A:260605USD1500000,\n:50K:WAYNE INDUSTRIES\n:59:OCEANIC TRADE CORP\n-}',
                 isoOutput: '',
                 rateLimitInput: 60,
                 targetRegion: 'EMEA',
@@ -195,8 +195,7 @@
                 },
 
                 pullData() {
-                    const basePath = window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : window.location.pathname;
-                    fetch(basePath + '/api/telemetry')
+                    fetch('/api/telemetry')
                         .then(res => res.json())
                         .then(data => {
                             if (this.chart) {
@@ -227,7 +226,7 @@
                 translateMessage() {
                     this.addLog('TRANSLATE', 'Parsing Swift MT103 payload structure...');
                     setTimeout(() => {
-                        this.isoOutput = `<?xml version="1.0" encoding="UTF-8"?>\\n<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">\\n  <FIToFICstmrCdtTrf>\\n    <GrpHdr>\\n      <MsgId>TXN-94029</MsgId>\\n      <CreDtTm>${new Date().toISOString()}</CreDtTm>\\n    </GrpHdr>\\n    <Dbtr>\\n      <Nm>WAYNE INDUSTRIES</Nm>\\n    </Dbtr>\\n    <Cdtr>\\n      <Nm>OCEANIC TRADE CORP</Nm>\\n    </Cdtr>\\n  </FIToFICstmrCdtTrf>\\n</Document>`;
+                        this.isoOutput = `<?xml version="1.0" encoding="UTF-8"?>\n<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">\n  <FIToFICstmrCdtTrf>\n    <GrpHdr>\n      <MsgId>TXN-94029</MsgId>\n      <CreDtTm>${new Date().toISOString()}</CreDtTm>\n    </GrpHdr>\n    <Dbtr>\n      <Nm>WAYNE INDUSTRIES</Nm>\n    </Dbtr>\n    <Cdtr>\n      <Nm>OCEANIC TRADE CORP</Nm>\n    </Cdtr>\n  </FIToFICstmrCdtTrf>\n</Document>`;
                         this.addLog('TRANSLATE', 'SWIFT payload successfully translated to pacs.008 ISO 20022 XML.');
                     }, 800);
                     this.postAction('Translate SWIFT', { payload: this.swiftInput });
@@ -331,8 +330,7 @@
                 },
 
                 postAction(actionType, bodyObj) {
-                    const basePath = window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : window.location.pathname;
-                    fetch(basePath + '/api/action', {
+                    fetch('/api/action', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: actionType, details: bodyObj })

@@ -10,14 +10,13 @@
       uri: "timer:init?repeatCount=1"
       steps:
         - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
-        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('12-02-auto-reconciliation', 'Automated Reconciliation Engine', '/12-02-auto-reconciliation/api/telemetry', 'CHART', 'fas fa-balance-scale')"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('12-02-auto-reconciliation', 'Automated Reconciliation Engine', '/api/telemetry', 'CHART', 'fas fa-balance-scale')"
         - log: "[Plugin Activated] Automated Reconciliation Engine registered inside Core Dashboard"
 
-# Prefixed UI endpoint (always active)
 - route:
-    id: "12-02-auto-reconciliation-ui-prefixed"
+    id: "12-02-auto-reconciliation-ui"
     from:
-      uri: "platform-http:/12-02-auto-reconciliation"
+      uri: "platform-http:/"
       steps:
         - setHeader:
             name: "Content-Type"
@@ -26,40 +25,10 @@
             constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/12-finance-treasury/12-02-auto-reconciliation/ui/index.html"
         - convertBodyTo: "java.lang.String"
 
-# Root UI endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
 - route:
-    id: "12-02-auto-reconciliation-ui-root"
+    id: "12-02-auto-reconciliation-telemetry-api"
     from:
-      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-12-02-auto-reconciliation}}/"
-      steps:
-        - setHeader:
-            name: "Content-Type"
-            constant: "text/html"
-        - setBody:
-            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/12-finance-treasury/12-02-auto-reconciliation/ui/index.html"
-        - convertBodyTo: "java.lang.String"
-
-# Prefixed Telemetry API endpoint (always active)
-- route:
-    id: "12-02-auto-reconciliation-telemetry-api-prefixed"
-    from:
-      uri: "platform-http:/12-02-auto-reconciliation/api/telemetry"
-      steps:
-        - to: "direct:12-02-auto-reconciliation-telemetry-api-impl"
-
-# Root Telemetry API endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
-- route:
-    id: "12-02-auto-reconciliation-telemetry-api-root"
-    from:
-      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-12-02-auto-reconciliation}}/api/telemetry"
-      steps:
-        - to: "direct:12-02-auto-reconciliation-telemetry-api-impl"
-
-# Telemetry API Implementation
-- route:
-    id: "12-02-auto-reconciliation-telemetry-api-impl"
-    from:
-      uri: "direct:12-02-auto-reconciliation-telemetry-api-impl"
+      uri: "platform-http:/api/telemetry"
       steps:
         # Returns random data for charts telemetry
         - transform:
@@ -81,27 +50,10 @@
             name: "Content-Type"
             constant: "application/json"
 
-# Prefixed Action API endpoint (always active)
 - route:
-    id: "12-02-auto-reconciliation-action-api-prefixed"
+    id: "12-02-auto-reconciliation-action-api"
     from:
-      uri: "platform-http:/12-02-auto-reconciliation/api/action"
-      steps:
-        - to: "direct:12-02-auto-reconciliation-action-api-impl"
-
-# Root Action API endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
-- route:
-    id: "12-02-auto-reconciliation-action-api-root"
-    from:
-      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-12-02-auto-reconciliation}}/api/action"
-      steps:
-        - to: "direct:12-02-auto-reconciliation-action-api-impl"
-
-# Action API Implementation
-- route:
-    id: "12-02-auto-reconciliation-action-api-impl"
-    from:
-      uri: "direct:12-02-auto-reconciliation-action-api-impl"
+      uri: "platform-http:/api/action"
       steps:
         - convertBodyTo: "java.lang.String"
         - log: "[Action Triggered] Received operation request: ${body}"

@@ -10,14 +10,13 @@
       uri: "timer:init?repeatCount=1"
       steps:
         - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
-        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('12-04-trade-order-mgmt', 'Trade & Order Management System', '/12-04-trade-order-mgmt/api/telemetry', 'CHART', 'fas fa-file-invoice-dollar')"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('12-04-trade-order-mgmt', 'Trade & Order Management System', '/api/telemetry', 'CHART', 'fas fa-file-invoice-dollar')"
         - log: "[Plugin Activated] Trade & Order Management System registered inside Core Dashboard"
 
-# Prefixed UI endpoint (always active)
 - route:
-    id: "12-04-trade-order-mgmt-ui-prefixed"
+    id: "12-04-trade-order-mgmt-ui"
     from:
-      uri: "platform-http:/12-04-trade-order-mgmt"
+      uri: "platform-http:/"
       steps:
         - setHeader:
             name: "Content-Type"
@@ -26,40 +25,10 @@
             constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/12-finance-treasury/12-04-trade-order-mgmt/ui/index.html"
         - convertBodyTo: "java.lang.String"
 
-# Root UI endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
 - route:
-    id: "12-04-trade-order-mgmt-ui-root"
+    id: "12-04-trade-order-mgmt-telemetry-api"
     from:
-      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-12-04-trade-order-mgmt}}/"
-      steps:
-        - setHeader:
-            name: "Content-Type"
-            constant: "text/html"
-        - setBody:
-            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/12-finance-treasury/12-04-trade-order-mgmt/ui/index.html"
-        - convertBodyTo: "java.lang.String"
-
-# Prefixed Telemetry API endpoint (always active)
-- route:
-    id: "12-04-trade-order-mgmt-telemetry-api-prefixed"
-    from:
-      uri: "platform-http:/12-04-trade-order-mgmt/api/telemetry"
-      steps:
-        - to: "direct:12-04-trade-order-mgmt-telemetry-api-impl"
-
-# Root Telemetry API endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
-- route:
-    id: "12-04-trade-order-mgmt-telemetry-api-root"
-    from:
-      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-12-04-trade-order-mgmt}}/api/telemetry"
-      steps:
-        - to: "direct:12-04-trade-order-mgmt-telemetry-api-impl"
-
-# Telemetry API Implementation
-- route:
-    id: "12-04-trade-order-mgmt-telemetry-api-impl"
-    from:
-      uri: "direct:12-04-trade-order-mgmt-telemetry-api-impl"
+      uri: "platform-http:/api/telemetry"
       steps:
         # Returns random data for charts telemetry
         - transform:
@@ -81,27 +50,10 @@
             name: "Content-Type"
             constant: "application/json"
 
-# Prefixed Action API endpoint (always active)
 - route:
-    id: "12-04-trade-order-mgmt-action-api-prefixed"
+    id: "12-04-trade-order-mgmt-action-api"
     from:
-      uri: "platform-http:/12-04-trade-order-mgmt/api/action"
-      steps:
-        - to: "direct:12-04-trade-order-mgmt-action-api-impl"
-
-# Root Action API endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
-- route:
-    id: "12-04-trade-order-mgmt-action-api-root"
-    from:
-      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-12-04-trade-order-mgmt}}/api/action"
-      steps:
-        - to: "direct:12-04-trade-order-mgmt-action-api-impl"
-
-# Action API Implementation
-- route:
-    id: "12-04-trade-order-mgmt-action-api-impl"
-    from:
-      uri: "direct:12-04-trade-order-mgmt-action-api-impl"
+      uri: "platform-http:/api/action"
       steps:
         - convertBodyTo: "java.lang.String"
         - log: "[Action Triggered] Received operation request: ${body}"

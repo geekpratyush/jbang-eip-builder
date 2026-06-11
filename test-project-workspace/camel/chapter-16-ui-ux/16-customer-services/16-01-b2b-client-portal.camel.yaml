@@ -10,14 +10,13 @@
       uri: "timer:init?repeatCount=1"
       steps:
         - to: "sql:CREATE TABLE IF NOT EXISTS ui_features (id VARCHAR(50) PRIMARY KEY, title VARCHAR(100), endpoint VARCHAR(100), type VARCHAR(50), icon VARCHAR(50))"
-        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('16-01-b2b-client-portal', 'B2B Client Self-Service Portal', '/16-01-b2b-client-portal/api/telemetry', 'CHART', 'fas fa-building')"
+        - to: "sql:MERGE INTO ui_features (id, title, endpoint, type, icon) KEY(id) VALUES ('16-01-b2b-client-portal', 'B2B Client Self-Service Portal', '/api/telemetry', 'CHART', 'fas fa-building')"
         - log: "[Plugin Activated] B2B Client Self-Service Portal registered inside Core Dashboard"
 
-# Prefixed UI endpoint (always active)
 - route:
-    id: "16-01-b2b-client-portal-ui-prefixed"
+    id: "16-01-b2b-client-portal-ui"
     from:
-      uri: "platform-http:/16-01-b2b-client-portal"
+      uri: "platform-http:/"
       steps:
         - setHeader:
             name: "Content-Type"
@@ -26,40 +25,10 @@
             constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/16-customer-services/16-01-b2b-client-portal/ui/index.html"
         - convertBodyTo: "java.lang.String"
 
-# Root UI endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
 - route:
-    id: "16-01-b2b-client-portal-ui-root"
+    id: "16-01-b2b-client-portal-telemetry-api"
     from:
-      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-16-01-b2b-client-portal}}/"
-      steps:
-        - setHeader:
-            name: "Content-Type"
-            constant: "text/html"
-        - setBody:
-            constant: "resource:file:{{WORKSPACE_ROOT_DIR}}/assets/chapter-16-ui-ux/16-customer-services/16-01-b2b-client-portal/ui/index.html"
-        - convertBodyTo: "java.lang.String"
-
-# Prefixed Telemetry API endpoint (always active)
-- route:
-    id: "16-01-b2b-client-portal-telemetry-api-prefixed"
-    from:
-      uri: "platform-http:/16-01-b2b-client-portal/api/telemetry"
-      steps:
-        - to: "direct:16-01-b2b-client-portal-telemetry-api-impl"
-
-# Root Telemetry API endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
-- route:
-    id: "16-01-b2b-client-portal-telemetry-api-root"
-    from:
-      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-16-01-b2b-client-portal}}/api/telemetry"
-      steps:
-        - to: "direct:16-01-b2b-client-portal-telemetry-api-impl"
-
-# Telemetry API Implementation
-- route:
-    id: "16-01-b2b-client-portal-telemetry-api-impl"
-    from:
-      uri: "direct:16-01-b2b-client-portal-telemetry-api-impl"
+      uri: "platform-http:/api/telemetry"
       steps:
         # Returns random data for charts telemetry
         - transform:
@@ -81,27 +50,10 @@
             name: "Content-Type"
             constant: "application/json"
 
-# Prefixed Action API endpoint (always active)
 - route:
-    id: "16-01-b2b-client-portal-action-api-prefixed"
+    id: "16-01-b2b-client-portal-action-api"
     from:
-      uri: "platform-http:/16-01-b2b-client-portal/api/action"
-      steps:
-        - to: "direct:16-01-b2b-client-portal-action-api-impl"
-
-# Root Action API endpoint (active only in standalone mode via CAMEL_UI_ROOT_PATH)
-- route:
-    id: "16-01-b2b-client-portal-action-api-root"
-    from:
-      uri: "platform-http:{{env:CAMEL_UI_ROOT_PATH:/disabled-16-01-b2b-client-portal}}/api/action"
-      steps:
-        - to: "direct:16-01-b2b-client-portal-action-api-impl"
-
-# Action API Implementation
-- route:
-    id: "16-01-b2b-client-portal-action-api-impl"
-    from:
-      uri: "direct:16-01-b2b-client-portal-action-api-impl"
+      uri: "platform-http:/api/action"
       steps:
         - convertBodyTo: "java.lang.String"
         - log: "[Action Triggered] Received operation request: ${body}"

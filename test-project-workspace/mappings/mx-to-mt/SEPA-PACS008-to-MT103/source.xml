@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.02">
+    <FIToFICstmrCdtTrf>
+        <GrpHdr>
+            <MsgId>SEPA-PACS008-2026-06-09-ABC</MsgId>
+            <CreDtTm>2026-06-09T16:00:00.000Z</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <CtrlSum>1250.00</CtrlSum>
+            <SttlmInf>
+                <SttlmMtd>CLRG</SttlmMtd>
+                <ClrSys>
+                    <Cd>ST2</Cd>
+                </ClrSys>
+            </SttlmInf>
+            <InstgAgt>
+                <FinInstnId><BICFI>DEUTDEFFXXX</BICFI></FinInstnId>
+            </InstgAgt>
+            <InstdAgt>
+                <FinInstnId><BICFI>BARCGB22XXX</BICFI></FinInstnId>
+            </InstdAgt>
+        </GrpHdr>
+        <CdtTrfTxInf>
+            <PmtId>
+                <InstrId>SEPA-INSTR-2026-999</InstrId>
+                <EndToEndId>SEPA-E2E-2026-888</EndToEndId>
+                <TxId>SEPA-TX-2026-777</TxId>
+            </PmtId>
+            <PmtTpInf>
+                <SvcLvl><Cd>SEPA</Cd></SvcLvl>
+                <LclInstrm><Cd>TRF</Cd></LclInstrm>
+            </PmtTpInf>
+            <IntrBkSttlmAmt Ccy="EUR">1250.00</IntrBkSttlmAmt>
+            <IntrBkSttlmDt>2026-06-09</IntrBkSttlmDt>
+            <ChrgBr>SLEV</ChrgBr>
+            <Dbtr>
+                <Nm>JOHN SEPA DOE</Nm>
+                <PstlAdr>
+                    <Ctry>DE</Ctry>
+                    <AdrLine>MAINSTREET 10, FRANKFURT</AdrLine>
+                </PstlAdr>
+            </Dbtr>
+            <DbtrAcct>
+                <Id><IBAN>DE12345678901234567890</IBAN></Id>
+            </DbtrAcct>
+            <DbtrAgt>
+                <FinInstnId><BICFI>DEUTDEFFXXX</BICFI></FinInstnId>
+            </DbtrAgt>
+            <CdtrAgt>
+                <FinInstnId><BICFI>BARCGB22XXX</BICFI></FinInstnId>
+            </CdtrAgt>
+            <Cdtr>
+                <Nm>JANE SEPA SMITH</Nm>
+                <PstlAdr>
+                    <Ctry>GB</Ctry>
+                    <AdrLine>LONDON BRIDGE 1, LONDON</AdrLine>
+                </PstlAdr>
+            </Cdtr>
+            <CdtrAcct>
+                <Id><IBAN>GB98765432109876543210</IBAN></Id>
+            </CdtrAcct>
+            <Purp><Cd>SALA</Cd></Purp>
+            <RmtInf>
+                <Ustrd>MONTHLY SALARY JUNE 2026</Ustrd>
+                <Ustrd>EMPLOYEE ID: EMP-5566</Ustrd>
+            </RmtInf>
+        </CdtTrfTxInf>
+    </FIToFICstmrCdtTrf>
+</Document>

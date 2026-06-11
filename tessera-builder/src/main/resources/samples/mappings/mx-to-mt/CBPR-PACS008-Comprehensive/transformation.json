@@ -1,0 +1,7 @@
+{
+  "name": "Comprehensive CBPR+ pacs.008 v14 to MT103",
+  "source": { "file": "source.xml", "type": "xml" },
+  "logic": [{ "file": "transform.xslt", "type": "xslt" }],
+  "type": "xslt",
+  "target": { "type": "mt" }
+}
