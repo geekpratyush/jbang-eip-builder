@@ -1,0 +1,7 @@
+{
+  "type": "joor",
+  "name": "CCIO Sanctions Message to ISO XML (Java Regex)",
+  "source": { "type": "xml", "file": "source.xml" },
+  "logic": { "type": "java", "file": "Transform.java" },
+  "target": { "type": "xml" }
+}

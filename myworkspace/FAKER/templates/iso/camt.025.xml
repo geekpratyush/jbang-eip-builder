@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.025.001.09">
+    <Rct>
+        <MsgHdr>
+            <MsgId>{{type:msgId}}</MsgId>
+            <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+        </MsgHdr>
+        <RctDtls>
+            <OrgnlMsgId>
+                <MsgId>{{type:msgId}}</MsgId>
+            </OrgnlMsgId>
+        </RctDtls>
+    </Rct>
+</Document>

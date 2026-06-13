@@ -1,0 +1,11 @@
+{1:F01{{type:bic:sender}}XXXX0000000000}
+{2:I210{{type:bic:receiver}}XXXXN}
+{4:
+:20:{{type:uuid}}
+:25:{{type:iban:debtor}}
+:30:{{type:dateTime:yyMMdd}}
+:21:{{type:uuid}}
+:32B:{{type:random:USD,EUR,GBP}}{{type:amount:10000:2000000}}
+:50K:{{type:company:debtor}}
+:56A:{{type:bic:sender}}
+-}

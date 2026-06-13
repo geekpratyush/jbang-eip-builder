@@ -55,6 +55,13 @@ public class DiagramPane extends VBox {
     private StackPane contentStack;
     private ScrollPane propScroll;
     private Runnable onClose, onMaximize;
+    private boolean isRunning = false;
+    private java.util.List<javafx.animation.Timeline> activeAnimations = new java.util.ArrayList<>();
+
+    public void setRunning(boolean running) {
+        this.isRunning = running;
+        Platform.runLater(this::renderFromRoot);
+    }
 
     // Shared toolbar action state (reused by both inline and detached toolbars)
     private Button inlineLBtn, inlineStackBtn;
@@ -304,14 +311,56 @@ public class DiagramPane extends VBox {
         });
         
         ContextMenu canvasMenu = new ContextMenu();
+        Menu newRouteMenu = new Menu("New Route Template", new FontIcon("fas-plus-square"));
+        
+        newRouteMenu.getItems().addAll(
+            createTemplateItem("Simple Timer", "fas-clock", 
+                "- route:\n    id: \"timer-route\"\n    from:\n      uri: \"timer:tick?period=5000\"\n      steps:\n        - log: \"Timer triggered: ${date:now:HH:mm:ss}\""),
+            
+            createTemplateItem("Faker Data Generator", "fas-magic", 
+                "- beans:\n    - name: \"faker\"\n      type: \"com.tessera.faker.UniversalFaker\"\n" +
+                "- route:\n    id: \"faker-gen-route\"\n    from:\n      uri: \"timer:faker?period=3000\"\n      steps:\n        - setBody:\n            simple: \"${bean:faker.generate('financial/payment')}\"\n        - log: \"Generated Data: ${body}\""),
+            
+            createTemplateItem("Kafka Consumer", "fas-share-alt", 
+                "- route:\n    id: \"kafka-consumer\"\n    from:\n      uri: \"kafka:incoming-topic?brokers=localhost:9092&groupId=tessera-group\"\n      steps:\n        - log: \"Received from Kafka: ${body}\""),
+            
+            createTemplateItem("IBM MQ Consumer", "fas-envelope", 
+                "- route:\n    id: \"ibmmq-consumer\"\n    from:\n      uri: \"ibmmq:queue:INBOUND.Q?connectionFactory=#mqFactory\"\n      steps:\n        - log: \"Received from MQ: ${body}\""),
+            
+            createTemplateItem("Direct (Sync) Entry", "fas-arrow-circle-right", 
+                "- route:\n    id: \"direct-process\"\n    from:\n      uri: \"direct:start-process\"\n      steps:\n        - log: \"Processing input: ${body}\""),
+            
+            createTemplateItem("SEDA (Async) Queue", "fas-stream", 
+                "- route:\n    id: \"async-worker\"\n    from:\n      uri: \"seda:async-queue?concurrentConsumers=5\"\n      steps:\n        - log: \"Async task start: ${body}\"\n        - delay:\n            constant: 1000\n        - log: \"Async task complete\""),
+            
+            createTemplateItem("REST API Endpoint", "fas-server", 
+                "- rest:\n    path: \"/api/v1\"\n    get:\n      - path: \"/status\"\n        to: \"direct:get-status\"\n" +
+                "- route:\n    id: \"rest-handler\"\n    from:\n      uri: \"direct:get-status\"\n      steps:\n        - setBody:\n            constant: '{\"status\":\"UP\", \"timestamp\":\"${date:now}\"}'"),
+            
+            createTemplateItem("File Poller", "fas-file-import", 
+                "- route:\n    id: \"file-consumer\"\n    from:\n      uri: \"file:{{WORKSPACE_ROOT_DIR}}/input?delete=true\"\n      steps:\n        - log: \"Processing file: ${header.CamelFileName}\""),
+            
+            createTemplateItem("Scheduled SQL Poll", "fas-database", 
+                "- route:\n    id: \"db-poller\"\n    from:\n      uri: \"sql:SELECT * FROM pending_tasks WHERE status='NEW'?delay=10000&onConsume=UPDATE pending_tasks SET status='PROCESSED' WHERE id=:#id\"\n      steps:\n        - log: \"Polled DB record: ${body}\""),
+            
+            createTemplateItem("Scheduled MongoDB Poll", "fas-leaf", 
+                "- route:\n    id: \"mongo-poller\"\n    from:\n      uri: \"timer:mongo-poll?period=30000\"\n      steps:\n        - setHeader:\n            name: \"CamelMongoDbCriteria\"\n            constant: '{\"status\": \"PENDING\"}'\n        - to: \"mongodb:myDb?database=tessera&collection=orders&operation=findAll\"\n        - split:\n            simple: \"${body}\"\n            steps:\n              - log: \"Processing Mongo Record: ${body}\""),
+
+            new SeparatorMenuItem(),
+
+            createTemplateItem("Audit Trail Processor", "fas-history", 
+                "- route:\n    id: \"audit-processor\"\n    from:\n      uri: \"direct:audit-event\"\n      steps:\n        - log: \"Auditing: ${body}\"\n        - to: \"mongodb:myDb?database=tessera&collection=audit_logs&operation=insert\""),
+
+            createTemplateItem("Kafka Sink Route", "fas-share-alt", 
+                "- route:\n    id: \"kafka-sink\"\n    from:\n      uri: \"direct:send-to-kafka\"\n      steps:\n        - log: \"Publishing to Kafka: ${body}\"\n        - to: \"kafka:outbound-topic?brokers=localhost:9092\""),
+
+            createTemplateItem("HTTP Proxy Route", "fas-globe", 
+                "- route:\n    id: \"http-proxy\"\n    from:\n      uri: \"platform-http:/proxy?matchOnUriPrefix=true\"\n      steps:\n        - to: \"http://localhost:9090/backend?bridgeEndpoint=true\"")
+        );
+
         canvasMenu.getItems().addAll(
-            new MenuItem("New Route", new FontIcon("fas-route")) {{ setOnAction(e -> {
-                try {
-                    JsonNode n = yamlMapper.readTree("- route:\n    from:\n      uri: direct:start\n      steps:\n        - log: New Route started");
-                    if (rootNode == null || !rootNode.isArray()) rootNode = yamlMapper.createArrayNode();
-                    ((ArrayNode)rootNode).add(n.get(0)); updateYamlFromRoot();
-                } catch (Exception ignored) {}
-            }); }},
+            newRouteMenu,
+            new SeparatorMenuItem(),
             new MenuItem("New Beans Configuration", new FontIcon("fas-cubes")) {{ setOnAction(e -> {
                 try {
                     JsonNode n = yamlMapper.readTree("- beans:\n    - name: \"auditProcessor\"\n      type: \"com.tessera.audit.AuditShaperProcessor\"");
@@ -325,13 +374,6 @@ public class DiagramPane extends VBox {
                     if (rootNode != null && rootNode.isArray()) ((ArrayNode)rootNode).add(n.get(0));
                     updateYamlFromRoot();
                 } catch (Exception ignored) {}
-            }); }},
-            new MenuItem("New REST Configuration", new FontIcon("fas-server")) {{ setOnAction(e -> {
-                try {
-                    JsonNode n = yamlMapper.readTree("- rest:\n    path: /api\n    get:\n      - path: /hello\n        to: direct:hello");
-                    if (rootNode != null && rootNode.isArray()) ((ArrayNode)rootNode).add(n.get(0));
-                    updateYamlFromRoot();
-                } catch (Exception ignored) {}
             }); }}
         );
         cp.setOnContextMenuRequested(e -> { if(activeContextMenu!=null) activeContextMenu.hide(); canvasMenu.show(cp, e.getScreenX(), e.getScreenY()); activeContextMenu=canvasMenu; e.consume(); });
@@ -341,6 +383,31 @@ public class DiagramPane extends VBox {
         cp.setOnMouseDragged(e -> { zoomGroup.setTranslateX(drag[2] + e.getScreenX()-drag[0]); zoomGroup.setTranslateY(drag[3] + e.getScreenY()-drag[1]); });
         cp.setOnMouseReleased(e -> cp.setCursor(javafx.scene.Cursor.OPEN_HAND));
         return cp;
+    }
+
+    private MenuItem createTemplateItem(String label, String icon, String yaml) {
+        return new MenuItem(label, new FontIcon(icon)) {{
+            setOnAction(e -> {
+                try {
+                    JsonNode n = yamlMapper.readTree(yaml);
+                    if (rootNode == null || !rootNode.isArray()) {
+                        rootNode = yamlMapper.createArrayNode();
+                    }
+                    ArrayNode arr = (ArrayNode) rootNode;
+                    if (n.isArray()) {
+                        for (JsonNode sub : n) {
+                            arr.add(sub);
+                        }
+                    } else {
+                        arr.add(n);
+                    }
+                    renderFromRoot();
+                    updateYamlFromRoot();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            });
+        }};
     }
 
     private void rebuildContainer() {
@@ -392,6 +459,8 @@ public class DiagramPane extends VBox {
     }
 
     private void renderFromRoot() {
+        activeAnimations.forEach(javafx.animation.Timeline::stop);
+        activeAnimations.clear();
         diagramContainer.getChildren().clear();
         if (rootNode != null && rootNode.isArray()) {
             ArrayNode arr = (ArrayNode) rootNode;
@@ -633,9 +702,22 @@ public class DiagramPane extends VBox {
             createInsertMenuItem("Marshal SWIFT MX", "marshal_swiftmx", array, idx),
             createInsertMenuItem("Unmarshal SWIFT MX", "unmarshal_swiftmx", array, idx)
         );
-        
+
+        Menu connectors = new Menu("Connectors & Sinks", new FontIcon("fas-plug"));
+        connectors.getItems().addAll(
+            createInsertMenuItem("Audit Wiretap", "wiretap_audit", array, idx),
+            createInsertMenuItem("Audit To", "to_audit", array, idx),
+            new SeparatorMenuItem(),
+            createInsertMenuItem("Kafka Sink", "to_kafka", array, idx),
+            createInsertMenuItem("IBM MQ Sink", "to_ibmmq", array, idx),
+            createInsertMenuItem("MongoDB Sink", "to_mongodb", array, idx),
+            createInsertMenuItem("HTTP Sink", "to_http", array, idx),
+            createInsertMenuItem("File Sink", "to_file", array, idx)
+        );
+
         m.getItems().addAll(createInsertMenuItem("Log", "log", array, idx), createInsertMenuItem("To", "to", array, idx), createInsertMenuItem("SetBody", "setBody", array, idx), createInsertMenuItem("SetHeader", "setHeader", array, idx),
-            new SeparatorMenuItem(), mapping, formats, new SeparatorMenuItem(), createInsertMenuItem("Choice", "choice", array, idx), createInsertMenuItem("Split", "split", array, idx), createInsertMenuItem("Filter", "filter", array, idx), createInsertMenuItem("DoTry", "doTry", array, idx));
+            new SeparatorMenuItem(), mapping, formats, connectors, new SeparatorMenuItem(), createInsertMenuItem("Choice", "choice", array, idx), createInsertMenuItem("Split", "split", array, idx), createInsertMenuItem("Filter", "filter", array, idx), createInsertMenuItem("DoTry", "doTry", array, idx));
+
         return m;
     }
 
@@ -658,6 +740,13 @@ public class DiagramPane extends VBox {
                 else if (type.equals("unmarshal_swiftmt")) n = yamlMapper.readTree("{\"unmarshal\":{\"swiftMt\":{}}}");
                 else if (type.equals("marshal_swiftmx")) n = yamlMapper.readTree("{\"marshal\":{\"swiftMx\":{}}}");
                 else if (type.equals("unmarshal_swiftmx")) n = yamlMapper.readTree("{\"unmarshal\":{\"swiftMx\":{}}}");
+                else if (type.equals("wiretap_audit")) n = yamlMapper.readTree("{\"wiretap\":{\"uri\":\"direct:audit-event\"}}");
+                else if (type.equals("to_audit")) n = yamlMapper.readTree("{\"to\":{\"uri\":\"direct:audit-event\"}}");
+                else if (type.equals("to_kafka")) n = yamlMapper.readTree("{\"to\":{\"uri\":\"kafka:outbound-topic?brokers=localhost:9092\"}}");
+                else if (type.equals("to_ibmmq")) n = yamlMapper.readTree("{\"to\":{\"uri\":\"ibmmq:queue:OUTBOUND.Q\"}}");
+                else if (type.equals("to_mongodb")) n = yamlMapper.readTree("{\"to\":{\"uri\":\"mongodb:myDb?database=tessera&collection=data&operation=insert\"}}");
+                else if (type.equals("to_http")) n = yamlMapper.readTree("{\"to\":{\"uri\":\"http://localhost:9090/api/external\"}}");
+                else if (type.equals("to_file")) n = yamlMapper.readTree("{\"to\":{\"uri\":\"file:{{WORKSPACE_ROOT_DIR}}/output\"}}");
                 else n = yamlMapper.readTree("{\""+type+"\":\"mock:dest\"}");
                 arr.insert(idx, n); renderFromRoot(); updateYamlFromRoot();
             } catch (Exception ignored) {}
@@ -746,13 +835,62 @@ public class DiagramPane extends VBox {
     }
 
     private Pane createConnector(String type) {
-        Pane box = isHorizontal ? new HBox() : new VBox(); if (box instanceof HBox) ((HBox)box).setAlignment(Pos.CENTER); else ((VBox)box).setAlignment(Pos.CENTER);
+        Pane box = isHorizontal ? new HBox() : new VBox();
+        if (box instanceof HBox)
+            ((HBox) box).setAlignment(Pos.CENTER);
+        else
+            ((VBox) box).setAlignment(Pos.CENTER);
+
+        Color themeIconColor = com.tessera.ui.components.ThemeManager.getCurrentIconColor();
+        boolean dark = currentTheme != null && currentTheme.toLowerCase().contains("dark");
+        
+        // If running, we might want it slightly brighter or keep it matching
+        Color connectorColor = isRunning && dark ? themeIconColor.brighter().brighter() : themeIconColor;
+
         if ("standard".equals(type)) {
-            Line l = new Line(0, 0, isHorizontal?15:0, isHorizontal?0:15) {{ getStyleClass().add("diagram-connector"); setStrokeWidth(2.5); }};
-            javafx.scene.shape.Polygon a = isHorizontal ? new javafx.scene.shape.Polygon(0,-4, 0,4, 6,0) : new javafx.scene.shape.Polygon(-4,0, 4,0, 0,6);
-            a.getStyleClass().add("diagram-arrow"); box.getChildren().addAll(l, a);
+            Line l = new Line(0, 0, isHorizontal ? 15 : 0, isHorizontal ? 0 : 15) {
+                {
+                    setStroke(connectorColor);
+                    setStrokeWidth(isRunning ? 3.0 : 2.5);
+                    if (isRunning) {
+                        getStrokeDashArray().addAll(6.0, 4.0);
+                        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+                                new javafx.animation.KeyFrame(javafx.util.Duration.ZERO,
+                                        new javafx.animation.KeyValue(strokeDashOffsetProperty(), 0)),
+                                new javafx.animation.KeyFrame(javafx.util.Duration.millis(500),
+                                        new javafx.animation.KeyValue(strokeDashOffsetProperty(), 10)));
+                        timeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
+                        timeline.play();
+                        activeAnimations.add(timeline);
+                    }
+                }
+            };
+            javafx.scene.shape.Polygon a = isHorizontal ? new javafx.scene.shape.Polygon(0, -4, 0, 4, 6, 0)
+                    : new javafx.scene.shape.Polygon(-4, 0, 4, 0, 0, 6);
+            a.setFill(connectorColor);
+            box.getChildren().addAll(l, a);
         } else {
-            javafx.scene.shape.SVGPath b = new javafx.scene.shape.SVGPath() {{ setContent(isHorizontal ? "M 0,15 L 10,15 Q 20,15 20,0 M 10,15 L 20,15 M 10,15 Q 20,15 20,30" : "M 15,0 L 15,10 Q 15,20 0,20 M 15,10 L 15,20 M 15,10 Q 15,20 30,20"); setStroke(Color.web("#FF9800")); setStrokeWidth(3); setFill(Color.TRANSPARENT); setEffect(new javafx.scene.effect.DropShadow(5, Color.web("#FF9800"))); }};
+            javafx.scene.shape.SVGPath b = new javafx.scene.shape.SVGPath() {
+                {
+                    setContent(isHorizontal ? "M 0,15 L 10,15 Q 20,15 20,0 M 10,15 L 20,15 M 10,15 Q 20,15 20,30"
+                            : "M 15,0 L 15,10 Q 15,20 0,20 M 15,10 L 15,20 M 15,10 Q 15,20 30,20");
+                    setStroke(connectorColor);
+                    setStrokeWidth(isRunning ? 3.5 : 3);
+                    setFill(Color.TRANSPARENT);
+                    if (isRunning) {
+                        getStrokeDashArray().addAll(8.0, 5.0);
+                        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+                                new javafx.animation.KeyFrame(javafx.util.Duration.ZERO,
+                                        new javafx.animation.KeyValue(strokeDashOffsetProperty(), 0)),
+                                new javafx.animation.KeyFrame(javafx.util.Duration.millis(800),
+                                        new javafx.animation.KeyValue(strokeDashOffsetProperty(), 13)));
+                        timeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
+                        timeline.play();
+                        activeAnimations.add(timeline);
+                    }
+                    setEffect(new javafx.scene.effect.DropShadow(isRunning ? 12 : 5, connectorColor));
+                }
+            };
             box.getChildren().add(b);
         }
         return box;

@@ -6,7 +6,7 @@ quarkus:
 
   # Default application HTTP port
   http:
-    port: 8080
+    port: 9090
 
   # Suppress noisy connection warnings from MongoDB driver when local mongo is not running
   log:

@@ -587,8 +587,8 @@ public class HelpPortalPane extends BorderPane {
             "# Global Earmark & Credit Services Architecture\n\n" +
             "A detailed architectural overview of the GEE (Global Earmarking Engine) and CLUE (Credit Engine) subsystems.\n\n" +
             "### Extended Reading Resources\n" +
-            "* [Global Earmark Architecture Page (HTML)](file:///home/pratyush/Downloads/global-earmark-architecture.html)\n" +
-            "* [Target State Architecture Document (Markdown)](file:///home/pratyush/Downloads/architecture.md)\n\n" +
+            "* [Global Earmark Architecture Page (HTML)](docs/InteractiveHelpManual.html)\n" +
+            "* [Target State Architecture Document (Markdown)](docs/RouteBuilderStudio.md)\n\n" +
             "## Architectural Blueprint\n" +
             "The **Global Earmark and Credit Services** platform is a real-time financial processing system that manages fund reservations across Citibank's global networks.\n\n" +
             "### Subsystems & Engines\n\n" +

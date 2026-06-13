@@ -1,0 +1,20 @@
+# ID: multicast
+# ENABLED: true
+# DESCRIPTION: Multicast EIP — broadcast same message to multiple endpoints in parallel
+# AUTHOR: Camel Studio
+# STUB: stub:jms:queue:NOTIFY.EMAIL, stub:jms:queue:NOTIFY.SMS
+
+- route:
+    id: "multicast-notifier"
+    from:
+      uri: "timer:notify?period=5000&repeatCount=3"
+      steps:
+        - setBody:
+            constant: '{"event":"PAYMENT_COMPLETE","txId":"TX-12345","amount":499.99}'
+        - log: "[Chapter 5][MULTICAST] Broadcasting notification: ${body}"
+        - multicast:
+            parallelProcessing: true
+            steps:
+              - to: "stub:jms:queue:NOTIFY.EMAIL"
+              - to: "stub:jms:queue:NOTIFY.SMS"
+              - to: "mock:audit-trail"

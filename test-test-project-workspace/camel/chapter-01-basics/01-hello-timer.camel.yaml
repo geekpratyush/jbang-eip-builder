@@ -1,0 +1,13 @@
+# ID: hello-timer
+# ENABLED: true
+# DESCRIPTION: Simplest possible route — timer fires every 3s and logs a message
+# AUTHOR: Camel Studio
+# STUB: none
+
+- route:
+    id: "hello-timer"
+    from:
+      uri: "timer:hello?period=3000"
+      steps:
+        - log:
+            message: "[Chapter 1] Hello from Apache Camel! Timestamp: ${date:now:HH:mm:ss}"

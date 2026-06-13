@@ -1,0 +1,28 @@
+// JSLT Deep Merge Enrichment
+// Matches Original structure, overlays Truncated values
+
+def merge(orig, trunc)
+  if (is-object($orig))
+    {for ($orig) 
+       let k = .key 
+       let v = .value
+       let t = $trunc[$k]
+       $k : merge($v, $t)
+    }
+  else if (is-array($orig))
+    [for (array-zip($orig, $trunc)) 
+       merge(.orig, .trunc)
+    ]
+  else
+    if ($trunc != null and string($trunc) != "")
+      $trunc
+    else
+      $orig
+
+// Start enrichment from the ISO Document level
+// Assign to variables before function call to avoid parser issues
+let env = if (.envelope) .envelope else .
+let origDoc = $env.original.Document
+let truncDoc = $env.truncated.Document
+
+merge($origDoc, $truncDoc)

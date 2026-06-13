@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:seev.047.001.03">
+  <Seev047Document>
+    <MsgId>{{type:msgId}}</MsgId>
+    <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+    <UETR>{{type:uetr}}</UETR>
+    <Desc>Generated Mock Message for seev.047</Desc>
+  </Seev047Document>
+</Document>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Compliance Archive Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-200 h-screen p-8 flex flex-col">
+    <h1 class="text-2xl font-bold mb-6 text-indigo-400">Compliance & Audit Archive</h1>
+    
+    <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6 flex gap-4">
+        <select class="bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white"><option>Last 30 Days</option><option>Last Year</option></select>
+        <select class="bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white"><option>All Protocols</option><option>AMQP</option><option>HTTP</option></select>
+        <input type="text" placeholder="Message Keyword" class="bg-slate-900 border border-slate-700 rounded px-3 py-2 flex-1 text-white">
+        <button class="bg-indigo-600 px-6 py-2 rounded text-white font-bold hover:bg-indigo-500">Search</button>
+    </div>
+
+    <div class="flex-1 overflow-auto bg-slate-800 rounded-lg border border-slate-700">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-slate-900 text-slate-400 sticky top-0">
+                <tr>
+                    <th class="p-4">TX ID</th>
+                    <th class="p-4">Date</th>
+                    <th class="p-4">Protocol</th>
+                    <th class="p-4">Size</th>
+                    <th class="p-4">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700">
+                <!-- Mock Data Loop -->
+                <tr><td class="p-4 font-mono">TX-9102</td><td class="p-4">2026-06-01</td><td class="p-4">HTTP</td><td class="p-4">12 KB</td><td class="p-4 text-emerald-400">ARCHIVED</td></tr>
+                <tr><td class="p-4 font-mono">TX-9103</td><td class="p-4">2026-06-02</td><td class="p-4">AMQP</td><td class="p-4">2 MB</td><td class="p-4 text-emerald-400">ARCHIVED</td></tr>
+                <tr><td class="p-4 font-mono">TX-9104</td><td class="p-4">2026-06-02</td><td class="p-4">HTTP</td><td class="p-4">45 KB</td><td class="p-4 text-amber-400">RETENTION_EXPIRING</td></tr>
+                <tr><td class="p-4 font-mono">TX-9105</td><td class="p-4">2026-06-03</td><td class="p-4">FTP</td><td class="p-4">104 MB</td><td class="p-4 text-emerald-400">ARCHIVED</td></tr>
+                <tr><td class="p-4 font-mono">TX-9106</td><td class="p-4">2026-06-04</td><td class="p-4">HTTP</td><td class="p-4">8 KB</td><td class="p-4 text-emerald-400">ARCHIVED</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-4 flex justify-between items-center text-slate-400 text-sm">
+        <span>Showing 1-5 of 14,293,101 records</span>
+        <div class="flex gap-2">
+            <button class="bg-slate-800 px-3 py-1 rounded hover:bg-slate-700">Prev</button>
+            <button class="bg-slate-800 px-3 py-1 rounded hover:bg-slate-700">Next</button>
+        </div>
+    </div>
+</body>
+</html>

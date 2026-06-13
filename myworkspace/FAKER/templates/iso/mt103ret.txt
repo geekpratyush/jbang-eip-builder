@@ -1,0 +1,9 @@
+{1:F01{{type:bic:sender}}XXXX0000000000}{2:I103{{type:bic:receiver}}XXXXN}{4:
+:20:{{type:uuid}}
+:21:INSTR-20260521-001
+:32A:{{type:dateTime:yyMMdd}}{{type:random:USD,EUR,GBP}}{{type:amount:100:10000}},
+:59:/{{type:company:creditor}}
+Creditor Enterprise SA
+:70:RETURN OF PAYMENT - ACCOUNT CLOSED
+:71A:SHA
+-}

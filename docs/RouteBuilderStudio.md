@@ -55,9 +55,9 @@ Route Builder Studio bundles zero-dependency mock infrastructure gateways to sim
 ### REST API Simulator Gateway
 * **URI**: Exposes HTTP endpoints using the `platform-http` component.
 * **Endpoints**:
-  * `POST http://localhost:9999/api/mongo/insert?collection=<name>`
-  * `GET http://localhost:9999/api/mongo/query?collection=<name>&id=<id>`
-  * `GET http://localhost:9999/api/oracle/query?table=<name>&column=<col>&value=<val>`
+  * `POST http://localhost:9090/api/mongo/insert?collection=<name>`
+  * `GET http://localhost:9090/api/mongo/query?collection=<name>&id=<id>`
+  * `GET http://localhost:9090/api/oracle/query?table=<name>&column=<col>&value=<val>`
 
 ---
 

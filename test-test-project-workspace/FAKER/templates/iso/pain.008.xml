@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.12">
+    <CstmrDrctDbtInitn>
+        <GrpHdr>
+            <MsgId>{{type:msgId}}</MsgId>
+            <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <CtrlSum>150.00</CtrlSum>
+            <InitgPty>
+                <Nm>Utility Provider Ltd</Nm>
+            </InitgPty>
+        </GrpHdr>
+        <PmtInf>
+            <PmtInfId>PMT-INF-DD-001</PmtInfId>
+            <PmtMtd>DD</PmtMtd>
+            <NbOfTxs>1</NbOfTxs>
+            <CtrlSum>150.00</CtrlSum>
+            <PmtTpInf>
+                <LclInstrm>
+                    <Cd>CORE</Cd>
+                </LclInstrm>
+                <SeqTp>RCUR</SeqTp>
+            </PmtTpInf>
+            <ReqdColltnDt>2026-06-01</ReqdColltnDt>
+            <Cdtr>
+                <Nm>Utility Provider Ltd</Nm>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <IBAN>{{type:iban:debtor}}</IBAN>
+                </Id>
+            </CdtrAcct>
+            <CdtrAgt>
+                <FinInstnId>
+                    <BICFI>{{type:bic:sender}}</BICFI>
+                </FinInstnId>
+            </CdtrAgt>
+            <DrctDbtTxInf>
+                <PmtId>
+                    <InstrId>{{type:uid:16}}</InstrId>
+                    <EndToEndId>{{type:uid:16}}</EndToEndId>
+                </PmtId>
+                <InstdAmt Ccy="GBP">150.00</InstdAmt>
+                <DrctDbtTx>
+                    <MndtRltdInf>
+                        <MndtId>MANDATE-001</MndtId>
+                        <DtOfSgntr>2025-01-01</DtOfSgntr>
+                    </MndtRltdInf>
+                </DrctDbtTx>
+                <DbtrAgt>
+                    <FinInstnId>
+                        <BICFI>{{type:bic:sender}}</BICFI>
+                    </FinInstnId>
+                </DbtrAgt>
+                <Dbtr>
+                    <Nm>John Doe</Nm>
+                </Dbtr>
+                <DbtrAcct>
+                    <Id>
+                        <IBAN>{{type:iban:debtor}}</IBAN>
+                    </Id>
+                </DbtrAcct>
+                <RmtInf>
+                    <Ustrd>Monthly Subscription - May 2026</Ustrd>
+                </RmtInf>
+            </DrctDbtTxInf>
+        </PmtInf>
+    </CstmrDrctDbtInitn>
+</Document>

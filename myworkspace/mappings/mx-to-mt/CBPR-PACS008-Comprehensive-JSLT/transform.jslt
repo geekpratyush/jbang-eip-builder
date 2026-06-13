@@ -1,0 +1,48 @@
+let doc = if (.Document) .Document else .
+let root = $doc.FIToFICstmrCdtTrf
+let hdr = $root.GrpHdr
+let tx_raw = $root.CdtTrfTxInf
+let tx = if (is-array($tx_raw)) $tx_raw[0] else $tx_raw
+
+// Extraction logic using standard replace() regex - works in any JSLT engine
+let instgBIC_raw = if ($hdr.InstgAgt.FinInstnId.BICFI) $hdr.InstgAgt.FinInstnId.BICFI else $tx.InstgAgt.FinInstnId.BICFI
+let instdBIC_raw = if ($hdr.InstdAgt.FinInstnId.BICFI) $hdr.InstdAgt.FinInstnId.BICFI else $tx.InstdAgt.FinInstnId.BICFI
+
+// Pad and slice to 12 chars using regex (Match first 12, discard rest)
+let instgBIC = replace($instgBIC_raw + "XXXXXXXXXXXX", "^(.{12}).*", "$1")
+let instdBIC = replace($instdBIC_raw + "XXXXXXXXXXXX", "^(.{12}).*", "$1")
+
+// Slice to 16 chars using regex
+let msgId = replace($hdr.MsgId, "^(.{16}).*", "$1")
+let uetr = $tx.PmtId.UETR
+
+let instrId = if ($tx.PmtId.InstrId) $tx.PmtId.InstrId else $tx.PmtId.EndToEndId
+let sttlmDt = $tx.IntrBkSttlmDt
+let amt = $tx.IntrBkSttlmAmt
+let amt_val = if (is-object($amt)) $amt.content else $amt
+let amt_ccy = if (is-object($amt)) $amt.Ccy else ""
+
+let dbtrAcct = if ($tx.DbtrAcct.Id.IBAN) $tx.DbtrAcct.Id.IBAN else $tx.DbtrAcct.Id.Othr.Id
+let cdtrAcct = if ($tx.CdtrAcct.Id.IBAN) $tx.CdtrAcct.Id.IBAN else $tx.CdtrAcct.Id.Othr.Id
+
+"{1:F01" + $instgBIC + "0000000000}" +
+"{2:I103" + $instdBIC + "N}" +
+"{3:{108:" + $msgId + "}" +
+(if ($uetr) "{121:" + $uetr + "}" else "") +
+"}{4:\n" +
+":20:" + replace($instrId, "^(.{16}).*", "$1") + "\n" +
+":23B:CRED\n" +
+":32A:" + replace($sttlmDt, "(\\d{2})(\\d{2})-(\\d{2})-(\\d{2})", "$2$3$4") +
+$amt_ccy + replace(string($amt_val), "\\.", ",") + "\n" +
+":50A:" + (if ($dbtrAcct) "/" + $dbtrAcct + "\n" else "") + replace($tx.Dbtr.Nm, "^(.{35}).*", "$1") + "\n" +
+(if ($tx.IntrmyAgt1.FinInstnId.BICFI) ":56A:" + $tx.IntrmyAgt1.FinInstnId.BICFI + "\n" else "") +
+(if ($tx.CdtrAgt.FinInstnId.BICFI) ":57A:" + $tx.CdtrAgt.FinInstnId.BICFI + "\n" else "") +
+":59:" + (if ($cdtrAcct) "/" + $cdtrAcct + "\n" else "") + replace($tx.Cdtr.Nm, "^(.{35}).*", "$1") + "\n" +
+(if ($tx.RmtInf.Ustrd) 
+    ":70:" + (if (is-array($tx.RmtInf.Ustrd)) 
+                join([for ($tx.RmtInf.Ustrd) replace(., "^(.{35}).*", "$1")], "\n") 
+              else 
+                replace($tx.RmtInf.Ustrd, "^(.{35}).*", "$1")) + "\n" 
+ else "") +
+":71A:" + (if ($tx.ChrgBr == "SHAR") "SHA" else if ($tx.ChrgBr == "CRED") "BEN" else if ($tx.ChrgBr == "DEBT") "OUR" else "SHA") + "\n" +
+"-}"

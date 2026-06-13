@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<smooks-resource-list xmlns="https://www.smooks.org/xsd/smooks-2.0.xsd"
+                      xmlns:core="https://www.smooks.org/xsd/smooks/smooks-core-1.6.xsd"
+                      xmlns:json="https://www.smooks.org/xsd/smooks/json-1.3.xsd">
+
+    <core:exports>
+        <core:result type="org.smooks.io.sink.StringSink" />
+    </core:exports>
+
+    <json:reader rootName="order" arrayElementName="item" />
+</smooks-resource-list>

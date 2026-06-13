@@ -12,16 +12,16 @@ Use the connection strings, credentials, and configuration commands below to con
 
 ### 1. MongoDB Compass Connection URI (Username/Password + TLS CA Verification)
 ```text
-mongodb://dbuser:dbpassword@localhost:27017/testdb?tls=true&tlsCAFile=/home/pratyush/software/jbang-eip-builder/infra-setup/certs/mongodb/ca.crt&tlsAllowInvalidHostnames=true&authSource=admin
+mongodb://dbuser:dbpassword@localhost:27017/testdb?tls=true&tlsCAFile=/path/to/tessera/infra-setup/certs/mongodb/ca.crt&tlsAllowInvalidHostnames=true&authSource=admin
 ```
 
 ### 2. MongoDB Shell (`mongosh`) Command
 ```bash
-mongosh "mongodb://dbuser:dbpassword@localhost:27017/testdb?tls=true&tlsCAFile=/home/pratyush/software/jbang-eip-builder/infra-setup/certs/mongodb/ca.crt&tlsAllowInvalidHostnames=true&authSource=admin"
+mongosh "mongodb://dbuser:dbpassword@localhost:27017/testdb?tls=true&tlsCAFile=/path/to/tessera/infra-setup/certs/mongodb/ca.crt&tlsAllowInvalidHostnames=true&authSource=admin"
 ```
 
 ### 3. Java Truststore (JKS) Configuration (for Java/Quarkus client)
-*   **Truststore (JKS)**: `/home/pratyush/software/jbang-eip-builder/infra-setup/certs/mongodb/cacert.jks`
+*   **Truststore (JKS)**: `/path/to/tessera/infra-setup/certs/mongodb/cacert.jks`
 *   **Truststore Password**: `mongopassword`
 
 
@@ -68,7 +68,7 @@ kcat -b localhost:9094 \
   -X security.protocol=SASL_PLAINTEXT \
   -X sasl.mechanisms=GSSAPI \
   -X sasl.kerberos.service.name=kafka \
-  -X sasl.kerberos.keytab=/home/pratyush/software/jbang-eip-builder/infra-setup/certs/apache-kafka/client.keytab \
+  -X sasl.kerberos.keytab=/path/to/tessera/infra-setup/certs/apache-kafka/client.keytab \
   -X sasl.kerberos.principal=client@EXAMPLE.COM \
   -L
 ```
@@ -76,7 +76,7 @@ kcat -b localhost:9094 \
 ### 2. JVM Client Configuration (Java/Quarkus)
 Add to system properties or startup command:
 ```text
--Djava.security.auth.login.config=/home/pratyush/software/jbang-eip-builder/infra-setup/certs/apache-kafka/kafka_server_jaas.conf
--Djava.security.krb5.conf=/home/pratyush/software/jbang-eip-builder/infra-setup/krb5.conf
+-Djava.security.auth.login.config=/path/to/tessera/infra-setup/certs/apache-kafka/kafka_server_jaas.conf
+-Djava.security.krb5.conf=/path/to/tessera/infra-setup/krb5.conf
 ```
 And use the JAAS Client section principal `client@EXAMPLE.COM` referencing `client.keytab`.

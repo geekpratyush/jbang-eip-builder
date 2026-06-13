@@ -1,0 +1,30 @@
+sequenceDiagram
+    autonumber
+    actor User
+    participant Frontend as Web App
+    participant API as API Gateway
+    participant Auth as Auth Service
+    participant DB as Database
+    participant Cache as Redis Cache
+
+    User->>Frontend: Login Request
+    Frontend->>API: POST /auth/login
+    API->>Auth: Validate Credentials
+    Auth->>DB: Query User
+    DB-->>Auth: User Data
+    Auth->>Auth: Verify Password
+    Auth->>Cache: Store Session Token
+    Auth-->>API: JWT Token
+    API-->>Frontend: 200 OK + Token
+    Frontend-->>User: Dashboard Loaded
+
+    Note over Frontend,Cache: Token expires in 24 hours
+
+    User->>Frontend: Access Protected Resource
+    Frontend->>API: GET /data (Bearer Token)
+    API->>Cache: Validate Token
+    Cache-->>API: Token Valid
+    API->>DB: Fetch Data
+    DB-->>API: Data Response
+    API-->>Frontend: 200 OK + Data
+    Frontend-->>User: Display Data

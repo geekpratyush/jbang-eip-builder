@@ -21,7 +21,9 @@ import netscape.javascript.JSObject;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.prefs.Preferences;
 
@@ -51,6 +53,7 @@ public class TransformationStudioWindow {
     private boolean isEnrichment = false;
     private boolean isMtToMx = false;
 
+    private volatile File currentSnippetTempFile;
     private com.tessera.ui.components.MonacoEditorPane sourceRawEditor, sourceXmlEditor, logicEditor,
             logicSecondaryEditor, targetEditor;
     private File sourceRawFile, sourceXmlFile, logicFile, logicSecondaryFile;
@@ -62,28 +65,33 @@ public class TransformationStudioWindow {
     private boolean sourceRawInitialized, sourceXmlInitialized, logicInitialized, targetInitialized;
 
     public TransformationStudioWindow() {
+        this(null);
+    }
+
+    public TransformationStudioWindow(File baseWorkspace) {
         activeInstances.add(this);
         this.prefs = Preferences.userNodeForPackage(TransformationStudioWindow.class);
         
         String mappingEnv = System.getProperty("MAPPING_DIR");
-        File userDir = new File(System.getProperty("user.dir"));
-        String defaultPath;
-        
-        if (mappingEnv != null && new File(mappingEnv).exists()) {
-            defaultPath = mappingEnv;
-        } else if (new File(userDir, "mappings").exists()) {
-            defaultPath = new File(userDir, "mappings").getAbsolutePath();
-        } else if (new File(userDir, "test-mapping").exists()) {
-            defaultPath = new File(userDir, "test-mapping").getAbsolutePath();
-        } else if (new File(userDir, "transformation-samples").exists()) {
-            defaultPath = new File(userDir, "transformation-samples").getAbsolutePath();
-        } else {
-            defaultPath = new File(userDir, "mappings").getAbsolutePath();
-        }
-        String savedPath = prefs.get("mappingsPath", defaultPath);
+        String savedPath;
         if (mappingEnv != null && new File(mappingEnv).exists()) {
             savedPath = mappingEnv;
+        } else if (baseWorkspace != null) {
+            savedPath = new File(baseWorkspace, "mappings").getAbsolutePath();
+            prefs.put("mappingsPath", savedPath);
+        } else {
+            java.io.File wsRoot = null;
+            if (RouteBuilderApp.getInstance() != null) {
+                wsRoot = RouteBuilderApp.getInstance().getWorkspaceRoot();
+            }
+            if (wsRoot != null) {
+                savedPath = new File(wsRoot, "mappings").getAbsolutePath();
+                prefs.put("mappingsPath", savedPath);
+            } else {
+                savedPath = prefs.get("mappingsPath", new File(System.getProperty("user.dir"), "mappings").getAbsolutePath());
+            }
         }
+
         this.currentMappingsPath = new File(savedPath);
         if (!this.currentMappingsPath.exists()) {
             this.currentMappingsPath.mkdirs();
@@ -138,7 +146,7 @@ public class TransformationStudioWindow {
             if (selected != null) {
                 currentMappingsPath = selected;
                 prefs.put("mappingsPath", selected.getAbsolutePath());
-                generateSampleMappings(selected);
+                generateSampleMappings(selected, "All Samples");
                 refreshMappingTree();
             }
         });
@@ -313,6 +321,16 @@ public class TransformationStudioWindow {
         }
     }
 
+    public void updateMappingsPath(File newPath) {
+        if (newPath != null) {
+            this.currentMappingsPath = newPath;
+            if (!this.currentMappingsPath.exists()) {
+                this.currentMappingsPath.mkdirs();
+            }
+            Platform.runLater(this::refreshMappingTree);
+        }
+    }
+
     private void refreshMappingTree() {
         TreeItem<File> rootItem = new TreeItem<>(currentMappingsPath);
         buildTree(currentMappingsPath, rootItem);
@@ -403,7 +421,7 @@ public class TransformationStudioWindow {
             String sourceType = source != null ? source.optString("type", "xml") : "xml";
 
             this.isMtToMx = "mt".equalsIgnoreCase(type) || "mt-to-mx".equalsIgnoreCase(type)
-                    || ("mt".equalsIgnoreCase(sourceType) && "xslt".equalsIgnoreCase(type));
+                    || ("mt".equalsIgnoreCase(sourceType) && ("xslt".equalsIgnoreCase(type) || "xslt3".equalsIgnoreCase(type)));
             this.isNonXmlSource = !"xml".equalsIgnoreCase(sourceType) && !isEnrichment && !isMtToMx;
 
             lblStudioTitle.setText(currentConfig.optString("name", folder.getName()));
@@ -582,7 +600,7 @@ public class TransformationStudioWindow {
                 Button btnVisualMap = createSmallButton("fas-map-marked-alt", "Sovereign Mapping Architect");
                 btnVisualMap.getStyleClass().add("btn-map-cyan");
                 boolean isMapApplicable = transformationType != null
-                        && (transformationType.equalsIgnoreCase("xslt") || transformationType.equalsIgnoreCase("jslt")
+                        && (transformationType.equalsIgnoreCase("xslt") || transformationType.equalsIgnoreCase("xslt3") || transformationType.equalsIgnoreCase("jslt")
                                 || transformationType.toLowerCase().contains("enrichment")
                                 || transformationType.toLowerCase().contains("mt"));
                 btnVisualMap.setDisable(!isMapApplicable);
@@ -831,16 +849,34 @@ public class TransformationStudioWindow {
         String execType = currentConfig.optString("type", "xslt");
         if (execType.contains("-to-"))
             execType = "xslt";
+
+        String logicType = "xslt";
+        Object logicObj = currentConfig.get("logic");
+        if (logicObj instanceof org.json.JSONArray) {
+            logicType = ((org.json.JSONArray) logicObj).getJSONObject(0).optString("type", "xslt");
+        } else if (logicObj instanceof JSONObject) {
+            logicType = ((JSONObject) logicObj).optString("type", "xslt");
+        }
+
         final String finalExecType = execType;
-        log("Running " + finalExecType.toUpperCase() + "...");
+        final String finalLogicType = logicType;
+        log("Running " + (isEnrichment ? finalLogicType.toUpperCase() + " Enrichment" : finalExecType.toUpperCase())
+                + "...");
 
         CompletableFuture.runAsync(() -> {
             try {
-                String result = isEnrichment ? TransformationBackend.transformEnrichment(rawSource, sourceText, logic)
+                long runStart = System.nanoTime();
+                String result = isEnrichment
+                        ? TransformationBackend.transformEnrichment(rawSource, sourceText, logic, finalLogicType,
+                                currentFolder)
                         : TransformationBackend.transform(sourceText, logic, finalExecType, currentFolder);
+                long runEnd = System.nanoTime();
+                double duration = (runEnd - runStart) / 1000000.0;
+                
+                final String finalResult = result;
                 Platform.runLater(() -> {
-                    targetEditor.setText(result);
-                    log("Transformation Success.");
+                    targetEditor.setText(finalResult);
+                    log(String.format("Transformation Success (took %.3f ms)", duration));
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
@@ -1033,15 +1069,23 @@ public class TransformationStudioWindow {
 
         ComboBox<String> comboScenario = new ComboBox<>();
         comboScenario.getItems().addAll(
-                "MT to MX (SWIFT to ISO)",
-                "MX to MT (ISO to SWIFT)",
+                "MT to MX (XSLT)",
+                "MT to MX (JSLT)",
+                "MX to MT (XSLT)",
+                "MX to MT (JSLT)",
+                "MX to MT (Groovy)",
+                "MX to MT (JOOR Java)",
+                "Enrichment (XSLT)",
+                "Enrichment (Groovy)",
+                "Enrichment (JOOR Java)",
+                "Enrichment (JSLT)",
                 "JSON to JSON (JSLT)",
                 "CSV to XML (Smooks)",
                 "EDI to XML (Smooks)",
                 "Fixed Format (Flatpack)",
                 "Custom Groovy Script",
                 "Java Joor Mapper");
-        comboScenario.setValue("MT to MX (SWIFT to ISO)");
+        comboScenario.setValue("MT to MX (XSLT)");
 
         grid.add(new Label("Title/Description:"), 0, 0);
         grid.add(txtTitle, 1, 0);
@@ -1090,15 +1134,81 @@ public class TransformationStudioWindow {
                     targetType = "xml";
             String sourceContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root>\n  <data>Sample</data>\n</root>";
             String logicContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">\n  <xsl:template match=\"/\">\n    <output>\n       <val><xsl:value-of select=\"//data\"/></val>\n    </output>\n  </xsl:template>\n</xsl:stylesheet>";
-            if (scenario.startsWith("MT to MX")) {
+            if ("MT to MX (XSLT)".equals(scenario)) {
                 config.put("type", "mt-to-mx");
                 sourceFile = "source.txt";
                 sourceType = "mt";
                 sourceContent = "{1:F01SENDERBKAXXX0000000000}{2:I103RECEIVERBKAXXXN}{4:\n:20:REF-123\n:32A:260524USD1000,\n-}";
                 logicContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">\n  <xsl:template match=\"/message\">\n    <ISO20022>\n       <MsgId><xsl:value-of select=\"//tag[name='20']/value\"/></MsgId>\n    </ISO20022>\n  </xsl:template>\n</xsl:stylesheet>";
-            } else if (scenario.startsWith("MX to MT")) {
+            } else if ("MT to MX (JSLT)".equals(scenario)) {
+                config.put("type", "jslt");
+                sourceFile = "source.json";
+                sourceType = "json";
+                logicFile = "transform.jslt";
+                logicType = "jslt";
+                sourceContent = "{\n  \"message\": {\n    \"block4\": {\n      \"20\": \"REF-123\"\n    }\n  }\n}";
+                logicContent = "{\n  \"ISO20022\": {\n    \"MsgId\": .message.block4.\"20\"\n  }\n}";
+            } else if ("MX to MT (XSLT)".equals(scenario)) {
                 config.put("type", "mx-to-mt");
                 targetType = "mt";
+            } else if ("MX to MT (JSLT)".equals(scenario)) {
+                config.put("type", "jslt");
+                sourceFile = "source.json";
+                sourceType = "json";
+                targetType = "mt";
+                logicFile = "transform.jslt";
+                logicType = "jslt";
+                sourceContent = "{\n  \"Document\": {\n    \"FIToFICstmrCdtTrf\": {\n      \"GrpHdr\": {\n        \"MsgId\": \"MSG-123\"\n      }\n    }\n  }\n}";
+                logicContent = "let id = .Document.FIToFICstmrCdtTrf.GrpHdr.MsgId\n\n\"{1:F01...}{2:I103...}{4:\\n:20:\" + $id + \"\\n-}\"";
+            } else if ("MX to MT (Groovy)".equals(scenario)) {
+                config.put("type", "groovy");
+                sourceFile = "source.xml";
+                sourceType = "xml";
+                targetType = "mt";
+                logicFile = "transform.groovy";
+                logicType = "groovy";
+                logicContent = "try {\n    def doc = new groovy.xml.XmlSlurper().parseText(body)\n    def root = doc.name() == 'Document' ? doc.FIToFICstmrCdtTrf : doc\n    def tx = root.CdtTrfTxInf[0]\n    \n    def instrId = tx.PmtId.InstrId.text() ?: tx.PmtId.EndToEndId.text()\n    \n    return \"\"\"{1:F01...}{2:I103...}{4:\n:20:${instrId.take(16)}\n:32A:260524USD${tx.IntrBkSttlmAmt.text().replace('.', ',')}\n-}\"\"\"\n} catch (Exception e) {\n    return \"Error: \" + e.toString()\n}";
+            } else if ("MX to MT (JOOR Java)".equals(scenario)) {
+                config.put("type", "joor");
+                sourceFile = "source.xml";
+                sourceType = "xml";
+                targetType = "mt";
+                logicFile = "Transform.java";
+                logicType = "joor";
+                logicContent = "try {\n    String xml = (String) body;\n    org.json.JSONObject json = org.json.XML.toJSONObject(xml);\n    org.json.JSONObject root = json.optJSONObject(\"Document\") != null ? json.getJSONObject(\"Document\").getJSONObject(\"FIToFICstmrCdtTrf\") : json.getJSONObject(\"FIToFICstmrCdtTrf\");\n    org.json.JSONObject tx = root.get(\"CdtTrfTxInf\") instanceof org.json.JSONArray ? root.getJSONArray(\"CdtTrfTxInf\").getJSONObject(0) : root.getJSONObject(\"CdtTrfTxInf\");\n    \n    String instrId = tx.getJSONObject(\"PmtId\").optString(\"InstrId\", tx.getJSONObject(\"PmtId\").optString(\"EndToEndId\"));\n    \n    return \"{1:F01...}{2:I103...}{4:\\n:20:\" + (instrId.length() > 16 ? instrId.substring(0, 16) : instrId) + \"\\n-}\";\n} catch (Exception e) {\n    return \"Error: \" + e.toString();\n}";
+            } else if (scenario.startsWith("Enrichment")) {
+                config.put("type", "enrichment");
+                org.json.JSONArray sources = new org.json.JSONArray();
+                sources.put(new JSONObject().put("file", "original.xml").put("id", "original"));
+                sources.put(new JSONObject().put("file", "truncated.xml").put("id", "truncated"));
+                config.put("sources", sources);
+
+                // Create placeholder files
+                String orig = "<Document><FIToFICstmrCdtTrf><GrpHdr><MsgId>ORIG-123</MsgId></GrpHdr><CdtTrfTxInf><Dbtr><Nm>Full Name SA</Nm></Dbtr></CdtTrfTxInf></FIToFICstmrCdtTrf></Document>";
+                String trunc = "<Document><FIToFICstmrCdtTrf><GrpHdr><MsgId>TRUNC-123</MsgId></GrpHdr><CdtTrfTxInf><Dbtr><Nm>Full Nam</Nm></Dbtr></CdtTrfTxInf></FIToFICstmrCdtTrf></Document>";
+
+                Files.writeString(new File(newFolder, "original.xml").toPath(), orig);
+                Files.writeString(new File(newFolder, "truncated.xml").toPath(), trunc);
+
+                if (scenario.contains("Groovy")) {
+                    logicFile = "enrich.groovy";
+                    logicType = "groovy";
+                    logicContent = "import groovy.xml.*\n\ntry {\n    def envelope = new XmlSlurper().parseText(body)\n    def original = envelope.original.Document\n    def truncated = envelope.truncated.Document\n\n    def mergeLogic\n    mergeLogic = { orig, trunc, b ->\n        if (orig.children().size() == 0) {\n            def tText = trunc.text()\n            b.mkp.yield((tText && tText != 'null') ? tText : orig.text())\n        } else {\n            def counters = [:].withDefault { 0 }\n            orig.children().each { child ->\n                def cName = child.name()\n                def pos = counters[cName]++\n                def tChild = trunc.\"${cName}\"[pos]\n                b.\"${cName}\"(child.attributes()) {\n                    mergeLogic(child, tChild, delegate)\n                }\n            }\n        }\n    }\n\n    def builder = new StreamingMarkupBuilder()\n    def merged = builder.bind {\n        mkp.xmlDeclaration()\n        delegate.'Document'('xmlns': 'urn:iso:std:iso:20022:tech:xsd:pacs.008.001.14') {\n            mergeLogic(original, truncated, delegate)\n        }\n    }\n    return XmlUtil.serialize(merged)\n} catch(e) { return 'Error: ' + e }";
+                } else if (scenario.contains("JOOR")) {
+                    logicFile = "enrich.java";
+                    logicType = "joor";
+                    logicContent = "try {\n    javax.xml.parsers.DocumentBuilderFactory dbf = javax.xml.parsers.DocumentBuilderFactory.newInstance();\n    dbf.setNamespaceAware(true);\n    org.w3c.dom.Document doc = dbf.newDocumentBuilder().parse(new java.io.ByteArrayInputStream(((String) body).getBytes(\"UTF-8\")));\n    org.w3c.dom.Element env = doc.getDocumentElement();\n    org.w3c.dom.Element origDoc = (org.w3c.dom.Element) env.getElementsByTagName(\"original\").item(0).getFirstChild();\n    while(origDoc != null && !(origDoc instanceof org.w3c.dom.Element)) origDoc = (org.w3c.dom.Element) origDoc.getNextSibling();\n    org.w3c.dom.Element truncDoc = (org.w3c.dom.Element) env.getElementsByTagName(\"truncated\").item(0).getFirstChild();\n    while(truncDoc != null && !(truncDoc instanceof org.w3c.dom.Element)) truncDoc = (org.w3c.dom.Element) truncDoc.getNextSibling();\n\n    java.util.function.BiConsumer<org.w3c.dom.Element, org.w3c.dom.Element> merge = new java.util.function.BiConsumer<org.w3c.dom.Element, org.w3c.dom.Element>() {\n        public void accept(org.w3c.dom.Element o, org.w3c.dom.Element t) {\n            if (o == null || t == null) return;\n            org.w3c.dom.NodeList children = o.getChildNodes();\n            boolean isLeaf = true;\n            for (int i = 0; i < children.getLength(); i++) {\n                if (children.item(i) instanceof org.w3c.dom.Element) {\n                    isLeaf = false;\n                    org.w3c.dom.Element c = (org.w3c.dom.Element) children.item(i);\n                    String name = c.getLocalName();\n                    int pos = 0;\n                    for (int j = 0; j < i; j++) if (children.item(j) instanceof org.w3c.dom.Element && name.equals(children.item(j).getLocalName())) pos++;\n                    org.w3c.dom.NodeList tChildren = t.getChildNodes();\n                    org.w3c.dom.Element tMatch = null;\n                    int tPos = 0;\n                    for (int j = 0; j < tChildren.getLength(); j++) {\n                        if (tChildren.item(j) instanceof org.w3c.dom.Element && name.equals(tChildren.item(j).getLocalName())) {\n                            if (tPos == pos) { tMatch = (org.w3c.dom.Element) tChildren.item(j); break; }\n                            tPos++;\n                        }\n                    }\n                    accept(c, tMatch);\n                }\n            }\n            if (isLeaf) {\n                String txt = t.getTextContent();\n                if (txt != null && !txt.trim().isEmpty()) o.setTextContent(txt);\n            }\n        }\n    };\n    merge.accept(origDoc, truncDoc);\n    org.w3c.dom.Element grpHdr = (org.w3c.dom.Element) origDoc.getElementsByTagName(\"GrpHdr\").item(0);\n    if (grpHdr != null) {\n        org.w3c.dom.Element eCreDtTm = doc.createElement(\"CreDtTm\");\n        eCreDtTm.setTextContent(java.time.OffsetDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString());\n        grpHdr.appendChild(eCreDtTm);\n    }\n    javax.xml.transform.Transformer t = javax.xml.transform.TransformerFactory.newInstance().newTransformer();\n    t.setOutputProperty(\"indent\", \"yes\");\n    java.io.StringWriter sw = new java.io.StringWriter();\n    t.transform(new javax.xml.transform.dom.DOMSource(origDoc), new javax.xml.transform.stream.StreamResult(sw));\n    return sw.toString().replaceAll(\"(?m)^[ \\\\t]*\\\\r?\\\\n\", \"\");\n} catch (Exception e) { return \"Error: \" + e; }";
+                } else if (scenario.contains("JSLT")) {
+                    logicFile = "enrich.jslt";
+                    logicType = "jslt";
+                    targetType = "xml";
+                    logicContent = "def merge(orig, trunc)\n  if (is-object($orig))\n    {for ($orig) \n       let k = .key \n       let v = .value\n       let t = $trunc[$k]\n       $k : merge($v, $t)\n    }\n  else if (is-array($orig))\n    [for (array-zip($orig, $trunc)) \n       merge(.orig, .trunc)\n    ]\n  else\n    if ($trunc != null and string($trunc) != \"\")\n      $trunc\n    else\n      $orig\n\nlet env = if (.envelope) .envelope else .\nlet origDoc = $env.original.Document\nlet truncDoc = $env.truncated.Document\n\nmerge($origDoc, $truncDoc)";
+                } else {
+                    logicFile = "enrich.xslt";
+                    logicType = "xslt";
+                    logicContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">\n  <xsl:template match=\"/\">\n    <Enriched>\n      <RestoredName><xsl:value-of select=\"//original//Dbtr/Nm\"/></RestoredName>\n    </Enriched>\n  </xsl:template>\n</xsl:stylesheet>";
+                }
+                config.put("logic", new JSONObject().put("file", logicFile).put("type", logicType));
             } else if (scenario.contains("JSLT")) {
                 config.put("type", "jslt");
                 sourceFile = "source.json";
@@ -1223,27 +1333,61 @@ public class TransformationStudioWindow {
         }
 
         String type = transformationType != null ? transformationType.toLowerCase() : "xslt";
-        if ("enrichment".equals(type)) {
-            type = "xslt";
+
+        String logicType = "xslt";
+        if (currentConfig != null) {
+            Object logicObj = currentConfig.get("logic");
+            if (logicObj instanceof org.json.JSONArray) {
+                logicType = ((org.json.JSONArray) logicObj).getJSONObject(0).optString("type", "xslt");
+            } else if (logicObj instanceof JSONObject) {
+                logicType = ((JSONObject) logicObj).optString("type", "xslt");
+            }
         }
-        if ("ftl".equals(type)) {
-            type = "freemarker";
+        String effectiveType = isEnrichment ? logicType : type;
+
+        if ("ftl".equals(effectiveType)) {
+            effectiveType = "freemarker";
         }
 
         JSONObject sourceCfg = currentConfig.optJSONObject("source");
         String sourceType = sourceCfg != null ? sourceCfg.optString("type", "xml") : "xml";
-        boolean isMtSource = "mt".equalsIgnoreCase(sourceType) || "mt".equalsIgnoreCase(type);
+        boolean isMtSource = "mt".equalsIgnoreCase(sourceType) || "mt".equalsIgnoreCase(effectiveType);
 
         String path = logicFile.getAbsolutePath().replace("\\", "/");
         String fileUri = toFileUriString(logicFile);
+
+        // Replace absolute workspace path with mustache placeholder
+        String wsRoot = System.getProperty("WORKSPACE_ROOT_DIR");
+        if (wsRoot == null || wsRoot.isEmpty()) {
+            wsRoot = System.getenv("WORKSPACE_ROOT_DIR");
+        }
+        if (wsRoot != null && !wsRoot.isEmpty()) {
+            String wsPath = wsRoot.replace("\\", "/");
+            if (!wsPath.endsWith("/")) {
+                wsPath += "/";
+            }
+            // Check if path starts with file:/// or file:/ or just /
+            String wsUri = "file:///" + wsPath;
+            if (fileUri.startsWith(wsUri)) {
+                fileUri = "file://{{WORKSPACE_ROOT_DIR}}/" + fileUri.substring(wsUri.length());
+            } else {
+                wsUri = "file:/" + wsPath;
+                if (fileUri.startsWith(wsUri)) {
+                    fileUri = "file://{{WORKSPACE_ROOT_DIR}}/" + fileUri.substring(wsUri.length());
+                } else if (path.startsWith(wsPath)) {
+                    fileUri = "file://{{WORKSPACE_ROOT_DIR}}/" + path.substring(wsPath.length());
+                }
+            }
+        }
+
         String groupId = "org.apache.camel";
-        String artifactId = "camel-" + type;
+        String artifactId = "camel-" + effectiveType;
         String version = RouteBuilderApp.getCamelVersion();
 
         boolean isFullClassVal = false;
         String fullClassNameVal = "";
         String classSourceVal = "";
-        if ("joor".equals(type) && logicFile != null && logicFile.exists()) {
+        if ("joor".equals(effectiveType) && logicFile != null && logicFile.exists()) {
             try {
                 String content = Files.readString(logicFile.toPath());
                 if (content.contains("class ") || content.contains("interface ")) {
@@ -1274,29 +1418,35 @@ public class TransformationStudioWindow {
         String sourceMsg = "";
         String originalMsg = "";
         String truncatedMsg = "";
+        
         if (isEnrichment) {
             originalMsg = sourceRawEditor != null ? sourceRawEditor.getText() : "";
             truncatedMsg = sourceXmlEditor != null ? sourceXmlEditor.getText() : "";
+            
             if (originalMsg == null || originalMsg.trim().isEmpty()) {
                 if (sourceRawFile != null && sourceRawFile.exists()) {
                     try {
                         originalMsg = Files.readString(sourceRawFile.toPath());
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 }
             }
             if (truncatedMsg == null || truncatedMsg.trim().isEmpty()) {
                 if (sourceXmlFile != null && sourceXmlFile.exists()) {
                     try {
                         truncatedMsg = Files.readString(sourceXmlFile.toPath());
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 }
             }
-            if (originalMsg == null)
-                originalMsg = "";
-            if (truncatedMsg == null)
-                truncatedMsg = "";
+            
+            // Apply unmarshaling logic if needed before combining
+            if (currentConfig != null) {
+                org.json.JSONArray sources = currentConfig.optJSONArray("sources");
+                if (sources != null && sources.length() >= 2) {
+                    originalMsg = TransformationBackend.unmarshal(originalMsg, sources.getJSONObject(0));
+                    truncatedMsg = TransformationBackend.unmarshal(truncatedMsg, sources.getJSONObject(1));
+                }
+            }
+            
             sourceMsg = TransformationBackend.combineEnrichmentXml(originalMsg, truncatedMsg);
         } else {
             if (isMtToMx) {
@@ -1304,31 +1454,42 @@ public class TransformationStudioWindow {
             } else {
                 sourceMsg = sourceXmlEditor != null ? sourceXmlEditor.getText() : "";
             }
+            
             if (sourceMsg == null || sourceMsg.trim().isEmpty()) {
                 if (sourceRawFile != null && sourceRawFile.exists()) {
                     try {
                         sourceMsg = Files.readString(sourceRawFile.toPath());
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 }
-                if ((sourceMsg == null || sourceMsg.trim().isEmpty()) && sourceXmlFile != null
-                        && sourceXmlFile.exists()) {
+                if ((sourceMsg == null || sourceMsg.trim().isEmpty()) && sourceXmlFile != null && sourceXmlFile.exists()) {
                     try {
                         sourceMsg = Files.readString(sourceXmlFile.toPath());
-                    } catch (Exception ignored) {
+                    } catch (Exception ignored) {}
+                }
+            }
+            
+            // Perform unmarshaling for snippet run if the source is MT
+            if (currentConfig != null) {
+                JSONObject sc = currentConfig.optJSONObject("source");
+                if (sc != null && sourceMsg != null && !sourceMsg.trim().isEmpty()) {
+                    String unmarshaled = TransformationBackend.unmarshal(sourceMsg, sc);
+                    if (unmarshaled != null && !unmarshaled.equals(sourceMsg)) {
+                        sourceMsg = unmarshaled;
                     }
                 }
             }
-            if (sourceMsg == null)
-                sourceMsg = "";
         }
+        if (sourceMsg == null) sourceMsg = "";
 
         // Determine all necessary dependencies (cartridges + Camel components)
         java.util.List<String> deps = new java.util.ArrayList<>();
-        if (isMtSource) {
+        if (isMtSource && ("xslt".equalsIgnoreCase(effectiveType) || "mt".equalsIgnoreCase(effectiveType)
+                || "mt-to-mx".equalsIgnoreCase(effectiveType) || "mx-to-mt".equalsIgnoreCase(effectiveType))) {
             deps.add("org.apache.camel:camel-swift:4.18.2");
-            deps.add("org.apache.camel:camel-xslt:" + version);
-        } else if ("smooks".equals(type)) {
+            deps.add("org.apache.camel:camel-xslt-saxon:" + version);
+        }
+
+        if ("smooks".equals(effectiveType)) {
             deps.add("org.apache.camel:camel-smooks:" + version);
             try {
                 String xmlContent = Files.readString(logicFile.toPath());
@@ -1353,31 +1514,34 @@ public class TransformationStudioWindow {
                 }
             } catch (Exception ignored) {
             }
-        } else if ("groovy".equals(type)) {
-            deps.add("org.apache.camel:camel-groovy:" + version);
-            if (version.startsWith("4.20") || version.startsWith("4.21") || version.startsWith("4.22")
-                    || version.compareTo("4.20.0") >= 0) {
-                deps.add("org.apache.groovy:groovy-xml:5.0.5");
-                deps.add("org.apache.groovy:groovy-json:5.0.5");
-            } else {
-                deps.add("org.apache.groovy:groovy-xml:4.0.30");
-                deps.add("org.apache.groovy:groovy-json:4.0.30");
-            }
-        } else if ("joor".equals(type)) {
+        } else if ("groovy".equals(effectiveType)) {
+            deps.add("org.apache.camel:camel-groovy:4.18.0");
+            deps.add("org.apache.groovy:groovy-xml:4.0.30");
+            deps.add("org.apache.groovy:groovy-json:4.0.30");
+        } else if ("joor".equals(effectiveType)) {
             deps.add("org.apache.camel:camel-joor:" + version);
-            deps.add("org.json:json:20231013");
-        } else if ("mt".equalsIgnoreCase(type)) {
-            deps.add("org.apache.camel:camel-swift:4.18.2");
-            deps.add("org.apache.camel:camel-xslt:" + version);
-        } else if ("xslt".equalsIgnoreCase(type) || "mt-to-mx".equalsIgnoreCase(type)
-                || "mx-to-mt".equalsIgnoreCase(type)) {
-            deps.add("org.apache.camel:camel-xslt:" + version);
+        } else if ("xslt3".equalsIgnoreCase(effectiveType) || "xslt".equalsIgnoreCase(effectiveType) 
+                || "mt-to-mx".equalsIgnoreCase(effectiveType) || "mx-to-mt".equalsIgnoreCase(effectiveType)
+                || isEnrichment) {
+            deps.add("org.apache.camel:camel-xslt-saxon:" + version);
+        } else if ("mt".equalsIgnoreCase(effectiveType)) {
+            if (!deps.contains("org.apache.camel:camel-swift:4.18.2")) {
+                deps.add("org.apache.camel:camel-swift:4.18.2");
+                deps.add("org.apache.camel:camel-xslt-saxon:" + version);
+            }
         } else {
-            deps.add(groupId + ":" + artifactId + ":" + version);
+            String dep = groupId + ":" + artifactId + ":" + version;
+            if (!deps.contains(dep)) {
+                deps.add(dep);
+            }
         }
 
-        if ("freemarker".equals(type) && (sourceMsg.trim().startsWith("{") || sourceMsg.trim().startsWith("["))) {
+        if ("freemarker".equals(effectiveType) && (sourceMsg.trim().startsWith("{") || sourceMsg.trim().startsWith("["))) {
             deps.add("org.apache.camel:camel-jackson:" + version);
+        }
+
+        if (!deps.contains("org.apache.camel:camel-groovy:" + version) && !deps.contains("org.apache.camel:camel-groovy:4.18.0")) {
+            deps.add("org.apache.camel:camel-groovy:" + version);
         }
 
         // Format dependencies for the dependency tabs
@@ -1398,6 +1562,25 @@ public class TransformationStudioWindow {
         String gradleDepsStr = gradleDepsBuilder.toString().trim();
         String mavenDepsStr = mavenDepsBuilder.toString().trim();
 
+        String logicContent = "";
+        if (logicEditor != null) {
+            logicContent = logicEditor.getText();
+        } else if (logicFile != null && logicFile.exists()) {
+            try {
+                logicContent = Files.readString(logicFile.toPath());
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (logicContent.contains("org.json") && !deps.contains("org.json:json:20231013")) {
+            deps.add("org.json:json:20231013");
+        }
+
+        String xmlSourceContent = sourceMsg;
+        if (xmlSourceContent.contains("<") || xmlSourceContent.contains("&") || xmlSourceContent.contains(">")) {
+            xmlSourceContent = "<![CDATA[\n" + xmlSourceContent + "\n]]>";
+        }
+
         // Build route steps based on type
         String yamlStep = "";
         String javaStep = "";
@@ -1414,35 +1597,109 @@ public class TransformationStudioWindow {
             }
         }
 
-        if ("xslt".equalsIgnoreCase(type) || isMtSource || "mt-to-mx".equalsIgnoreCase(type)
-                || "mx-to-mt".equalsIgnoreCase(type)) {
-            if (isMtSource || "mt-to-mx".equalsIgnoreCase(type)) {
+        boolean isXsltEngine = "xslt".equalsIgnoreCase(effectiveType) || "mt-to-mx".equalsIgnoreCase(effectiveType)
+                || "mx-to-mt".equalsIgnoreCase(effectiveType);
+
+        if (isXsltEngine && (isMtSource || "mt-to-mx".equalsIgnoreCase(effectiveType)
+                || "mx-to-mt".equalsIgnoreCase(effectiveType))) {
+            if (isMtSource || "mt-to-mx".equalsIgnoreCase(effectiveType)) {
                 yamlStep = "unmarshal:\n            swiftMt: {}\n        - setBody:\n            simple: \"${body.xml}\"\n        - to:\n            uri: \"xslt-saxon:"
-                        + fileUri + "\"";
+                        + fileUri + "?contentCache=true\"";
                 javaStep = ".unmarshal().swiftMt()\n            .setBody().simple(\"${body.xml}\")\n            .to(\"xslt-saxon:"
-                        + fileUri + "\")";
+                        + fileUri + "?contentCache=true\")";
                 xmlStep = "<unmarshal>\n            <swiftMt/>\n        </unmarshal>\n        <setBody>\n            <simple>${body.xml}</simple>\n        </setBody>\n        <to uri=\"xslt-saxon:"
-                        + fileUri + "\"/>";
-            } else if ("mx-to-mt".equalsIgnoreCase(type)) {
+                        + fileUri + "?contentCache=true\"/>";
+            } else if ("mx-to-mt".equalsIgnoreCase(effectiveType)) {
                 yamlStep = "to:\n            uri: \"xslt-saxon:" + fileUri
-                        + "\"\n        - marshal:\n            swiftMt: {}";
-                javaStep = ".to(\"xslt-saxon:" + fileUri + "\")\n            .marshal().swiftMt()";
+                        + "?contentCache=true\"\n        - marshal:\n            swiftMt: {}";
+                javaStep = ".to(\"xslt-saxon:" + fileUri + "?contentCache=true\")\n            .marshal().swiftMt()";
                 xmlStep = "<to uri=\"xslt-saxon:" + fileUri
-                        + "\"/>\n        <marshal>\n            <swiftMt/>\n        </marshal>";
+                        + "?contentCache=true\"/>\n        <marshal>\n            <swiftMt/>\n        </marshal>";
             } else {
-                yamlStep = "to:\n            uri: \"xslt-saxon:" + fileUri + "\"";
-                javaStep = ".to(\"xslt-saxon:" + fileUri + "\")";
-                xmlStep = "<to uri=\"xslt-saxon:" + fileUri + "\"/>";
+                yamlStep = "to:\n            uri: \"xslt-saxon:" + fileUri + "?contentCache=true\"";
+                javaStep = ".to(\"xslt-saxon:" + fileUri + "?contentCache=true\")";
+                xmlStep = "<to uri=\"xslt-saxon:" + fileUri + "?contentCache=true\"/>";
             }
-        } else if ("jslt".equals(type)) {
-            yamlStep = "to:\n            uri: \"jslt:" + fileUri + "\"";
-            javaStep = ".to(\"jslt:" + fileUri + "\")";
-            xmlStep = "<to uri=\"jslt:" + fileUri + "\"/>";
-        } else if ("smooks".equals(type)) {
+        } else if ("xslt3".equalsIgnoreCase(effectiveType)) {
+            yamlStep = "to:\n            uri: \"xslt-saxon:" + fileUri + "?contentCache=true\"";
+            javaStep = ".to(\"xslt-saxon:" + fileUri + "?contentCache=true\")";
+            xmlStep = "<to uri=\"xslt-saxon:" + fileUri + "?contentCache=true\"/>";
+        } else if ("mt".equalsIgnoreCase(effectiveType)) {
+            yamlStep = "to:\n            uri: \"xslt-saxon:" + fileUri + "?contentCache=true\"";
+            javaStep = ".to(\"xslt-saxon:" + fileUri + "?contentCache=true\")";
+            xmlStep = "<to uri=\"xslt-saxon:" + fileUri + "?contentCache=true\"/>";
+        } else if ("jslt".equals(effectiveType)) {
+            String targetType = currentConfig != null && currentConfig.optJSONObject("target") != null ? currentConfig.optJSONObject("target").optString("type", "json") : "json";
+            
+            // Register custom array-zip function for JSLT in Camel context
+            String customJsltFuncCode = 
+                "org.apache.camel.component.jslt.JsltComponent jsltComp = exchange.getContext().getComponent(\"jslt\", org.apache.camel.component.jslt.JsltComponent.class);\n" +
+                "if (jsltComp.getFunctions() == null || jsltComp.getFunctions().isEmpty()) {\n" +
+                "    com.schibsted.spt.data.jslt.Function arrayZipFunc = new com.schibsted.spt.data.jslt.Function() {\n" +
+                "        public String getName() { return \"array-zip\"; }\n" +
+                "        public int getMinArguments() { return 2; }\n" +
+                "        public int getMaxArguments() { return 2; }\n" +
+                "        public com.fasterxml.jackson.databind.JsonNode call(com.fasterxml.jackson.databind.JsonNode inputNode, com.fasterxml.jackson.databind.JsonNode[] arguments) {\n" +
+                "            if (!(arguments[0] instanceof com.fasterxml.jackson.databind.node.ArrayNode)) return com.fasterxml.jackson.databind.node.NullNode.getInstance();\n" +
+                "            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();\n" +
+                "            com.fasterxml.jackson.databind.node.ArrayNode arr1 = (com.fasterxml.jackson.databind.node.ArrayNode) arguments[0];\n" +
+                "            com.fasterxml.jackson.databind.node.ArrayNode arr2 = arguments[1] instanceof com.fasterxml.jackson.databind.node.ArrayNode ? (com.fasterxml.jackson.databind.node.ArrayNode) arguments[1] : null;\n" +
+                "            com.fasterxml.jackson.databind.node.ArrayNode result = mapper.createArrayNode();\n" +
+                "            for (int i = 0; i < arr1.size(); i++) {\n" +
+                "                com.fasterxml.jackson.databind.node.ObjectNode obj = mapper.createObjectNode();\n" +
+                "                obj.set(\"orig\", arr1.get(i));\n" +
+                "                obj.set(\"trunc\", (arr2 != null && i < arr2.size()) ? arr2.get(i) : com.fasterxml.jackson.databind.node.NullNode.getInstance());\n" +
+                "                result.add(obj);\n" +
+                "            }\n" +
+                "            return result;\n" +
+                "        }\n" +
+                "    };\n" +
+                "    jsltComp.setFunctions(java.util.Collections.singletonList(arrayZipFunc));\n" +
+                "}\n" +
+                "return null;";
+
+            String jsltSetupYaml = "script:\n            joor: |\n" + indentString(customJsltFuncCode, 16) + "\n        - ";
+            String jsltSetupJava = ".script().joor(\"" + customJsltFuncCode.replace("\n", "\\n").replace("\"", "\\\"") + "\")\n            ";
+            String jsltSetupXml = "<script><joor><![CDATA[\n" + indentString(customJsltFuncCode, 16) + "\n            ]]></joor></script>\n        ";
+
+            deps.add("org.apache.camel:camel-joor:" + version);
+
+            if (sourceMsg.trim().startsWith("<")) {
+                yamlStep = jsltSetupYaml + "unmarshal:\n            jackson-xml: {}\n        - marshal:\n            json: {}\n        - to:\n            uri: \"jslt:" + fileUri + "?contentCache=true\"";
+                javaStep = jsltSetupJava + ".unmarshal().jacksonXml()\n            .marshal().json()\n            .to(\"jslt:" + fileUri + "?contentCache=true\")";
+                xmlStep = jsltSetupXml + "<unmarshal><jacksonXml/></unmarshal>\n        <marshal><json/></marshal>\n        <to uri=\"jslt:" + fileUri + "?contentCache=true\"/>";
+                deps.add("org.apache.camel:camel-jacksonxml:4.18.0");
+                deps.add("org.apache.camel:camel-jackson:4.18.0");
+            } else {
+                yamlStep = jsltSetupYaml + "to:\n            uri: \"jslt:" + fileUri + "?contentCache=true\"";
+                javaStep = jsltSetupJava + ".to(\"jslt:" + fileUri + "?contentCache=true\")";
+                xmlStep = jsltSetupXml + "<to uri=\"jslt:" + fileUri + "?contentCache=true\"/>";
+            }
+
+            if ("xml".equalsIgnoreCase(targetType)) {
+                // If JSLT output is meant to be XML, we need a post-processing step in Camel Route
+                String xmlConversionCode = "String b = body.toString().trim();\n" +
+                        "if (!b.startsWith(\"{\") && !b.startsWith(\"[\")) return b;\n" +
+                        "org.json.JSONObject jsonObj = b.startsWith(\"[\") ? new org.json.JSONObject(\"{\\\"item\\\":\" + b + \"}\") : new org.json.JSONObject(b);\n" +
+                        "String rawXml = org.json.XML.toString(jsonObj, \"Document\").replace(\"<Document>\", \"<Document xmlns=\\\"urn:iso:std:iso:20022:tech:xsd:pacs.008.001.14\\\">\");\n" +
+                        "try {\n" +
+                        "    javax.xml.transform.Transformer t = javax.xml.transform.TransformerFactory.newInstance().newTransformer();\n" +
+                        "    t.setOutputProperty(\"indent\", \"yes\");\n" +
+                        "    t.setOutputProperty(\"{http://xml.apache.org/xslt}indent-amount\", \"2\");\n" +
+                        "    java.io.StringWriter sw = new java.io.StringWriter();\n" +
+                        "    t.transform(new javax.xml.transform.stream.StreamSource(new java.io.StringReader(rawXml)), new javax.xml.transform.stream.StreamResult(sw));\n" +
+                        "    return \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\\n\" + sw.toString().replaceAll(\"(?m)^[ \\\\t]*\\\\r?\\\\n\", \"\");\n" +
+                        "} catch(Exception e) { return rawXml; }";
+                yamlStep += "\n        - transform:\n            joor: |\n" + indentString(xmlConversionCode, 14);
+                javaStep += "\n            .transform().joor(\"" + xmlConversionCode.replace("\n", "\\n").replace("\"", "\\\"") + "\")";
+                xmlStep += "\n        <transform><joor><![CDATA[\n" + indentString(xmlConversionCode, 12) + "\n        ]]></joor></transform>";
+                deps.add("org.json:json:20231013");
+            }
+        } else if ("smooks".equals(effectiveType)) {
             yamlStep = "unmarshal:\n            smooks:\n              smooksConfig: \"" + fileUri + "\"";
             javaStep = ".unmarshal().smooks(\"" + fileUri + "\")";
             xmlStep = "<unmarshal>\n            <smooks smooksConfig=\"" + fileUri + "\"/>\n        </unmarshal>";
-        } else if ("flatpack".equals(type)) {
+        } else if ("flatpack".equals(effectiveType)) {
             yamlStep = "unmarshal:\n" +
                     "            flatpack:\n" +
                     "              fixed: " + isFlatpackFixed + "\n" +
@@ -1463,11 +1720,11 @@ public class TransformationStudioWindow {
                     "            <simple>${body}</simple>\n" +
                     "            <log message=\"Row: ${body}\"/>\n" +
                     "        </split>";
-        } else if ("groovy".equals(type)) {
+        } else if ("groovy".equals(effectiveType)) {
             yamlStep = "transform:\n            groovy: \"resource:" + fileUri + "\"";
             javaStep = ".transform().groovy(\"resource:" + fileUri + "\")";
             xmlStep = "<transform>\n            <groovy>resource:" + fileUri + "</groovy>\n        </transform>";
-        } else if ("joor".equals(type)) {
+        } else if ("joor".equals(effectiveType)) {
             if (isFullClass) {
                 String escapedSource = escapeJavaString(classSource);
                 String joorCode = "Class<?> clazz;\n" +
@@ -1491,7 +1748,7 @@ public class TransformationStudioWindow {
                 javaStep = ".transform().joor(\"" + fileUri + "\")";
                 xmlStep = "<transform>\n            <joor>resource:" + fileUri + "</joor>\n        </transform>";
             }
-        } else if ("freemarker".equals(type)
+        } else if ("freemarker".equals(effectiveType)
                 && (sourceMsg.trim().startsWith("{") || sourceMsg.trim().startsWith("["))) {
             yamlStep = "unmarshal:\n            json:\n              library: Jackson\n        - to:\n            uri: \"freemarker:"
                     + fileUri + "\"";
@@ -1500,9 +1757,9 @@ public class TransformationStudioWindow {
             xmlStep = "<unmarshal>\n            <json library=\"Jackson\"/>\n        </unmarshal>\n        <to uri=\"freemarker:"
                     + fileUri + "\"/>";
         } else {
-            yamlStep = "to:\n            uri: \"" + type + ":" + fileUri + "\"";
-            javaStep = ".to(\"" + type + ":" + fileUri + "\")";
-            xmlStep = "<to uri=\"" + type + ":" + fileUri + "\"/>";
+            yamlStep = "to:\n            uri: \"" + effectiveType + ":" + fileUri + "\"";
+            javaStep = ".to(\"" + effectiveType + ":" + fileUri + "\")";
+            xmlStep = "<to uri=\"" + effectiveType + ":" + fileUri + "\"/>";
         }
 
         // Generate full runnable route DSLs
@@ -1530,50 +1787,36 @@ public class TransformationStudioWindow {
                     "        </setHeader>\n";
         }
 
-        yamlDsl = "- route:\n" +
-                "    id: transform-test-route\n" +
-                "    from:\n" +
-                "      uri: \"timer:trigger?repeatCount=1&delay=0\"\n" +
-                "      steps:\n" +
-                "        - setBody:\n" +
-                "            constant: |\n" +
-                (sourceMsg.isEmpty() ? "              [source message]\n" : indentString(sourceMsg, 14) + "\n") +
-                yamlHeaderSteps +
-                "        - " + yamlStep + "\n" +
-                "        - log: \"Parsed Output: ${body}\"";
-
-        javaDsl = "import org.apache.camel.builder.RouteBuilder;\n\n" +
-                "public class TransformRoute extends RouteBuilder {\n" +
-                "    @Override\n" +
-                "    public void configure() throws Exception {\n" +
-                "        from(\"timer:trigger?repeatCount=1&delay=0\")\n" +
-                "            .setBody().constant(\"\"\"\n" +
-                (sourceMsg.isEmpty() ? "                [source message]\n" : indentString(sourceMsg, 16) + "\n") +
-                "                \"\"\")\n" +
-                javaHeaderSteps +
-                "            " + javaStep + "\n" +
-                "            .log(\"Parsed Output: ${body}\");\n" +
-                "    }\n" +
-                "}";
-
-        String xmlSourceContent = sourceMsg;
-        if (xmlSourceContent.contains("<") || xmlSourceContent.contains("&") || xmlSourceContent.contains(">")) {
-            xmlSourceContent = "<![CDATA[\n" + xmlSourceContent + "\n]]>";
+        if (sourceMsg.trim().startsWith("[HEADER_START]") && (isXsltEngine || "xslt3".equalsIgnoreCase(effectiveType) || "mt".equalsIgnoreCase(effectiveType))) {
+            yamlHeaderSteps += "        - setHeader:\n" +
+                    "            name: \"payload\"\n" +
+                    "            simple: \"${body}\"\n" +
+                    "        - setBody:\n" +
+                    "            constant: \"<dummy/>\"\n";
+            javaHeaderSteps += "            .setHeader(\"payload\").simple(\"${body}\")\n" +
+                    "            .setBody().constant(\"<dummy/>\")\n";
+            xmlHeaderSteps += "        <setHeader name=\"payload\">\n" +
+                    "            <simple>${body}</simple>\n" +
+                    "        </setHeader>\n" +
+                    "        <setBody>\n" +
+                    "            <constant>&lt;dummy/&gt;</constant>\n" +
+                    "        </setBody>\n";
         }
-        xmlDsl = "<routes xmlns=\"http://camel.apache.org/schema/spring\">\n" +
-                "    <route id=\"transform-test-route\">\n" +
-                "        <from uri=\"timer:trigger?repeatCount=1&delay=0\"/>\n" +
-                "        <setBody>\n" +
-                "            <constant>\n" +
-                (sourceMsg.isEmpty() ? "                [source message]\n" : indentString(xmlSourceContent, 16) + "\n")
-                +
-                "            </constant>\n" +
-                "        </setBody>\n" +
-                xmlHeaderSteps +
-                "        " + xmlStep + "\n" +
-                "        <log message=\"Parsed Output: ${body}\"/>\n" +
-                "    </route>\n" +
-                "</routes>";
+
+        String directRouteId = currentFolder.getName().toLowerCase().replaceAll("[^a-z0-9]", "-");
+        if (directRouteId.isEmpty()) {
+            directRouteId = "transform-service";
+        }
+
+        final String finalSourceMsg = sourceMsg;
+        final String finalXmlSourceContent = xmlSourceContent;
+        final String finalYamlHeaderSteps = yamlHeaderSteps;
+        final String finalJavaHeaderSteps = javaHeaderSteps;
+        final String finalXmlHeaderSteps = xmlHeaderSteps;
+        final String finalDirectRouteId = directRouteId;
+        final String finalYamlStep = yamlStep;
+        final String finalJavaStep = javaStep;
+        final String finalXmlStep = xmlStep;
 
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Camel Route Snippet & Dependency");
@@ -1584,7 +1827,32 @@ public class TransformationStudioWindow {
 
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(15));
-        vbox.setPrefWidth(600);
+        vbox.setPrefWidth(650);
+
+        Label lblSettings = new Label("Execution Settings:");
+        lblSettings.setStyle("-fx-font-weight: bold;");
+
+        HBox settingsBox = new HBox(15);
+        settingsBox.setAlignment(Pos.CENTER_LEFT);
+        settingsBox.setPadding(new Insets(5, 0, 5, 0));
+
+        Label lblTimerVal = new Label("Timer (ms):");
+        Spinner<Integer> spinTimer = new Spinner<>(0, 9999, 1000);
+        spinTimer.setEditable(true);
+        spinTimer.setPrefWidth(85);
+        spinTimer.focusedProperty().addListener((s, ov, nv) -> {
+            if (!nv) spinTimer.increment(0);
+        });
+
+        Label lblRepeatVal = new Label("Repeat Count:");
+        Spinner<Integer> spinRepeat = new Spinner<>(1, 99999999, 5);
+        spinRepeat.setEditable(true);
+        spinRepeat.setPrefWidth(140);
+        spinRepeat.focusedProperty().addListener((s, ov, nv) -> {
+            if (!nv) spinRepeat.increment(0);
+        });
+
+        settingsBox.getChildren().addAll(lblTimerVal, spinTimer, lblRepeatVal, spinRepeat);
 
         Label lblDep = new Label("Required Dependency:");
         lblDep.setStyle("-fx-font-weight: bold;");
@@ -1644,25 +1912,12 @@ public class TransformationStudioWindow {
         Label lblDsl = new Label("Route DSL Usage (with DEPS):");
         lblDsl.setStyle("-fx-font-weight: bold;");
 
-        // Prepend JBang dependency headers directly to the DSL tabs
-        StringBuilder yamlHeader = new StringBuilder();
-        StringBuilder javaHeader = new StringBuilder();
-        StringBuilder xmlHeader = new StringBuilder();
-        for (String dep : deps) {
-            yamlHeader.append("# camel-k: dependency=mvn:").append(dep).append("\n");
-            javaHeader.append("//DEPS ").append(dep).append("\n");
-            xmlHeader.append("<!-- camel-k: dependency=mvn:").append(dep).append(" -->\n");
-        }
-        String yamlWithDep = yamlHeader.toString() + "\n" + yamlDsl;
-        String javaWithDep = javaHeader.toString() + "\n" + javaDsl;
-        String xmlWithDep = xmlHeader.toString() + "\n" + xmlDsl;
-
         TabPane dslTabPane = new TabPane();
         dslTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
         Tab yamlTab = new Tab("YAML");
         HBox yamlBox = new HBox(5);
-        TextArea txtYaml = new TextArea(yamlWithDep);
+        TextArea txtYaml = new TextArea("");
         txtYaml.setEditable(false);
         txtYaml.setPrefHeight(150);
         txtYaml.getStyleClass().addAll("snippet-code-area", "snippet-dsl");
@@ -1675,7 +1930,7 @@ public class TransformationStudioWindow {
 
         Tab javaTab = new Tab("Java");
         HBox javaBox = new HBox(5);
-        TextArea txtJava = new TextArea(javaWithDep);
+        TextArea txtJava = new TextArea("");
         txtJava.setEditable(false);
         txtJava.setPrefHeight(150);
         txtJava.getStyleClass().addAll("snippet-code-area", "snippet-dsl");
@@ -1688,7 +1943,7 @@ public class TransformationStudioWindow {
 
         Tab xmlTab = new Tab("XML");
         HBox xmlBox = new HBox(5);
-        TextArea txtXml = new TextArea(xmlWithDep);
+        TextArea txtXml = new TextArea("");
         txtXml.setEditable(false);
         txtXml.setPrefHeight(150);
         txtXml.getStyleClass().addAll("snippet-code-area", "snippet-dsl");
@@ -1700,6 +1955,100 @@ public class TransformationStudioWindow {
         xmlTab.setContent(xmlBox);
 
         dslTabPane.getTabs().addAll(yamlTab, javaTab, xmlTab);
+
+        Runnable refreshDsl = () -> {
+            int delay = spinTimer.getValue();
+            int repeat = spinRepeat.getValue();
+
+            String yDsl = "- route:\n" +
+                    "    id: transform-trigger-route\n" +
+                    "    from:\n" +
+                    "      uri: \"timer:trigger?repeatCount=" + repeat + "&delay=" + delay + "\"\n" +
+                    "      steps:\n" +
+                    "        - setBody:\n" +
+                    "            constant: |\n" +
+                    (finalSourceMsg.isEmpty() ? "              [source message]\n" : indentString(finalSourceMsg, 14) + "\n") +
+                    finalYamlHeaderSteps +
+                    "        - setHeader:\n" +
+                    "            name: \"startTime\"\n" +
+                    "            groovy: \"System.nanoTime()\"\n" +
+                    "        - log: \"Input to Transformation: ${body}\"\n" +
+                    "        - to: \"direct:" + finalDirectRouteId + "\"\n" +
+                    "        - script:\n" +
+                    "            groovy: \"log.info('Translation took: ' + String.format('%.3f', (System.nanoTime() - exchange.in.headers.startTime) / 1000000.0) + ' ms')\"\n" +
+                    "        - log: \"Parsed Output: ${body}\"\n\n" +
+                    "- route:\n" +
+                    "    id: " + finalDirectRouteId + "\n" +
+                    "    from:\n" +
+                    "      uri: \"direct:" + finalDirectRouteId + "\"\n" +
+                    "      steps:\n" +
+                    "        - " + finalYamlStep;
+
+            String jDsl = "import org.apache.camel.builder.RouteBuilder;\n\n" +
+                    "public class TransformRoute extends RouteBuilder {\n" +
+                    "    @Override\n" +
+                    "    public void configure() throws Exception {\n" +
+                    "        from(\"timer:trigger?repeatCount=" + repeat + "&delay=" + delay + "\")\n" +
+                    "            .setBody().constant(\"\"\"\n" +
+                    (finalSourceMsg.isEmpty() ? "                [source message]\n" : indentString(finalSourceMsg, 16) + "\n") +
+                    "                \"\"\")\n" +
+                    finalJavaHeaderSteps +
+                    "            .setHeader(\"startTime\").groovy(\"System.nanoTime()\")\n" +
+                    "            .log(\"Input to Transformation: ${body}\")\n" +
+                    "            .to(\"direct:" + finalDirectRouteId + "\")\n" +
+                    "            .script().groovy(\"log.info('Translation took: ' + String.format('%.3f', (System.nanoTime() - exchange.in.headers.startTime) / 1000000.0) + ' ms')\")\n" +
+                    "            .log(\"Parsed Output: ${body}\");\n\n" +
+                    "        from(\"direct:" + finalDirectRouteId + "\")\n" +
+                    "            .routeId(\"" + finalDirectRouteId + "\")\n" +
+                    "            " + finalJavaStep + ";\n" +
+                    "    }\n" +
+                    "}";
+
+            String xDsl = "<routes xmlns=\"http://camel.apache.org/schema/spring\">\n" +
+                    "    <route id=\"transform-trigger-route\">\n" +
+                    "        <from uri=\"timer:trigger?repeatCount=" + repeat + "&amp;delay=" + delay + "\"/>\n" +
+                    "        <setBody>\n" +
+                    "            <constant>\n" +
+                    (finalSourceMsg.isEmpty() ? "                [source message]\n" : indentString(finalXmlSourceContent, 16) + "\n")
+                    +
+                    "            </constant>\n" +
+                    "        </setBody>\n" +
+                    finalXmlHeaderSteps +
+                    "        <setHeader name=\"startTime\">\n" +
+                    "            <groovy>System.nanoTime()</groovy>\n" +
+                    "        </setHeader>\n" +
+                    "        <log message=\"Input to Transformation: ${body}\"/>\n" +
+                    "        <to uri=\"direct:" + finalDirectRouteId + "\"/>\n" +
+                    "        <script>\n" +
+                    "            <groovy><![CDATA[\n" +
+                    "                log.info('Translation took: ' + String.format('%.3f', (System.nanoTime() - exchange.in.headers.startTime) / 1000000.0) + ' ms')\n" +
+                    "            ]]></groovy>\n" +
+                    "        </script>\n" +
+                    "        <log message=\"Parsed Output: ${body}\"/>\n" +
+                    "    </route>\n\n" +
+                    "    <route id=\"" + finalDirectRouteId + "\">\n" +
+                    "        <from uri=\"direct:" + finalDirectRouteId + "\"/>\n" +
+                    "        " + finalXmlStep + "\n" +
+                    "    </route>\n" +
+                    "</routes>";
+
+            // Prepend JBang dependency headers
+            StringBuilder yamlH = new StringBuilder();
+            StringBuilder javaH = new StringBuilder();
+            StringBuilder xmlH = new StringBuilder();
+            for (String dep : deps) {
+                yamlH.append("# camel-k: dependency=mvn:").append(dep).append("\n");
+                javaH.append("//DEPS ").append(dep).append("\n");
+                xmlH.append("<!-- camel-k: dependency=mvn:").append(dep).append(" -->\n");
+            }
+            txtYaml.setText(yamlH.toString() + "\n" + yDsl);
+            txtJava.setText(javaH.toString() + "\n" + jDsl);
+            txtXml.setText(xmlH.toString() + "\n" + xDsl);
+        };
+
+        spinTimer.valueProperty().addListener((obs, oldV, newV) -> refreshDsl.run());
+        spinRepeat.valueProperty().addListener((obs, oldV, newV) -> refreshDsl.run());
+        refreshDsl.run();
 
         Button btnCopy = new Button("Copy All Info", new FontIcon("fas-copy"));
         btnCopy.getStyleClass().addAll("btn-copy-all");
@@ -1732,6 +2081,13 @@ public class TransformationStudioWindow {
                 } catch (Exception ignored) {
                 }
                 snippetProcess = null;
+                // Allow pipe threads to finish before we write the new temp file
+                try { Thread.sleep(200); } catch (InterruptedException ignored) {}
+            }
+            // Delete any previous temp file to avoid stale references
+            if (currentSnippetTempFile != null && currentSnippetTempFile.exists()) {
+                currentSnippetTempFile.delete();
+                currentSnippetTempFile = null;
             }
             if (consolePane != null) {
                 consolePane.clear();
@@ -1741,16 +2097,20 @@ public class TransformationStudioWindow {
             String tabText = selectedTab != null ? selectedTab.getText() : "YAML";
 
             String snippetContent = "";
-            String fileName = "";
+            String fileNamePrefix = "";
+            String fileNameSuffix = "";
             if ("YAML".equals(tabText)) {
-                snippetContent = yamlWithDep;
-                fileName = "temp-transform-test-route.camel.yaml";
+                snippetContent = txtYaml.getText();
+                fileNamePrefix = "temp-transform-test-route-";
+                fileNameSuffix = ".camel.yaml";
             } else if ("Java".equals(tabText)) {
-                snippetContent = javaWithDep;
-                fileName = "TransformRoute.java";
+                snippetContent = txtJava.getText();
+                fileNamePrefix = "TransformRoute-";
+                fileNameSuffix = ".java";
             } else if ("XML".equals(tabText)) {
-                snippetContent = xmlWithDep;
-                fileName = "temp-transform-test-route.camel.xml";
+                snippetContent = txtXml.getText();
+                fileNamePrefix = "temp-transform-test-route-";
+                fileNameSuffix = ".camel.xml";
             }
 
             File runDir = currentFolder;
@@ -1761,8 +2121,10 @@ public class TransformationStudioWindow {
                 runDir = new File(System.getProperty("user.dir"));
             }
 
-            File tempFile = new File(runDir, fileName);
+            File tempFile = null;
             try {
+                tempFile = File.createTempFile(fileNamePrefix, fileNameSuffix, runDir);
+                currentSnippetTempFile = tempFile;
                 Files.writeString(tempFile.toPath(), snippetContent);
                 tempFile.deleteOnExit();
             } catch (Exception ex) {
@@ -1786,7 +2148,7 @@ public class TransformationStudioWindow {
             }
             command.add("camel");
             command.add("run");
-            command.add("--port=0");
+            command.add("--port=9090");
             command.add(tempFile.getAbsolutePath());
             for (String dep : deps) {
                 command.add("--dependency=" + dep);
@@ -1797,6 +2159,10 @@ public class TransformationStudioWindow {
             try {
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.environment().put("TERM", "xterm-256color");
+                String wsRootVal = System.getProperty("WORKSPACE_ROOT_DIR");
+                if (wsRootVal != null) {
+                    pb.environment().put("WORKSPACE_ROOT_DIR", wsRootVal);
+                }
                 pb.directory(runDir);
                 snippetProcess = pb.start();
 
@@ -1850,7 +2216,7 @@ public class TransformationStudioWindow {
         actionBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
         actionBox.getChildren().addAll(btnCopy, btnRunSnippet, btnStopSnippet);
 
-        vbox.getChildren().addAll(lblDep, depTabPane, lblDsl, dslTabPane, actionBox);
+        vbox.getChildren().addAll(lblSettings, settingsBox, lblDep, depTabPane, lblDsl, dslTabPane, actionBox);
         dialog.getDialogPane().setContent(vbox);
         RouteBuilderApp.themeDialog(dialog);
         dialog.showAndWait();
@@ -1902,8 +2268,13 @@ public class TransformationStudioWindow {
                             }
                         } catch (Exception ignored2) {
                         }
+                        // Always delete our own temp file when we're done
                         if (tempFile.exists()) {
                             tempFile.delete();
+                        }
+                        // Only clear the global reference if it still points to us
+                        if (tempFile.equals(currentSnippetTempFile)) {
+                            currentSnippetTempFile = null;
                         }
                     }
                 });
@@ -1919,6 +2290,10 @@ public class TransformationStudioWindow {
     }
 
     private void generateSampleMappings(File base) {
+        generateSampleMappings(base, "All Samples");
+    }
+
+    private void generateSampleMappings(File base, String filter) {
         try {
             String filesIndex = readResource("/samples/mappings/files.txt");
             if (filesIndex == null || filesIndex.trim().isEmpty()) {
@@ -1929,6 +2304,12 @@ public class TransformationStudioWindow {
             for (String relativePath : lines) {
                 relativePath = relativePath.trim();
                 if (relativePath.isEmpty())
+                    continue;
+
+                boolean isJslt = relativePath.toLowerCase().contains("jslt");
+                if ("Standard (XSLT/Smooks)".equals(filter) && isJslt)
+                    continue;
+                if ("JSLT (JSON Transformation)".equals(filter) && !isJslt)
                     continue;
 
                 // Load content of the resource
@@ -1944,7 +2325,7 @@ public class TransformationStudioWindow {
                 // Write the file content
                 Files.writeString(targetFile.toPath(), content);
             }
-            log("Successfully generated sample mappings in: " + base.getAbsolutePath());
+            log("Successfully generated " + filter + " mapping samples in: " + base.getAbsolutePath());
         } catch (Exception e) {
             e.printStackTrace();
             log("Error generating sample mappings: " + e.getMessage());

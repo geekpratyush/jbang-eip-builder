@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:cain.015.001.04">
+  <Cain015Document>
+    <MsgId>{{type:msgId}}</MsgId>
+    <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+    <UETR>{{type:uetr}}</UETR>
+    <Desc>Generated Mock Message for cain.015</Desc>
+  </Cain015Document>
+</Document>

@@ -1,0 +1,32 @@
+# ID: mongo-crud-demo
+# DESCRIPTION: Basic MongoDB Insert and Find operations (Requires Embedded MongoDB to be active)
+# camel-k: dependency=mvn:org.apache.camel:camel-mongodb:4.18.0
+
+- route:
+    id: "mongo-insert-find-route"
+    from:
+      uri: "timer:mongo-demo?repeatCount=1&delay=1000"
+      steps:
+        - log: "Starting MongoDB integration test..."
+        
+        # 1. Insert an audit record
+        - setBody:
+            constant: >
+              {
+                "auditId": "AUDIT-MONGO-001",
+                "timestamp": "2026-06-04T19:35:00Z",
+                "action": "USER_LOGIN",
+                "status": "SUCCESS",
+                "user": "pratyush"
+              }
+        - to: "mongodb:mongoBean?database=auditdb&collection=security_audit&operation=insert"
+        - log: "Successfully inserted audit record into MongoDB"
+
+        # 2. Query the audit log back
+        - setBody:
+            constant: >
+              {
+                "auditId": "AUDIT-MONGO-001"
+              }
+        - to: "mongodb:mongoBean?database=auditdb&collection=security_audit&operation=findAll"
+        - log: "Queried audit log from MongoDB. Result:\n${body}"

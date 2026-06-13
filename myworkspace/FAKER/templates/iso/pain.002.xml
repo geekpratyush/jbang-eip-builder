@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.15">
+    <CstmrPmtStsRpt>
+        <GrpHdr>
+            <MsgId>{{type:msgId}}</MsgId>
+            <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+            <InitgPty>
+                <Nm>Bank UK PLC</Nm>
+            </InitgPty>
+        </GrpHdr>
+        <OrgnlGrpInfAndSts>
+            <OrgnlMsgId>MSG-PAIN001-20260521-001</OrgnlMsgId>
+            <OrgnlMsgNmId>pain.001.001.13</OrgnlMsgNmId>
+            <GrpSts>ACTC</GrpSts>
+        </OrgnlGrpInfAndSts>
+        <OrgnlPmtInfAndSts>
+            <OrgnlPmtInfId>PMT-INF-001</OrgnlPmtInfId>
+            <PmtInfSts>ACSC</PmtInfSts>
+            <TxInfAndSts>
+                <OrgnlInstrId>INSTR-001</OrgnlInstrId>
+                <OrgnlEndToEndId>E2E-ABC-123</OrgnlEndToEndId>
+                <TxSts>ACSC</TxSts>
+                <StsRsnInf>
+                    <Rsn>
+                        <Cd>G000</Cd>
+                    </Rsn>
+                </StsRsnInf>
+            </TxInfAndSts>
+        </OrgnlPmtInfAndSts>
+    </CstmrPmtStsRpt>
+</Document>

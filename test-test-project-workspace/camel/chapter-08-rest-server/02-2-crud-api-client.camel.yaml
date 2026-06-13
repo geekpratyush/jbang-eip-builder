@@ -1,0 +1,41 @@
+# ID: crud-api-client
+# ENABLED: true
+# DESCRIPTION: A client route that demonstrates calling the CRUD API server.
+#   Run this AT THE SAME TIME as 02-1-crud-api-server to watch the client create and read orders!
+# AUTHOR: Camel Studio
+# STUB: none
+
+- route:
+    id: "crud-api-client"
+    from:
+      uri: "timer:crud-client?period=8000&delay=3000"
+      steps:
+        - log: "[Chapter 8][CLIENT] --------------------------------"
+        - log: "[Chapter 8][CLIENT] Step 1: Creating a new Order via POST..."
+        - setBody:
+            constant: '{"product":"Quantum Capacitor", "qty":42}'
+        - setHeader:
+            name: "CamelHttpMethod"
+            constant: "POST"
+        - setHeader:
+            name: "Content-Type"
+            constant: "application/json"
+        - to: "http://localhost:9090/api/orders/"
+        
+        - log: "[Chapter 8][CLIENT] Server Response (POST): ${body}"
+        
+        # Extract the ID from the server response using JSONPath to fetch it immediately
+        - setHeader:
+            name: "createdId"
+            jsonpath: "$.id"
+            
+        - log: "[Chapter 8][CLIENT] Step 2: Fetching the order we just created: ${header.createdId}"
+        - removeHeaders:
+            pattern: "*"
+        - setHeader:
+            name: "CamelHttpMethod"
+            constant: "GET"
+        - toD: "http://localhost:9090/api/orders/${header.createdId}"
+        
+        - log: "[Chapter 8][CLIENT] Server Response (GET): ${body}"
+        - log: "[Chapter 8][CLIENT] --------------------------------"

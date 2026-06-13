@@ -711,6 +711,6 @@ public class RemoteDeployWindow {
                 } catch (Exception ignored) {}
             }
         }
-        return "http://localhost:8080";
+        return "http://localhost:9090";
     }
 }

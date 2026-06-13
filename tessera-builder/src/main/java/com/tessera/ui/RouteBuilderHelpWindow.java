@@ -556,8 +556,8 @@ public class RouteBuilderHelpWindow {
             "<p>A detailed architectural overview of the GEE (Global Earmarking Engine) and CLUE (Credit Engine) subsystems.</p>" +
             "<h3>Extended Reading Resources</h3>" +
             "<ul>" +
-            "  <li><a href=\"file:///home/pratyush/Downloads/global-earmark-architecture.html\">Global Earmark Architecture Page (HTML)</a></li>" +
-            "  <li><a href=\"file:///home/pratyush/Downloads/architecture.md\">Target State Architecture Document (Markdown)</a></li>" +
+            "  <li><a href=\"docs/InteractiveHelpManual.html\">Global Earmark Architecture Page (HTML)</a></li>" +
+            "  <li><a href=\"docs/RouteBuilderStudio.md\">Target State Architecture Document (Markdown)</a></li>" +
             "</ul>" +
             "<h3>Architectural Blueprint</h3>" +
             "<p>The <strong>Global Earmark and Credit Services</strong> platform is a real-time financial processing system that manages fund reservations across Citibank's global networks.</p>" +

@@ -1,0 +1,7 @@
+# camel-k: dependency=mvn:org.apache.camel.kamelet:camel-kamelet:3.20.1
+- route:
+    id: timer-to-log-example
+    from:
+      uri: "kamelet:kamelet-studio-timer-source?period=2000"
+      steps:
+        - to: "kamelet:kamelet-studio-log-sink?showHeaders=true"

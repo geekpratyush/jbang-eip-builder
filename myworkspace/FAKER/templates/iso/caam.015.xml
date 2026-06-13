@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:caam.015.001.01">
+  <Caam015Document>
+    <MsgId>{{type:msgId}}</MsgId>
+    <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+    <UETR>{{type:uetr}}</UETR>
+    <Desc>Generated Mock Message for caam.015</Desc>
+  </Caam015Document>
+</Document>

@@ -1,0 +1,21 @@
+# ID: transactional-outbox
+# ENABLED: true
+# DESCRIPTION: Transactional Outbox pattern — poll DB outbox table and publish to Kafka
+# AUTHOR: Camel Studio
+# STUB: stub:kafka:topic:OUTBOX.EVENTS (replaces real Kafka)
+
+- route:
+    id: "outbox-poller"
+    from:
+      uri: "timer:outbox-poll?period=5000"
+      steps:
+        - log: "[Chapter 7][OUTBOX] Polling outbox table for unpublished events..."
+        - setBody:
+            constant: '[{"eventId":"EVT-001","type":"ORDER_CREATED","payload":"{}","status":"PENDING"}]'
+        - split:
+            jsonpath: "$[*]"
+            steps:
+              - log: "[Chapter 7][OUTBOX] Publishing event: ${body}"
+              - to: "stub:kafka:topic:OUTBOX.EVENTS"
+              - log: "[Chapter 7][OUTBOX] Event published, marking as SENT"
+              - to: "mock:outbox-sent"

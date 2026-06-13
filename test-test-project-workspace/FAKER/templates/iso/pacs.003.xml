@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.003.001.12">
+    <FIToFICstmrDrctDbt>
+        <GrpHdr>
+            <MsgId>{{type:msgId}}</MsgId>
+            <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <InstgAgt>
+                <FinInstnId>
+                    <BICFI>{{type:bic:sender}}</BICFI>
+                </FinInstnId>
+            </InstgAgt>
+            <InstdAgt>
+                <FinInstnId>
+                    <BICFI>{{type:bic:sender}}</BICFI>
+                </FinInstnId>
+            </InstdAgt>
+        </GrpHdr>
+        <DrctDbtTxInf>
+            <PmtId>
+                <InstrId>{{type:uid:16}}</InstrId>
+                <EndToEndId>{{type:uid:16}}</EndToEndId>
+                <TxId>{{type:uid:16}}</TxId>
+            </PmtId>
+            <IntrBkSttlmAmt Ccy="EUR">2500.00</IntrBkSttlmAmt>
+            <InstdDt>2026-05-21</InstdDt>
+            <Dbtr>
+                <Nm>Debtor Name</Nm>
+            </Dbtr>
+            <Cdtr>
+                <Nm>Creditor Name</Nm>
+            </Cdtr>
+        </DrctDbtTxInf>
+    </FIToFICstmrDrctDbt>
+</Document>

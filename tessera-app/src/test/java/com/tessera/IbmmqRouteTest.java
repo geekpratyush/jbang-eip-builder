@@ -44,9 +44,9 @@ public class IbmmqRouteTest {
                         "&queuemanager=QM1" +
                         "&channel=DEV.ADMIN.SVRCONN" +
                         "&sslciphersuite=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384" +
-                        "&truststorepath=/home/pratyush/software/jbang-eip-builder/infra-setup/certs/ibmmq/clienttrust.p12" +
+                        "&truststorepath=../infra-setup/certs/ibmmq/clienttrust.p12" +
                         "&truststorepassword=mqpassword" +
-                        "&keystorepath=/home/pratyush/software/jbang-eip-builder/infra-setup/certs/ibmmq/clientkey.p12" +
+                        "&keystorepath=../infra-setup/certs/ibmmq/clientkey.p12" +
                         "&keystorepassword=clientpassword");
 
                 // Route 2: Consume from MQ
@@ -57,9 +57,9 @@ public class IbmmqRouteTest {
                         "&queuemanager=QM1" +
                         "&channel=DEV.ADMIN.SVRCONN" +
                         "&sslciphersuite=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384" +
-                        "&truststorepath=/home/pratyush/software/jbang-eip-builder/infra-setup/certs/ibmmq/clienttrust.p12" +
+                        "&truststorepath=../infra-setup/certs/ibmmq/clienttrust.p12" +
                         "&truststorepassword=mqpassword" +
-                        "&keystorepath=/home/pratyush/software/jbang-eip-builder/infra-setup/certs/ibmmq/clientkey.p12" +
+                        "&keystorepath=../infra-setup/certs/ibmmq/clientkey.p12" +
                         "&keystorepassword=clientpassword")
                     .to("mock:result");
             }

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.13">
+    <CstmrCdtTrfInitn>
+        <GrpHdr>
+            <MsgId>{{type:msgId}}</MsgId>
+            <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <CtrlSum>25000.00</CtrlSum>
+            <InitgPty>
+                <Nm>Customer Corporation Ltd</Nm>
+                <PstlAdr>
+                    <StrtNm>High Street</StrtNm>
+                    <BldgNb>123</BldgNb>
+                    <PstCd>EC1A 1AA</PstCd>
+                    <TwnNm>London</TwnNm>
+                    <Ctry>GB</Ctry>
+                </PstlAdr>
+                <Id>
+                    <OrgId>
+                        <AnyBIC>CUSTGB2LXXX</AnyBIC>
+                    </OrgId>
+                </Id>
+            </InitgPty>
+        </GrpHdr>
+        <PmtInf>
+            <PmtInfId>PMT-INF-001</PmtInfId>
+            <PmtMtd>TRF</PmtMtd>
+            <NbOfTxs>1</NbOfTxs>
+            <CtrlSum>25000.00</CtrlSum>
+            <PmtTpInf>
+                <SvcLvl>
+                    <Cd>SEPA</Cd>
+                </SvcLvl>
+            </PmtTpInf>
+            <ReqdExctnDt>
+                <Dt>2026-05-22</Dt>
+            </ReqdExctnDt>
+            <Dbtr>
+                <Nm>Customer Corporation Ltd</Nm>
+            </Dbtr>
+            <DbtrAcct>
+                <Id>
+                    <IBAN>{{type:iban:debtor}}</IBAN>
+                </Id>
+            </DbtrAcct>
+            <DbtrAgt>
+                <FinInstnId>
+                    <BICFI>{{type:bic:sender}}</BICFI>
+                </FinInstnId>
+            </DbtrAgt>
+            <CdtTrfTxInf>
+                <PmtId>
+                    <InstrId>{{type:uid:16}}</InstrId>
+                    <EndToEndId>{{type:uid:16}}</EndToEndId>
+                </PmtId>
+                <Amt>
+                    <InstdAmt Ccy="EUR">25000.00</InstdAmt>
+                </Amt>
+                <CdtrAgt>
+                    <FinInstnId>
+                        <BICFI>{{type:bic:sender}}</BICFI>
+                    </FinInstnId>
+                </CdtrAgt>
+                <Cdtr>
+                    <Nm>Supplier France SA</Nm>
+                    <PstlAdr>
+                        <TwnNm>Paris</TwnNm>
+                        <Ctry>FR</Ctry>
+                    </PstlAdr>
+                </Cdtr>
+                <CdtrAcct>
+                    <Id>
+                        <IBAN>{{type:iban:debtor}}</IBAN>
+                    </Id>
+                </CdtrAcct>
+                <RmtInf>
+                    <Ustrd>Invoice INV-2026-001</Ustrd>
+                </RmtInf>
+            </CdtTrfTxInf>
+        </PmtInf>
+    </CstmrCdtTrfInitn>
+</Document>

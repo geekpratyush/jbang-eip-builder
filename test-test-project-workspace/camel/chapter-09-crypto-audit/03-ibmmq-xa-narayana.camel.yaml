@@ -1,0 +1,13 @@
+# ID: ibmmq-xa-narayana
+# ENABLED: true
+# DESCRIPTION: Demonstrates IBM MQ Jakarta 9.4.5.1 Client configuration with JmsPoolXAConnectionFactory.
+# AUTHOR: Camel Studio
+# STUB: stub:jms:queue:XA.REQUEST
+
+- route:
+    id: "ibmmq-xa-consumer"
+    from:
+      uri: "stub:jms:queue:XA.REQUEST?cacheLevelName=CACHE_NONE&transacted=false"
+      steps:
+        - log: "[Chapter 9][XA] Coordinated transaction message: ${body}"
+        - to: "mock:xa-processed"

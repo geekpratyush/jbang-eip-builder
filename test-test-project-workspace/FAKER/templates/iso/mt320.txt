@@ -1,0 +1,13 @@
+{1:F01{{type:bic:sender}}XXXX0000000000}
+{2:I320{{type:bic:receiver}}XXXXN}
+{4:
+:20:{{type:uuid}}
+:22A:NEWT
+:17R:D
+:30T:{{type:dateTime:yyMMdd}}
+:30V:{{type:dateTime:yyMMdd}}
+:30P:{{type:dateTime:yyMMdd}}
+:32B:{{type:random:USD,EUR,GBP}}{{type:amount:100000:5000000}}
+:37G:5.25
+:57A:{{type:bic:receiver}}
+-}

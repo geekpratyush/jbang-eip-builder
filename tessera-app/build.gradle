@@ -24,6 +24,7 @@ dependencies {
     implementation 'org.apache.camel.quarkus:camel-quarkus-jms'
     implementation 'org.apache.camel.quarkus:camel-quarkus-platform-http'
     implementation 'org.apache.camel.quarkus:camel-quarkus-kamelet'
+    implementation 'org.apache.camel.quarkus:camel-quarkus-joor'
 
     // IBM MQ Extension (includes pooling and JTA)
     implementation project(':tessera-ibmmq-runtime')

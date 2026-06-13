@@ -1,0 +1,53 @@
+{
+  "FIToFICstmrCdtTrf": {
+    "GrpHdr": {
+      "MsgId": "MSG-pacs008-20260521-001",
+      "InstgAgt": {
+        "FinInstnId": {
+          "BICFI": "BANKGB2LXXX"
+        }
+      },
+      "InstdAgt": {
+        "FinInstnId": {
+          "BICFI": "BANKFRPPXXX"
+        }
+      }
+    },
+    "CdtTrfTxInf": [
+      {
+        "PmtId": {
+          "InstrId": "INSTR-20260521-001",
+          "EndToEndId": "E2E-ABC-123456789",
+          "UETR": "0c1979a2-9cbf-43d7-a53f-82dd73639a03"
+        },
+        "IntrBkSttlmAmt": {
+          "content": "150000.00",
+          "Ccy": "EUR"
+        },
+        "IntrBkSttlmDt": "2026-05-21",
+        "Dbtr": {
+          "Nm": "Debtor Company PLC"
+        },
+        "DbtrAcct": {
+          "Id": {
+            "IBAN": "GB82WEST12345698765432"
+          }
+        },
+        "Cdtr": {
+          "Nm": "Creditor Enterprise SA"
+        },
+        "CdtrAcct": {
+          "Id": {
+            "IBAN": "FR1420041010050500013M02606"
+          }
+        },
+        "ChrgBr": "SHAR",
+        "RmtInf": {
+          "Ustrd": [
+            "Payment for goods and services"
+          ]
+        }
+      }
+    ]
+  }
+}

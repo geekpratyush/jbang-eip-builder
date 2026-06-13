@@ -46,6 +46,22 @@ public class ThemeManager {
     public static String getCurrentThemeName() { return currentThemeName; }
     public static String getCurrentThemeClass() { return currentThemeClass; }
 
+    public static javafx.scene.paint.Color getCurrentIconColor() {
+        String theme = getCurrentThemeClass();
+        if (theme.equals("theme-intellij-light")) return javafx.scene.paint.Color.web("#1a1a1a");
+        if (theme.equals("theme-material-light")) return javafx.scene.paint.Color.web("#212121");
+        if (theme.equals("theme-solarized-light")) return javafx.scene.paint.Color.web("#268bd2");
+        if (theme.equals("theme-tokyo-light")) return javafx.scene.paint.Color.web("#8c4351");
+        if (theme.contains("light")) return javafx.scene.paint.Color.web("#1a1a1a");
+        if (theme.equals("theme-nordic")) return javafx.scene.paint.Color.web("#8fbcbb");
+        if (theme.equals("theme-dracula")) return javafx.scene.paint.Color.web("#f8f8f2");
+        if (theme.equals("theme-monokai")) return javafx.scene.paint.Color.web("#ffd866");
+        if (theme.equals("theme-cyberpunk")) return javafx.scene.paint.Color.web("#f3f315");
+        if (theme.equals("theme-neon-dreams")) return javafx.scene.paint.Color.web("#00ffff");
+        if (theme.equals("theme-midnight")) return javafx.scene.paint.Color.web("#ff007c");
+        return javafx.scene.paint.Color.web("#d4d4d4"); // Default dark text
+    }
+
     public static void registerRoot(Parent root) {
         if (root != null) {
             registeredRoots.add(root);

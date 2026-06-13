@@ -563,7 +563,7 @@ public class RouteControlResource {
     }
 }
 ```
-Run `curl -X POST http://localhost:8080/admin/routes/reload` to hot-redeploy the routes in-place.
+Run `curl -X POST http://localhost:9090/admin/routes/reload` to hot-redeploy the routes in-place.
 
 ---
 
@@ -1516,7 +1516,7 @@ public class RouteControlResource {
 
 #### 1. Uploading a new dynamic Route
 ```bash
-curl -X POST http://localhost:8080/admin/routes/upload \
+curl -X POST http://localhost:9090/admin/routes/upload \
   -H "Content-Type: application/json" \
   -d '{
     "routeId": "dynamic-logger-route",
@@ -1529,7 +1529,7 @@ curl -X POST http://localhost:8080/admin/routes/upload \
 
 #### 2. Uploading a new XSLT mapping file
 ```bash
-curl -X POST http://localhost:8080/admin/transformers/upload \
+curl -X POST http://localhost:9090/admin/transformers/upload \
   -H "Content-Type: application/json" \
   -d '{
     "id": "order-xslt",
@@ -1544,7 +1544,7 @@ This writes `order-to-invoice.xslt` to the database first, and then dumps it to 
 
 #### 3. Temporary Route Hotloading (In-Memory Only)
 ```bash
-curl -X POST http://localhost:8080/admin/routes/hotload-temp \
+curl -X POST http://localhost:9090/admin/routes/hotload-temp \
   -H "Content-Type: application/json" \
   -d '{
     "routeId": "sandbox-temp-route",
@@ -1556,7 +1556,7 @@ curl -X POST http://localhost:8080/admin/routes/hotload-temp \
 
 #### 4. Temporary Transformer Hotloading (Disk-Only Sandbox)
 ```bash
-curl -X POST http://localhost:8080/admin/transformers/hotload-temp \
+curl -X POST http://localhost:9090/admin/transformers/hotload-temp \
   -H "Content-Type: application/json" \
   -d '{
     "id": "sandbox-xslt",
@@ -1661,7 +1661,7 @@ The client application (Route Builder IDE) polls `/admin/heartbeat` using a back
 2.  **Connection Drop Alert**:
     *   If the state transitions from **Connected** to **Disconnected**, the client triggers a non-blocking warning notification toast or an alert pop-up window:
         > ⚠️ **Warning: Remote Container Connection Lost!**
-        > The remote container at `http://localhost:8080` is no longer reachable. Hot-reloading and remote sandbox tests have been paused.
+        > The remote container at `http://localhost:9090` is no longer reachable. Hot-reloading and remote sandbox tests have been paused.
 
 ---
 
@@ -1672,7 +1672,7 @@ Certain assets, such as XSLT/JSLT/Smooks mapping files, XML schemas, or Liquibas
 ### A. General File Copy Endpoint (`POST /admin/files/upload`)
 Exposes a generic endpoint to upload any text-based configuration file directly to a custom directory on the server filesystem.
 
-*   **URL:** `http://localhost:8080/admin/files/upload`
+*   **URL:** `http://localhost:9090/admin/files/upload`
 *   **Method:** `POST`
 *   **Request Payload (JSON):**
     ```json

@@ -153,7 +153,7 @@ public class VariablesEditorWindow {
 
         // Standard properties required by this app
         Map<String, String> defaultValues = new java.util.LinkedHashMap<>();
-        defaultValues.put("API_URL", "http://localhost:8080");
+        defaultValues.put("API_URL", "http://localhost:9090");
         defaultValues.put("kafka.orders.endpoint", "stub:kafka:topic:orders");
         defaultValues.put("ibmmq-endpoint", "stub:jms:queue:IBMMQ.Q");
         defaultValues.put("ibmmq.request.queue", "stub:jms:queue:REQUEST.Q");
@@ -168,7 +168,7 @@ public class VariablesEditorWindow {
         defaultValues.put("http.orders.endpoint", "stub:http:api.example.com/orders");
         defaultValues.put("http.downstream.endpoint", "stub:http:downstream-service/api");
         defaultValues.put("enricher.customer.service", "stub:direct:fetch-customer");
-        defaultValues.put("camel.jbang.platform-http.port", "9999");
+        defaultValues.put("camel.jbang.platform-http.port", "9090");
 
         Map<String, String> defaultDescs = new HashMap<>();
         defaultDescs.put("API_URL", "Remote target container host API URL for Deploy & Run Remotely");

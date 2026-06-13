@@ -122,5 +122,5 @@ If you are load-testing an HTTP REST gateway:
         - setHeader:
             name: "Content-Type"
             constant: "application/xml"
-        - to: "http://localhost:8080/api/v1/payments"
+        - to: "http://localhost:9090/api/v1/payments"
 ```

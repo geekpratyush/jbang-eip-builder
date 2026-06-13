@@ -486,6 +486,16 @@ public class DiagramStudioWindow {
         refreshTree();
     }
 
+    public void updateWorkspaceRoot(File newPath) {
+        if (newPath != null) {
+            this.workspaceRoot = newPath;
+            if (!this.workspaceRoot.exists()) {
+                this.workspaceRoot.mkdirs();
+            }
+            Platform.runLater(this::refreshTree);
+        }
+    }
+
     private void changeWorkspace() {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select Diagram Workspace Directory");

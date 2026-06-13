@@ -609,13 +609,13 @@ public class RouteBuilderApp extends Application {
         javafx.scene.control.MenuItem transformItem = new javafx.scene.control.MenuItem(
                 "Data Transformation Studio...");
         transformItem.setOnAction(e -> {
-            TransformationStudioWindow studio = new TransformationStudioWindow();
+            TransformationStudioWindow studio = new TransformationStudioWindow(getWorkspaceRoot());
             studio.show();
         });
 
         javafx.scene.control.MenuItem validateItem = new javafx.scene.control.MenuItem("Universal Validator Studio...");
         validateItem.setOnAction(e -> {
-            ValidatorStudioWindow validatorStudio = new ValidatorStudioWindow();
+            ValidatorStudioWindow validatorStudio = new ValidatorStudioWindow(getWorkspaceRoot());
             validatorStudio.show();
         });
 
@@ -914,7 +914,7 @@ public class RouteBuilderApp extends Application {
         btnTransform.getStyleClass().addAll("toolbar-btn", "btn-transform");
         btnTransform.setTooltip(new javafx.scene.control.Tooltip("Open Data Transformation Studio"));
         btnTransform.setOnAction(e -> {
-            TransformationStudioWindow studio = new TransformationStudioWindow();
+            TransformationStudioWindow studio = new TransformationStudioWindow(getWorkspaceRoot());
             studio.show();
         });
 
@@ -923,7 +923,7 @@ public class RouteBuilderApp extends Application {
         btnValidateStudio.getStyleClass().addAll("toolbar-btn", "btn-validate-studio");
         btnValidateStudio.setTooltip(new javafx.scene.control.Tooltip("Open Universal Validator Studio"));
         btnValidateStudio.setOnAction(e -> {
-            ValidatorStudioWindow validatorStudio = new ValidatorStudioWindow();
+            ValidatorStudioWindow validatorStudio = new ValidatorStudioWindow(getWorkspaceRoot());
             validatorStudio.show();
         });
 
@@ -1129,6 +1129,9 @@ public class RouteBuilderApp extends Application {
             boolean hasChecked = !checked.isEmpty();
             boolean hasSelected = selectedFile != null;
             boolean isRunning = runnerProcess[0] != null && runnerProcess[0].isAlive();
+            if (diagramPane != null) {
+                diagramPane.setRunning(isRunning);
+            }
             if (btnPlay != null)
                 btnPlay.setDisable(isRunning || (!hasChecked && !hasSelected));
             if (btnStop != null)
@@ -1542,7 +1545,7 @@ public class RouteBuilderApp extends Application {
                 if (!camelDir.exists())
                     camelDir.mkdirs();
 
-                generateChapterSamples(treePane, selectedDirectory);
+                generateChapterSamples(treePane, selectedDirectory, "All Samples");
 
                 // setBaseDirectory will pick up the 'camel' folder
                 treePane.setBaseDirectory(selectedDirectory);
@@ -2029,6 +2032,10 @@ public class RouteBuilderApp extends Application {
     }
 
     private void generateChapterSamples(RouteTreePane treePane, java.io.File base) {
+        generateChapterSamples(treePane, base, "All Samples");
+    }
+
+    private void generateChapterSamples(RouteTreePane treePane, java.io.File base, String filter) {
         try {
             java.io.File docsDir = new java.io.File(base, "docs");
             java.io.File docsInputDir = new java.io.File(docsDir, "input");
@@ -2039,7 +2046,7 @@ public class RouteBuilderApp extends Application {
             if (!docsOutputDir.exists())
                 docsOutputDir.mkdirs();
 
-            generateFromIndex(base, "/samples/");
+            generateFromIndex(base, "/samples/", false, filter);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -2051,10 +2058,16 @@ public class RouteBuilderApp extends Application {
     }
 
     private void generateFromIndex(java.io.File base, String resourcePrefix) throws java.io.IOException {
-        generateFromIndex(base, resourcePrefix, false);
+        generateFromIndex(base, resourcePrefix, false, "All Samples");
     }
 
-    private void generateFromIndex(java.io.File base, String resourcePrefix, boolean forceOverwrite) throws java.io.IOException {
+    private void generateFromIndex(java.io.File base, String resourcePrefix, boolean forceOverwrite)
+            throws java.io.IOException {
+        generateFromIndex(base, resourcePrefix, forceOverwrite, "All Samples");
+    }
+
+    private void generateFromIndex(java.io.File base, String resourcePrefix, boolean forceOverwrite, String filter)
+            throws java.io.IOException {
         byte[] indexBytes = readResourceBytes(resourcePrefix + "files.txt");
         if (indexBytes.length == 0)
             return;
@@ -2064,6 +2077,12 @@ public class RouteBuilderApp extends Application {
         for (String relativePath : lines) {
             relativePath = relativePath.trim();
             if (relativePath.isEmpty() || relativePath.endsWith("files.txt"))
+                continue;
+
+            boolean isJslt = relativePath.toLowerCase().contains("jslt");
+            if ("Standard (XSLT/Smooks)".equals(filter) && isJslt)
+                continue;
+            if ("JSLT (JSON Transformation)".equals(filter) && !isJslt)
                 continue;
 
             java.io.File targetFile = new java.io.File(base, relativePath);
@@ -2272,6 +2291,40 @@ public class RouteBuilderApp extends Application {
             return base.getParentFile();
         }
         return base;
+    }
+
+    public void syncWorkspacePaths(java.io.File workspaceRoot) {
+        if (workspaceRoot == null) return;
+        System.out.println("[RouteBuilderApp] Synchronizing workspace paths for root: " + workspaceRoot.getAbsolutePath());
+        
+        java.io.File mappingsDir = new java.io.File(workspaceRoot, "mappings");
+        java.util.prefs.Preferences.userNodeForPackage(TransformationStudioWindow.class)
+                .put("mappingsPath", mappingsDir.getAbsolutePath());
+
+        java.util.prefs.Preferences.userNodeForPackage(DiagramStudioWindow.class)
+                .put("workspaceRoot", new java.io.File(workspaceRoot, "diagrams").getAbsolutePath());
+
+        java.util.prefs.Preferences docPrefs = java.util.prefs.Preferences
+                .userNodeForPackage(DocumentConverterStudioWindow.class);
+        docPrefs.put("workspaceRoot", new java.io.File(workspaceRoot, "docs").getAbsolutePath());
+        docPrefs.put("outputRoot", new java.io.File(workspaceRoot, "docs/output").getAbsolutePath());
+
+        java.util.prefs.Preferences.userNodeForPackage(ValidatorStudioWindow.class)
+                .put("workspaceRoot", new java.io.File(workspaceRoot, "validator").getAbsolutePath());
+        
+        // Dynamically update any open active instances of these windows!
+        for (TransformationStudioWindow activeStudio : TransformationStudioWindow.activeInstances) {
+            activeStudio.updateMappingsPath(mappingsDir);
+        }
+        for (DiagramStudioWindow activeStudio : DiagramStudioWindow.activeInstances) {
+            activeStudio.updateWorkspaceRoot(new java.io.File(workspaceRoot, "diagrams"));
+        }
+        for (ValidatorStudioWindow activeStudio : ValidatorStudioWindow.activeInstances) {
+            activeStudio.updateWorkspaceRoot(new java.io.File(workspaceRoot, "validator"));
+        }
+        for (DocumentConverterStudioWindow activeStudio : DocumentConverterStudioWindow.activeInstances) {
+            activeStudio.updateWorkspacePaths(new java.io.File(workspaceRoot, "docs"), new java.io.File(workspaceRoot, "docs/output"));
+        }
     }
 
     public static void main(String[] args) {
@@ -2715,7 +2768,30 @@ public class RouteBuilderApp extends Application {
                         boolean isAbs = resolvedFile.isAbsolute() || value.startsWith("/")
                                 || value.matches("^[A-Z]:/.*");
 
-                        if (!isAbs) {
+                        if (isAbs) {
+                            String wsPath = wsRoot.getAbsolutePath().replace("\\", "/");
+                            String valNorm = value.replace("\\", "/");
+                            if (!valNorm.startsWith(wsPath)) {
+                                // It is absolute, but points outside the current workspace.
+                                // Let's resolve it relative to the current wsRoot using its last parts.
+                                String relPath = null;
+                                if (valNorm.endsWith("/mappings") || valNorm.equals("mappings")) {
+                                    relPath = "mappings";
+                                } else if (valNorm.endsWith("/diagrams") || valNorm.equals("diagrams")) {
+                                    relPath = "diagrams";
+                                } else if (valNorm.endsWith("/validator") || valNorm.equals("validator")) {
+                                    relPath = "validator";
+                                } else if (valNorm.endsWith("/FAKER/templates") || valNorm.endsWith("/templates") || valNorm.equals("templates")) {
+                                    relPath = "FAKER/templates";
+                                } else if (valNorm.endsWith("/FAKER/faker-db/financial") || valNorm.endsWith("/faker-db/financial") || valNorm.equals("financial")) {
+                                    relPath = "FAKER/faker-db/financial";
+                                }
+                                
+                                if (relPath != null) {
+                                    resolvedFile = new java.io.File(wsRoot, relPath);
+                                }
+                            }
+                        } else {
                             resolvedFile = new java.io.File(wsRoot, value);
                         }
 
@@ -2731,26 +2807,46 @@ public class RouteBuilderApp extends Application {
                                     .put("workspaceRoot", absPath);
                         }
 
-                        // Only update if it actually changed and wasn't already absolute
-                        if (!value.equals(absPath)) {
-                            props.setProperty(var, absPath);
+                        // Determine if we should store it as relative or absolute
+                        String valueToStore = absPath;
+                        String wsPath = wsRoot.getAbsolutePath().replace("\\", "/");
+                        if (absPath.startsWith(wsPath)) {
+                            valueToStore = absPath.substring(wsPath.length());
+                            if (valueToStore.startsWith("/")) {
+                                valueToStore = valueToStore.substring(1);
+                            }
+                            if (valueToStore.isEmpty()) {
+                                valueToStore = ".";
+                            }
+                        }
+
+                        if (!value.equals(valueToStore)) {
+                            props.setProperty(var, valueToStore);
                             needsUpdate = true;
                         }
-                        System.out.println("[Tessera] Loaded environment: " + var + "=" + absPath);
+                        System.out.println("[Tessera] Loaded environment: " + var + "=" + absPath + " (Stored as: " + valueToStore + ")");
                     }
                 }
 
-                if (!absoluteWsPath.equals(props.getProperty("WORKSPACE_ROOT_DIR"))) {
-                    props.setProperty("WORKSPACE_ROOT_DIR", absoluteWsPath);
+                if (props.getProperty("WORKSPACE_ROOT_DIR") != null) {
+                    // We don't want to hardcode WORKSPACE_ROOT_DIR in the file anymore if possible, 
+                    // or at least make it '.' if it points to the current file's dir
+                    String wsRootVal = props.getProperty("WORKSPACE_ROOT_DIR");
+                    if (!wsRootVal.equals(".")) {
+                         props.setProperty("WORKSPACE_ROOT_DIR", ".");
+                         needsUpdate = true;
+                    }
+                } else {
+                    props.setProperty("WORKSPACE_ROOT_DIR", ".");
                     needsUpdate = true;
                 }
 
                 if (needsUpdate) {
                     try (java.io.OutputStream output = new java.io.FileOutputStream(propsFile)) {
                         props.store(output,
-                                "Standardized Tessera Workspace Configuration - Automatically Updated to Absolute Paths");
+                                "Standardized Tessera Workspace Configuration - Using Relative Paths for Portability");
                         System.out.println(
-                                "[Tessera] Updated application.properties with absolute paths for better portability across subdirectories.");
+                                "[Tessera] Updated application.properties with relative paths for better portability.");
                     }
                 }
             } catch (Exception e) {

@@ -930,6 +930,14 @@ public class RouteTreePane extends VBox {
                 this.onFileSelected.accept(null);
             }
         }
+
+        java.io.File workspaceRoot = newBaseDir;
+        if (newBaseDir.getName().equals("routes") || newBaseDir.getName().equals("camel")) {
+            workspaceRoot = newBaseDir.getParentFile();
+        }
+        if (RouteBuilderApp.getInstance() != null) {
+            RouteBuilderApp.getInstance().syncWorkspacePaths(workspaceRoot);
+        }
     }
 
     public void refresh() {

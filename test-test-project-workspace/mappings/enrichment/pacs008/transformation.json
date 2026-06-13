@@ -1,0 +1,22 @@
+{
+  "sources": [
+    {
+      "file": "original.xml",
+      "id": "original"
+    },
+    {
+      "file": "truncated.xml",
+      "id": "truncated"
+    }
+  ],
+  "name": "ISO pacs.008 Comprehensive Enrichment",
+  "logic": {
+    "file": "enrich.xslt",
+    "type": "xslt"
+  },
+  "type": "enrichment",
+  "target": {
+    "xsd": "pacs.008.001.14.xsd",
+    "type": "xml"
+  }
+}

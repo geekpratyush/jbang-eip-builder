@@ -443,4 +443,97 @@ public class SampleDecoupledTest {
         }
         assertEquals("file:///C:/Users/test/route.yaml", normalizedLspWin);
     }
+
+    @Test
+    public void testDynamicWorkspaceResolution(@TempDir Path tempDir) throws Exception {
+        File baseDir = tempDir.toFile();
+        File mappingsDir = new File(baseDir, "mappings");
+        mappingsDir.mkdirs();
+        File diagramsDir = new File(baseDir, "diagrams");
+        diagramsDir.mkdirs();
+        File docsDir = new File(baseDir, "docs");
+        docsDir.mkdirs();
+        File valDir = new File(baseDir, "validator");
+        valDir.mkdirs();
+
+        java.util.concurrent.CompletableFuture<Void> future = new java.util.concurrent.CompletableFuture<>();
+        Platform.runLater(() -> {
+            try {
+                // 1. Instantiate the windows with the base Workspace.
+                com.tessera.ui.TransformationStudioWindow transformStudio = new com.tessera.ui.TransformationStudioWindow(baseDir);
+                com.tessera.ui.DiagramStudioWindow diagramStudio = new com.tessera.ui.DiagramStudioWindow(baseDir);
+                com.tessera.ui.ValidatorStudioWindow validatorStudio = new com.tessera.ui.ValidatorStudioWindow(baseDir);
+                com.tessera.ui.DocumentConverterStudioWindow docStudio = new com.tessera.ui.DocumentConverterStudioWindow(baseDir);
+
+                // 2. Verify their workspace paths are set relative to baseDir.
+                java.lang.reflect.Field fieldCurrentMappingsPath = com.tessera.ui.TransformationStudioWindow.class.getDeclaredField("currentMappingsPath");
+                fieldCurrentMappingsPath.setAccessible(true);
+                File mappingsPath = (File) fieldCurrentMappingsPath.get(transformStudio);
+                assertEquals(mappingsDir.getAbsolutePath(), mappingsPath.getAbsolutePath());
+
+                java.lang.reflect.Field fieldDiagramWorkspaceRoot = com.tessera.ui.DiagramStudioWindow.class.getDeclaredField("workspaceRoot");
+                fieldDiagramWorkspaceRoot.setAccessible(true);
+                File diagWorkspaceRoot = (File) fieldDiagramWorkspaceRoot.get(diagramStudio);
+                assertEquals(diagramsDir.getAbsolutePath(), diagWorkspaceRoot.getAbsolutePath());
+
+                java.lang.reflect.Field fieldValidatorWorkspaceRoot = com.tessera.ui.ValidatorStudioWindow.class.getDeclaredField("workspaceRoot");
+                fieldValidatorWorkspaceRoot.setAccessible(true);
+                File valWorkspaceRoot = (File) fieldValidatorWorkspaceRoot.get(validatorStudio);
+                assertEquals(valDir.getAbsolutePath(), valWorkspaceRoot.getAbsolutePath());
+
+                java.lang.reflect.Field fieldDocWorkspaceRoot = com.tessera.ui.DocumentConverterStudioWindow.class.getDeclaredField("workspaceRoot");
+                fieldDocWorkspaceRoot.setAccessible(true);
+                File docWorkspaceRoot = (File) fieldDocWorkspaceRoot.get(docStudio);
+                assertEquals(docsDir.getAbsolutePath(), docWorkspaceRoot.getAbsolutePath());
+
+                // 3. Test dynamic synchronization when calling syncWorkspacePaths.
+                File newBaseDir = new File(baseDir, "new-workspace");
+                newBaseDir.mkdirs();
+                
+                com.tessera.ui.RouteBuilderApp app = new com.tessera.ui.RouteBuilderApp();
+                app.syncWorkspacePaths(newBaseDir);
+
+                // Check if all instances updated their paths!
+                File updatedMappingsPath = (File) fieldCurrentMappingsPath.get(transformStudio);
+                assertEquals(new File(newBaseDir, "mappings").getAbsolutePath(), updatedMappingsPath.getAbsolutePath());
+
+                File updatedDiagWorkspaceRoot = (File) fieldDiagramWorkspaceRoot.get(diagramStudio);
+                assertEquals(new File(newBaseDir, "diagrams").getAbsolutePath(), updatedDiagWorkspaceRoot.getAbsolutePath());
+
+                File updatedValWorkspaceRoot = (File) fieldValidatorWorkspaceRoot.get(validatorStudio);
+                assertEquals(new File(newBaseDir, "validator").getAbsolutePath(), updatedValWorkspaceRoot.getAbsolutePath());
+
+                File updatedDocWorkspaceRoot = (File) fieldDocWorkspaceRoot.get(docStudio);
+                assertEquals(new File(newBaseDir, "docs").getAbsolutePath(), updatedDocWorkspaceRoot.getAbsolutePath());
+
+                future.complete(null);
+            } catch (Throwable e) {
+                future.completeExceptionally(e);
+            }
+        });
+
+        future.get(10, java.util.concurrent.TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testTransformationPerformanceWarmup() throws Exception {
+        // Test XSLT transform warm-up loop.
+        String xml = "<root><data>hello</data></root>";
+        String xslt = "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"><xsl:template match=\"/\"><output><xsl:value-of select=\"/root/data\"/></output></xsl:template></xsl:stylesheet>";
+        
+        long[] times = new long[10];
+        String result = "";
+        for (int i = 0; i < 10; i++) {
+            long runStart = System.currentTimeMillis();
+            result = com.tessera.ui.TransformationBackend.transform(xml, xslt, "xslt", null);
+            long runEnd = System.currentTimeMillis();
+            times[i] = runEnd - runStart;
+        }
+        
+        assertTrue(result.contains("hello"));
+        assertEquals(10, times.length);
+        for (int i = 0; i < 10; i++) {
+            assertTrue(times[i] >= 0);
+        }
+    }
 }

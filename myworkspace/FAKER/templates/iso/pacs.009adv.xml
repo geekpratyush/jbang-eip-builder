@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.009.001.13">
+    <FICdtTrf>
+        <GrpHdr>
+            <MsgId>{{type:msgId}}</MsgId>
+            <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <SttlmInf>
+                <SttlmMtd>INDA</SttlmMtd>
+            </SttlmInf>
+        </GrpHdr>
+        <CdtTrfTxInf>
+            <PmtId>
+                <InstrId>{{type:uid:16}}</InstrId>
+                <EndToEndId>{{type:uid:16}}</EndToEndId>
+                <TxId>{{type:uid:16}}</TxId>
+            </PmtId>
+            <PmtTpInf>
+                <SvcLvl>
+                    <Cd>ADV</Cd>
+                </SvcLvl>
+            </PmtTpInf>
+            <IntrBkSttlmAmt Ccy="EUR">100000.00</IntrBkSttlmAmt>
+            <Dbtr>
+                <FinInstnId><BICFI>{{type:bic:sender}}</BICFI></FinInstnId>
+            </Dbtr>
+            <Cdtr>
+                <FinInstnId><BICFI>{{type:bic:sender}}</BICFI></FinInstnId>
+            </Cdtr>
+        </CdtTrfTxInf>
+    </FICdtTrf>
+</Document>

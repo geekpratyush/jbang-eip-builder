@@ -1,0 +1,33 @@
+# ID: dotry-docatch
+# ENABLED: true
+# DESCRIPTION: Inline doTry/doCatch/doFinally for local exception scoping
+# AUTHOR: Camel Studio
+# STUB: none
+
+- route:
+    id: "dotry-example"
+    from:
+      uri: "timer:try?period=4000&repeatCount=4"
+      steps:
+        - setBody:
+            simple: "${random(1,10)}"
+        - doTry:
+            steps:
+              - log: "[Chapter 4][TRY] Processing value: ${body}"
+              - filter:
+                  simple: "${body} > 7"
+                  steps:
+                    - throwException:
+                        exceptionType: "java.lang.RuntimeException"
+                        message: "Value too large: ${body}"
+              - log: "[Chapter 4][TRY] Success: ${body}"
+              - to: "mock:success"
+            doCatch:
+              - exception:
+                  - "java.lang.RuntimeException"
+                steps:
+                  - log: "[Chapter 4][CATCH] Caught exception: ${exception.message}"
+                  - to: "mock:caught"
+            doFinally:
+              steps:
+                - log: "[Chapter 4][FINALLY] Cleanup complete"

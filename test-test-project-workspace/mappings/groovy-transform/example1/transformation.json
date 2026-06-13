@@ -1,0 +1,7 @@
+{
+  "type": "groovy",
+  "name": "Groovy Custom Transformation",
+  "source": { "type": "xml", "file": "source.xml" },
+  "logic": { "type": "java", "file": "transform.groovy" },
+  "target": { "type": "xml" }
+}

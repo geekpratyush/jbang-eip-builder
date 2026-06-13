@@ -1,0 +1,10 @@
+digraph G {
+  rankdir=LR;
+  node [shape=box, style=filled, fillcolor=lightblue];
+  User -> WebApp;
+  WebApp -> APIGateway;
+  APIGateway -> AuthService;
+  APIGateway -> OrderService;
+  OrderService -> Database [label="SQL"];
+  AuthService -> Redis [label="Cache"];
+}

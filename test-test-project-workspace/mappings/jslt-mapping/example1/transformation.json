@@ -1,0 +1,7 @@
+{
+  "type": "jslt",
+  "name": "JSON to JSON with JSLT",
+  "source": { "type": "json", "file": "source.json" },
+  "logic": { "type": "jslt", "file": "transform.jslt" },
+  "target": { "type": "json" }
+}

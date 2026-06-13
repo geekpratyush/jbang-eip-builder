@@ -1,0 +1,7 @@
+{
+  "name": "Comprehensive CBPR+ pacs.008 to MT103 (Groovy)",
+  "source": { "file": "source.xml", "type": "xml" },
+  "logic": [{ "file": "transform.groovy", "type": "groovy" }],
+  "type": "groovy",
+  "target": { "type": "mt" }
+}

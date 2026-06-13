@@ -31,6 +31,7 @@ import java.util.List;
  * Supports multi-selection via checkboxes and bulk conversion with progress tracking.
  */
 public class DocumentConverterStudioWindow {
+    public static final java.util.List<DocumentConverterStudioWindow> activeInstances = new java.util.ArrayList<>();
 
     private final Stage stage;
     private File workspaceRoot;
@@ -55,6 +56,7 @@ public class DocumentConverterStudioWindow {
     }
 
     public DocumentConverterStudioWindow(File baseWorkspace) {
+        activeInstances.add(this);
         this.stage = new Stage();
         this.consoleArea = new com.tessera.ui.components.ConsolePane();
         java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(DocumentConverterStudioWindow.class);
@@ -181,10 +183,27 @@ public class DocumentConverterStudioWindow {
         scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
         stage.setScene(scene);
         stage.setMaximized(true);
+        stage.setOnHidden(e -> activeInstances.remove(this));
         stage.show();
         
         refreshTree();
         log("INFO", "Document Converter Studio active. Select documents to convert.");
+    }
+
+    public void updateWorkspacePaths(File newWorkspaceRoot, File newOutputRoot) {
+        if (newWorkspaceRoot != null) {
+            this.workspaceRoot = newWorkspaceRoot;
+            if (!this.workspaceRoot.exists()) {
+                this.workspaceRoot.mkdirs();
+            }
+            Platform.runLater(this::refreshTree);
+        }
+        if (newOutputRoot != null) {
+            this.outputRoot = newOutputRoot;
+            if (!this.outputRoot.exists()) {
+                this.outputRoot.mkdirs();
+            }
+        }
     }
 
     private void handleFilePreview(File file) {

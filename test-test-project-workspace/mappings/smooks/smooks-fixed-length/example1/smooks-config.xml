@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<smooks-resource-list xmlns="https://www.smooks.org/xsd/smooks-2.0.xsd"
+                      xmlns:core="https://www.smooks.org/xsd/smooks/smooks-core-1.6.xsd"
+                      xmlns:fl="https://www.smooks.org/xsd/smooks/fixed-length-1.4.xsd">
+
+    <core:exports>
+        <core:result type="org.smooks.io.sink.StringSink" />
+    </core:exports>
+
+    <fl:reader fields="firstName[10],lastName[10],age[3],country[3]" />
+</smooks-resource-list>

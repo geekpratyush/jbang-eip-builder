@@ -1,0 +1,13 @@
+@startuml
+package "Web Application" {
+  [React Frontend]
+}
+package "API Layer" {
+  [Express Gateway]
+}
+database "PostgreSQL" {
+  [Order DB]
+}
+[React Frontend] --> [Express Gateway] : HTTP/JSON
+[Express Gateway] --> [Order DB] : SQL
+@enduml

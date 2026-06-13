@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.029.001.02">
+    <FIToFIPmtCxlReq>
+        <GrpHdr>
+            <MsgId>{{type:msgId}}</MsgId>
+            <CreDtTm>{{type:dateTime:iso}}</CreDtTm>
+            <InstgAgt><FinInstnId><BICFI>{{type:bic:sender}}</BICFI></FinInstnId></InstgAgt>
+            <InstdAgt><FinInstnId><BICFI>{{type:bic:sender}}</BICFI></FinInstnId></InstdAgt>
+        </GrpHdr>
+        <Undrlyg>
+            <CxlDtls>
+                <CxlReqId>CXL-pacs029-001</CxlReqId>
+                <OrgnlTxId>TX-pacs008-001</OrgnlTxId>
+                <CxlRsnInf><Rsn><Cd>CUST</Cd></Rsn></CxlRsnInf>
+            </CxlDtls>
+        </Undrlyg>
+    </FIToFIPmtCxlReq>
+</Document>

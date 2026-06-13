@@ -20,17 +20,35 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class TransformationBackend {
 
     private static final ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+    private static final java.util.concurrent.ConcurrentHashMap<String, Object> joorInstanceCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     public static String transform(String input, String logic, String type, File currentFolder) throws Exception {
-        if ("xslt".equalsIgnoreCase(type)) {
+        String targetType = "json"; // Default
+        if (currentFolder != null) {
+            File configFile = new File(currentFolder, "transformation.json");
+            if (configFile.exists()) {
+                try {
+                    String content = Files.readString(configFile.toPath());
+                    JSONObject currentConfig = new JSONObject(content);
+                    JSONObject targetCfg = currentConfig.optJSONObject("target");
+                    if (targetCfg != null) {
+                        targetType = targetCfg.optString("type", "json");
+                    }
+                } catch (Exception ignored) { }
+            }
+        }
+
+        if ("xslt".equalsIgnoreCase(type) || "xslt3".equalsIgnoreCase(type)) {
             return transformXslt(input, logic);
         } else if ("jslt".equalsIgnoreCase(type)) {
-            return transformJslt(input, logic);
+            return transformJslt(input, logic, targetType);
         } else if ("smooks".equalsIgnoreCase(type)) {
             return transformSmooks(input, logic, currentFolder);
         } else if ("joor".equalsIgnoreCase(type)) {
@@ -67,8 +85,13 @@ public class TransformationBackend {
     }
 
     public static String transformEnrichment(String originalXml, String truncatedXml, String logic) throws Exception {
+        return transformEnrichment(originalXml, truncatedXml, logic, "xslt", null);
+    }
+
+    public static String transformEnrichment(String originalXml, String truncatedXml, String logic, String logicType,
+            File currentFolder) throws Exception {
         String combinedXml = combineEnrichmentXml(originalXml, truncatedXml);
-        return transformXslt(combinedXml, logic);
+        return transform(combinedXml, logic, logicType, currentFolder);
     }
 
     private static String toFileUriString(File file) {
@@ -134,38 +157,143 @@ public class TransformationBackend {
         }
     }
 
-    private static String transformJslt(String input, String jslt) throws Exception {
-        JsonNode inputNode = mapper.readTree(input);
-        Expression expr = Parser.compileString(jslt);
+    private static String transformJslt(String input, String jslt, String targetType) throws Exception {
+        String jsonInput = input;
+        if (input != null && input.trim().startsWith("<")) {
+            try {
+                // If it looks like XML, convert to JSON for JSLT
+                jsonInput = org.json.XML.toJSONObject(input).toString();
+            } catch (Exception e) {
+                // Not valid XML, proceed as JSON
+            }
+        }
+        JsonNode inputNode = mapper.readTree(jsonInput);
+
+        // Add custom functions to guarantee availability and XSLT compatibility
+        List<com.schibsted.spt.data.jslt.Function> customFunctions = new ArrayList<>();
+        
+        // substring(string, start, [end])
+        customFunctions.add(new com.schibsted.spt.data.jslt.Function() {
+            @Override public String getName() { return "substring"; }
+            @Override public int getMinArguments() { return 2; }
+            @Override public int getMaxArguments() { return 3; }
+            @Override public JsonNode call(JsonNode inputNode, JsonNode[] arguments) {
+                String str = arguments[0].asText();
+                if (str == null || str.equals("null")) return com.fasterxml.jackson.databind.node.TextNode.valueOf("");
+                int start = arguments[1].asInt();
+                int end = (arguments.length > 2) ? arguments[2].asInt() : str.length();
+                if (start < 0) start = 0;
+                if (start > str.length()) start = str.length();
+                if (end < start) end = start;
+                if (end > str.length()) end = str.length();
+                return com.fasterxml.jackson.databind.node.TextNode.valueOf(str.substring(start, end));
+            }
+        });
+
+        // format-number(number, pattern)
+        customFunctions.add(new com.schibsted.spt.data.jslt.Function() {
+            @Override public String getName() { return "format-number"; }
+            @Override public int getMinArguments() { return 2; }
+            @Override public int getMaxArguments() { return 2; }
+            @Override public JsonNode call(JsonNode inputNode, JsonNode[] arguments) {
+                double val = arguments[0].asDouble();
+                String pattern = arguments[1].asText();
+                try {
+                    java.text.DecimalFormat df = new java.text.DecimalFormat(pattern);
+                    return com.fasterxml.jackson.databind.node.TextNode.valueOf(df.format(val));
+                } catch (Exception e) {
+                    return com.fasterxml.jackson.databind.node.TextNode.valueOf(String.valueOf(val));
+                }
+            }
+        });
+
+        // replace(string, search, replacement)
+        customFunctions.add(new com.schibsted.spt.data.jslt.Function() {
+            @Override public String getName() { return "replace"; }
+            @Override public int getMinArguments() { return 3; }
+            @Override public int getMaxArguments() { return 3; }
+            @Override public JsonNode call(JsonNode inputNode, JsonNode[] arguments) {
+                String str = arguments[0].asText();
+                String search = arguments[1].asText();
+                String replacement = arguments[2].asText();
+                if (str == null) return com.fasterxml.jackson.databind.node.NullNode.getInstance();
+                return com.fasterxml.jackson.databind.node.TextNode.valueOf(str.replace(search, replacement));
+            }
+        });
+
+        // array-zip(arr1, arr2)
+        customFunctions.add(new com.schibsted.spt.data.jslt.Function() {
+            @Override public String getName() { return "array-zip"; }
+            @Override public int getMinArguments() { return 2; }
+            @Override public int getMaxArguments() { return 2; }
+            @Override public JsonNode call(JsonNode inputNode, JsonNode[] arguments) {
+                if (!(arguments[0] instanceof com.fasterxml.jackson.databind.node.ArrayNode)) {
+                    return com.fasterxml.jackson.databind.node.NullNode.getInstance();
+                }
+                com.fasterxml.jackson.databind.node.ArrayNode arr1 = (com.fasterxml.jackson.databind.node.ArrayNode) arguments[0];
+                com.fasterxml.jackson.databind.node.ArrayNode arr2 = arguments[1] instanceof com.fasterxml.jackson.databind.node.ArrayNode ? (com.fasterxml.jackson.databind.node.ArrayNode) arguments[1] : null;
+                com.fasterxml.jackson.databind.node.ArrayNode result = mapper.createArrayNode();
+                for (int i = 0; i < arr1.size(); i++) {
+                    com.fasterxml.jackson.databind.node.ObjectNode obj = mapper.createObjectNode();
+                    obj.set("orig", arr1.get(i));
+                    obj.set("trunc", (arr2 != null && i < arr2.size()) ? arr2.get(i) : com.fasterxml.jackson.databind.node.NullNode.getInstance());
+                    result.add(obj);
+                }
+                return result;
+            }
+        });
+
+        Expression expr = Parser.compileString(jslt, customFunctions);
         JsonNode outputNode = expr.apply(inputNode);
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(outputNode);
+        
+        // If the result is a simple text node (often the case for MT output), return it as-is
+        if (outputNode.isTextual()) {
+            return outputNode.asText();
+        }
+
+        String jsonResult = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(outputNode);
+
+        if ("xml".equalsIgnoreCase(targetType)) {
+            String xmlOut = org.json.XML.toString(new JSONObject(jsonResult), "Document");
+            return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
+                   xmlOut.replace("<Document>", "<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.008.001.14\">");
+        }
+        return jsonResult;
     }
 
     private static String transformJoor(String input, String javaCode) throws Exception {
-        if (javaCode.contains("class ") || javaCode.contains("interface ")) {
-            String pkg = "com.tessera.dynamic";
-            java.util.regex.Matcher pkgMatcher = java.util.regex.Pattern.compile("package\\s+([a-zA-Z0-9_\\.]+)\\s*;").matcher(javaCode);
-            if (pkgMatcher.find()) {
-                pkg = pkgMatcher.group(1);
-            }
-            String className = "Mapper";
-            java.util.regex.Matcher classMatcher = java.util.regex.Pattern.compile("(?:class|interface|enum)\\s+(\\w+)").matcher(javaCode);
-            if (classMatcher.find()) {
-                className = classMatcher.group(1);
-            }
-            String fullClassName = pkg + "." + className;
-            org.joor.Reflect compiled = org.joor.Reflect.compile(fullClassName, javaCode);
+        Object mapperInstance = joorInstanceCache.computeIfAbsent(javaCode, code -> {
             try {
-                return (String) compiled.create().call("map", input).get();
+                if (code.contains("class ") || code.contains("interface ")) {
+                    String pkg = "com.tessera.dynamic";
+                    java.util.regex.Matcher pkgMatcher = java.util.regex.Pattern.compile("package\\s+([a-zA-Z0-9_\\.]+)\\s*;").matcher(code);
+                    if (pkgMatcher.find()) {
+                        pkg = pkgMatcher.group(1);
+                    }
+                    String className = "Mapper";
+                    java.util.regex.Matcher classMatcher = java.util.regex.Pattern.compile("(?:class|interface|enum)\\s+(\\w+)").matcher(code);
+                    if (classMatcher.find()) {
+                        className = classMatcher.group(1);
+                    }
+                    String fullClassName = pkg + "." + className;
+                    org.joor.Reflect compiled = org.joor.Reflect.compile(fullClassName, code);
+                    try {
+                        return compiled.create().get();
+                    } catch (Exception e) {
+                        return compiled.get();
+                    }
+                } else {
+                    return org.joor.Reflect.compile("com.tessera.dynamic.PreviewMapper", 
+                        "package com.tessera.dynamic; public class PreviewMapper { " +
+                        "public String map(Object body) { " + code + " } }")
+                        .create().get();
+                }
             } catch (Exception e) {
-                return (String) compiled.call("map", input).get();
+                throw new RuntimeException(e);
             }
-        } else {
-            return (String) org.joor.Reflect.compile("com.tessera.dynamic.PreviewMapper", 
-                "package com.tessera.dynamic; public class PreviewMapper { " +
-                "public String map(Object body) { " + javaCode + " } }")
-                .create().call("map", input).get();
-        }
+        });
+
+        return (String) org.joor.Reflect.on(mapperInstance).call("map", input).get();
     }
 
     private static String transformGroovy(String input, String groovyCode) throws Exception {
@@ -212,7 +340,13 @@ public class TransformationBackend {
     private static String transformXslt(String xml, String xslt) throws Exception {
         TransformerFactory factory = new net.sf.saxon.TransformerFactoryImpl();
         Transformer transformer = factory.newTransformer(new StreamSource(new StringReader(xslt)));
-        Source xmlSource = new StreamSource(new StringReader(xml));
+        Source xmlSource;
+        if (xml.trim().startsWith("[HEADER_START]")) {
+            transformer.setParameter("payload", xml);
+            xmlSource = new StreamSource(new StringReader("<dummy/>"));
+        } else {
+            xmlSource = new StreamSource(new StringReader(xml));
+        }
         StringWriter writer = new StringWriter();
         transformer.transform(xmlSource, new StreamResult(writer));
         return writer.toString();

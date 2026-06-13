@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+    <FIToFICstmrCdtTrf>
+        <GrpHdr>
+            <MsgId>CBPR-PACS-2026-06-09-001</MsgId>
+            <CreDtTm>2026-06-09T14:30:00Z</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <CtrlSum>50000.00</CtrlSum>
+            <SttlmInf>
+                <SttlmMtd>INDA</SttlmMtd>
+                <SttlmAcct>
+                    <Id><Othr><Id>SETTLE-ACCT-CBPR-999</Id></Othr></Id>
+                </SttlmAcct>
+            </SttlmInf>
+            <InstgAgt>
+                <FinInstnId>
+                    <BICFI>SENDERBKAXXX</BICFI>
+                    <Nm>Global Sending Bank Ltd</Nm>
+                </FinInstnId>
+            </InstgAgt>
+            <InstdAgt>
+                <FinInstnId>
+                    <BICFI>RECEIVERBKAXXX</BICFI>
+                    <Nm>Global Receiving Bank SA</Nm>
+                </FinInstnId>
+            </InstdAgt>
+        </GrpHdr>
+        <CdtTrfTxInf>
+            <PmtId>
+                <InstrId>INSTR-CBPR-20260609-123</InstrId>
+                <EndToEndId>E2E-CBPR-20260609-ABC</EndToEndId>
+                <TxId>TX-CBPR-20260609-XYZ</TxId>
+                <UETR>eb5f1a7d-2b4e-4f7d-8f1a-7d2b4e4f7d8f</UETR>
+            </PmtId>
+            <PmtTpInf>
+                <InstrPrty>HIGH</InstrPrty>
+                <SvcLvl><Cd>CBPR</Cd></SvcLvl>
+                <LclInstrm><Prtry>INSTANT</Prtry></LclInstrm>
+                <CtgyPurp><Cd>CORT</Cd></CtgyPurp>
+            </PmtTpInf>
+            <IntrBkSttlmAmt Ccy="USD">50000.00</IntrBkSttlmAmt>
+            <IntrBkSttlmDt>2026-06-09</IntrBkSttlmDt>
+            <ChrgBr>SHAR</ChrgBr>
+            <InstgRmbrsmntAgt>
+                <FinInstnId><BICFI>REIMBURBKAXXX</BICFI></FinInstnId>
+            </InstgRmbrsmntAgt>
+            <Dbtr>
+                <Nm>SOPHISTICATED GLOBAL CORP</Nm>
+                <PstlAdr>
+                    <StrtNm>Wall Street</StrtNm>
+                    <BldgNb>100</BldgNb>
+                    <PstCd>10005</PstCd>
+                    <TwnNm>New York</TwnNm>
+                    <Ctry>US</Ctry>
+                </PstlAdr>
+                <Id>
+                    <OrgId>
+                        <AnyBIC>SOGLOCORPXXX</AnyBIC>
+                        <Othr><Id>TAX-ID-123456</Id></Othr>
+                    </OrgId>
+                </Id>
+            </Dbtr>
+            <DbtrAcct>
+                <Id><Othr><Id>DEBTOR-ACC-987654321</Id></Othr></Id>
+                <Tp><Cd>CACC</Cd></Tp>
+            </DbtrAcct>
+            <DbtrAgt>
+                <FinInstnId>
+                    <BICFI>ORDERINGBKAXXX</BICFI>
+                    <Nm>The Ordering Bank</Nm>
+                </FinInstnId>
+            </DbtrAgt>
+            <IntrmyAgt1>
+                <FinInstnId><BICFI>INTERBKAXXX</BICFI></FinInstnId>
+            </IntrmyAgt1>
+            <CdtrAgt>
+                <FinInstnId>
+                    <BICFI>ACCOUNTBKAXXX</BICFI>
+                    <Nm>The Beneficiary Bank</Nm>
+                </FinInstnId>
+            </CdtrAgt>
+            <Cdtr>
+                <Nm>CREDITOR GLOBAL SERVICES LTD</Nm>
+                <PstlAdr>
+                    <StrtNm>Commerce Way</StrtNm>
+                    <BldgNb>456</BldgNb>
+                    <PstCd>EC2A 2BB</PstCd>
+                    <TwnNm>London</TwnNm>
+                    <Ctry>GB</Ctry>
+                </PstlAdr>
+                <Id>
+                    <OrgId><Othr><Id>CORP-REG-778899</Id></Othr></OrgId>
+                </Id>
+            </Cdtr>
+            <CdtrAcct>
+                <Id><IBAN>GB29BUKB20201555555555</IBAN></Id>
+            </CdtrAcct>
+            <Purp><Cd>BEPP</Cd></Purp>
+            <RgltryRptg>
+                <Dtls>
+                    <Inf>TAX PAYMENT FOR SERVICES</Inf>
+                </Dtls>
+            </RgltryRptg>
+            <RmtInf>
+                <Ustrd>CBPR+ ENRICHED REMITTANCE ADVICE</Ustrd>
+                <Ustrd>INVOICE REF: INV-2026-06-001</Ustrd>
+            </RmtInf>
+        </CdtTrfTxInf>
+    </FIToFICstmrCdtTrf>
+</Document>

@@ -1,0 +1,24 @@
+<hospital name="St. Jude Clinic" location="Memphis">
+  <doctors>
+    <doctor id="D101">
+      <name>Dr. Stephen Strange</name>
+      <specialty>Neurosurgery</specialty>
+    </doctor>
+    <doctor id="D102">
+      <name>Dr. Leonard McCoy</name>
+      <specialty>General Medicine</specialty>
+    </doctor>
+  </doctors>
+  <patients>
+    <patient id="P201" status="Admitted">
+      <name>Bruce Banner</name>
+      <age>42</age>
+      <assignedDoctor>D101</assignedDoctor>
+    </patient>
+    <patient id="P202" status="Discharged">
+      <name>Tony Stark</name>
+      <age>48</age>
+      <assignedDoctor>D102</assignedDoctor>
+    </patient>
+  </patients>
+</hospital>

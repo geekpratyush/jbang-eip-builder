@@ -1,0 +1,12 @@
+<store name="Corner Books" location="London">
+  <book category="reference">
+    <author>Nigel Rees</author>
+    <title>Sayings of the Century</title>
+    <price>8.95</price>
+  </book>
+  <book category="fiction">
+    <author>Evelyn Waugh</author>
+    <title>Sword of Honour</title>
+    <price>12.99</price>
+  </book>
+</store>

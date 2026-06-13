@@ -1,0 +1,12 @@
+direction: right
+User: {
+  shape: person
+}
+Cloud: {
+  WebApp: Frontend Application
+  API: Backend API Gateway
+  DB: PostgreSQL Database
+}
+User -> Cloud.WebApp: HTTPS
+Cloud.WebApp -> Cloud.API: JSON/REST
+Cloud.API -> Cloud.DB: SQL

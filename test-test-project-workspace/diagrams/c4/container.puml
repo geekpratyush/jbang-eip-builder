@@ -1,0 +1,14 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(customer, "Customer", "A customer of the online store.")
+System_Boundary(store, "Online Store") {
+    Container(web, "Web App", "React", "Frontend interface.")
+    Container(api, "API Application", "Node.js", "Handles business logic.")
+    ContainerDb(db, "Database", "PostgreSQL", "Stores orders and users.")
+}
+
+Rel(customer, web, "Uses", "HTTPS")
+Rel(web, api, "Makes calls to", "JSON/HTTPS")
+Rel(api, db, "Reads/Writes", "SQL")
+@enduml

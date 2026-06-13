@@ -75,14 +75,31 @@ public class ValidatorStudioWindow {
     }
 
     public ValidatorStudioWindow() {
+        this(null);
+    }
+
+    public ValidatorStudioWindow(File baseWorkspace) {
         activeInstances.add(this);
         this.stage = new Stage();
         java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(ValidatorStudioWindow.class);
-        String savedRoot = prefs.get("workspaceRoot", null);
-        if (savedRoot != null) {
-            this.workspaceRoot = new File(savedRoot);
+        
+        if (baseWorkspace != null) {
+            this.workspaceRoot = new File(baseWorkspace, "validator");
         } else {
-            this.workspaceRoot = new File(System.getProperty("user.dir"), "validator-workspace");
+            java.io.File wsRoot = null;
+            if (RouteBuilderApp.getInstance() != null) {
+                wsRoot = RouteBuilderApp.getInstance().getWorkspaceRoot();
+            }
+            if (wsRoot != null) {
+                this.workspaceRoot = new File(wsRoot, "validator");
+            } else {
+                String savedRoot = prefs.get("workspaceRoot", null);
+                if (savedRoot != null) {
+                    this.workspaceRoot = new File(savedRoot);
+                } else {
+                    this.workspaceRoot = new File(System.getProperty("user.dir"), "validator-workspace");
+                }
+            }
         }
         initializeWorkspace();
     }
@@ -488,6 +505,16 @@ public class ValidatorStudioWindow {
 
         if (editorSource != null) editorSource.setLanguage(sourceLang);
         if (editorSchema != null) editorSchema.setLanguage(schemaLang);
+    }
+
+    public void updateWorkspaceRoot(File newPath) {
+        if (newPath != null) {
+            this.workspaceRoot = newPath;
+            if (!this.workspaceRoot.exists()) {
+                this.workspaceRoot.mkdirs();
+            }
+            Platform.runLater(this::refreshTree);
+        }
     }
 
     private void refreshTree() {

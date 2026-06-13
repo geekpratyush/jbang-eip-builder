@@ -1,0 +1,13 @@
+# ID: aes-gcm-properties
+# ENABLED: true
+# DESCRIPTION: Demonstrates decryption of credentials in properties files using PBKDF2 GCM key derivation.
+# AUTHOR: Camel Studio
+# STUB: none
+
+- route:
+    id: "secure-properties-loader"
+    from:
+      uri: "timer:secure-props?period=5000&repeatCount=2"
+      steps:
+        - log: "[Chapter 9] Database Username: ${properties:db.username:admin}"
+        - log: "[Chapter 9] Encrypted Password resolved: ${properties:db.password:ENC(g21A/98s/8da12k=)}"

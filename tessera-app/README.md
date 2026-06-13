@@ -17,7 +17,7 @@ This project externalizes configuration values (such as connection URLs, passwor
    QUARKUS_MONGODB_TLS_CONFIGURATION_NAME=mongodb
 
    # Truststore Configuration
-   QUARKUS_TLS_MONGODB_TRUST_STORE_JKS_PATH=/home/pratyush/software/jbang-eip-builder/infra-setup/certs/mongodb/cacert.jks
+   QUARKUS_TLS_MONGODB_TRUST_STORE_JKS_PATH=infra-setup/certs/mongodb/cacert.jks
    QUARKUS_TLS_MONGODB_TRUST_STORE_JKS_PASSWORD=mongopassword
    QUARKUS_TLS_MONGODB_HOSTNAME_VERIFICATION_ALGORITHM=NONE
    ```
