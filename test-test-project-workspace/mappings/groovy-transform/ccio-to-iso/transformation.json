@@ -1,7 +1,0 @@
-{
-  "type": "groovy",
-  "name": "CCIO Sanctions Message to ISO XML (Groovy)",
-  "source": { "type": "xml", "file": "source.xml" },
-  "logic": { "type": "java", "file": "transform.groovy" },
-  "target": { "type": "xml" }
-}

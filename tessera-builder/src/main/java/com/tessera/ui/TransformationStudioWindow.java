@@ -410,6 +410,13 @@ public class TransformationStudioWindow {
         if (!configFile.exists())
             return;
         this.currentFolder = folder;
+        this.sourceRawFile = null;
+        this.sourceXmlFile = null;
+        this.logicFile = null;
+        this.logicSecondaryFile = null;
+        if (targetEditor != null) {
+            targetEditor.setText("");
+        }
         try {
             String content = Files.readString(configFile.toPath());
             this.currentConfig = new JSONObject(content);
@@ -482,10 +489,14 @@ public class TransformationStudioWindow {
             SplitPane horizontalSplit = new SplitPane();
             horizontalSplit.setOrientation(Orientation.HORIZONTAL);
 
-            sourceRawEditor = new com.tessera.ui.components.MonacoEditorPane();
-            sourceRawEditor.setOnSave(() -> saveEditorToFile(sourceRawEditor, false, f -> sourceRawFile = f));
-            sourceXmlEditor = new com.tessera.ui.components.MonacoEditorPane();
-            sourceXmlEditor.setOnSave(() -> saveEditorToFile(sourceXmlEditor, false, f -> sourceXmlFile = f));
+            if (sourceRawEditor == null) {
+                sourceRawEditor = new com.tessera.ui.components.MonacoEditorPane();
+                sourceRawEditor.setOnSave(() -> saveEditorToFile(sourceRawEditor, false, f -> sourceRawFile = f));
+            }
+            if (sourceXmlEditor == null) {
+                sourceXmlEditor = new com.tessera.ui.components.MonacoEditorPane();
+                sourceXmlEditor.setOnSave(() -> saveEditorToFile(sourceXmlEditor, false, f -> sourceXmlFile = f));
+            }
 
             VBox sourcePanel = new VBox();
             if (isEnrichment || isMtToMx) {
@@ -507,14 +518,18 @@ public class TransformationStudioWindow {
             }
 
             VBox logicPanel = new VBox();
-            logicEditor = new com.tessera.ui.components.MonacoEditorPane();
-            logicEditor.setOnSave(() -> saveEditorToFile(logicEditor, false, f -> logicFile = f));
+            if (logicEditor == null) {
+                logicEditor = new com.tessera.ui.components.MonacoEditorPane();
+                logicEditor.setOnSave(() -> saveEditorToFile(logicEditor, false, f -> logicFile = f));
+            }
 
             org.json.JSONArray logicArr = currentConfig.optJSONArray("logic");
             boolean isSmooks = "smooks".equalsIgnoreCase(transformationType);
             if (logicArr != null && logicArr.length() > 1 && !isSmooks) {
-                logicSecondaryEditor = new com.tessera.ui.components.MonacoEditorPane();
-                logicSecondaryEditor.setOnSave(() -> saveEditorToFile(logicSecondaryEditor, false, f -> logicSecondaryFile = f));
+                if (logicSecondaryEditor == null) {
+                    logicSecondaryEditor = new com.tessera.ui.components.MonacoEditorPane();
+                    logicSecondaryEditor.setOnSave(() -> saveEditorToFile(logicSecondaryEditor, false, f -> logicSecondaryFile = f));
+                }
                 SplitPane logicSplit = new SplitPane();
                 logicSplit.setOrientation(Orientation.VERTICAL);
                 VBox topBox = new VBox(createHeader("CONFIG (" + transformationType.toUpperCase() + ")", logicEditor,
@@ -528,15 +543,16 @@ public class TransformationStudioWindow {
                 logicPanel.getChildren().add(logicSplit);
                 VBox.setVgrow(logicSplit, Priority.ALWAYS);
             } else {
-                logicSecondaryEditor = null;
                 logicPanel.getChildren().addAll(createHeader("LOGIC (" + transformationType.toUpperCase() + ")",
                         logicEditor, true, f -> logicFile = f), logicEditor);
                 VBox.setVgrow(logicEditor, Priority.ALWAYS);
             }
 
             VBox targetPanel = new VBox();
-            targetEditor = new com.tessera.ui.components.MonacoEditorPane();
-            targetEditor.setOnSave(() -> saveEditorToFile(targetEditor, true, null));
+            if (targetEditor == null) {
+                targetEditor = new com.tessera.ui.components.MonacoEditorPane();
+                targetEditor.setOnSave(() -> saveEditorToFile(targetEditor, true, null));
+            }
             targetPanel.getChildren().addAll(createHeader("TARGET", targetEditor, false, null), targetEditor);
             VBox.setVgrow(targetEditor, Priority.ALWAYS);
 

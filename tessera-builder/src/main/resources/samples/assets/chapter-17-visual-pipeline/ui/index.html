@@ -232,6 +232,7 @@
             background-color: rgba(17, 24, 39, 0.3);
             overflow: hidden;
             margin-bottom: 4px;
+            flex-shrink: 0;
         }
 
         .category-header {
@@ -311,6 +312,42 @@
         .icon-processor { background-color: var(--accent-purple); box-shadow: 0 0 6px var(--accent-purple); }
         .icon-sink { background-color: var(--accent-red); box-shadow: 0 0 6px var(--accent-red); }
         .icon-custom { background-color: var(--accent-cyan); box-shadow: 0 0 6px var(--accent-cyan); }
+        .icon-eip { background-color: var(--accent-orange); box-shadow: 0 0 6px var(--accent-orange); }
+
+        /* Live Stats Dashboard Bar */
+        .stats-bar {
+            background: linear-gradient(90deg, rgba(17,24,39,0.95), rgba(11,15,25,0.95));
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 24px;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            font-size: 12px;
+            z-index: 9;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stat-label { color: var(--text-secondary); font-weight: 500; }
+        .stat-value { color: var(--text-primary); font-weight: 700; font-family: var(--font-code); }
+        .stat-value.live { color: var(--accent-green); }
+        .stat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-green); animation: pulse-dot 1.5s infinite; }
+        .stat-dot.idle { background: var(--text-secondary); animation: none; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .stat-separator { width: 1px; height: 20px; background: var(--border-color); }
+
+        /* Node message counter badge */
+        .node-msg-badge {
+            position: absolute; top: -8px; right: -8px;
+            background: var(--accent-cyan); color: #000;
+            font-size: 10px; font-weight: 700; font-family: var(--font-code);
+            min-width: 20px; height: 20px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0 5px; z-index: 5; opacity: 0; transition: opacity 0.3s;
+        }
+        .node-msg-badge.visible { opacity: 1; }
 
         /* Canvas Area */
         .canvas-area {
@@ -765,11 +802,18 @@
                 <button class="btn btn-outline" onclick="loadTemplate('translation')">MT103 Translation</button>
                 <button class="btn btn-outline" onclick="loadTemplate('enrichment')">Database Enrichment</button>
                 <button class="btn btn-outline" onclick="loadTemplate('dlq')">Resilience (DLQ) Flow</button>
+                <button class="btn btn-outline" onclick="loadTemplate('swift_hub')">SWIFT Hub</button>
+                <button class="btn btn-outline" onclick="loadTemplate('sanctions')">Sanctions Screening</button>
             </div>
             
             <button class="btn" onclick="exportPipeline()" title="Export Pipeline JSON">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                Export
+                Export JSON
+            </button>
+            
+            <button class="btn" onclick="exportPipelineYaml()" title="Export Camel Route YAML">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Export YAML
             </button>
             
             <button class="btn btn-play" id="play-btn" onclick="startPipelineSimulation()">
@@ -783,6 +827,21 @@
             <button class="btn" onclick="clearCanvas()">Clear</button>
         </div>
     </header>
+
+    <!-- Live Stats Dashboard -->
+    <div class="stats-bar" id="stats-bar">
+        <div class="stat-item"><div class="stat-dot idle" id="stat-dot"></div><span class="stat-label">Status:</span><span class="stat-value" id="stat-status">IDLE</span></div>
+        <div class="stat-separator"></div>
+        <div class="stat-item"><span class="stat-label">Messages:</span><span class="stat-value" id="stat-msgs">0</span></div>
+        <div class="stat-separator"></div>
+        <div class="stat-item"><span class="stat-label">TPS:</span><span class="stat-value" id="stat-tps">0.0</span></div>
+        <div class="stat-separator"></div>
+        <div class="stat-item"><span class="stat-label">Avg Latency:</span><span class="stat-value" id="stat-latency">0ms</span></div>
+        <div class="stat-separator"></div>
+        <div class="stat-item"><span class="stat-label">Nodes:</span><span class="stat-value" id="stat-nodes">0</span></div>
+        <div class="stat-separator"></div>
+        <div class="stat-item"><span class="stat-label">Connections:</span><span class="stat-value" id="stat-conns">0</span></div>
+    </div>
 
     <!-- Main Workspace -->
     <div class="workspace">
@@ -808,6 +867,12 @@
                         </div>
                         <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'ibmmq_source')">
                             <div class="comp-icon icon-source"></div>IBM MQ Source
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'solace_source')">
+                            <div class="comp-icon icon-source"></div>Solace Source
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'sql_source')">
+                            <div class="comp-icon icon-source"></div>Oracle SQL Source
                         </div>
                     </div>
                 </div>
@@ -843,6 +908,40 @@
                         <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'set_header')">
                             <div class="comp-icon icon-processor"></div>Set Header
                         </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'smooks')">
+                            <div class="comp-icon icon-processor"></div>Smooks Transform
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'jslt')">
+                            <div class="comp-icon icon-processor"></div>JSLT Transform
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'xslt_saxon')">
+                            <div class="comp-icon icon-processor"></div>XSLT-Saxon 3.0
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'validator')">
+                            <div class="comp-icon icon-processor"></div>Schema Validator
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EIP Patterns Group -->
+                <div class="category-group" id="group-eip">
+                    <div class="category-header" onclick="toggleCategoryGroup('eip')">
+                        <span>EIP Patterns</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="category-content">
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'cbr')">
+                            <div class="comp-icon icon-eip"></div>Content-Based Router
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'splitter')">
+                            <div class="comp-icon icon-eip"></div>Splitter
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'aggregator')">
+                            <div class="comp-icon icon-eip"></div>Aggregator
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'wiretap')">
+                            <div class="comp-icon icon-eip"></div>Wiretap (Audit)
+                        </div>
                     </div>
                 </div>
 
@@ -864,6 +963,12 @@
                         </div>
                         <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'ibmmq_sink')">
                             <div class="comp-icon icon-sink"></div>IBM MQ Sink
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'solace_sink')">
+                            <div class="comp-icon icon-sink"></div>Solace Sink
+                        </div>
+                        <div class="comp-item" draggable="true" ondragstart="handleDragStart(event, 'sql_sink')">
+                            <div class="comp-icon icon-sink"></div>Oracle SQL Sink
                         </div>
                     </div>
                 </div>
@@ -1036,6 +1141,8 @@
                 icon.innerHTML = '<polyline points="15 18 9 12 15 6"></polyline>';
             }
             
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+            
             let start = null;
             function step(timestamp) {
                 if (!start) start = timestamp;
@@ -1054,6 +1161,7 @@
             const group = document.getElementById(`group-${groupId}`);
             if (group) {
                 group.classList.toggle('collapsed');
+                localStorage.setItem(`categoryCollapsed_${groupId}`, group.classList.contains('collapsed'));
             }
         }
 
@@ -1285,6 +1393,14 @@
                 name = 'IBM MQ Source';
                 details = 'Consumes messages from IBM MQ';
                 props = { queueManager: 'QMGR1', queue: 'PAYMENT.IN' };
+            } else if (type === 'solace_source') {
+                name = 'Solace Source';
+                details = 'Consumes events from Solace broker';
+                props = { brokerUrl: 'tcp://localhost:55555', vpn: 'default', destination: 'payments/incoming' };
+            } else if (type === 'sql_source') {
+                name = 'Oracle SQL Source';
+                details = 'Polls/selects rows from Oracle DB';
+                props = { datasource: 'jdbc:oracle:thin:@localhost:1521/XE', query: 'SELECT * FROM payments WHERE status = \'PENDING\'' };
             } else if (type === 'mt_to_mx') {
                 name = 'MT-MX Parser';
                 details = 'Converts MT plain text to pacs.008 XML';
@@ -1301,6 +1417,60 @@
         </EnrichedPayload>
     </xsl:template>
 </xsl:stylesheet>`;
+            } else if (type === 'xslt_saxon') {
+                name = 'XSLT-Saxon 3.0';
+                details = 'Advanced Saxon XSLT 3.0 transform';
+                props = { stylesheet: 'saxon-enrich.xslt' };
+                code = `<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="3.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="xs">
+    <xsl:mode on-no-match="shallow-copy"/>
+    <xsl:template match="Document">
+        <xsl:copy>
+            <xsl:apply-templates select="@*|node()"/>
+        </xsl:copy>
+    </xsl:template>
+</xsl:stylesheet>`;
+            } else if (type === 'smooks') {
+                name = 'Smooks Transform';
+                details = 'Transforms EDI/SWIFT with Smooks';
+                props = { config: 'smooks-config.xml' };
+                code = `<?xml version="1.0" encoding="UTF-8"?>
+<smooks-resource-list xmlns="http://www.milyn.org/user/xsd/smooks-1.1.xsd">
+    <!-- Smooks mappings go here -->
+</smooks-resource-list>`;
+            } else if (type === 'jslt') {
+                name = 'JSLT Transform';
+                details = 'Transforms JSON with JSLT expression';
+                props = { expression: 'jslt-rules.json' };
+                code = `{
+  "id": .transaction.messageId,
+  "value": .transaction.amount,
+  "currency": .transaction.currency,
+  "sender": .transaction.debtor,
+  "receiver": .transaction.creditor,
+  "status": "PROCESSED_JSLT"
+}`;
+            } else if (type === 'validator') {
+                name = 'Schema Validator';
+                details = 'Validates XML/JSON payload schemas';
+                props = { schema: 'pacs.008.001.08.xsd' };
+            } else if (type === 'cbr') {
+                name = 'Content Router';
+                details = 'Routes message by payload criteria';
+                props = { xpath: '/Document/FIToFICstmrCdtTrf/GrpHdr/MsgId != \'\'', targetRoute: 'valid-payments' };
+            } else if (type === 'splitter') {
+                name = 'Splitter';
+                details = 'Splits array or multi-item payload';
+                props = { expression: 'xpath(\'//CdtTrfTxInf\')' };
+            } else if (type === 'aggregator') {
+                name = 'Aggregator';
+                details = 'Aggregates correlated messages';
+                props = { correlationExpression: 'header(\'CorrelationId\')', completionSize: '5' };
+            } else if (type === 'wiretap') {
+                name = 'Wiretap (Audit)';
+                details = 'Sends a copy to audit destination';
+                props = { destination: 'direct:audit-log' };
             } else if (type === 'json_converter') {
                 name = 'JSON Converter';
                 details = 'Translates XML schemas into JSON';
@@ -1355,6 +1525,14 @@ return "APPROVED";`;
                 name = 'IBM MQ Sink';
                 details = 'Dispatches messages to IBM MQ';
                 props = { queueManager: 'QMGR1', queue: 'PAYMENT.OUT' };
+            } else if (type === 'solace_sink') {
+                name = 'Solace Sink';
+                details = 'Dispatches messages to Solace broker';
+                props = { destination: 'payments/processed' };
+            } else if (type === 'sql_sink') {
+                name = 'Oracle SQL Sink';
+                details = 'Inserts records into Oracle Database';
+                props = { table: 'PAYMENTS_AUDIT', columns: 'ID, AMOUNT, STATUS' };
             } else if (type === 'custom') {
                 const route = customRoutesList.find(r => r.id === customId);
                 name = route ? route.id : customId;
@@ -1362,10 +1540,11 @@ return "APPROVED";`;
                 props = { routeId: customId };
             }
 
-            const node = { id, type, name, x, y, details, properties: props, code: code };
+            const node = { id, type, name, x, y, details, properties: props, code: code, msgCount: 0 };
             nodes.push(node);
             renderNode(node);
             selectNode(id);
+            updateDashboardStats();
         }
 
         // Render node components in workspace SVG area
@@ -1377,6 +1556,7 @@ return "APPROVED";`;
             card.style.top = `${node.y}px`;
 
             card.innerHTML = `
+                <div class="node-msg-badge" id="badge_${node.id}">0</div>
                 <div class="node-header">
                     <span>${node.name}</span>
                     <span class="node-delete-btn" onclick="deleteNode(event, '${node.id}')">&times;</span>
@@ -1387,7 +1567,7 @@ return "APPROVED";`;
             `;
 
             // Draw handles: Sources do not have input handles
-            const isSource = ['faker', 'timer', 'kafka_source', 'ibmmq_source'].includes(node.type);
+            const isSource = ['faker', 'timer', 'kafka_source', 'ibmmq_source', 'solace_source', 'sql_source'].includes(node.type);
             if (!isSource) {
                 const inHandle = document.createElement('div');
                 inHandle.className = 'node-handle handle-input';
@@ -1405,7 +1585,7 @@ return "APPROVED";`;
             }
 
             // Sinks do not have output handles
-            const isSink = ['kafka_sink', 'db_stub', 'dlq', 'ibmmq_sink'].includes(node.type);
+            const isSink = ['kafka_sink', 'db_stub', 'dlq', 'ibmmq_sink', 'solace_sink', 'sql_sink'].includes(node.type);
             if (!isSink) {
                 const outHandle = document.createElement('div');
                 outHandle.className = 'node-handle handle-output';
@@ -1470,6 +1650,7 @@ return "APPROVED";`;
                 renderPropertiesPanel(null);
             }
             redrawConnections();
+            updateDashboardStats();
         }
 
         // Connection Handling
@@ -1490,6 +1671,7 @@ return "APPROVED";`;
             if (!exists) {
                 connections.push({ fromNode: fromNodeId, toNode: toNodeId });
                 redrawConnections();
+                updateDashboardStats();
                 renderPropertiesPanel(nodes.find(n => n.id === selectedNodeId));
             }
             cancelConnection();
@@ -1551,7 +1733,7 @@ return "APPROVED";`;
                             const nodeCard = elem.closest('.node-card');
                             if (nodeCard) {
                                 const targetNode = nodes.find(n => n.id === nodeCard.id);
-                                const isSource = ['faker', 'timer', 'kafka_source', 'ibmmq_source'].includes(targetNode.type);
+                                const isSource = ['faker', 'timer', 'kafka_source', 'ibmmq_source', 'solace_source', 'sql_source'].includes(targetNode.type);
                                 if (targetNode && !isSource && nodeCard.id !== connectionSource) {
                                     targetHandle = nodeCard.querySelector('.handle-input');
                                 }
@@ -1593,7 +1775,7 @@ return "APPROVED";`;
                     if (nodeCard) {
                         const targetNodeId = nodeCard.id;
                         const targetNode = nodes.find(n => n.id === targetNodeId);
-                        const isSource = ['faker', 'timer', 'kafka_source', 'ibmmq_source'].includes(targetNode.type);
+                        const isSource = ['faker', 'timer', 'kafka_source', 'ibmmq_source', 'solace_source', 'sql_source'].includes(targetNode.type);
                         if (targetNode && !isSource && targetNodeId !== connectionSource) {
                             completeConnection(connectionSource, targetNodeId);
                             return;
@@ -1662,6 +1844,7 @@ return "APPROVED";`;
                         e.stopPropagation();
                         connections = connections.filter(c => c !== conn);
                         redrawConnections();
+                        updateDashboardStats();
                         renderPropertiesPanel(nodes.find(n => n.id === selectedNodeId));
                     });
 
@@ -1704,12 +1887,14 @@ return "APPROVED";`;
 
             connections.push({ fromNode: fromId, toNode: toId });
             redrawConnections();
+            updateDashboardStats();
             renderPropertiesPanel(nodes.find(n => n.id === selectedNodeId));
         }
 
         function deleteConnectionFromPanel(idx) {
             connections.splice(idx, 1);
             redrawConnections();
+            updateDashboardStats();
             renderPropertiesPanel(nodes.find(n => n.id === selectedNodeId));
         }
 
@@ -1718,7 +1903,7 @@ return "APPROVED";`;
             let html = '';
             if (node) {
                 // Determine if this component has custom code logic
-                const hasCode = ['xslt_mapper', 'java_joor', 'groovy_script', 'set_body', 'set_header'].includes(node.type);
+                const hasCode = ['xslt_mapper', 'xslt_saxon', 'smooks', 'jslt', 'java_joor', 'groovy_script', 'set_body', 'set_header'].includes(node.type);
                 
                 if (hasCode) {
                     html += `
@@ -1900,6 +2085,114 @@ return "APPROVED";`;
                             <input class="form-control" type="text" value="${node.properties.queue || 'PAYMENT.OUT'}" oninput="updateProperty('${node.id}', 'queue', this.value)" />
                         </div>
                     `;
+                } else if (node.type === 'solace_source') {
+                    html += `
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Broker URL</label>
+                            <input class="form-control" type="text" value="${node.properties.brokerUrl || 'tcp://localhost:55555'}" oninput="updateProperty('${node.id}', 'brokerUrl', this.value)" />
+                        </div>
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Message VPN</label>
+                            <input class="form-control" type="text" value="${node.properties.vpn || 'default'}" oninput="updateProperty('${node.id}', 'vpn', this.value)" />
+                        </div>
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Queue or Topic Destination</label>
+                            <input class="form-control" type="text" value="${node.properties.destination || 'payments/incoming'}" oninput="updateProperty('${node.id}', 'destination', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'sql_source') {
+                    html += `
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>JDBC URL</label>
+                            <input class="form-control" type="text" value="${node.properties.datasource || 'jdbc:oracle:thin:@localhost:1521/XE'}" oninput="updateProperty('${node.id}', 'datasource', this.value)" />
+                        </div>
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Select / Poll Query</label>
+                            <input class="form-control" type="text" value="${node.properties.query || ''}" oninput="updateProperty('${node.id}', 'query', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'xslt_saxon') {
+                    html += `
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Saxon XSLT 3.0 Stylesheet</label>
+                            <input class="form-control" type="text" value="${node.properties.stylesheet || ''}" oninput="updateProperty('${node.id}', 'stylesheet', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'smooks') {
+                    html += `
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Smooks Config Resource</label>
+                            <input class="form-control" type="text" value="${node.properties.config || 'smooks-config.xml'}" oninput="updateProperty('${node.id}', 'config', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'jslt') {
+                    html += `
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>JSLT Spec File</label>
+                            <input class="form-control" type="text" value="${node.properties.expression || 'jslt-rules.json'}" oninput="updateProperty('${node.id}', 'expression', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'validator') {
+                    html += `
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>XML Schema/JSON Schema File</label>
+                            <input class="form-control" type="text" value="${node.properties.schema || ''}" oninput="updateProperty('${node.id}', 'schema', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'cbr') {
+                    html += `
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>XPath/JSONPath Routing Condition</label>
+                            <input class="form-control" type="text" value="${node.properties.xpath || ''}" oninput="updateProperty('${node.id}', 'xpath', this.value)" />
+                        </div>
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Condition Target Endpoint</label>
+                            <input class="form-control" type="text" value="${node.properties.targetRoute || ''}" oninput="updateProperty('${node.id}', 'targetRoute', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'splitter') {
+                    html += `
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Split Expression (XPath/Tokenize/Simple)</label>
+                            <input class="form-control" type="text" value="${node.properties.expression || ''}" oninput="updateProperty('${node.id}', 'expression', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'aggregator') {
+                    html += `
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Correlation Group Expression</label>
+                            <input class="form-control" type="text" value="${node.properties.correlationExpression || ''}" oninput="updateProperty('${node.id}', 'correlationExpression', this.value)" />
+                        </div>
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Completion Size</label>
+                            <input class="form-control" type="number" min="2" max="100" value="${node.properties.completionSize || 5}" oninput="updateProperty('${node.id}', 'completionSize', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'wiretap') {
+                    html += `
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Audit Destination Route</label>
+                            <input class="form-control" type="text" value="${node.properties.destination || ''}" oninput="updateProperty('${node.id}', 'destination', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'solace_sink') {
+                    html += `
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Solace Queue or Topic</label>
+                            <input class="form-control" type="text" value="${node.properties.destination || ''}" oninput="updateProperty('${node.id}', 'destination', this.value)" />
+                        </div>
+                    `;
+                } else if (node.type === 'sql_sink') {
+                    html += `
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Oracle Table Name</label>
+                            <input class="form-control" type="text" value="${node.properties.table || ''}" oninput="updateProperty('${node.id}', 'table', this.value)" />
+                        </div>
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Target Columns (comma-separated)</label>
+                            <input class="form-control" type="text" value="${node.properties.columns || ''}" oninput="updateProperty('${node.id}', 'columns', this.value)" />
+                        </div>
+                    `;
                 } else if (node.type === 'custom') {
                     html += `
                         <div class="form-group" style="margin-top: 8px;">
@@ -1975,7 +2268,7 @@ return "APPROVED";`;
             configBody.innerHTML = html;
             
             // Trigger Monaco editor load if needed
-            if (node && ['xslt_mapper', 'java_joor', 'groovy_script', 'set_body', 'set_header'].includes(node.type) && activePropertiesTab === 'code') {
+            if (node && ['xslt_mapper', 'xslt_saxon', 'smooks', 'jslt', 'java_joor', 'groovy_script', 'set_body', 'set_header'].includes(node.type) && activePropertiesTab === 'code') {
                 switchPropertiesTab('code');
             }
         }
@@ -2006,9 +2299,10 @@ return "APPROVED";`;
                             const initialCode = node ? (node.code || '') : '';
                             
                             let lang = 'javascript';
-                            if (node && node.type === 'xslt_mapper') lang = 'xml';
+                            if (node && ['xslt_mapper', 'xslt_saxon', 'smooks'].includes(node.type)) lang = 'xml';
                             if (node && node.type === 'groovy_script') lang = 'groovy';
                             if (node && node.type === 'java_joor') lang = 'java';
+                            if (node && node.type === 'jslt') lang = 'json';
                             
                             monacoEditorInstance = monaco.editor.create(container, {
                                 value: initialCode,
@@ -2051,13 +2345,41 @@ return "APPROVED";`;
             }
         }
 
+        let totalSimulatedMsgs = 0;
+        function updateDashboardStats() {
+            document.getElementById('stat-nodes').textContent = nodes.length;
+            document.getElementById('stat-conns').textContent = connections.length;
+            document.getElementById('stat-msgs').textContent = totalSimulatedMsgs;
+            if (isSimulating) {
+                document.getElementById('stat-status').textContent = 'LIVE';
+                const dot = document.getElementById('stat-dot');
+                if (dot) {
+                    dot.className = 'stat-dot live';
+                }
+                const tpsVal = (1.2 + Math.random() * 2.5).toFixed(1);
+                const latVal = Math.floor(35 + Math.random() * 45) + 'ms';
+                document.getElementById('stat-tps').textContent = tpsVal;
+                document.getElementById('stat-latency').textContent = latVal;
+            } else {
+                document.getElementById('stat-status').textContent = 'IDLE';
+                const dot = document.getElementById('stat-dot');
+                if (dot) {
+                    dot.className = 'stat-dot idle';
+                }
+                document.getElementById('stat-tps').textContent = '0.0';
+                document.getElementById('stat-latency').textContent = '0ms';
+            }
+        }
+
         function clearCanvas() {
             nodes = [];
             connections = [];
             selectedNodeId = null;
+            totalSimulatedMsgs = 0;
             nodesContainer.innerHTML = '';
             redrawConnections();
             renderPropertiesPanel(null);
+            updateDashboardStats();
             addLog("Canvas cleared.");
         }
 
@@ -2073,9 +2395,9 @@ return "APPROVED";`;
         // Live Pipeline simulation
         function startPipelineSimulation() {
             // Find a source node
-            const source = nodes.find(n => ['faker', 'timer', 'kafka_source', 'ibmmq_source'].includes(n.type));
+            const source = nodes.find(n => ['faker', 'timer', 'kafka_source', 'ibmmq_source', 'solace_source', 'sql_source'].includes(n.type));
             if (!source) {
-                alert("Please add at least one source (Faker, Timer, Kafka Source, or IBM MQ Source) to start the simulation!");
+                alert("Please add at least one source (Faker, Timer, Kafka Source, IBM MQ Source, Solace Source, or Oracle SQL Source) to start the simulation!");
                 return;
             }
 
@@ -2083,6 +2405,7 @@ return "APPROVED";`;
             document.getElementById('play-btn').disabled = true;
             document.getElementById('stop-btn').disabled = false;
             redrawConnections();
+            updateDashboardStats();
             addLog("Simulation engine started.");
 
             let msgId = 1000;
@@ -2107,6 +2430,7 @@ return "APPROVED";`;
             document.getElementById('play-btn').disabled = false;
             document.getElementById('stop-btn').disabled = true;
             redrawConnections();
+            updateDashboardStats();
             
             document.querySelectorAll('.node-card').forEach(c => c.classList.remove('active-running'));
             addLog("Simulation engine stopped.");
@@ -2114,8 +2438,11 @@ return "APPROVED";`;
 
         // Single execution path cycle
         function simulateTransactionCycle(msgId) {
-            const source = nodes.find(n => ['faker', 'timer', 'kafka_source', 'ibmmq_source'].includes(n.type));
+            const source = nodes.find(n => ['faker', 'timer', 'kafka_source', 'ibmmq_source', 'solace_source', 'sql_source'].includes(n.type));
             if (!source) return;
+
+            totalSimulatedMsgs++;
+            updateDashboardStats();
 
             let payloads = {};
             const uuid = 'msg-' + Math.random().toString(36).substr(2, 9);
@@ -2178,6 +2505,34 @@ return "APPROVED";`;
                 }, null, 2);
             } else if (source.type === 'ibmmq_source') {
                 mockRaw = `<MQMessage>\n  <Header>\n    <QueueManager>${source.properties.queueManager || 'QMGR1'}</QueueManager>\n    <Queue>${source.properties.queue || 'PAYMENT.IN'}</Queue>\n    <MsgId>${uuid}</MsgId>\n  </Header>\n  <Body>Raw transaction buffer payload</Body>\n</MQMessage>`;
+            } else if (source.type === 'solace_source') {
+                mockRaw = JSON.stringify({
+                    source: "solace",
+                    broker: source.properties.brokerUrl || "tcp://localhost:55555",
+                    vpn: source.properties.vpn || "default",
+                    destination: source.properties.destination || "payments/incoming",
+                    messageId: uuid,
+                    timestamp: new Date().toISOString(),
+                    body: {
+                        amount: 42000.00,
+                        currency: "GBP",
+                        sender: "BARCGB22",
+                        receiver: "DEUTDEDBFRA"
+                    }
+                }, null, 2);
+            } else if (source.type === 'sql_source') {
+                mockRaw = JSON.stringify({
+                    source: "oracle_sql",
+                    datasource: source.properties.datasource || "jdbc:oracle:thin:@localhost:1521/XE",
+                    query: source.properties.query || "SELECT * FROM payments",
+                    polledRows: 1,
+                    data: {
+                        PAYMENT_ID: uuid,
+                        AMOUNT: 9500.50,
+                        CURRENCY: "USD",
+                        STATUS: "POLL_INIT"
+                    }
+                }, null, 2);
             }
 
             payloads[source.id] = mockRaw;
@@ -2221,6 +2576,37 @@ return "APPROVED";`;
                         } else if (toNode.type === 'xslt_mapper') {
                             addLog(`[XSLT Mapper] Transforming message using stylesheet: ${toNode.properties.stylesheet || 'default.xslt'}`);
                             nextPayload = prevPayload.replace('<FIToFICstmrCdtTrf>', '<FIToFICstmrCdtTrf enriched="true">\n    <Enrichment>\n      <SenderBankCode>DEUTDEDBFRA</SenderBankCode>\n      <ReceiverBankCode>BARCGB22</ReceiverBankCode>\n    </Enrichment>');
+                        } else if (toNode.type === 'xslt_saxon') {
+                            addLog(`[Saxon XSLT 3.0] Transforming message with style: ${toNode.properties.stylesheet || 'default30.xslt'}`);
+                            nextPayload = `<EnrichedMessage xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">\n  <!-- Transformed via Saxon XSLT 3.0 -->\n  <Header>\n    <AppHdr>Saxon-3.0</AppHdr>\n  </Header>\n  <Body>\n    ${prevPayload}\n  </Body>\n</EnrichedMessage>`;
+                        } else if (toNode.type === 'smooks') {
+                            addLog(`[Smooks Mapper] Applying EDI/XML configuration: ${toNode.properties.config || 'smooks-config.xml'}`);
+                            nextPayload = `<SmooksOutput>\n  <ProcessedData>\n    ${prevPayload}\n  </ProcessedData>\n</SmooksOutput>`;
+                        } else if (toNode.type === 'jslt') {
+                            addLog(`[JSLT Engine] Applying JSLT template: ${toNode.properties.expression || 'jslt-rules.json'}`);
+                            nextPayload = JSON.stringify({
+                                jsltResult: {
+                                    message: "Transformed via JSLT rules",
+                                    original: prevPayload,
+                                    timestamp: new Date().toISOString()
+                                }
+                            }, null, 2);
+                        } else if (toNode.type === 'validator') {
+                            addLog(`[Validator] Validating payload against schema: ${toNode.properties.schema || 'schema.xsd'}`);
+                            nextPayload = prevPayload;
+                        } else if (toNode.type === 'cbr') {
+                            addLog(`[CBR] Evaluating routing xpath: ${toNode.properties.xpath || '/Document/Amt > 10000'}`);
+                            addLog(`[CBR] Message matches condition, routing to: ${toNode.properties.targetRoute || 'large-payments'}`);
+                            nextPayload = prevPayload;
+                        } else if (toNode.type === 'splitter') {
+                            addLog(`[Splitter] Splitting payload by xpath: ${toNode.properties.expression || '/Document/Record'}`);
+                            nextPayload = `<!-- Split item 1 of 2 -->\n${prevPayload}\n<!-- Split item 2 of 2 -->\n${prevPayload}`;
+                        } else if (toNode.type === 'aggregator') {
+                            addLog(`[Aggregator] Aggregating messages on: ${toNode.properties.correlationExpression || '${header.CorrelationId}'}`);
+                            nextPayload = `<AggregatedBatch size="${toNode.properties.completionSize || 5}">\n  ${prevPayload}\n</AggregatedBatch>`;
+                        } else if (toNode.type === 'wiretap') {
+                            addLog(`[WireTap] Copying message to destination: ${toNode.properties.destination || 'audit-tap'}`);
+                            nextPayload = prevPayload;
                         } else if (toNode.type === 'json_converter') {
                             addLog(`[JSON Converter] Exporting XML schema elements to JSON object`);
                             nextPayload = JSON.stringify({
@@ -2272,6 +2658,12 @@ return "APPROVED";`;
                         } else if (toNode.type === 'ibmmq_sink') {
                             addLog(`[IBM MQ Sink] Dispatched payload to Queue: ${toNode.properties.queue || 'PAYMENT.OUT'}`);
                             nextPayload = `QueueManager: ${toNode.properties.queueManager || 'QMGR1'}\nQueue: ${toNode.properties.queue || 'PAYMENT.OUT'}\n\nPayload:\n${prevPayload}`;
+                        } else if (toNode.type === 'solace_sink') {
+                            addLog(`[Solace Sink] Dispatching payload to destination: ${toNode.properties.destination || 'payments/outgoing'}`);
+                            nextPayload = `Destination: ${toNode.properties.destination || 'payments/outgoing'}\n\nPayload:\n${prevPayload}`;
+                        } else if (toNode.type === 'sql_sink') {
+                            addLog(`[Oracle SQL Sink] Inserting record into table: ${toNode.properties.table || 'PAYMENTS_AUDIT'}`);
+                            nextPayload = `INSERT INTO ${toNode.properties.table || 'PAYMENTS_AUDIT'} (${toNode.properties.columns || 'ID, AMOUNT, STATUS'}) VALUES (...)\n\nRow inserted successfully.`;
                         } else if (toNode.type === 'custom') {
                             addLog(`[Custom Route: ${toNode.name}] Executed custom pipeline sub-route`);
                             nextPayload = `Custom Route Result:\n${prevPayload}`;
@@ -2293,6 +2685,17 @@ return "APPROVED";`;
             const card = document.getElementById(nodeId);
             if (card) {
                 card.classList.add('active-running');
+                
+                const node = nodes.find(n => n.id === nodeId);
+                if (node) {
+                    node.msgCount = (node.msgCount || 0) + 1;
+                    const badge = document.getElementById(`badge_${nodeId}`);
+                    if (badge) {
+                        badge.textContent = node.msgCount;
+                        badge.style.display = 'block';
+                    }
+                }
+
                 setTimeout(() => {
                     card.classList.remove('active-running');
                 }, 1200);
@@ -2354,6 +2757,143 @@ return "APPROVED";`;
             dlAnchorElem.setAttribute("download", "tessera-pipeline-config.json");
             dlAnchorElem.click();
             addLog("[System] Exported pipeline JSON configuration definition.");
+        }
+
+        function generateCamelYaml() {
+            const sources = nodes.filter(n => ['faker', 'timer', 'kafka_source', 'ibmmq_source', 'solace_source', 'sql_source'].includes(n.type));
+            
+            if (sources.length === 0) {
+                return "# No source nodes defined in the pipeline canvas.\n- route:\n    from:\n      uri: timer:empty?repeatCount=1\n      steps:\n        - log: \"Empty pipeline\"";
+            }
+
+            let yaml = "# Generated by Tessera Visual Pipeline Orchestrator\n- route:\n";
+            const primarySource = sources[0];
+            let sourceUri = "";
+            let initialSteps = [];
+            
+            if (primarySource.type === 'faker') {
+                const interval = primarySource.properties.interval || 3;
+                const schema = primarySource.properties.template || 'mt103';
+                sourceUri = `timer:faker?period=${interval * 1000}`;
+                initialSteps.push(`        - setBody:\n            simple: "resource:classpath:mock-${schema}.txt"`);
+            } else if (primarySource.type === 'timer') {
+                const period = primarySource.properties.period || 5000;
+                const repeat = primarySource.properties.repeatCount || 0;
+                sourceUri = `timer:composed-timer?period=${period}${repeat > 0 ? '&repeatCount=' + repeat : ''}`;
+            } else if (primarySource.type === 'kafka_source') {
+                const topic = primarySource.properties.topic || 'incoming-payments';
+                const servers = primarySource.properties.bootstrapServers || 'localhost:9092';
+                const group = primarySource.properties.groupId || 'tessera-group';
+                sourceUri = `kafka:${topic}?bootstrapServers=${servers}&groupId=${group}`;
+            } else if (primarySource.type === 'ibmmq_source') {
+                const q = primarySource.properties.queue || 'PAYMENT.IN';
+                sourceUri = `jms:queue:${q}?connectionFactory=#ibmmq`;
+            } else if (primarySource.type === 'solace_source') {
+                const dest = primarySource.properties.destination || 'payments/incoming';
+                const broker = primarySource.properties.brokerUrl || 'tcp://localhost:55555';
+                const vpn = primarySource.properties.vpn || 'default';
+                sourceUri = `solace:queue:${dest}?brokerUrl=${broker}&vpn=${vpn}`;
+            } else if (primarySource.type === 'sql_source') {
+                const query = primarySource.properties.query || 'SELECT * FROM payments';
+                sourceUri = `sql:${query}?dataSource=#oracleDS`;
+            }
+            
+            yaml += `    id: "route-${primarySource.id}"\n`;
+            yaml += `    from:\n`;
+            yaml += `      uri: "${sourceUri}"\n`;
+            yaml += `      steps:\n`;
+            
+            initialSteps.forEach(s => {
+                yaml += s + "\n";
+            });
+
+            let visited = new Set();
+            visited.add(primarySource.id);
+            
+            function buildStepsYaml(currentNodeId, indentLevel) {
+                let stepsStr = "";
+                const spaces = " ".repeat(indentLevel);
+                const nextConns = connections.filter(c => c.fromNode === currentNodeId);
+                
+                nextConns.forEach(conn => {
+                    const toNode = nodes.find(n => n.id === conn.toNode);
+                    if (!toNode || visited.has(toNode.id)) return;
+                    visited.add(toNode.id);
+                    
+                    if (toNode.type === 'mt_to_mx') {
+                        stepsStr += `${spaces}- bean:\n${spaces}    beanType: "com.tessera.processors.MtToMxParser"\n${spaces}    method: "parse"\n`;
+                    } else if (toNode.type === 'xslt_mapper') {
+                        stepsStr += `${spaces}- to:\n${spaces}    uri: "xslt:${toNode.properties.stylesheet || 'transform.xslt'}"\n`;
+                    } else if (toNode.type === 'xslt_saxon') {
+                        stepsStr += `${spaces}- to:\n${spaces}    uri: "xslt-saxon:${toNode.properties.stylesheet || 'transform30.xslt'}"\n`;
+                    } else if (toNode.type === 'smooks') {
+                        stepsStr += `${spaces}- to:\n${spaces}    uri: "smooks:${toNode.properties.config || 'smooks-config.xml'}"\n`;
+                    } else if (toNode.type === 'jslt') {
+                        stepsStr += `${spaces}- to:\n${spaces}    uri: "jslt:${toNode.properties.expression || 'jslt-rules.json'}"\n`;
+                    } else if (toNode.type === 'validator') {
+                        stepsStr += `${spaces}- to:\n${spaces}    uri: "validator:${toNode.properties.schema || 'schema.xsd'}"\n`;
+                    } else if (toNode.type === 'json_converter') {
+                        const fmt = toNode.properties.format || 'pretty';
+                        stepsStr += `${spaces}- marshal:\n${spaces}    json:\n${spaces}      library: "Jackson"\n${spaces}      prettyPrint: ${fmt === 'pretty'}\n`;
+                    } else if (toNode.type === 'unmarshal_swift') {
+                        stepsStr += `${spaces}- bean:\n${spaces}    beanType: "com.tessera.processors.SwiftUnmarshalService"\n`;
+                    } else if (toNode.type === 'java_joor') {
+                        stepsStr += `${spaces}- transform:\n${spaces}    joor: "${toNode.properties.expr || 'body.toString()'}"\n`;
+                    } else if (toNode.type === 'groovy_script') {
+                        const codeClean = (toNode.code || 'request.body').replace(/\n/g, `\n${spaces}      `);
+                        stepsStr += `${spaces}- script:\n${spaces}    groovy: |\n${spaces}      ${codeClean}\n`;
+                    } else if (toNode.type === 'set_body') {
+                        stepsStr += `${spaces}- setBody:\n${spaces}    simple: "${toNode.properties.expression || '${body}'}"\n`;
+                    } else if (toNode.type === 'set_header') {
+                        stepsStr += `${spaces}- setHeader:\n${spaces}    name: "${toNode.properties.headerName || 'MyHeader'}"\n${spaces}    simple: "${toNode.properties.expression || '${body}'}"\n`;
+                    } else if (toNode.type === 'cbr') {
+                        const xpath = toNode.properties.xpath || '/Document/Amt > 10000';
+                        const target = toNode.properties.targetRoute || 'large-payments';
+                        stepsStr += `${spaces}- choice:\n${spaces}    when:\n${spaces}      - xpath: "${xpath}"\n${spaces}        steps:\n${spaces}          - to: "direct:${target}"\n`;
+                    } else if (toNode.type === 'splitter') {
+                        stepsStr += `${spaces}- split:\n${spaces}    expression:\n${spaces}      xpath: "${toNode.properties.expression || '/Document/Record'}"\n${spaces}    steps:\n`;
+                        stepsStr += buildStepsYaml(toNode.id, indentLevel + 6);
+                    } else if (toNode.type === 'aggregator') {
+                        stepsStr += `${spaces}- aggregate:\n${spaces}    correlationExpression:\n${spaces}      simple: "${toNode.properties.correlationExpression || '${header.CorrelationId}'}"\n${spaces}    completionSize: ${toNode.properties.completionSize || 5}\n${spaces}    aggregationStrategy: "#myStrategy"\n${spaces}    steps:\n`;
+                        stepsStr += buildStepsYaml(toNode.id, indentLevel + 6);
+                    } else if (toNode.type === 'wiretap') {
+                        stepsStr += `${spaces}- wireTap:\n${spaces}    uri: "direct:${toNode.properties.destination || 'audit-tap'}"\n`;
+                    } else if (toNode.type === 'kafka_sink') {
+                        stepsStr += `${spaces}- to:\n${spaces}    uri: "kafka:${toNode.properties.topic || 'outgoing-payments'}?bootstrapServers=localhost:9092"\n`;
+                    } else if (toNode.type === 'db_stub') {
+                        stepsStr += `${spaces}- to:\n${spaces}    uri: "mongodb:myDb?database=tessera&collection=${toNode.properties.collection || 'transactions'}&operation=insert"\n`;
+                    } else if (toNode.type === 'dlq') {
+                        stepsStr += `${spaces}- to:\n${spaces}    uri: "jms:queue:${toNode.properties.queue || 'payment-errors'}"\n`;
+                    } else if (toNode.type === 'ibmmq_sink') {
+                        stepsStr += `${spaces}- to:\n${spaces}    uri: "jms:queue:${toNode.properties.queue || 'PAYMENT.OUT'}?connectionFactory=#ibmmq"\n`;
+                    } else if (toNode.type === 'solace_sink') {
+                        stepsStr += `${spaces}- to:\n${spaces}    uri: "solace:queue:${toNode.properties.destination || 'payments/outgoing'}"\n`;
+                    } else if (toNode.type === 'sql_sink') {
+                        stepsStr += `${spaces}- to:\n${spaces}    uri: "sql:INSERT INTO ${toNode.properties.table || 'PAYMENTS'} (${toNode.properties.columns || 'ID, AMOUNT'}) VALUES (...)&dataSource=#oracleDS"\n`;
+                    } else if (toNode.type === 'custom') {
+                        stepsStr += `${spaces}- to:\n${spaces}    uri: "direct:${toNode.properties.routeId}"\n`;
+                    }
+                    
+                    if (!['splitter', 'aggregator'].includes(toNode.type)) {
+                        stepsStr += buildStepsYaml(toNode.id, indentLevel);
+                    }
+                });
+                
+                return stepsStr;
+            }
+            
+            yaml += buildStepsYaml(primarySource.id, 8);
+            return yaml;
+        }
+
+        function exportPipelineYaml() {
+            const yaml = generateCamelYaml();
+            const dataStr = "data:text/yaml;charset=utf-8," + encodeURIComponent(yaml);
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href",     dataStr     );
+            dlAnchorElem.setAttribute("download", "tessera-pipeline-route.camel.yaml");
+            dlAnchorElem.click();
+            addLog("[System] Exported pipeline Camel Route DSL YAML configuration.");
         }
 
         // Updates tabs in inspector at bottom
@@ -2459,6 +2999,26 @@ return "APPROVED";`;
 
         // On Load initialization
         window.addEventListener('load', () => {
+            const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (sidebarCollapsed) {
+                const sidebar = document.getElementById('sidebar-left');
+                const icon = document.getElementById('toggle-icon');
+                if (sidebar && icon) {
+                    sidebar.classList.add('collapsed');
+                    icon.innerHTML = '<polyline points="9 18 15 12 9 6"></polyline>';
+                }
+            }
+            ['sources', 'processors', 'sinks', 'workspace'].forEach(groupId => {
+                const isCollapsed = localStorage.getItem(`categoryCollapsed_${groupId}`);
+                const group = document.getElementById(`group-${groupId}`);
+                if (group) {
+                    if (isCollapsed === 'true') {
+                        group.classList.add('collapsed');
+                    } else if (isCollapsed === 'false') {
+                        group.classList.remove('collapsed');
+                    }
+                }
+            });
             fetchWorkspaceAssets();
             loadTemplate('translation');
         });

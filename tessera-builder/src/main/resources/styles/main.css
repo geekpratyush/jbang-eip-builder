@@ -420,4 +420,8 @@
     -fx-icon-color: #f4f7f9 !important;
 }
 
+.active-stack-icon {
+    -fx-icon-color: -sui-accent-primary !important;
+}
+
 

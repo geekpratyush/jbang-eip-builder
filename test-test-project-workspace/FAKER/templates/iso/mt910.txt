@@ -1,7 +1,0 @@
-{1:F01{{type:bic:sender}}XXXX0000000000}{2:I910{{type:bic:receiver}}XXXXN}{4:
-:20:{{type:uuid}}
-:21:E2E-NTF-001
-:25:GB29NWBK60161331926819
-:32A:{{type:dateTime:yyMMdd}}{{type:random:USD,EUR,GBP}}{{type:amount:100:10000}},
-:52A:BANKGB2LXXX
--}

@@ -1,0 +1,369 @@
+# ID: credit-earmark-pipeline
+# DESCRIPTION: Credit Limit & Earmarking System Simulation with Multi-Stage Pipeline and EIP Rules Engine
+# camel-k: dependency=mvn:org.apache.camel:camel-groovy
+
+- route:
+    id: "stage-1-generation"
+    from:
+      uri: "timer:generateRequest?period=8000"
+      steps:
+        - setHeader:
+            name: "pipelineId"
+            simple: "${uuid}"
+        - setHeader:
+            name: "stage"
+            constant: "STAGE_1_GENERATION"
+        - setBody:
+            groovy: |
+              def rand = new java.util.Random()
+              def companies = ["Acme Corp", "Globex Corporation", "Initech", "Umbrella Corp", "Veer Industries", "Soylent Corp"]
+              def sectors = ["Manufacturing", "Technology", "Healthcare", "Restricted-Weapons", "Finance", "Energy"]
+              def facilityTypes = ["Revolving Credit Facility", "Term Loan", "Overdraft", "Letter of Credit", "Bank Guarantee"]
+              
+              def company = companies[rand.nextInt(companies.size())]
+              def sector = sectors[rand.nextInt(sectors.size())]
+              def facility = facilityTypes[rand.nextInt(facilityTypes.size())]
+              def amount = rand.nextInt(100) < 10 ? rand.nextDouble() * 150000 : (rand.nextInt(100) < 60 ? rand.nextDouble() * 4000000 : rand.nextDouble() * 60000000)
+              amount = Math.round(amount * 100.0) / 100.0
+              def tenure = 6 + rand.nextInt(36)
+              def rating = ["AAA", "AA", "A", "BBB", "BB", "B", "C", "D"][rand.nextInt(8)]
+              
+              // Define available limit for the customer to simulate over-limit excess paths
+              def approvedLimit = Math.round((2000000 + rand.nextInt(8000000)) * 1.0)
+              def bookedExposure = Math.round((rand.nextDouble() * approvedLimit * 0.8) * 100.0) / 100.0
+              def availableLimit = approvedLimit - bookedExposure
+              
+              return """{
+                "messageType": "FACILITY_REQUEST",
+                "pipelineId": "${exchange.in.getHeader('pipelineId')}",
+                "timestamp": "${new java.util.Date().toString()}",
+                "payload": {
+                  "customerName": "${company}",
+                  "sector": "${sector}",
+                  "facilityType": "${facility}",
+                  "requestedAmount": ${amount},
+                  "currency": "USD",
+                  "termMonths": ${tenure},
+                  "riskRating": "${rating}",
+                  "approvedLimit": ${approvedLimit},
+                  "bookedExposure": ${bookedExposure},
+                  "availableLimit": ${availableLimit}
+                }
+              }""".toString()
+        - log: "STAGE 1 [Request Generated] -> New request created. ID: ${header.pipelineId}. Body: ${body}"
+        - to: "seda:credit.requests.new"
+
+- route:
+    id: "stage-2-validation"
+    from:
+      uri: "seda:credit.requests.new"
+      steps:
+        - setHeader:
+            name: "stage"
+            constant: "STAGE_2_VALIDATION"
+        - setHeader:
+            name: "valid"
+            constant: "true"
+        - setHeader:
+            name: "validationErrors"
+            constant: ""
+        - unmarshal:
+            json:
+              library: Jackson
+        - setBody:
+            groovy: |
+              // Perform lightweight JSON validation and enrichment using groovy
+              def json = body
+              def amount = json.payload.requestedAmount
+              def name = json.payload.customerName
+              if (amount <= 0) {
+                  exchange.in.setHeader("valid", "false")
+                  exchange.in.setHeader("validationErrors", "Requested amount must be positive.")
+              } else if (!name) {
+                  exchange.in.setHeader("valid", "false")
+                  exchange.in.setHeader("validationErrors", "Customer name cannot be empty.")
+              }
+              return json
+        - choice:
+            when:
+              - simple: "${header.valid} == 'false'"
+                steps:
+                  - log: "STAGE 2 [Validation Failed] -> Rejecting request. Errors: ${header.validationErrors}"
+                  - setHeader:
+                      name: "reason"
+                      simple: "${header.validationErrors}"
+                  - to: "direct:pipeline-rejection"
+            otherwise:
+              steps:
+                - log: "STAGE 2 [Validated & Enriched] -> Client: ${body[payload][customerName]}, Sector: ${body[payload][sector]}, Amount: $${body[payload][requestedAmount]}"
+                - to: "seda:credit.requests.validated"
+
+- route:
+    id: "stage-3-risk-assessment"
+    from:
+      uri: "seda:credit.requests.validated"
+      steps:
+        - setHeader:
+            name: "stage"
+            constant: "STAGE_3_RISK_ASSESSMENT"
+        - setBody:
+            groovy: |
+              // Enrich payload with calculated PD (Probability of Default) based on rating
+              def json = body
+              def rating = json.payload.riskRating
+              def pd = 0.01
+              switch(rating) {
+                  case "AAA": pd = 0.0001; break;
+                  case "AA":  pd = 0.001; break;
+                  case "A":   pd = 0.005; break;
+                  case "BBB": pd = 0.02; break;
+                  case "BB":  pd = 0.05; break;
+                  case "B":   pd = 0.12; break;
+                  case "C":   pd = 0.25; break;
+                  case "D":   pd = 0.99; break;
+              }
+              json.payload.probabilityOfDefault = pd
+              exchange.in.setHeader("riskRating", rating)
+              return json
+        - log: "STAGE 3 [Risk Assessed] -> Assigned Risk Rating: ${header.riskRating} (PD: ${body[payload][probabilityOfDefault]})"
+        - to: "seda:credit.risk.assessed"
+
+- route:
+    id: "stage-4-decision-engine"
+    from:
+      uri: "seda:credit.risk.assessed"
+      steps:
+        - setHeader:
+            name: "stage"
+            constant: "STAGE_4_DECISION_ENGINE"
+        - setBody:
+            groovy: |
+              def json = body
+              def amount = json.payload.requestedAmount
+              def rating = json.payload.riskRating
+              def sector = json.payload.sector
+              def availableLimit = json.payload.availableLimit
+              def approvedLimit = json.payload.approvedLimit
+              
+              def decision = "AUTO_APPROVE"
+              def reason = "Standard approval within limit"
+              
+              // Rule 1: Rejection Rules
+              if (rating == "D") {
+                  decision = "AUTO_REJECT"
+                  reason = "Default risk rating (D) without mitigation"
+              } else if (sector == "Restricted-Weapons" && amount > 1000000) {
+                  decision = "AUTO_REJECT"
+                  reason = 'Restricted Weapons sector concentration limit exceeded ($1M cap)'
+              } else if (amount > (approvedLimit * 1.10)) {
+                  decision = "AUTO_REJECT"
+                  reason = "Requested amount exceeds 110% of approved limit buffer limit ($approvedLimit)"
+              }
+              // Rule 2: Excess Approval Rules (Over-limit check)
+              else if (amount > availableLimit) {
+                  def excessPct = (amount - availableLimit) / availableLimit
+                  if (excessPct < 0.10) {
+                      decision = "EXCESS_APPROVAL"
+                      reason = "Requested amount exceeds available limit by ${Math.round(excessPct * 100.0)}% (within 10% buffer)"
+                  } else {
+                      decision = "AUTO_REJECT"
+                      reason = "Limit breach exceeds 10% buffer zone (unsupported exposure)"
+                  }
+              }
+              // Rule 3: Auto-Approval Rules
+              else if (amount < 100000 && (rating == "AAA" || rating == "AA" || rating == "A" || rating == "BBB")) {
+                  decision = "AUTO_APPROVE"
+                  reason = 'Auto-approve small exposure (<$100K) with investment grade rating'
+              }
+              // Rule 4: Standard approval levels requiring sign-offs
+              else {
+                  decision = "REQUIRED_APPROVAL"
+                  if (amount < 5000000) {
+                      reason = "Credit Manager approval required (Single approval path)"
+                  } else {
+                      reason = "Head of Credit + Credit Manager dual sign-off required"
+                  }
+              }
+              
+              json.payload.decision = decision
+              json.payload.decisionReason = reason
+              exchange.in.setHeader("decision", decision)
+              exchange.in.setHeader("reason", reason)
+              return json
+        - log: "STAGE 4 [Decision Engine] -> Applied Rules. Decision: ${header.decision}. Reason: ${header.reason}"
+        - choice:
+            when:
+              - simple: "${header.decision} == 'AUTO_REJECT'"
+                steps:
+                  - to: "direct:pipeline-rejection"
+              - simple: "${header.decision} == 'AUTO_APPROVE'"
+                steps:
+                  - to: "seda:credit.decision.auto"
+              - simple: "${header.decision} == 'EXCESS_APPROVAL'"
+                steps:
+                  - to: "seda:credit.decision.excess"
+            otherwise:
+              steps:
+                - to: "seda:credit.decision.required"
+
+- route:
+    id: "stage-5-earmarking"
+    from:
+      uri: "seda:credit.decision.auto"
+      steps:
+        - setHeader:
+            name: "stage"
+            constant: "STAGE_5_EARMARK"
+        - setBody:
+            groovy: |
+              def json = body
+              json.payload.earmarkType = "HARD"
+              json.payload.earmarkStatus = "ACTIVE"
+              json.payload.earmarkId = "earm-" + java.util.UUID.randomUUID().toString().substring(0, 8)
+              return json
+        - log: "STAGE 5 [Earmark Created] -> HARD Earmark created: ${body[payload][earmarkId]} for $${body[payload][requestedAmount]}"
+        - to: "direct:pipeline-booking"
+
+- route:
+    id: "stage-5-earmarking-pending"
+    from:
+      uri: "seda:credit.decision.required"
+      steps:
+        - setHeader:
+            name: "stage"
+            constant: "STAGE_5_EARMARK"
+        - setBody:
+            groovy: |
+              def json = body
+              json.payload.earmarkType = "SOFT"
+              json.payload.earmarkStatus = "PENDING_APPROVAL"
+              json.payload.earmarkId = "earm-" + java.util.UUID.randomUUID().toString().substring(0, 8)
+              return json
+        - log: "STAGE 5 [Earmark Pending] -> SOFT Earmark created: ${body[payload][earmarkId]} pending approval."
+        - to: "seda:credit.earmark.pending"
+
+- route:
+    id: "stage-5-earmarking-excess"
+    from:
+      uri: "seda:credit.decision.excess"
+      steps:
+        - setHeader:
+            name: "stage"
+            constant: "STAGE_5_EARMARK_EXCESS"
+        - setBody:
+            groovy: |
+              def json = body
+              json.payload.earmarkType = "SOFT_EXCESS"
+              json.payload.earmarkStatus = "PENDING_EXCESS_APPROVAL"
+              json.payload.earmarkId = "earm-" + java.util.UUID.randomUUID().toString().substring(0, 8)
+              return json
+        - log: "STAGE 5 [Earmark Excess] -> SOFT EXCESS Earmark created: ${body[payload][earmarkId]} (Over-limit buffer path)."
+        - to: "seda:credit.earmark.excess"
+
+- route:
+    id: "stage-6-approval-normal"
+    from:
+      uri: "seda:credit.earmark.pending"
+      steps:
+        - setHeader:
+            name: "stage"
+            constant: "STAGE_6_APPROVAL"
+        - log: "STAGE 6 [Approval Requested] -> Sending approval request to CREDIT.APPROVAL.REQUESTS queue. Reason: ${body[payload][decisionReason]}"
+        - setBody:
+            groovy: |
+              // Simulate asynchronous approval workflow via IBM MQ responses
+              def json = body
+              def rand = new java.util.Random()
+              // 85% approval chance in normal simulation path
+              json.payload.approved = rand.nextInt(100) < 85
+              json.payload.approver = "CreditOfficer_" + (100 + rand.nextInt(900))
+              return json
+        - to: "seda:CREDIT.APPROVAL.RESPONSES"
+
+- route:
+    id: "stage-6-approval-excess"
+    from:
+      uri: "seda:credit.earmark.excess"
+      steps:
+        - setHeader:
+            name: "stage"
+            constant: "STAGE_6_APPROVAL_EXCESS"
+        - log: "STAGE 6 [Excess Approval Requested] -> Sending to CREDIT.EXCESS.APPROVALS queue. Requires Head of Credit."
+        - setBody:
+            groovy: |
+              // Simulate excess buffer approval - only 50% approval chance
+              def json = body
+              def rand = new java.util.Random()
+              json.payload.approved = rand.nextInt(100) < 50
+              json.payload.approver = "HeadOfCredit_Risk"
+              return json
+        - to: "seda:CREDIT.APPROVAL.RESPONSES"
+
+- route:
+    id: "stage-6-approval-responses"
+    from:
+      uri: "seda:CREDIT.APPROVAL.RESPONSES"
+      steps:
+        - delay:
+            expression:
+              constant: 2000
+        - choice:
+            when:
+              - simple: "${body[payload][approved]} == true"
+                steps:
+                  - log: "STAGE 6 [Approval Response Received] -> APPROVED by ${body[payload][approver]}."
+                  - to: "seda:credit.approval.granted"
+            otherwise:
+              steps:
+                - log: "STAGE 6 [Approval Response Received] -> REJECTED by ${body[payload][approver]}."
+                - setHeader:
+                    name: "reason"
+                    simple: "Approval denied by ${body[payload][approver]}."
+                - to: "direct:pipeline-rejection"
+
+- route:
+    id: "stage-7-booking"
+    from:
+      uri: "seda:credit.approval.granted"
+      steps:
+        - to: "direct:pipeline-booking"
+
+- route:
+    id: "pipeline-booking"
+    from:
+      uri: "direct:pipeline-booking"
+      steps:
+        - setHeader:
+            name: "stage"
+            constant: "STAGE_7_BOOKING"
+        - setBody:
+            groovy: |
+              def json = body
+              json.payload.booked = true
+              json.payload.earmarkStatus = "CONVERTED"
+              json.payload.facilityStatus = "BOOKED"
+              return json
+        - log: "STAGE 7 [Booking] -> Earmark converted. Transaction committed to SQL. Facility booked successfully."
+        - to: "direct:pipeline-completion"
+
+- route:
+    id: "stage-8-completion"
+    from:
+      uri: "direct:pipeline-completion"
+      steps:
+        - setHeader:
+            name: "stage"
+            constant: "STAGE_8_COMPLETED"
+        - log: "STAGE 8 [Completion & Notifications] -> Notification dispatched to CREDIT.PARTNER.NOTIFICATIONS. Archiving pipeline state in MongoDB."
+        - log: "SUCCESS -> Credit and Earmark Pipeline ${header.pipelineId} completed successfully! [Client: ${body[payload][customerName]}, Amount: $${body[payload][requestedAmount]}]\n"
+
+- route:
+    id: "pipeline-rejection"
+    from:
+      uri: "direct:pipeline-rejection"
+      steps:
+        - setHeader:
+            name: "stage"
+            constant: "STAGE_REJECTED"
+        - log: "FAILURE -> Releasing earmark. Inserting rejected facility log into SQL database. Reason: ${header.reason}"
+        - log: "REJECTED -> Credit and Earmark Pipeline ${header.pipelineId} terminated. Reason: ${header.reason}\n"

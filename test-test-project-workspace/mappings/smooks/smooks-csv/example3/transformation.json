@@ -1,9 +1,0 @@
-{
-  "type": "smooks",
-  "name": "Smooks CSV Example",
-  "source": { "type": "text", "file": "source.csv" },
-  "logic": [
-    { "type": "xml", "file": "smooks-config.xml" }
-  ],
-  "target": { "type": "xml" }
-}

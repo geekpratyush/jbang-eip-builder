@@ -1,7 +1,0 @@
-{
-  "name": "Production ISO pain.001 to MT101",
-  "source": { "file": "source.xml", "type": "xml" },
-  "logic": [{ "file": "transform.xslt", "type": "xslt" }],
-  "type": "xslt",
-  "target": { "type": "mt" }
-}

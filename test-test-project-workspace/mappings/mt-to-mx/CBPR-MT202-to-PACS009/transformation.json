@@ -1,7 +1,0 @@
-{
-  "name": "Production CBPR+ MT202 to pacs.009",
-  "source": { "file": "source.txt", "type": "mt" },
-  "logic": [{ "file": "transform.xslt", "type": "xslt" }],
-  "type": "xslt",
-  "target": { "xsd": "pacs.009.001.08.xsd", "type": "xml" }
-}

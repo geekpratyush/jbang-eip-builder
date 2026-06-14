@@ -1,7 +1,0 @@
-{
-  "type": "joor",
-  "name": "MT103 to pacs.008 (Direct JOOR)",
-  "source": { "type": "mt", "file": "source.txt" },
-  "logic": [{ "file": "Transform.java", "type": "joor" }],
-  "target": { "xsd": "pacs.008.001.08.xsd", "type": "xml" }
-}

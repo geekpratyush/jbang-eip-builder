@@ -1,9 +1,0 @@
-{
-  "type": "smooks",
-  "name": "Smooks Pipe/Semicolon Ledger CSV to XML Mapping",
-  "source": { "type": "text", "file": "source.csv" },
-  "logic": [
-    { "type": "xml", "file": "smooks-config.xml" }
-  ],
-  "target": { "type": "xml" }
-}

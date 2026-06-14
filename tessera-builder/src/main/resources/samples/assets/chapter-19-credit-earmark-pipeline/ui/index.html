@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Stunning interactive visualizer for the Credit Limit & Earmarking pipeline simulation in Camel JBang.">
+  <title>Credit Limit & Earmarking Pipeline Simulator</title>
+  
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* Styling Tokens & Palette */
+    :root {
+      --bg-base: #0b0f19;
+      --bg-surface: rgba(20, 27, 45, 0.7);
+      --bg-surface-hover: rgba(30, 41, 69, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-color-focus: rgba(99, 102, 241, 0.6);
+      
+      --color-text-primary: #f8fafc;
+      --color-text-secondary: #94a3b8;
+      --color-text-muted: #64748b;
+      
+      /* Status Colors */
+      --color-idle: #475569;
+      --color-active: #6366f1; /* Indigo */
+      --color-completed: #10b981; /* Emerald */
+      --color-pending: #f59e0b; /* Amber */
+      --color-rejected: #ef4444; /* Crimson */
+      
+      /* Shadows & Glows */
+      --glow-active: 0 0 15px rgba(99, 102, 241, 0.4);
+      --glow-completed: 0 0 15px rgba(16, 115, 73, 0.4);
+      --glow-pending: 0 0 15px rgba(245, 158, 11, 0.4);
+      --glow-rejected: 0 0 15px rgba(239, 68, 68, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--color-text-primary);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    /* Background decorative elements */
+    .bg-glow-1 {
+      position: absolute;
+      top: -10%;
+      left: -10%;
+      width: 50vw;
+      height: 50vw;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-glow-2 {
+      position: absolute;
+      bottom: -10%;
+      right: -10%;
+      width: 50vw;
+      height: 50vw;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+      margin-bottom: 24px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      font-size: 28px;
+      background: linear-gradient(135deg, #6366f1, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-title p {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+    }
+
+    .preset-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .preset-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .preset-select {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      color: var(--color-text-primary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .preset-select:hover {
+      border-color: var(--color-active);
+    }
+
+    /* Grid Layout */
+    .dashboard-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    @media (min-width: 1200px) {
+      .dashboard-grid {
+        grid-template-columns: 350px 1fr;
+      }
+    }
+
+    /* Metrics Bar */
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+    }
+
+    .metric-value {
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Panel Card Styles */
+    .panel-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title i {
+      color: var(--color-active);
+    }
+
+    /* Form Styles */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+    }
+
+    .form-input, .form-select {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      color: var(--color-text-primary);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+      border-color: var(--border-color-focus);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+    }
+
+    .btn {
+      background: var(--color-active);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--color-text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--color-text-secondary);
+    }
+
+    .btn-danger {
+      background: var(--color-rejected);
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Pipeline Layout */
+    .pipeline-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .pipeline-view {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      padding: 20px 0;
+      position: relative;
+    }
+
+    @media (min-width: 768px) {
+      .pipeline-view {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: stretch;
+      }
+    }
+
+    /* Pipeline Step Cards */
+    .step-card {
+      flex: 1;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 10px;
+      cursor: pointer;
+      min-width: 130px;
+    }
+
+    .step-card:hover {
+      background: var(--bg-surface-hover);
+      transform: translateY(-4px);
+      border-color: var(--border-color-focus);
+    }
+
+    .step-card.active {
+      border-color: var(--color-active);
+      box-shadow: var(--glow-active);
+    }
+
+    .step-card.completed {
+      border-color: var(--color-completed);
+    }
+
+    .step-card.pending {
+      border-color: var(--color-pending);
+    }
+
+    .step-card.rejected {
+      border-color: var(--color-rejected);
+    }
+
+    .step-number {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+    }
+
+    .step-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.03);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--color-text-secondary);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .step-card.active .step-icon {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--color-active);
+      border-color: var(--color-active);
+    }
+
+    .step-card.completed .step-icon {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--color-completed);
+      border-color: var(--color-completed);
+    }
+
+    .step-card.pending .step-icon {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--color-pending);
+      border-color: var(--color-pending);
+    }
+
+    .step-card.rejected .step-icon {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--color-rejected);
+      border-color: var(--color-rejected);
+    }
+
+    .step-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .step-status-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--color-text-muted);
+    }
+
+    .step-card.active .step-status-badge {
+      background: rgba(99, 102, 241, 0.2);
+      color: var(--color-active);
+    }
+
+    .step-card.completed .step-status-badge {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--color-completed);
+    }
+
+    .step-card.pending .step-status-badge {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--color-pending);
+    }
+
+    .step-card.rejected .step-status-badge {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--color-rejected);
+    }
+
+    /* Drag and Drop Elements */
+    .token-draggable {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      cursor: grab;
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: white;
+      transition: transform 0.2s ease;
+    }
+
+    .token-draggable:active {
+      cursor: grabbing;
+      transform: translateX(-50%) scale(1.15);
+    }
+
+    /* Console Panel */
+    .console-panel {
+      background: #05070c;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #cbd5e1;
+      height: 250px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+    }
+
+    .console-line {
+      display: flex;
+      gap: 12px;
+      border-left: 2px solid transparent;
+      padding-left: 8px;
+    }
+
+    .console-time {
+      color: var(--color-text-muted);
+      flex-shrink: 0;
+    }
+
+    .console-level {
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .console-level.info {
+      color: #10b981;
+    }
+
+    .console-level.warn {
+      color: #f59e0b;
+    }
+
+    .console-level.error {
+      color: #ef4444;
+    }
+
+    .console-message {
+      white-space: pre-wrap;
+    }
+
+    /* Connecting Lines */
+    .connector-line {
+      display: none;
+    }
+
+    @media (min-width: 768px) {
+      .connector-line {
+        display: block;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.05);
+        z-index: 0;
+      }
+      .connector-progress {
+        height: 100%;
+        background: linear-gradient(90deg, var(--color-completed), var(--color-active));
+        width: 0%;
+        transition: width 0.5s ease;
+      }
+    }
+
+    /* JSON Editor Pane */
+    .json-editor-pane {
+      background: #070a13;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #38bdf8;
+      min-height: 220px;
+      outline: none;
+      white-space: pre-wrap;
+      overflow-y: auto;
+    }
+
+    /* Interactive Decision Tree overlay */
+    .decision-helper-box {
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .decision-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .decision-step i {
+      width: 20px;
+    }
+
+    .decision-step.matched {
+      color: var(--color-completed);
+      font-weight: 600;
+    }
+
+    .decision-step.matched i {
+      color: var(--color-completed);
+    }
+
+    .decision-step.failed {
+      color: var(--color-text-muted);
+      text-decoration: line-through;
+    }
+
+    .decision-step.failed i {
+      color: var(--color-text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-glow-1"></div>
+  <div class="bg-glow-2"></div>
+
+  <!-- Header Section -->
+  <header>
+    <div class="brand-container">
+      <div class="brand-logo"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+      <div class="brand-title">
+        <h1>Credit Limit & Earmarking Orchestrator</h1>
+        <p>Interactive Pipeline State Simulator & Event Auditor</p>
+      </div>
+    </div>
+    
+    <div class="preset-container">
+      <span class="preset-label">Simulation Presets:</span>
+      <select id="presetSelect" class="preset-select">
+        <option value="default">Select scenario preset...</option>
+        <option value="autoApprove">Preset 1: AAA Small Exposure ($50K) -> Auto-Approve</option>
+        <option value="weaponsReject">Preset 2: Restricted Weapons Sector Breach -> Auto-Reject</option>
+        <option value="excessLimit">Preset 3: Excess Limit Exposure (10% Buffer Path) -> Soft Excess Earmark</option>
+        <option value="dualSignoff">Preset 4: Major Institutional Request ($8M) -> Dual Approval Path</option>
+        <option value="defaultRisk">Preset 5: High Risk rating (D) -> Auto-Reject</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- Metrics Dashboard Bar -->
+  <div class="metrics-bar">
+    <div class="metric-card">
+      <div class="metric-label">Credit Limit Pool (Approved)</div>
+      <div class="metric-value" id="metricApprovedLimit" style="color: #6366f1;">$5,000,000</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Booked Exposure (Existing)</div>
+      <div class="metric-value" id="metricBookedExposure" style="color: #94a3b8;">$1,500,000</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Available Limit (Remaining)</div>
+      <div class="metric-value" id="metricAvailableLimit" style="color: #10b981;">$3,500,000</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Active Earmarks (Soft/Hard)</div>
+      <div class="metric-value" id="metricEarmarks" style="color: #f59e0b;">$0</div>
+    </div>
+  </div>
+
+  <!-- Main Grid Layout -->
+  <div class="dashboard-grid">
+    
+    <!-- Left Column: Parameters Editor & Controllers -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <div class="panel-title"><i class="fa-solid fa-sliders"></i> Request Parameters</div>
+        <button id="btnReset" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="paramClient">Customer Name</label>
+        <input type="text" id="paramClient" class="form-input" value="Globex Corporation">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="paramSector">Economic Sector</label>
+        <select id="paramSector" class="form-select">
+          <option value="Healthcare">Healthcare</option>
+          <option value="Finance">Finance</option>
+          <option value="Technology">Technology</option>
+          <option value="Restricted-Weapons">Restricted-Weapons (Restricted)</option>
+          <option value="Real-Estate">Real Estate</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="paramAmount">Requested Amount ($)</label>
+        <input type="number" id="paramAmount" class="form-input" value="750000" step="50000">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="paramApprovedLimit">Approved Credit Limit ($)</label>
+        <input type="number" id="paramApprovedLimit" class="form-input" value="5000000" step="500000">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="paramBookedExposure">Booked Exposure ($)</label>
+        <input type="number" id="paramBookedExposure" class="form-input" value="1500000" step="100000">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="paramRating">Risk Rating</label>
+        <select id="paramRating" class="form-select">
+          <option value="AAA">AAA (Extremely Low Risk)</option>
+          <option value="AA">AA (Very Low Risk)</option>
+          <option value="A">A (Low Risk)</option>
+          <option value="BBB" selected>BBB (Good Credit Quality)</option>
+          <option value="BB">BB (Speculative)</option>
+          <option value="B">B (Highly Speculative)</option>
+          <option value="C">C (Substantial Risk)</option>
+          <option value="D">D (Default risk)</option>
+        </select>
+      </div>
+
+      <div class="button-group">
+        <button id="btnRunFull" class="btn"><i class="fa-solid fa-play"></i> Run Pipeline</button>
+        <button id="btnStepNext" class="btn btn-secondary"><i class="fa-solid fa-forward-step"></i> Step Next</button>
+      </div>
+    </div>
+
+    <!-- Right Column: Interactive Pipeline View & Console Output -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+      
+      <!-- Pipeline Steps Graphic Map -->
+      <div class="panel-card" style="padding: 24px 16px;">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-diagram-project"></i> Pipeline Step Execution Path</div>
+          <div id="simulationStateText" style="font-size: 13px; font-weight: 600; color: var(--color-active);">Status: Idle</div>
+        </div>
+
+        <div class="pipeline-view">
+          <div class="connector-line">
+            <div id="connectorProgress" class="connector-progress"></div>
+          </div>
+
+          <!-- Step 1 -->
+          <div class="step-card" data-step="1" id="stepNode1">
+            <div class="step-number">Stage 1</div>
+            <div class="step-icon"><i class="fa-solid fa-file-signature"></i></div>
+            <div class="step-name">Generation</div>
+            <div class="step-status-badge">Idle</div>
+            <div class="token-draggable" draggable="true" id="tokenBadge" style="display: none;">TX</div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step-card" data-step="2" id="stepNode2">
+            <div class="step-number">Stage 2</div>
+            <div class="step-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+            <div class="step-name">Validation</div>
+            <div class="step-status-badge">Idle</div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="step-card" data-step="3" id="stepNode3">
+            <div class="step-number">Stage 3</div>
+            <div class="step-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="step-name">Risk Assess</div>
+            <div class="step-status-badge">Idle</div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="step-card" data-step="4" id="stepNode4">
+            <div class="step-number">Stage 4</div>
+            <div class="step-icon"><i class="fa-solid fa-gears"></i></div>
+            <div class="step-name">Decision</div>
+            <div class="step-status-badge">Idle</div>
+          </div>
+
+          <!-- Step 5 -->
+          <div class="step-card" data-step="5" id="stepNode5">
+            <div class="step-number">Stage 5</div>
+            <div class="step-icon"><i class="fa-solid fa-lock"></i></div>
+            <div class="step-name">Earmarking</div>
+            <div class="step-status-badge">Idle</div>
+          </div>
+
+          <!-- Step 6 -->
+          <div class="step-card" data-step="6" id="stepNode6">
+            <div class="step-number">Stage 6</div>
+            <div class="step-icon"><i class="fa-solid fa-comments"></i></div>
+            <div class="step-name">Approval</div>
+            <div class="step-status-badge">Idle</div>
+          </div>
+
+          <!-- Step 7 -->
+          <div class="step-card" data-step="7" id="stepNode7">
+            <div class="step-number">Stage 7</div>
+            <div class="step-icon"><i class="fa-solid fa-book-bookmark"></i></div>
+            <div class="step-name">Booking</div>
+            <div class="step-status-badge">Idle</div>
+          </div>
+
+          <!-- Step 8 -->
+          <div class="step-card" data-step="8" id="stepNode8">
+            <div class="step-number">Stage 8</div>
+            <div class="step-icon"><i class="fa-solid fa-flag-checkered"></i></div>
+            <div class="step-name">Outcome</div>
+            <div class="step-status-badge">Idle</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two Column Inspector and Console -->
+      <div style="display: grid; grid-template-columns: 1fr; gap: 24px; min-height: 300px;">
+        <!-- Left: Rule Analysis & JSON Data State -->
+        <div class="panel-card" style="grid-column: span 1;">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fa-solid fa-code"></i> Live Message State (JSON)</div>
+            <div style="font-size: 11px; color: var(--color-text-muted); font-family: monospace;">Interactive Payload Inspector</div>
+          </div>
+          <div id="jsonEditor" class="json-editor-pane" contenteditable="false">Select a step card or run the pipeline to inspect the transactional state payload.</div>
+        </div>
+
+        <!-- Right: Rule Decision Engine Rules audit -->
+        <div class="panel-card" style="grid-column: span 1;">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fa-solid fa-shield-halved"></i> Stage 4 Rules Engine Evaluation</div>
+          </div>
+          <div class="decision-helper-box" id="rulesAuditPanel">
+            <div class="decision-step" id="ruleD"><i class="fa-solid fa-circle-question"></i> Risk Rating is D (Auto-Reject)</div>
+            <div class="decision-step" id="ruleWeapons"><i class="fa-solid fa-circle-question"></i> Restricted Sector > $1M (Auto-Reject)</div>
+            <div class="decision-step" id="ruleBuffer"><i class="fa-solid fa-circle-question"></i> Amount > 110% of Limit (Auto-Reject)</div>
+            <div class="decision-step" id="ruleExcess"><i class="fa-solid fa-circle-question"></i> Amount > Available Limit (Excess Approval Path)</div>
+            <div class="decision-step" id="ruleAuto"><i class="fa-solid fa-circle-question"></i> Small exposure < $100K & Investment Grade (Auto-Approve)</div>
+            <div class="decision-step" id="ruleReview"><i class="fa-solid fa-circle-question"></i> Standard Credit review dual/single path</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom: Simulated JBang Console Logger -->
+      <div class="panel-card">
+        <div class="panel-header" style="padding-bottom: 8px;">
+          <div class="panel-title" style="font-size: 14px;"><i class="fa-solid fa-terminal"></i> Camel Route Console logs</div>
+          <button id="btnClearConsole" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;"><i class="fa-solid fa-trash-can"></i> Clear</button>
+        </div>
+        <div id="consoleLog" class="console-panel">
+          <div class="console-line"><span class="console-time">23:26:00.000</span><span class="console-level info">INFO</span><span class="console-message">Apache Camel (JBang) 4.18.0 is starting with pipeline simulator...</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // State Tracking
+    let simState = {
+      currentStep: 0,
+      activeTransaction: null,
+      presets: {},
+      isExecuting: false,
+      earmarksList: {}
+    };
+
+    // DOM Elements
+    const presetSelect = document.getElementById('presetSelect');
+    const paramClient = document.getElementById('paramClient');
+    const paramSector = document.getElementById('paramSector');
+    const paramAmount = document.getElementById('paramAmount');
+    const paramApprovedLimit = document.getElementById('paramApprovedLimit');
+    const paramBookedExposure = document.getElementById('paramBookedExposure');
+    const paramRating = document.getElementById('paramRating');
+    const btnRunFull = document.getElementById('btnRunFull');
+    const btnStepNext = document.getElementById('btnStepNext');
+    const btnReset = document.getElementById('btnReset');
+    const btnClearConsole = document.getElementById('btnClearConsole');
+    const consoleLog = document.getElementById('consoleLog');
+    const jsonEditor = document.getElementById('jsonEditor');
+    const simulationStateText = document.getElementById('simulationStateText');
+    const tokenBadge = document.getElementById('tokenBadge');
+    
+    // Metric Fields
+    const metricApprovedLimit = document.getElementById('metricApprovedLimit');
+    const metricBookedExposure = document.getElementById('metricBookedExposure');
+    const metricAvailableLimit = document.getElementById('metricAvailableLimit');
+    const metricEarmarks = document.getElementById('metricEarmarks');
+
+    // Preset configurations
+    const PRESETS = {
+      autoApprove: {
+        client: 'Starbucks Corporation',
+        sector: 'Healthcare',
+        amount: 85000,
+        approvedLimit: 4000000,
+        bookedExposure: 1000000,
+        rating: 'AAA'
+      },
+      weaponsReject: {
+        client: 'Aero Defense Systems',
+        sector: 'Restricted-Weapons',
+        amount: 1500000,
+        approvedLimit: 5000000,
+        bookedExposure: 2000000,
+        rating: 'BBB'
+      },
+      excessLimit: {
+        client: 'Global Logistics Inc',
+        sector: 'Technology',
+        amount: 1080000,
+        approvedLimit: 2000000,
+        bookedExposure: 1000000,
+        rating: 'A'
+      },
+      dualSignoff: {
+        client: 'Initech Financials Ltd',
+        sector: 'Finance',
+        amount: 7500000,
+        approvedLimit: 15000000,
+        bookedExposure: 4000000,
+        rating: 'AA'
+      },
+      defaultRisk: {
+        client: 'Vanguard Retail Corp',
+        sector: 'Real-Estate',
+        amount: 500000,
+        approvedLimit: 2000000,
+        bookedExposure: 500000,
+        rating: 'D'
+      }
+    };
+
+    // Probability of default lookup
+    const PD_MAPPING = {
+      'AAA': 0.0001,
+      'AA': 0.001,
+      'A': 0.005,
+      'BBB': 0.01,
+      'BB': 0.05,
+      'B': 0.10,
+      'C': 0.25,
+      'D': 0.50
+    };
+
+    // Form inputs change event
+    [paramClient, paramSector, paramAmount, paramApprovedLimit, paramBookedExposure, paramRating].forEach(element => {
+      element.addEventListener('change', () => {
+        updateMetricCards();
+        if (simState.currentStep > 0) {
+          addLog("WARN", `Request parameters altered during active simulation state. Resetting to Stage 1.`);
+          resetSimulation();
+        }
+      });
+    });
+
+    // Preset Selection
+    presetSelect.addEventListener('change', (e) => {
+      const preset = PRESETS[e.target.value];
+      if (preset) {
+        paramClient.value = preset.client;
+        paramSector.value = preset.sector;
+        paramAmount.value = preset.amount;
+        paramApprovedLimit.value = preset.approvedLimit;
+        paramBookedExposure.value = preset.bookedExposure;
+        paramRating.value = preset.rating;
+        addLog("INFO", `Preset scenario loaded: "${e.target.selectedOptions[0].text}"`);
+        resetSimulation();
+      }
+    });
+
+    // Reset simulator
+    btnReset.addEventListener('click', () => {
+      presetSelect.value = 'default';
+      paramClient.value = 'Globex Corporation';
+      paramSector.value = 'Healthcare';
+      paramAmount.value = 750000;
+      paramApprovedLimit.value = 5000000;
+      paramBookedExposure.value = 1500000;
+      paramRating.value = 'BBB';
+      resetSimulation();
+      addLog("INFO", "Pipeline state and transaction parameters reset to default.");
+    });
+
+    // Clear console
+    btnClearConsole.addEventListener('click', () => {
+      consoleLog.innerHTML = "";
+    });
+
+    // Helper functions for currency format
+    function formatCurrency(val) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+    }
+
+    // Update metric dashboard numbers
+    function updateMetricCards() {
+      const approved = parseFloat(paramApprovedLimit.value) || 0;
+      const booked = parseFloat(paramBookedExposure.value) || 0;
+      const available = approved - booked;
+      
+      metricApprovedLimit.innerText = formatCurrency(approved);
+      metricBookedExposure.innerText = formatCurrency(booked);
+      metricAvailableLimit.innerText = formatCurrency(available);
+      
+      if (simState.activeTransaction && simState.activeTransaction.payload.earmarkId) {
+        metricEarmarks.innerText = formatCurrency(simState.activeTransaction.payload.requestedAmount);
+      } else {
+        metricEarmarks.innerText = "$0";
+      }
+    }
+
+    // Add log to terminal console
+    function addLog(level, message) {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      
+      const line = document.createElement('div');
+      line.className = 'console-line';
+      
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'console-time';
+      timeSpan.innerText = timeStr;
+      
+      const levelSpan = document.createElement('span');
+      levelSpan.className = `console-level ${level.toLowerCase()}`;
+      levelSpan.innerText = level.toUpperCase();
+      
+      const msgSpan = document.createElement('span');
+      msgSpan.className = 'console-message';
+      msgSpan.innerText = message;
+      
+      line.appendChild(timeSpan);
+      line.appendChild(levelSpan);
+      line.appendChild(msgSpan);
+      
+      consoleLog.appendChild(line);
+      consoleLog.scrollTop = consoleLog.scrollHeight;
+    }
+
+    // Step cards click handler (Allow direct navigation to a step / inspecting it)
+    document.querySelectorAll('.step-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const stepNum = parseInt(card.getAttribute('data-step'));
+        inspectStep(stepNum);
+      });
+    });
+
+    // Inspect historical payload for a step
+    function inspectStep(stepNum) {
+      if (!simState.activeTransaction) {
+        jsonEditor.innerText = "No active transaction payload. Please generate a request first.";
+        return;
+      }
+      
+      // Select the stage card UI
+      document.querySelectorAll('.step-card').forEach(c => c.classList.remove('active'));
+      const activeCard = document.getElementById(`stepNode${stepNum}`);
+      if (activeCard) activeCard.classList.add('active');
+      
+      // Move token visually
+      positionTokenAtNode(stepNum);
+      
+      // Build dummy historical state of the payload at this specific step
+      const dataState = getPayloadAtStep(stepNum);
+      jsonEditor.innerText = JSON.stringify(dataState, null, 2);
+    }
+
+    // Get payload copy at a specific step
+    function getPayloadAtStep(stepNum) {
+      if (!simState.activeTransaction) return null;
+      let copy = JSON.parse(JSON.stringify(simState.activeTransaction));
+      
+      if (stepNum < 8) {
+        // Remove completion updates
+        if (copy.payload) {
+          delete copy.payload.completedTimestamp;
+          delete copy.payload.bookingReference;
+        }
+      }
+      if (stepNum < 7) {
+        if (copy.payload) {
+          delete copy.payload.bookedTimestamp;
+        }
+      }
+      if (stepNum < 6) {
+        if (copy.payload) {
+          delete copy.payload.approved;
+          delete copy.payload.approver;
+          delete copy.payload.approvalTimestamp;
+        }
+      }
+      if (stepNum < 5) {
+        if (copy.payload) {
+          delete copy.payload.earmarkId;
+          delete copy.payload.earmarkStatus;
+          delete copy.payload.earmarkedTimestamp;
+        }
+      }
+      if (stepNum < 4) {
+        if (copy.payload) {
+          delete copy.payload.decision;
+          delete copy.payload.decisionReason;
+        }
+      }
+      if (stepNum < 3) {
+        if (copy.payload) {
+          delete copy.payload.probabilityOfDefault;
+          delete copy.payload.ratingGrade;
+        }
+      }
+      if (stepNum < 2) {
+        if (copy.payload) {
+          delete copy.payload.validated;
+        }
+      }
+      return copy;
+    }
+
+    // Drag & Drop Code for transaction token badge
+    tokenBadge.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', 'token');
+      tokenBadge.style.opacity = '0.5';
+    });
+
+    tokenBadge.addEventListener('dragend', () => {
+      tokenBadge.style.opacity = '1';
+    });
+
+    document.querySelectorAll('.step-card').forEach(card => {
+      card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        card.style.background = 'var(--bg-surface-hover)';
+      });
+
+      card.addEventListener('dragleave', () => {
+        card.style.background = 'var(--bg-surface)';
+      });
+
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        card.style.background = 'var(--bg-surface)';
+        const targetStep = parseInt(card.getAttribute('data-step'));
+        
+        addLog("INFO", `User manually dragged credit request token to Stage ${targetStep}. Evaluating rules...`);
+        transitionToStep(targetStep);
+      });
+    });
+
+    // Helper to position the token node visually
+    function positionTokenAtNode(stepNum) {
+      const targetNode = document.getElementById(`stepNode${stepNum}`);
+      if (targetNode && tokenBadge) {
+        tokenBadge.style.display = 'flex';
+        targetNode.appendChild(tokenBadge);
+      }
+    }
+
+    // Move state to specific step
+    function transitionToStep(targetStep) {
+      if (!simState.activeTransaction) {
+        generateRequestPayload();
+      }
+      
+      // Execute all intermediate steps to reach the target step
+      resetSimulationUI();
+      simState.currentStep = 0;
+      
+      for (let i = 1; i <= targetStep; i++) {
+        executeStep(i);
+      }
+      
+      inspectStep(targetStep);
+    }
+
+    // Execute single step logic
+    function executeStep(stepNum) {
+      simState.currentStep = stepNum;
+      const card = document.getElementById(`stepNode${stepNum}`);
+      
+      if (stepNum === 1) {
+        generateRequestPayload();
+        card.className = 'step-card completed';
+        card.querySelector('.step-status-badge').innerText = 'Generated';
+        addLog("INFO", `STAGE 1 [Request Generated] -> New request created. ID: ${simState.activeTransaction.pipelineId}. Available limit: ${formatCurrency(simState.activeTransaction.payload.availableLimit)}`);
+      }
+      
+      else if (stepNum === 2) {
+        simState.activeTransaction.payload.validated = true;
+        card.className = 'step-card completed';
+        card.querySelector('.step-status-badge').innerText = 'Validated';
+        addLog("INFO", `STAGE 2 [Validated & Enriched] -> Client: ${simState.activeTransaction.payload.customerName}, Sector: ${simState.activeTransaction.payload.sector}, Amount: ${formatCurrency(simState.activeTransaction.payload.requestedAmount)}`);
+      }
+      
+      else if (stepNum === 3) {
+        const rating = simState.activeTransaction.payload.riskRating;
+        const pd = PD_MAPPING[rating] || 0.05;
+        simState.activeTransaction.payload.probabilityOfDefault = pd;
+        simState.activeTransaction.payload.ratingGrade = pd <= 0.01 ? 'Investment' : 'Sub-Investment';
+        
+        card.className = 'step-card completed';
+        card.querySelector('.step-status-badge').innerText = 'Assessed';
+        addLog("INFO", `STAGE 3 [Risk Assessed] -> Assigned Risk Rating: ${rating} (PD: ${pd})`);
+      }
+      
+      else if (stepNum === 4) {
+        evaluateDecisionRules();
+        const decision = simState.activeTransaction.payload.decision;
+        const reason = simState.activeTransaction.payload.decisionReason;
+        
+        if (decision === 'AUTO_REJECT') {
+          card.className = 'step-card rejected';
+          card.querySelector('.step-status-badge').innerText = 'Rejected';
+          addLog("WARN", `STAGE 4 [Decision Engine] -> Applied Rules. Decision: AUTO_REJECT. Reason: ${reason}`);
+        } else if (decision === 'AUTO_APPROVE') {
+          card.className = 'step-card completed';
+          card.querySelector('.step-status-badge').innerText = 'Approved';
+          addLog("INFO", `STAGE 4 [Decision Engine] -> Applied Rules. Decision: AUTO_APPROVE. Reason: ${reason}`);
+        } else {
+          card.className = 'step-card pending';
+          card.querySelector('.step-status-badge').innerText = 'Pending Review';
+          addLog("INFO", `STAGE 4 [Decision Engine] -> Applied Rules. Decision: ${decision}. Reason: ${reason}`);
+        }
+      }
+      
+      else if (stepNum === 5) {
+        const decision = simState.activeTransaction.payload.decision;
+        if (decision === 'AUTO_REJECT') {
+          card.className = 'step-card rejected';
+          card.querySelector('.step-status-badge').innerText = 'Bypassed';
+          addLog("WARN", `STAGE 5 [Earmarking] -> Bypassed earmark allocation due to Auto-Reject.`);
+        } else {
+          const earmarkId = 'earm-' + Math.random().toString(36).substring(2, 10);
+          simState.activeTransaction.payload.earmarkId = earmarkId;
+          
+          if (decision === 'AUTO_APPROVE') {
+            simState.activeTransaction.payload.earmarkStatus = 'HARD';
+            card.className = 'step-card completed';
+            card.querySelector('.step-status-badge').innerText = 'Hard Earmark';
+            addLog("INFO", `STAGE 5 [Earmark Created] -> HARD Earmark created: ${earmarkId} for ${formatCurrency(simState.activeTransaction.payload.requestedAmount)}`);
+          } else if (decision === 'EXCESS_APPROVAL') {
+            simState.activeTransaction.payload.earmarkStatus = 'SOFT_EXCESS';
+            card.className = 'step-card pending';
+            card.querySelector('.step-status-badge').innerText = 'Soft Excess';
+            addLog("INFO", `STAGE 5 [Earmark Excess] -> SOFT EXCESS Earmark created: ${earmarkId} (Over-limit buffer path).`);
+          } else {
+            simState.activeTransaction.payload.earmarkStatus = 'SOFT';
+            card.className = 'step-card pending';
+            card.querySelector('.step-status-badge').innerText = 'Soft Earmark';
+            addLog("INFO", `STAGE 5 [Earmark Pending] -> SOFT Earmark created: ${earmarkId} pending approval.`);
+          }
+          simState.activeTransaction.payload.earmarkedTimestamp = new Date().toISOString();
+        }
+      }
+      
+      else if (stepNum === 6) {
+        const decision = simState.activeTransaction.payload.decision;
+        if (decision === 'AUTO_APPROVE') {
+          card.className = 'step-card completed';
+          card.querySelector('.step-status-badge').innerText = 'Auto-Passed';
+          addLog("INFO", `STAGE 6 [Approval Requested] -> SEDA Queue Bypassed: Auto-approved limit.`);
+        } else if (decision === 'AUTO_REJECT') {
+          card.className = 'step-card rejected';
+          card.querySelector('.step-status-badge').innerText = 'Bypassed';
+          addLog("WARN", `STAGE 6 [Approval Requested] -> Bypassed: Rejection terminal path.`);
+        } else {
+          // Normal/Excess Approval Needed (Requires SEDA Async Response simulation)
+          card.className = 'step-card pending';
+          card.querySelector('.step-status-badge').innerText = 'In Flight';
+          addLog("INFO", `STAGE 6 [Approval Requested] -> Sending approval request to CREDIT.APPROVAL.REQUESTS queue. Reason: ${simState.activeTransaction.payload.decisionReason}`);
+          
+          // Simulate MQ Response processing
+          const officerId = 'CreditOfficer_' + Math.floor(Math.random() * 300 + 100);
+          const approved = true; // Auto approve in our mock
+          simState.activeTransaction.payload.approved = approved;
+          simState.activeTransaction.payload.approver = officerId;
+          simState.activeTransaction.payload.approvalTimestamp = new Date().toISOString();
+          
+          addLog("INFO", `STAGE 6 [Approval Response Received] -> APPROVED by ${officerId}.`);
+        }
+      }
+      
+      else if (stepNum === 7) {
+        const decision = simState.activeTransaction.payload.decision;
+        const approved = simState.activeTransaction.payload.approved !== false;
+        
+        if (decision !== 'AUTO_REJECT' && approved) {
+          card.className = 'step-card completed';
+          card.querySelector('.step-status-badge').innerText = 'Booked';
+          simState.activeTransaction.payload.bookedTimestamp = new Date().toISOString();
+          
+          // Mutate the metrics
+          const currentBooked = parseFloat(paramBookedExposure.value);
+          const requested = parseFloat(paramAmount.value);
+          metricBookedExposure.innerText = formatCurrency(currentBooked + requested);
+          metricAvailableLimit.innerText = formatCurrency(parseFloat(paramApprovedLimit.value) - (currentBooked + requested));
+          
+          addLog("INFO", `STAGE 7 [Limit Booked] -> Booking credit limit for transaction ${simState.activeTransaction.pipelineId}. Earmark ID ${simState.activeTransaction.payload.earmarkId} cleared.`);
+        } else {
+          card.className = 'step-card rejected';
+          card.querySelector('.step-status-badge').innerText = 'Bypassed';
+          addLog("WARN", `STAGE 7 [Limit Booked] -> Bypassed booking due to rejection.`);
+        }
+      }
+      
+      else if (stepNum === 8) {
+        const decision = simState.activeTransaction.payload.decision;
+        const approved = simState.activeTransaction.payload.approved !== false;
+        
+        if (decision !== 'AUTO_REJECT' && approved) {
+          card.className = 'step-card completed';
+          card.querySelector('.step-status-badge').innerText = 'SUCCESS';
+          simState.activeTransaction.payload.completedTimestamp = new Date().toISOString();
+          simState.activeTransaction.payload.bookingReference = 'BK-' + Math.floor(Math.random() * 10000000);
+          
+          addLog("INFO", `SUCCESS -> Credit and Earmark Pipeline ${simState.activeTransaction.pipelineId} completed successfully! [Client: ${simState.activeTransaction.payload.customerName}, Amount: ${formatCurrency(simState.activeTransaction.payload.requestedAmount)}]`);
+          simulationStateText.innerText = "Status: Successful";
+          simulationStateText.style.color = "var(--color-completed)";
+        } else {
+          card.className = 'step-card rejected';
+          card.querySelector('.step-status-badge').innerText = 'REJECTED';
+          
+          addLog("WARN", `FAILURE -> Releasing earmark. Inserting rejected facility log into SQL database.`);
+          addLog("WARN", `REJECTED -> Credit and Earmark Pipeline ${simState.activeTransaction.pipelineId} terminated. Reason: ${simState.activeTransaction.payload.decisionReason}`);
+          simulationStateText.innerText = "Status: Rejected";
+          simulationStateText.style.color = "var(--color-rejected)";
+        }
+      }
+      
+      updateMetricCards();
+      updateConnectorLines();
+    }
+
+    // Step next trigger
+    btnStepNext.addEventListener('click', () => {
+      if (simState.isExecuting) return;
+      if (simState.currentStep >= 8) {
+        resetSimulation();
+      }
+      executeStep(simState.currentStep + 1);
+      inspectStep(simState.currentStep);
+    });
+
+    // Run full simulation
+    btnRunFull.addEventListener('click', async () => {
+      if (simState.isExecuting) return;
+      simState.isExecuting = true;
+      btnRunFull.disabled = true;
+      presetSelect.disabled = true;
+      
+      resetSimulation();
+      addLog("INFO", "Starting automated pipeline simulation run...");
+      
+      for (let step = 1; step <= 8; step++) {
+        executeStep(step);
+        inspectStep(step);
+        
+        // Wait 1.2 seconds between steps for nice visual delay
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        
+        // Stop execution if transaction has hit a rejection path
+        if (step === 4 && simState.activeTransaction.payload.decision === 'AUTO_REJECT') {
+          // Skip intermediate steps, jump directly to step 8 for rejection logging
+          executeStep(8);
+          inspectStep(8);
+          break;
+        }
+      }
+      
+      simState.isExecuting = false;
+      btnRunFull.disabled = false;
+      presetSelect.disabled = false;
+    });
+
+    // Generate Request JSON object
+    function generateRequestPayload() {
+      const pipelineId = 'TX-' + Math.random().toString(36).substring(2, 11).toUpperCase() + '-STAGE';
+      const company = paramClient.value;
+      const sector = paramSector.value;
+      const amount = parseFloat(paramAmount.value);
+      const approved = parseFloat(paramApprovedLimit.value);
+      const booked = parseFloat(paramBookedExposure.value);
+      const available = approved - booked;
+      const rating = paramRating.value;
+
+      simState.activeTransaction = {
+        messageType: "FACILITY_REQUEST",
+        pipelineId: pipelineId,
+        timestamp: new Date().toString(),
+        payload: {
+          customerName: company,
+          sector: sector,
+          facilityType: "Bank Guarantee",
+          requestedAmount: amount,
+          currency: "USD",
+          termMonths: 18,
+          riskRating: rating,
+          approvedLimit: approved,
+          bookedExposure: booked,
+          availableLimit: available
+        }
+      };
+    }
+
+    // Evaluate Credit Decision Rules (matches Camel JBang YAML Stage 4 Groovy code)
+    function evaluateDecisionRules() {
+      const payload = simState.activeTransaction.payload;
+      const amount = payload.requestedAmount;
+      const approvedLimit = payload.approvedLimit;
+      const bookedExposure = payload.bookedExposure;
+      const availableLimit = payload.availableLimit;
+      const rating = payload.riskRating;
+      const sector = payload.sector;
+
+      let decision = "AUTO_APPROVE";
+      let reason = "Standard approval within limit";
+
+      // Reset rules tree visual audit UI
+      document.querySelectorAll('.decision-step').forEach(d => {
+        d.className = 'decision-step';
+        d.querySelector('i').className = 'fa-solid fa-circle-question';
+      });
+
+      // Rule 1: Rejection Rules
+      if (rating === "D") {
+        decision = "AUTO_REJECT";
+        reason = "Default risk rating (D) without mitigation";
+        markRuleMatched('ruleD');
+      } else if (sector === "Restricted-Weapons" && amount > 1000000) {
+        decision = "AUTO_REJECT";
+        reason = "Restricted Weapons sector concentration limit exceeded ($1M cap)";
+        markRuleMatched('ruleWeapons');
+      } else if (amount > (approvedLimit * 1.10)) {
+        decision = "AUTO_REJECT";
+        reason = `Requested amount exceeds 110% of approved limit buffer limit ($${approvedLimit})`;
+        markRuleMatched('ruleBuffer');
+      }
+      // Rule 2: Excess Approval Rules (Over-limit check)
+      else if (amount > availableLimit) {
+        const excessPct = (amount - availableLimit) / availableLimit;
+        if (excessPct < 0.10) {
+          decision = "EXCESS_APPROVAL";
+          reason = `Requested amount exceeds available limit by ${Math.round(excessPct * 100)}% (within 10% buffer)`;
+          markRuleMatched('ruleExcess');
+        } else {
+          decision = "AUTO_REJECT";
+          reason = "Limit breach exceeds 10% buffer zone (unsupported exposure)";
+          markRuleMatched('ruleExcess');
+        }
+      }
+      // Rule 3: Auto-Approval Rules
+      else if (amount < 100000 && (rating === "AAA" || rating === "AA" || rating === "A" || rating === "BBB")) {
+        decision = "AUTO_APPROVE";
+        reason = "Auto-approve small exposure (<$100K) with investment grade rating";
+        markRuleMatched('ruleAuto');
+      }
+      // Rule 4: Standard approval levels requiring sign-offs
+      else {
+        decision = "REQUIRED_APPROVAL";
+        if (amount < 5000000) {
+          reason = "Credit Manager approval required (Single approval path)";
+        } else {
+          reason = "Head of Credit + Credit Manager dual sign-off required";
+        }
+        markRuleMatched('ruleReview');
+      }
+
+      payload.decision = decision;
+      payload.decisionReason = reason;
+
+      // Mark other rules as failed
+      document.querySelectorAll('.decision-step').forEach(d => {
+        if (!d.classList.contains('matched')) {
+          d.className = 'decision-step failed';
+          d.querySelector('i').className = 'fa-solid fa-circle-xmark';
+        }
+      });
+    }
+
+    function markRuleMatched(elementId) {
+      const el = document.getElementById(elementId);
+      if (el) {
+        el.className = 'decision-step matched';
+        el.querySelector('i').className = 'fa-solid fa-circle-check';
+      }
+    }
+
+    // Reset UI states
+    function resetSimulation() {
+      resetSimulationUI();
+      simState.currentStep = 0;
+      simState.activeTransaction = null;
+      jsonEditor.innerText = "Select a step card or run the pipeline to inspect the transactional state payload.";
+      simulationStateText.innerText = "Status: Idle";
+      simulationStateText.style.color = "var(--color-active)";
+      updateMetricCards();
+    }
+
+    function resetSimulationUI() {
+      document.querySelectorAll('.step-card').forEach(card => {
+        card.className = 'step-card';
+        card.querySelector('.step-status-badge').innerText = 'Idle';
+      });
+      tokenBadge.style.display = 'none';
+      if (document.getElementById('connectorProgress')) {
+        document.getElementById('connectorProgress').style.width = '0%';
+      }
+    }
+
+    // Update lines between step nodes
+    function updateConnectorLines() {
+      const progress = document.getElementById('connectorProgress');
+      if (progress && simState.currentStep > 0) {
+        const percent = ((simState.currentStep - 1) / 7) * 100;
+        progress.style.width = `${percent}%`;
+      }
+    }
+
+    // Initial load setup
+    resetSimulation();
+  </script>
+</body>
+</html>

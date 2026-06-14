@@ -24,3 +24,5 @@ project(':tessera-app-manager-deployment').projectDir = file('tessera-app-manage
 include 'tessera-ibmmq-runtime', 'tessera-ibmmq-deployment'
 project(':tessera-ibmmq-runtime').projectDir = file('tessera-ibmmq/runtime')
 project(':tessera-ibmmq-deployment').projectDir = file('tessera-ibmmq/deployment')
+
+org.apache.tools.ant.DirectoryScanner.removeDefaultExclude("**/.gitignore")

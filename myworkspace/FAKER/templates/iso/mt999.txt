@@ -1,7 +1,0 @@
-{1:F01{{type:bic:sender}}XXXX0000000000}
-{2:I999{{type:bic:receiver}}XXXXN}
-{4:
-:20:{{type:uuid}}
-:21:{{type:uuid}}
-:79:General free format query / response statement.
--}

@@ -1,7 +1,0 @@
-{
-  "type": "xslt3",
-  "name": "XSLT 3.0 CCIO to ISO",
-  "source": { "type": "xml", "file": "source.xml" },
-  "logic": { "type": "xslt3", "file": "transform.xslt" },
-  "target": { "type": "xml" }
-}

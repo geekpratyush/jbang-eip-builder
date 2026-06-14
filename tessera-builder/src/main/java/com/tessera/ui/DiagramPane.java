@@ -65,6 +65,7 @@ public class DiagramPane extends VBox {
 
     // Shared toolbar action state (reused by both inline and detached toolbars)
     private Button inlineLBtn, inlineStackBtn;
+    private Button detachedLBtn, detachedStackBtn;
     private javafx.stage.FileChooser svgFileChooser;
     private ContextMenu activeContextMenu;
     private ClassDiagramPane classDiagramPane;
@@ -128,6 +129,43 @@ public class DiagramPane extends VBox {
         getChildren().addAll(title, toolbar, contentStack);
     }
 
+    private void updateFlowButtonsState() {
+        String iconName = isHorizontal ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down";
+        if (inlineLBtn != null) {
+            inlineLBtn.setGraphic(new FontIcon(iconName));
+        }
+        if (detachedLBtn != null) {
+            detachedLBtn.setGraphic(new FontIcon(iconName));
+        }
+    }
+
+    private void updateStackButtonsState() {
+        if (inlineStackBtn != null) {
+            updateStackBtnStyle(inlineStackBtn);
+        }
+        if (detachedStackBtn != null) {
+            updateStackBtnStyle(detachedStackBtn);
+        }
+    }
+
+    private void updateStackBtnStyle(Button btn) {
+        if (btn == null) return;
+        FontIcon icon = (FontIcon) btn.getGraphic();
+        if (isStackedSideBySide) {
+            btn.setStyle("-fx-background-color: -sui-selection;");
+            if (icon != null) {
+                if (!icon.getStyleClass().contains("active-stack-icon")) {
+                    icon.getStyleClass().add("active-stack-icon");
+                }
+            }
+        } else {
+            btn.setStyle("-fx-background-color: transparent;");
+            if (icon != null) {
+                icon.getStyleClass().remove("active-stack-icon");
+            }
+        }
+    }
+
     /** Builds the diagram toolbar. When {@code detached=true} the close button re-docks instead of
      *  closing the panel, and the detach button is replaced by a "Return to Panel" button. */
     private HBox buildToolbar(boolean detached) {
@@ -144,24 +182,32 @@ public class DiagramPane extends VBox {
         lBtn.setOnAction(e -> {
             isHorizontal = !isHorizontal;
             prefs.putBoolean("isHorizontal", isHorizontal);
-            // keep both toolbar copies in sync
-            lBtn.setGraphic(new FontIcon(isHorizontal ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down"));
-            if (inlineLBtn != null && inlineLBtn != lBtn)
-                inlineLBtn.setGraphic(new FontIcon(isHorizontal ? "fas-long-arrow-alt-right" : "fas-long-arrow-alt-down"));
+            updateFlowButtonsState();
             rebuildContainer(); renderFromRoot();
         });
-        if (!detached) inlineLBtn = lBtn;
+        if (!detached) {
+            inlineLBtn = lBtn;
+        } else {
+            detachedLBtn = lBtn;
+        }
 
         // --- Multi-route stacking toggle ---
         Button stackBtn = new Button();
         stackBtn.setGraphic(new FontIcon("fas-layer-group"));
         stackBtn.getStyleClass().add("editor-btn");
         stackBtn.setTooltip(new Tooltip("Toggle Multi-Route Stacking (Side-by-Side / Vertical)"));
+        updateStackBtnStyle(stackBtn);
         stackBtn.setOnAction(e -> {
             isStackedSideBySide = !isStackedSideBySide;
             prefs.putBoolean("isStackedSideBySide", isStackedSideBySide);
+            updateStackButtonsState();
             rebuildContainer(); renderFromRoot();
         });
+        if (!detached) {
+            inlineStackBtn = stackBtn;
+        } else {
+            detachedStackBtn = stackBtn;
+        }
 
         // --- Zoom controls (initialise zoomScale once) ---
         if (!detached && zoomScale == null) zoomScale = new Scale(1, 1);
@@ -294,6 +340,8 @@ public class DiagramPane extends VBox {
             detachedStage.show();
         } else {
             detachedStage.close(); detachedStage = null;
+            detachedLBtn = null;
+            detachedStackBtn = null;
             getChildren().remove(detachedPlaceholder); getChildren().add(contentStack);
         }
     }

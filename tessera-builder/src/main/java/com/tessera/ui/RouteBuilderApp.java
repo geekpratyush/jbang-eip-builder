@@ -304,6 +304,7 @@ public class RouteBuilderApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        final java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(RouteBuilderApp.class);
         try {
             javafx.scene.image.Image appIcon = new javafx.scene.image.Image(
                     getClass().getResourceAsStream("/logo.png"));
@@ -447,6 +448,8 @@ public class RouteBuilderApp extends Application {
     }
 
     private void setupMainWindow(Stage primaryStage, BorderPane root) {
+        final java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(RouteBuilderApp.class);
+        final SplitPane verticalSplitPane = new SplitPane();
         // Top Menu Bar
         javafx.scene.control.MenuBar menuBar = new javafx.scene.control.MenuBar();
         javafx.scene.control.Menu fileMenu = new javafx.scene.control.Menu("_File");
@@ -533,11 +536,11 @@ public class RouteBuilderApp extends Application {
         javafx.scene.control.Menu viewMenu = new javafx.scene.control.Menu("_View");
         javafx.scene.control.CheckMenuItem viewExplorerItem = new javafx.scene.control.CheckMenuItem(
                 "Project Explorer");
-        viewExplorerItem.setSelected(true);
+        viewExplorerItem.setSelected(prefs.getBoolean("viewExplorer", true));
         javafx.scene.control.CheckMenuItem viewCodeItem = new javafx.scene.control.CheckMenuItem("Code Editor");
-        viewCodeItem.setSelected(true);
+        viewCodeItem.setSelected(prefs.getBoolean("viewCode", true));
         javafx.scene.control.CheckMenuItem viewDiagramItem = new javafx.scene.control.CheckMenuItem("Diagram Canvas");
-        viewDiagramItem.setSelected(true);
+        viewDiagramItem.setSelected(prefs.getBoolean("viewDiagram", true));
         javafx.scene.control.MenuItem resetLayoutItem = new javafx.scene.control.MenuItem("Reset Layout");
         javafx.scene.control.MenuItem swapLayoutItem = new javafx.scene.control.MenuItem("Swap Code and Diagram");
         viewMenu.getItems().addAll(viewExplorerItem, viewCodeItem, viewDiagramItem,
@@ -1067,7 +1070,7 @@ public class RouteBuilderApp extends Application {
             }
         }
 
-        boolean[] swapCodeDiagram = { false };
+        boolean[] swapCodeDiagram = { prefs.getBoolean("swapCodeDiagram", false) };
 
         viewExplorerItem.selectedProperty().bindBidirectional(btnViewExplorer.selectedProperty());
         viewCodeItem.selectedProperty().bindBidirectional(btnViewCode.selectedProperty());
@@ -1337,6 +1340,9 @@ public class RouteBuilderApp extends Application {
                 if (target != null && target.isFile() && !target.getName().contains("dashboard")) {
                     pb.environment().put("CAMEL_UI_ROOT_PATH", "");
                 }
+                // Override WORKSPACE_ROOT_DIR with absolute path so file: resources resolve correctly from any CWD
+                java.io.File wsRoot = workspaceRoot != null ? workspaceRoot : baseDir;
+                pb.environment().put("WORKSPACE_ROOT_DIR", wsRoot.getAbsolutePath());
                 pb.directory(baseDir);
                 pb.redirectErrorStream(true);
                 runnerProcess[0] = pb.start();
@@ -1513,7 +1519,6 @@ public class RouteBuilderApp extends Application {
             LiquibaseExportWindow.showForRoutes(treePane.getBaseDirectory(), checked);
         });
 
-        java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(RouteBuilderApp.class);
 
         openItem.setOnAction(e -> {
             javafx.stage.DirectoryChooser chooser = new javafx.stage.DirectoryChooser();
@@ -1710,6 +1715,9 @@ public class RouteBuilderApp extends Application {
                 if (file != null && file.isFile() && !file.getName().contains("dashboard")) {
                     pb.environment().put("CAMEL_UI_ROOT_PATH", "");
                 }
+                // Override WORKSPACE_ROOT_DIR with absolute path so file: resources resolve correctly from any CWD
+                java.io.File wsRoot = workspaceRoot != null ? workspaceRoot : baseDir;
+                pb.environment().put("WORKSPACE_ROOT_DIR", wsRoot.getAbsolutePath());
                 pb.directory(baseDir);
                 pb.redirectErrorStream(true);
                 Process singleProcess = pb.start();
@@ -1803,16 +1811,27 @@ public class RouteBuilderApp extends Application {
 
         swapLayoutItem.setOnAction(e -> {
             swapCodeDiagram[0] = !swapCodeDiagram[0];
+            prefs.putBoolean("swapCodeDiagram", swapCodeDiagram[0]);
             updateLayout.run();
         });
         btnSwapPanels.setOnAction(e -> {
             swapCodeDiagram[0] = !swapCodeDiagram[0];
+            prefs.putBoolean("swapCodeDiagram", swapCodeDiagram[0]);
             updateLayout.run();
         });
 
-        viewExplorerItem.selectedProperty().addListener((obs, oldVal, newVal) -> updateLayout.run());
-        viewCodeItem.selectedProperty().addListener((obs, oldVal, newVal) -> updateLayout.run());
-        viewDiagramItem.selectedProperty().addListener((obs, oldVal, newVal) -> updateLayout.run());
+        viewExplorerItem.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            prefs.putBoolean("viewExplorer", newVal);
+            updateLayout.run();
+        });
+        viewCodeItem.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            prefs.putBoolean("viewCode", newVal);
+            updateLayout.run();
+        });
+        viewDiagramItem.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            prefs.putBoolean("viewDiagram", newVal);
+            updateLayout.run();
+        });
 
         editorPane.setOnToggleDiagram(() -> {
             viewDiagramItem.setSelected(!viewDiagramItem.isSelected());
@@ -1837,6 +1856,18 @@ public class RouteBuilderApp extends Application {
         // Initial setup
         updateLayout.run();
 
+        // Restore divider positions from preferences
+        if (mainSplitPane.getItems().size() == 3) {
+            double pos1 = prefs.getDouble("mainSplitDivider3_1", 0.18);
+            double pos2 = prefs.getDouble("mainSplitDivider3_2", 0.58);
+            mainSplitPane.setDividerPositions(pos1, pos2);
+        } else if (mainSplitPane.getItems().size() == 2) {
+            double pos = prefs.getDouble("mainSplitDivider2", 0.3);
+            mainSplitPane.setDividerPositions(pos);
+        }
+        double vertPos = prefs.getDouble("verticalSplitDivider", 0.75);
+        verticalSplitPane.setDividerPositions(vertPos);
+
         undoItem.setOnAction(e -> editorPane.undo());
         redoItem.setOnAction(e -> editorPane.redo());
         cutItem.setOnAction(e -> editorPane.cut());
@@ -1846,10 +1877,19 @@ public class RouteBuilderApp extends Application {
 
         resetLayoutItem.setOnAction(e -> {
             swapCodeDiagram[0] = false;
+            prefs.putBoolean("swapCodeDiagram", false);
             viewExplorerItem.setSelected(true);
             viewCodeItem.setSelected(true);
             viewDiagramItem.setSelected(true);
             updateLayout.run();
+            // Reset split pane dividers to default values
+            mainSplitPane.setDividerPositions(0.18, 0.58);
+            verticalSplitPane.setDividerPositions(0.75);
+            // Also store them
+            prefs.putDouble("mainSplitDivider3_1", 0.18);
+            prefs.putDouble("mainSplitDivider3_2", 0.58);
+            prefs.putDouble("mainSplitDivider2", 0.3);
+            prefs.putDouble("verticalSplitDivider", 0.75);
         });
 
         // 4. Bottom Panel: Console
@@ -1858,7 +1898,6 @@ public class RouteBuilderApp extends Application {
                 consolePane);
 
         // Wrap in a vertical SplitPane
-        SplitPane verticalSplitPane = new SplitPane();
         verticalSplitPane.setOrientation(Orientation.VERTICAL);
         verticalSplitPane.getStyleClass().add("main-split-pane");
         verticalSplitPane.getItems().addAll(mainSplitPane, consolePane);
@@ -1902,6 +1941,23 @@ public class RouteBuilderApp extends Application {
         primaryStage.setScene(scene);
 
         primaryStage.setOnCloseRequest(e -> {
+            if (mainSplitPane.getItems().size() == 3) {
+                double[] positions = mainSplitPane.getDividerPositions();
+                if (positions.length >= 2) {
+                    prefs.putDouble("mainSplitDivider3_1", positions[0]);
+                    prefs.putDouble("mainSplitDivider3_2", positions[1]);
+                }
+            } else if (mainSplitPane.getItems().size() == 2) {
+                double[] positions = mainSplitPane.getDividerPositions();
+                if (positions.length >= 1) {
+                    prefs.putDouble("mainSplitDivider2", positions[0]);
+                }
+            }
+            double[] vertPositions = verticalSplitPane.getDividerPositions();
+            if (vertPositions.length >= 1) {
+                prefs.putDouble("verticalSplitDivider", vertPositions[0]);
+            }
+
             javafx.application.Platform.exit();
             System.exit(0);
         });
